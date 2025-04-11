@@ -6,6 +6,7 @@ import Layout from './components/common/Layout';
 import Dashboard from './pages/Dashboard';
 import Upload from './pages/Upload';
 import CaseTracking from './pages/CaseTracking';
+import CaseDetails from './pages/CaseDetails';
 import Logs from './pages/Logs';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
@@ -105,6 +106,14 @@ function AppWithTheme() {
               <ProtectedRoute>
                 <Layout>
                   <CaseTracking />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/cases/:caseId" element={
+              <ProtectedRoute>
+                <Layout>
+                  <CaseDetails />
                 </Layout>
               </ProtectedRoute>
             } />

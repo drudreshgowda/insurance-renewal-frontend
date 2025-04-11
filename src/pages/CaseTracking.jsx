@@ -20,8 +20,11 @@ import {
   InsertDriveFile as InsertDriveFileIcon
 } from '@mui/icons-material';
 import { fetchCases, updateCase } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 
 const CaseTracking = () => {
+  const navigate = useNavigate();
+  
   const mockCases = useMemo(() => [
     {
       id: 'CASE-001',
@@ -558,7 +561,11 @@ const CaseTracking = () => {
         open={Boolean(actionMenuAnchorEl)}
         onClose={handleActionMenuClose}
       >
-        <MenuItem onClick={handleActionMenuClose}>View Details</MenuItem>
+        <MenuItem onClick={() => {
+          handleActionMenuClose();
+          const caseData = cases.find(c => c.id === selectedCaseId);
+          if (caseData) navigate(`/cases/${caseData.id}`);
+        }}>View Details</MenuItem>
         <MenuItem onClick={handleActionMenuClose}>Download Policy</MenuItem>
         <MenuItem onClick={() => {
           handleActionMenuClose();
