@@ -15,27 +15,21 @@ import {
   Save as SaveIcon
 } from '@mui/icons-material';
 import { useThemeMode } from '../context/ThemeModeContext';
+import { useSettings } from '../context/SettingsContext';
 
 const Settings = () => {
   const { mode, toggleMode } = useThemeMode();
-  const [settings, setSettings] = useState({
-    emailNotifications: true,
-    smsNotifications: false,
-    language: 'en',
-    timezone: 'UTC-5',
-    autoRefresh: true
-  });
+  const { settings, updateSettings } = useSettings();
   const [successMessage, setSuccessMessage] = useState('');
 
   const handleSettingChange = (setting, value) => {
-    setSettings(prev => ({
-      ...prev,
+    updateSettings({
       [setting]: value
-    }));
+    });
   };
 
   const handleSaveSettings = () => {
-    // In a real app, this would call an API to save user settings
+    // Settings are automatically saved via the context
     setSuccessMessage('Settings saved successfully!');
     
     // Auto-dismiss success message after 3 seconds
@@ -191,6 +185,19 @@ const Settings = () => {
                     edge="end"
                     checked={settings.autoRefresh}
                     onChange={(e) => handleSettingChange('autoRefresh', e.target.checked)}
+                  />
+                </ListItemSecondaryAction>
+              </ListItem>
+              <ListItem>
+                <ListItemText
+                  primary="Show Edit Case Button"
+                  secondary="Display the Edit Case button in case details view"
+                />
+                <ListItemSecondaryAction>
+                  <Switch
+                    edge="end"
+                    checked={settings.showEditCaseButton !== false}
+                    onChange={(e) => handleSettingChange('showEditCaseButton', e.target.checked)}
                   />
                 </ListItemSecondaryAction>
               </ListItem>

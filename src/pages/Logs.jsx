@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { 
   Box, Typography, Paper, TextField, Button, 
   List, ListItem, ListItemText, Divider, 
@@ -9,12 +10,23 @@ import { Search as SearchIcon } from '@mui/icons-material';
 import { fetchLogs } from '../services/api';
 
 const Logs = () => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const caseIdParam = queryParams.get('caseId');
+  
+  const [searchQuery, setSearchQuery] = useState(caseIdParam || '');
   const [searchType, setSearchType] = useState('caseId');
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searched, setSearched] = useState(false);
+
+  useEffect(() => {
+    // Auto-search if caseId is provided in URL
+    if (caseIdParam) {
+      handleSearch();
+    }
+  }, []);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;

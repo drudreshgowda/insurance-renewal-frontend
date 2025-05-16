@@ -101,6 +101,190 @@ export const uploadPolicyData = async (file) => {
 };
 
 // Case Tracking API calls
+export const getCaseById = async (caseId) => {
+  // In a real app, this would call the API
+  // return apiRequest(`/cases/${caseId}`);
+  
+  // Mock implementation
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      // Find the case in our mock data
+      const mockCases = [
+        {
+          id: 'CASE-001',
+          customerName: 'John Smith',
+          policyNumber: 'POL-12345',
+          status: 'In Progress',
+          agent: 'Alice Johnson',
+          uploadDate: '2025-04-08',
+          isPriority: false,
+          contactInfo: {
+            email: 'john.smith@example.com',
+            phone: '555-123-4567'
+          },
+          policyDetails: {
+            type: 'Auto',
+            expiryDate: '2025-05-15',
+            premium: 1250.00,
+            coverage: {
+              liability: '$300,000',
+              collision: '$500 deductible',
+              comprehensive: '$250 deductible'
+            }
+          },
+          flowSteps: ['Uploaded', 'Validated', 'Assigned', 'In Progress'],
+          history: [
+            {
+              date: '2025-04-08T09:15:30',
+              action: 'Case Created',
+              details: 'Case uploaded via bulk upload',
+              user: 'System'
+            },
+            {
+              date: '2025-04-08T09:15:35',
+              action: 'Validation',
+              details: 'All required fields present and valid',
+              user: 'System'
+            },
+            {
+              date: '2025-04-08T10:30:12',
+              action: 'Assignment',
+              details: 'Case assigned to agent Alice Johnson',
+              user: 'System'
+            }
+          ]
+        },
+        {
+          id: 'CASE-002',
+          customerName: 'Sarah Williams',
+          policyNumber: 'POL-23456',
+          status: 'Renewed',
+          agent: 'Bob Miller',
+          uploadDate: '2025-04-07',
+          isPriority: true,
+          contactInfo: {
+            email: 'sarah.w@example.com',
+            phone: '555-234-5678'
+          },
+          policyDetails: {
+            type: 'Home',
+            expiryDate: '2025-05-10',
+            premium: 950.00,
+            coverage: {
+              dwelling: '$500,000',
+              personalProperty: '$250,000',
+              liability: '$300,000'
+            }
+          },
+          flowSteps: ['Uploaded', 'Validated', 'Assigned', 'In Progress', 'Payment Processed', 'Renewed'],
+          history: [
+            {
+              date: '2025-04-07T14:22:10',
+              action: 'Case Created',
+              details: 'Case uploaded via API',
+              user: 'System'
+            },
+            {
+              date: '2025-04-07T14:22:15',
+              action: 'Validation',
+              details: 'All required fields present and valid',
+              user: 'System'
+            },
+            {
+              date: '2025-04-07T15:10:45',
+              action: 'Assignment',
+              details: 'Case assigned to agent Bob Miller',
+              user: 'System'
+            },
+            {
+              date: '2025-04-08T09:30:22',
+              action: 'Processing',
+              details: 'Agent has begun renewal processing',
+              user: 'Bob Miller'
+            },
+            {
+              date: '2025-04-09T11:15:33',
+              action: 'Payment Processed',
+              details: 'Payment of $950.00 processed successfully',
+              user: 'System'
+            },
+            {
+              date: '2025-04-09T11:16:05',
+              action: 'Renewed',
+              details: 'Policy renewed successfully',
+              user: 'System'
+            }
+          ]
+        },
+        {
+          id: 'CASE-003',
+          customerName: 'Michael Johnson',
+          policyNumber: 'POL-34567',
+          status: 'Failed',
+          agent: 'Carol Davis',
+          uploadDate: '2025-04-06',
+          isPriority: false,
+          contactInfo: {
+            email: 'michael.j@example.com',
+            phone: '555-345-6789'
+          },
+          policyDetails: {
+            type: 'Life',
+            expiryDate: '2025-05-05',
+            premium: 2100.00,
+            coverage: {
+              deathBenefit: '$500,000',
+              cashValue: '$25,000',
+              accidentalDeath: '$1,000,000'
+            }
+          },
+          flowSteps: ['Uploaded', 'Validated', 'Assigned', 'In Progress', 'Failed'],
+          history: [
+            {
+              date: '2025-04-06T10:45:30',
+              action: 'Case Created',
+              details: 'Case created manually',
+              user: 'Admin'
+            },
+            {
+              date: '2025-04-06T10:46:15',
+              action: 'Validation',
+              details: 'All required fields present and valid',
+              user: 'System'
+            },
+            {
+              date: '2025-04-06T11:30:45',
+              action: 'Assignment',
+              details: 'Case assigned to agent Carol Davis',
+              user: 'System'
+            },
+            {
+              date: '2025-04-07T14:22:10',
+              action: 'Processing',
+              details: 'Agent has begun renewal processing',
+              user: 'Carol Davis'
+            },
+            {
+              date: '2025-04-08T16:05:22',
+              action: 'Failed',
+              details: 'Customer declined renewal due to premium increase',
+              user: 'Carol Davis'
+            }
+          ]
+        }
+      ];
+      
+      const foundCase = mockCases.find(c => c.id === caseId);
+      
+      if (foundCase) {
+        resolve(foundCase);
+      } else {
+        reject(new Error(`Case with ID ${caseId} not found`));
+      }
+    }, 800);
+  });
+};
+
 export const fetchCases = async (page, rowsPerPage, searchTerm, statusFilter, dateFilter, agentFilter) => {
   // In a real app, this would call the API
   // return apiRequest(

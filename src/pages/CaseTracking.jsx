@@ -17,13 +17,16 @@ import {
   MoreVert as MoreIcon,
   FileDownload as FileDownloadIcon,
   TableView as TableViewIcon,
-  InsertDriveFile as InsertDriveFileIcon
+  InsertDriveFile as InsertDriveFileIcon,
+  History as HistoryIcon
 } from '@mui/icons-material';
 import { fetchCases, updateCase } from '../services/api';
 import { useNavigate } from 'react-router-dom';
+import { useSettings } from '../context/SettingsContext';
 
 const CaseTracking = () => {
   const navigate = useNavigate();
+  const { settings } = useSettings();
   
   const mockCases = useMemo(() => [
     {
@@ -132,6 +135,7 @@ const CaseTracking = () => {
   const [dateFilter, setDateFilter] = useState('all');
   const [agentFilter, setAgentFilter] = useState('all');
   const [successMessage, setSuccessMessage] = useState('');
+  const [error, setError] = useState(null);
   const [exportAnchorEl, setExportAnchorEl] = useState(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [currentCase, setCurrentCase] = useState(null);
@@ -322,13 +326,11 @@ const CaseTracking = () => {
   };
 
   const getStatusColor = (status) => {
-    switch (status) {
-      case 'Uploaded': return 'info';
-      case 'Assigned': return 'secondary';
-      case 'In Progress': return 'warning';
-      case 'Payment Processed': return 'primary';
-      case 'Renewed': return 'success';
-      case 'Failed': return 'error';
+    switch (status.toLowerCase()) {
+      case 'renewed': return 'success';
+      case 'in progress': return 'info';
+      case 'failed': return 'error';
+      case 'pending': return 'warning';
       default: return 'default';
     }
   };
@@ -355,6 +357,12 @@ const CaseTracking = () => {
       {successMessage && (
         <Alert severity="success" sx={{ mb: 3 }}>
           {successMessage}
+        </Alert>
+      )}
+      
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
         </Alert>
       )}
       
@@ -478,47 +486,80 @@ const CaseTracking = () => {
                 <TableCell>{caseItem.customerName}</TableCell>
                 <TableCell>{caseItem.policyNumber}</TableCell>
                 <TableCell>
-                  <Chip 
-                    label={caseItem.status} 
+                  <Chip
+                    label={caseItem.status}
                     color={getStatusColor(caseItem.status)}
                     size="small"
                   />
                 </TableCell>
                 <TableCell>
                   <Chip
-                    label={caseItem.isPriority ? 'Priority' : 'Normal'}
-                    color={caseItem.isPriority ? 'error' : 'default'}
+                    label={caseItem.isPriority ? "Priority" : "Normal"}
+                    color={caseItem.isPriority ? "error" : "default"}
+                    variant={caseItem.isPriority ? "filled" : "outlined"}
                     size="small"
-                    variant={caseItem.isPriority ? 'filled' : 'outlined'}
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      try {
+                        // Toggle priority status
+                        const updatedCase = { ...caseItem, isPriority: !caseItem.isPriority };
+                        await updateCase(caseItem.id, { isPriority: !caseItem.isPriority });
+                        
+                        // Update the cases array with the updated case
+                        setCases(cases.map(c => c.id === caseItem.id ? updatedCase : c));
+                        setSuccessMessage(`Priority status ${!caseItem.isPriority ? 'enabled' : 'disabled'} for case ${caseItem.id}`);
+                      } catch (err) {
+                        setError('Failed to update priority status');
+                        // Auto-dismiss error message after 3 seconds
+                        setTimeout(() => {
+                          setError(null);
+                        }, 3000);
+                      }
+                    }}
+                    sx={{ cursor: 'pointer' }}
                   />
                 </TableCell>
                 <TableCell>{new Date(caseItem.uploadDate).toLocaleDateString()}</TableCell>
                 <TableCell>{new Date(caseItem.uploadDate).toLocaleDateString()}</TableCell>
                 <TableCell>
-                  <Tooltip title="Edit Case">
-                    <IconButton 
-                      size="small"
-                      onClick={() => handleEditClick(caseItem)}
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  
-                  <Tooltip title="View Case Flow">
-                    <IconButton 
-                      size="small"
-                      onClick={() => handleViewFlow(caseItem)}
-                    >
-                      <ViewIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  
-                  <IconButton
-                    size="small"
-                    onClick={(event) => handleActionMenuOpen(event, caseItem.id)}
-                  >
-                    <MoreIcon fontSize="small" />
-                  </IconButton>
+                  <Box sx={{ display: 'flex' }}>
+                    <Tooltip title="View Details">
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/cases/${caseItem.id}`);
+                        }}
+                      >
+                        <ViewIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    {settings?.showEditCaseButton !== false && (
+                      <Tooltip title="Edit Case">
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCurrentCase(caseItem);
+                            setEditDialogOpen(true);
+                          }}
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                    <Tooltip title="Case Logs">
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/logs?caseId=${caseItem.id}`);
+                        }}
+                      >
+                        <HistoryIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
                 </TableCell>
               </TableRow>
             ))}

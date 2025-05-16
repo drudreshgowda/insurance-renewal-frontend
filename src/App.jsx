@@ -15,6 +15,7 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeModeProvider, useThemeMode } from './context/ThemeModeContext';
 import { NotificationsProvider } from './context/NotificationsContext';
+import SettingsProvider from './context/SettingsContext';
 
 function AppWithTheme() {
   const { mode } = useThemeMode();
@@ -82,8 +83,9 @@ function AppWithTheme() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
-        <Router>
-          <Routes>
+        <SettingsProvider>
+          <Router>
+            <Routes>
             <Route path="/login" element={<Login />} />
             
             <Route path="/" element={
@@ -144,8 +146,9 @@ function AppWithTheme() {
             
             {/* Redirect any unknown routes to dashboard */}
             <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Router>
+            </Routes>
+          </Router>
+        </SettingsProvider>
       </AuthProvider>
     </ThemeProvider>
   );

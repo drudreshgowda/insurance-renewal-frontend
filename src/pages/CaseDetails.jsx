@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+// No need to import getCaseById here as we're using dynamic import in the useEffect
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -21,6 +22,7 @@ import {
   Stack,
   Avatar,
   Tooltip,
+  TextField,
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -35,68 +37,32 @@ import {
   AccessTime as AccessTimeIcon,
   PriorityHigh as PriorityHighIcon,
 } from '@mui/icons-material';
+import { useSettings } from '../context/SettingsContext';
 
 const CaseDetails = () => {
   const { caseId } = useParams();
   const navigate = useNavigate();
+  const { settings } = useSettings();
   const [caseData, setCaseData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [comment, setComment] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
     const fetchCaseDetails = async () => {
       setLoading(true);
       try {
-        // Mock data for demonstration
-        const mockCase = {
-          id: caseId,
-          customerName: 'John Smith',
-          policyNumber: 'POL-12345',
-          status: 'In Progress',
-          agent: 'Alice Johnson',
-          uploadDate: '2025-04-08',
-          isPriority: false,
-          contactInfo: {
-            email: 'john.smith@example.com',
-            phone: '555-123-4567'
-          },
-          policyDetails: {
-            type: 'Auto',
-            expiryDate: '2025-05-15',
-            premium: 1250.00,
-            coverage: {
-              liability: '$300,000',
-              collision: '$500 deductible',
-              comprehensive: '$250 deductible'
-            }
-          },
-          flowSteps: ['Uploaded', 'Validated', 'Assigned', 'In Progress'],
-          history: [
-            {
-              date: '2025-04-08T09:15:30',
-              action: 'Case Created',
-              details: 'Case uploaded via bulk upload',
-              user: 'System'
-            },
-            {
-              date: '2025-04-08T09:15:35',
-              action: 'Validation',
-              details: 'All required fields present and valid',
-              user: 'System'
-            },
-            {
-              date: '2025-04-08T10:30:12',
-              action: 'Assignment',
-              details: 'Case assigned to agent Alice Johnson',
-              user: 'System'
-            }
-          ]
-        };
-
-        setCaseData(mockCase);
+        // Import the API function to get case by ID
+        const { getCaseById } = await import('../services/api');
+        
+        // Fetch case data using the caseId from URL parameters
+        const caseData = await getCaseById(caseId);
+        
+        setCaseData(caseData);
       } catch (err) {
-        setError('Failed to fetch case details');
-        console.error(err);
+        setError(`Failed to fetch case details: ${err.message}`);
+        console.error('Error fetching case details:', err);
       } finally {
         setLoading(false);
       }
@@ -161,20 +127,39 @@ const CaseDetails = () => {
               label={caseData.isPriority ? 'Priority' : 'Normal'}
               color={caseData.isPriority ? 'error' : 'default'}
               variant={caseData.isPriority ? 'filled' : 'outlined'}
+              onClick={async () => {
+                try {
+                  const { updateCase } = await import('../services/api');
+                  await updateCase(caseId, { isPriority: !caseData.isPriority });
+                  setCaseData({ ...caseData, isPriority: !caseData.isPriority });
+                  setSuccessMessage(`Priority status ${!caseData.isPriority ? 'enabled' : 'disabled'}`);
+                } catch (err) {
+                  setError('Failed to update priority status');
+                }
+              }}
+              sx={{ cursor: 'pointer' }}
             />
             <Typography variant="body2" color="text.secondary">
               Last Updated: {new Date(caseData.uploadDate).toLocaleString()}
             </Typography>
           </Stack>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<EditIcon />}
-          onClick={() => {}}
-        >
-          Edit Case
-        </Button>
+        {settings?.showEditCaseButton !== false && (
+          <Button
+            variant="contained"
+            startIcon={<EditIcon />}
+            onClick={() => {}}
+          >
+            Edit Case
+          </Button>
+        )}
       </Box>
+
+      {successMessage && (
+        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccessMessage('')}>
+          {successMessage}
+        </Alert>
+      )}
 
       <Grid container spacing={3}>
         {/* Customer Information */}
@@ -271,6 +256,55 @@ const CaseDetails = () => {
                   </Step>
                 ))}
               </Stepper>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Add Comment */}
+        <Grid item xs={12}>
+          <Card>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                <HistoryIcon sx={{ mr: 1 }} color="primary" />
+                <Typography variant="h6">Add Comment</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={2}
+                  placeholder="Add a comment..."
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                />
+                <Button
+                  variant="contained"
+                  disabled={!comment.trim()}
+                  onClick={async () => {
+                    try {
+                      const { updateCase } = await import('../services/api');
+                      const newHistory = [
+                        {
+                          date: new Date().toISOString(),
+                          action: 'Comment Added',
+                          details: comment,
+                          user: 'Current User', // In a real app, this would come from auth context
+                          level: 'info'
+                        },
+                        ...caseData.history
+                      ];
+                      await updateCase(caseId, { history: newHistory });
+                      setCaseData({ ...caseData, history: newHistory });
+                      setComment('');
+                      setSuccessMessage('Comment added successfully');
+                    } catch (err) {
+                      setError('Failed to add comment');
+                    }
+                  }}
+                >
+                  Add Comment
+                </Button>
+              </Box>
             </CardContent>
           </Card>
         </Grid>
