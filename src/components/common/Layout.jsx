@@ -22,7 +22,11 @@ import {
   DarkMode as DarkModeIcon,
   Assignment as AssignmentIcon,
   Update as UpdateIcon,
-  Info as InfoIcon
+  Info as InfoIcon,
+  WhatsApp as WhatsAppIcon,
+  CreditCard as CreditCardIcon,
+  CheckCircle as CheckCircleIcon,
+  Timeline as TimelineIcon
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { useThemeMode } from '../../context/ThemeModeContext';
@@ -125,6 +129,8 @@ const Layout = ({ children }) => {
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
     { text: 'Upload', icon: <UploadIcon />, path: '/upload' },
     { text: 'Case Tracking', icon: <CasesIcon />, path: '/cases' },
+    { text: 'Closed Cases', icon: <CheckCircleIcon />, path: '/closed-cases' },
+    { text: 'Policy Timeline', icon: <TimelineIcon />, path: '/policy-timeline' },
     { text: 'Logs', icon: <LogsIcon />, path: '/logs' },
   ];
 

@@ -1,15 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Grid, Paper, Typography, Box, Card, CardContent, 
-  FormControl, InputLabel, Select, MenuItem 
+  FormControl, InputLabel, Select, MenuItem, alpha, useTheme,
+  Fade, Grow
 } from '@mui/material';
 import { 
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, 
-  Tooltip, Legend, ResponsiveContainer 
+  Tooltip, Legend, ResponsiveContainer, AreaChart, Area
 } from 'recharts';
 import { fetchDashboardStats, fetchTrendData } from '../services/api';
+import { 
+  Timeline as TimelineIcon,
+  Policy as PolicyIcon, 
+  AssignmentTurnedIn as CompletedIcon, 
+  Watch as PendingIcon,
+  ErrorOutline as ErrorIcon
+} from '@mui/icons-material';
 
 const Dashboard = () => {
+  const theme = useTheme();
   const [stats, setStats] = useState({
     totalCases: 0,
     inProgress: 0,
@@ -22,6 +31,7 @@ const Dashboard = () => {
   const [dateRange, setDateRange] = useState('week');
   const [policyType, setPolicyType] = useState('all');
   const [caseStatus, setCaseStatus] = useState('all');
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     // In a real app, these would fetch from your API
@@ -59,137 +69,248 @@ const Dashboard = () => {
     ];
     
     setTrendData(mockTrendData);
+    
+    // Set loaded state for animations
+    setTimeout(() => {
+      setLoaded(true);
+    }, 100);
   }, [dateRange, policyType, caseStatus]);
 
-  const StatCard = ({ title, value, color }) => (
-    <Card sx={{ height: '100%', backgroundColor: color }}>
-      <CardContent>
-        <Typography variant="h6" component="div" color="white">
-          {title}
-        </Typography>
-        <Typography variant="h3" component="div" color="white">
-          {value}
-        </Typography>
-      </CardContent>
-    </Card>
-  );
+  const StatCard = ({ title, value, color, icon, index }) => {
+    // Create a gradient background
+    const gradientFrom = alpha(color, theme.palette.mode === 'dark' ? 0.7 : 0.9);
+    const gradientTo = alpha(color, theme.palette.mode === 'dark' ? 0.4 : 0.6);
+    
+    return (
+      <Grow in={loaded} style={{ transformOrigin: '0 0 0' }} timeout={(index + 1) * 200}>
+        <Card 
+          sx={{ 
+            height: '100%', 
+            background: `linear-gradient(135deg, ${gradientFrom} 0%, ${gradientTo} 100%)`,
+            borderRadius: 4,
+            boxShadow: `0 10px 20px ${alpha(color, 0.2)}`,
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          <Box
+            sx={{
+              position: 'absolute',
+              top: -20,
+              right: -20,
+              opacity: 0.15,
+              transform: 'rotate(25deg)',
+              fontSize: '8rem'
+            }}
+          >
+            {icon}
+          </Box>
+          <CardContent sx={{ position: 'relative', zIndex: 1 }}>
+            <Typography variant="h6" component="div" color="white" fontWeight="500" gutterBottom>
+              {title}
+            </Typography>
+            <Typography variant="h3" component="div" color="white" fontWeight="bold">
+              {value}
+            </Typography>
+          </CardContent>
+        </Card>
+      </Grow>
+    );
+  };
 
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
-        Dashboard
-      </Typography>
-      
-      {/* Filters */}
-      <Box sx={{ mb: 3, display: 'flex', gap: 2 }}>
-        <FormControl sx={{ minWidth: 120 }}>
-          <InputLabel>Date Range</InputLabel>
-          <Select
-            value={dateRange}
-            label="Date Range"
-            onChange={(e) => setDateRange(e.target.value)}
-          >
-            <MenuItem value="day">Daily</MenuItem>
-            <MenuItem value="week">Weekly</MenuItem>
-            <MenuItem value="month">Monthly</MenuItem>
-          </Select>
-        </FormControl>
+    <Fade in={true} timeout={800}>
+      <Box sx={{ px: 1 }}>
+        <Typography variant="h4" gutterBottom sx={{ mb: 3 }}>
+          Insurance Policy Renewal Dashboard
+        </Typography>
         
-        <FormControl sx={{ minWidth: 120 }}>
-          <InputLabel>Policy Type</InputLabel>
-          <Select
-            value={policyType}
-            label="Policy Type"
-            onChange={(e) => setPolicyType(e.target.value)}
-          >
-            <MenuItem value="all">All Types</MenuItem>
-            <MenuItem value="auto">Auto</MenuItem>
-            <MenuItem value="home">Home</MenuItem>
-            <MenuItem value="life">Life</MenuItem>
-          </Select>
-        </FormControl>
+        {/* Filters */}
+        <Card sx={{ mb: 4, boxShadow: 'none', p: 1 }}>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+              <FormControl sx={{ minWidth: 160 }} size="small">
+                <InputLabel>Date Range</InputLabel>
+                <Select
+                  value={dateRange}
+                  label="Date Range"
+                  onChange={(e) => setDateRange(e.target.value)}
+                >
+                  <MenuItem value="day">Daily</MenuItem>
+                  <MenuItem value="week">Weekly</MenuItem>
+                  <MenuItem value="month">Monthly</MenuItem>
+                </Select>
+              </FormControl>
+              
+              <FormControl sx={{ minWidth: 160 }} size="small">
+                <InputLabel>Policy Type</InputLabel>
+                <Select
+                  value={policyType}
+                  label="Policy Type"
+                  onChange={(e) => setPolicyType(e.target.value)}
+                >
+                  <MenuItem value="all">All Types</MenuItem>
+                  <MenuItem value="auto">Auto</MenuItem>
+                  <MenuItem value="home">Home</MenuItem>
+                  <MenuItem value="life">Life</MenuItem>
+                </Select>
+              </FormControl>
+              
+              <FormControl sx={{ minWidth: 160 }} size="small">
+                <InputLabel>Case Status</InputLabel>
+                <Select
+                  value={caseStatus}
+                  label="Case Status"
+                  onChange={(e) => setCaseStatus(e.target.value)}
+                >
+                  <MenuItem value="all">All Statuses</MenuItem>
+                  <MenuItem value="pending">Pending</MenuItem>
+                  <MenuItem value="inProgress">In Progress</MenuItem>
+                  <MenuItem value="completed">Completed</MenuItem>
+                  <MenuItem value="failed">Failed</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+          </CardContent>
+        </Card>
         
-        <FormControl sx={{ minWidth: 120 }}>
-          <InputLabel>Case Status</InputLabel>
-          <Select
-            value={caseStatus}
-            label="Case Status"
-            onChange={(e) => setCaseStatus(e.target.value)}
-          >
-            <MenuItem value="all">All Statuses</MenuItem>
-            <MenuItem value="pending">Pending</MenuItem>
-            <MenuItem value="inProgress">In Progress</MenuItem>
-            <MenuItem value="completed">Completed</MenuItem>
-            <MenuItem value="failed">Failed</MenuItem>
-          </Select>
-        </FormControl>
+        {/* Stats Cards */}
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid item xs={12} sm={6} md={2.4}>
+            <StatCard 
+              title="Total Cases" 
+              value={stats.totalCases} 
+              color={theme.palette.primary.main} 
+              icon={<TimelineIcon fontSize="inherit" />}
+              index={0}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={2.4}>
+            <StatCard 
+              title="In Progress" 
+              value={stats.inProgress} 
+              color={theme.palette.warning.main} 
+              icon={<PolicyIcon fontSize="inherit" />}
+              index={1}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={2.4}>
+            <StatCard 
+              title="Renewed" 
+              value={stats.renewed} 
+              color={theme.palette.success.main} 
+              icon={<CompletedIcon fontSize="inherit" />}
+              index={2}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={2.4}>
+            <StatCard 
+              title="Pending Action" 
+              value={stats.pendingAction} 
+              color="#9c27b0" 
+              icon={<PendingIcon fontSize="inherit" />}
+              index={3}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={2.4}>
+            <StatCard 
+              title="Errors" 
+              value={stats.errors} 
+              color={theme.palette.error.main} 
+              icon={<ErrorIcon fontSize="inherit" />}
+              index={4}
+            />
+          </Grid>
+        </Grid>
+        
+        {/* Charts */}
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={6}>
+            <Grow in={loaded} style={{ transformOrigin: '0 0 0' }} timeout={400}>
+              <Paper sx={{ p: 3, height: 380, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+                <Typography variant="h6" gutterBottom fontWeight="600">
+                  Case Volume
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Comparison of new cases and completed renewals
+                </Typography>
+                <ResponsiveContainer width="100%" height="85%">
+                  <BarChart data={trendData} barSize={20}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: theme.palette.mode === 'dark' ? '#2a2a2a' : '#fff',
+                        borderRadius: 8,
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                      }} 
+                    />
+                    <Legend />
+                    <Bar 
+                      dataKey="newCases" 
+                      fill={alpha(theme.palette.primary.main, 0.8)} 
+                      name="New Cases" 
+                      radius={[4, 4, 0, 0]} 
+                    />
+                    <Bar 
+                      dataKey="renewals" 
+                      fill={alpha(theme.palette.success.main, 0.8)}  
+                      name="Completed Renewals" 
+                      radius={[4, 4, 0, 0]} 
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Paper>
+            </Grow>
+          </Grid>
+          
+          <Grid item xs={12} md={6}>
+            <Grow in={loaded} style={{ transformOrigin: '0 0 0' }} timeout={600}>
+              <Paper sx={{ p: 3, height: 380, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+                <Typography variant="h6" gutterBottom fontWeight="600">
+                  Success Rate Trend
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Percentage of successful renewals over time
+                </Typography>
+                <ResponsiveContainer width="100%" height="85%">
+                  <AreaChart data={trendData}>
+                    <defs>
+                      <linearGradient id="successGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={theme.palette.success.main} stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor={theme.palette.success.main} stopOpacity={0.1}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                    <XAxis dataKey="name" />
+                    <YAxis domain={[0, 1]} tickFormatter={(tick) => `${(tick * 100).toFixed(0)}%`} />
+                    <Tooltip 
+                      formatter={(value) => `${(value * 100).toFixed(2)}%`} 
+                      contentStyle={{ 
+                        backgroundColor: theme.palette.mode === 'dark' ? '#2a2a2a' : '#fff',
+                        borderRadius: 8,
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                      }} 
+                    />
+                    <Legend />
+                    <Area 
+                      type="monotone" 
+                      dataKey="successRate" 
+                      stroke={theme.palette.success.main} 
+                      fillOpacity={1}
+                      fill="url(#successGradient)"
+                      name="Success Rate"
+                      strokeWidth={2}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </Paper>
+            </Grow>
+          </Grid>
+        </Grid>
       </Box>
-      
-      {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={2.4}>
-          <StatCard title="Total Cases" value={stats.totalCases} color="#1976d2" />
-        </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
-          <StatCard title="In Progress" value={stats.inProgress} color="#ff9800" />
-        </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
-          <StatCard title="Renewed" value={stats.renewed} color="#4caf50" />
-        </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
-          <StatCard title="Pending Action" value={stats.pendingAction} color="#9c27b0" />
-        </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
-          <StatCard title="Errors" value={stats.errors} color="#f44336" />
-        </Grid>
-      </Grid>
-      
-      {/* Charts */}
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2, height: 300 }}>
-            <Typography variant="h6" gutterBottom>
-              Case Volume
-            </Typography>
-            <ResponsiveContainer width="100%" height="85%">
-              <BarChart data={trendData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="newCases" fill="#8884d8" name="New Cases" />
-                <Bar dataKey="renewals" fill="#82ca9d" name="Completed Renewals" />
-              </BarChart>
-            </ResponsiveContainer>
-          </Paper>
-        </Grid>
-        
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2, height: 300 }}>
-            <Typography variant="h6" gutterBottom>
-              Success Rate Trend
-            </Typography>
-            <ResponsiveContainer width="100%" height="85%">
-              <LineChart data={trendData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis domain={[0, 1]} tickFormatter={(tick) => `${(tick * 100).toFixed(0)}%`} />
-                <Tooltip formatter={(value) => `${(value * 100).toFixed(2)}%`} />
-                <Legend />
-                <Line 
-                  type="monotone" 
-                  dataKey="successRate" 
-                  stroke="#ff7300" 
-                  name="Success Rate"
-                  strokeWidth={2}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </Paper>
-        </Grid>
-      </Grid>
-    </Box>
+    </Fade>
   );
 };
 

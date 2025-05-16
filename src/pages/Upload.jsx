@@ -2,12 +2,21 @@ import React, { useState } from 'react';
 import { 
   Box, Typography, Paper, Button, Grid, 
   LinearProgress, Alert, AlertTitle, List, 
-  ListItem, ListItemText, Divider, Chip 
+  ListItem, ListItemText, Divider, Chip,
+  Card, CardContent, alpha, useTheme,
+  Fade, Grow, Zoom
 } from '@mui/material';
-import { CloudUpload as UploadIcon, Download as DownloadIcon } from '@mui/icons-material';
+import { 
+  CloudUpload as UploadIcon, 
+  Download as DownloadIcon,
+  CheckCircleOutline as CheckIcon,
+  ErrorOutline as ErrorIcon,
+  HourglassEmpty as PendingIcon
+} from '@mui/icons-material';
 import { uploadPolicyData } from '../services/api';
 
 const Upload = () => {
+  const theme = useTheme();
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -127,148 +136,301 @@ const Upload = () => {
     }
   };
 
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'Completed': return <CheckIcon color="success" />;
+      case 'Processing': return <PendingIcon color="warning" />;
+      case 'Failed': return <ErrorIcon color="error" />;
+      default: return null;
+    }
+  };
+
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
-        Upload Data
-      </Typography>
-      
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3, mb: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Upload New File
-            </Typography>
-            
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
-                Upload cases using our template format. Only Excel (.xlsx) or CSV files are supported.
-              </Typography>
-              
-              <Button 
-                variant="outlined" 
-                startIcon={<DownloadIcon />}
-                onClick={handleDownloadTemplate}
-                sx={{ mb: 2 }}
-              >
-                Download Template
-              </Button>
-            </Box>
-            
-            <Box 
-              sx={{ 
-                border: '2px dashed #ccc', 
-                borderRadius: 2, 
-                p: 3, 
-                textAlign: 'center',
-                mb: 3
-              }}
-            >
-              <input
-                accept=".xlsx,.csv"
-                style={{ display: 'none' }}
-                id="upload-file-button"
-                type="file"
-                onChange={handleFileChange}
-                disabled={uploading}
-              />
-              <label htmlFor="upload-file-button">
-                <Button
-                  variant="contained"
-                  component="span"
-                  startIcon={<UploadIcon />}
-                  disabled={uploading}
-                >
-                  Select File
-                </Button>
-              </label>
-              
-              {file && (
-                <Typography variant="body2" sx={{ mt: 2 }}>
-                  Selected: {file.name} ({(file.size / 1024).toFixed(2)} KB)
-                </Typography>
-              )}
-            </Box>
-            
-            {file && !uploading && (
-              <Button 
-                variant="contained" 
-                color="primary" 
-                onClick={handleUpload}
-                fullWidth
-              >
-                Upload and Process
-              </Button>
-            )}
-            
-            {uploading && (
-              <Box sx={{ width: '100%', mt: 2 }}>
-                <LinearProgress variant="determinate" value={uploadProgress} />
-                <Typography variant="body2" sx={{ mt: 1, textAlign: 'center' }}>
-                  Uploading... {uploadProgress}%
-                </Typography>
-              </Box>
-            )}
-            
-            {uploadStatus && (
-              <Alert 
-                severity={uploadStatus.type} 
-                sx={{ mt: 2 }}
-              >
-                <AlertTitle>{uploadStatus.type === 'success' ? 'Success' : 'Error'}</AlertTitle>
-                {uploadStatus.message}
-              </Alert>
-            )}
-          </Paper>
-        </Grid>
+    <Fade in={true} timeout={800}>
+      <Box>
+        <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
+          Upload Policy Data
+        </Typography>
         
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Recent Uploads
-            </Typography>
-            
-            <List>
-              {uploadHistory.map((upload, index) => (
-                <React.Fragment key={upload.id}>
-                  {index > 0 && <Divider />}
-                  <ListItem alignItems="flex-start">
-                    <ListItemText
-                      primary={
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Typography variant="subtitle1">
-                            {upload.filename}
-                          </Typography>
-                          <Chip 
-                            label={upload.status} 
-                            color={getStatusColor(upload.status)}
-                            size="small"
-                          />
-                        </Box>
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={6}>
+            <Grow in={true} timeout={800}>
+              <Card 
+                elevation={0} 
+                sx={{ 
+                  mb: 3, 
+                  borderRadius: 3,
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+                  overflow: 'visible'
+                }}
+              >
+                <CardContent sx={{ p: 4 }}>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
+                    Upload New File
+                  </Typography>
+                  
+                  <Box sx={{ mb: 3 }}>
+                    <Typography variant="body1" color="text.secondary" gutterBottom>
+                      Upload cases using our template format. Only Excel (.xlsx) or CSV files are supported.
+                    </Typography>
+                    
+                    <Button 
+                      variant="outlined" 
+                      startIcon={<DownloadIcon />}
+                      onClick={handleDownloadTemplate}
+                      sx={{ 
+                        mt: 1, 
+                        borderRadius: 2,
+                        transition: 'all 0.2s',
+                        '&:hover': {
+                          transform: 'translateY(-2px)',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                        }
+                      }}
+                    >
+                      Download Template
+                    </Button>
+                  </Box>
+                  
+                  <Box 
+                    sx={{ 
+                      border: `2px dashed ${theme.palette.mode === 'dark' ? alpha(theme.palette.primary.main, 0.3) : alpha(theme.palette.primary.main, 0.2)}`,
+                      borderRadius: 3, 
+                      p: 4, 
+                      textAlign: 'center',
+                      mb: 3,
+                      backgroundColor: theme.palette.mode === 'dark' ? alpha(theme.palette.primary.main, 0.05) : alpha(theme.palette.primary.main, 0.03),
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        backgroundColor: theme.palette.mode === 'dark' ? alpha(theme.palette.primary.main, 0.08) : alpha(theme.palette.primary.main, 0.05),
+                        borderColor: theme.palette.primary.main,
                       }
-                      secondary={
-                        <>
-                          <Typography component="span" variant="body2" color="text.primary">
-                            {new Date(upload.timestamp).toLocaleString()}
-                          </Typography>
-                          <Box sx={{ mt: 1 }}>
-                            <Typography variant="body2">
-                              Total Records: {upload.records} | 
-                              Successful: {upload.successful} | 
-                              Failed: {upload.failed}
-                            </Typography>
-                          </Box>
-                        </>
-                      }
+                    }}
+                  >
+                    <input
+                      accept=".xlsx,.csv"
+                      style={{ display: 'none' }}
+                      id="upload-file-button"
+                      type="file"
+                      onChange={handleFileChange}
+                      disabled={uploading}
                     />
-                  </ListItem>
-                </React.Fragment>
-              ))}
-            </List>
-          </Paper>
+                    <label htmlFor="upload-file-button">
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <UploadIcon 
+                          sx={{ 
+                            fontSize: 60, 
+                            color: theme.palette.primary.main,
+                            opacity: 0.7,
+                            mb: 2
+                          }} 
+                        />
+                        <Button
+                          variant="contained"
+                          component="span"
+                          startIcon={<UploadIcon />}
+                          disabled={uploading}
+                          sx={{
+                            px: 3,
+                            py: 1,
+                            borderRadius: 2,
+                            boxShadow: '0 4px 14px rgba(0,118,255,0.25)',
+                            '&:hover': {
+                              transform: 'translateY(-2px)',
+                              boxShadow: '0 6px 20px rgba(0,118,255,0.35)',
+                            }
+                          }}
+                        >
+                          {file ? 'Change File' : 'Select File'}
+                        </Button>
+                        
+                        <Typography variant="body2" sx={{ mt: 2, color: theme.palette.text.secondary }}>
+                          Drag and drop or click to select
+                        </Typography>
+                      </Box>
+                    </label>
+                    
+                    {file && (
+                      <Zoom in={Boolean(file)}>
+                        <Box sx={{ 
+                          mt: 3, 
+                          p: 2, 
+                          borderRadius: 2, 
+                          backgroundColor: theme.palette.mode === 'dark' ? alpha(theme.palette.background.paper, 0.6) : alpha(theme.palette.background.paper, 0.8),
+                          border: `1px solid ${theme.palette.divider}`
+                        }}>
+                          <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                            {file.name}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {(file.size / 1024).toFixed(2)} KB • {file.type}
+                          </Typography>
+                        </Box>
+                      </Zoom>
+                    )}
+                  </Box>
+                  
+                  {file && !uploading && (
+                    <Fade in={Boolean(file && !uploading)}>
+                      <Button 
+                        variant="contained" 
+                        color="primary" 
+                        onClick={handleUpload}
+                        fullWidth
+                        size="large"
+                        sx={{
+                          py: 1.5,
+                          borderRadius: 2,
+                          fontWeight: 600,
+                          boxShadow: '0 4px 14px rgba(0,118,255,0.25)',
+                          '&:hover': {
+                            transform: 'translateY(-2px)',
+                            boxShadow: '0 6px 20px rgba(0,118,255,0.35)',
+                          }
+                        }}
+                      >
+                        Upload and Process File
+                      </Button>
+                    </Fade>
+                  )}
+                  
+                  {uploading && (
+                    <Box sx={{ width: '100%', mt: 2 }}>
+                      <LinearProgress 
+                        variant="determinate" 
+                        value={uploadProgress} 
+                        sx={{
+                          height: 8,
+                          borderRadius: 4,
+                          backgroundColor: alpha(theme.palette.primary.main, 0.2),
+                          '& .MuiLinearProgress-bar': {
+                            borderRadius: 4,
+                          }
+                        }}
+                      />
+                      <Typography variant="body2" sx={{ mt: 1, textAlign: 'center', fontWeight: 500 }}>
+                        Uploading... {uploadProgress}%
+                      </Typography>
+                    </Box>
+                  )}
+                  
+                  {uploadStatus && (
+                    <Grow in={Boolean(uploadStatus)}>
+                      <Alert 
+                        severity={uploadStatus.type} 
+                        sx={{ 
+                          mt: 3,
+                          borderRadius: 2,
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                        }}
+                        icon={uploadStatus.type === 'success' ? <CheckIcon /> : <ErrorIcon />}
+                      >
+                        <AlertTitle>{uploadStatus.type === 'success' ? 'Success' : 'Error'}</AlertTitle>
+                        {uploadStatus.message}
+                      </Alert>
+                    </Grow>
+                  )}
+                </CardContent>
+              </Card>
+            </Grow>
+          </Grid>
+          
+          <Grid item xs={12} md={6}>
+            <Grow in={true} timeout={1000}>
+              <Card 
+                elevation={0}
+                sx={{ 
+                  borderRadius: 3,
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
+                }}
+              >
+                <CardContent sx={{ p: 3 }}>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
+                    Recent Uploads
+                  </Typography>
+                  
+                  <List sx={{ px: 1 }}>
+                    {uploadHistory.map((upload, index) => (
+                      <Grow key={upload.id} in={true} timeout={(index + 1) * 200}>
+                        <Box>
+                          {index > 0 && <Divider sx={{ my: 2 }} />}
+                          <ListItem 
+                            alignItems="flex-start" 
+                            disableGutters
+                            sx={{ px: 1 }}
+                          >
+                            <ListItemText
+                              primary={
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                                  <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                                    {upload.filename}
+                                  </Typography>
+                                  <Chip 
+                                    label={upload.status} 
+                                    color={getStatusColor(upload.status)}
+                                    size="small"
+                                    icon={getStatusIcon(upload.status)}
+                                    sx={{ 
+                                      fontWeight: 500,
+                                      '& .MuiChip-icon': { fontSize: '0.8rem' }
+                                    }}
+                                  />
+                                </Box>
+                              }
+                              secondary={
+                                <>
+                                  <Typography component="span" variant="body2" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                                    {new Date(upload.timestamp).toLocaleString()}
+                                  </Typography>
+                                  <Box sx={{ 
+                                    mt: 1, 
+                                    p: 1.5, 
+                                    borderRadius: 2, 
+                                    backgroundColor: theme.palette.mode === 'dark' ? alpha(theme.palette.background.paper, 0.4) : alpha(theme.palette.background.default, 0.8),
+                                    border: `1px solid ${theme.palette.divider}`
+                                  }}>
+                                    <Grid container spacing={2}>
+                                      <Grid item xs={4}>
+                                        <Typography variant="body2" color="text.secondary">
+                                          Total Records
+                                        </Typography>
+                                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                                          {upload.records}
+                                        </Typography>
+                                      </Grid>
+                                      <Grid item xs={4}>
+                                        <Typography variant="body2" color="success.main">
+                                          Successful
+                                        </Typography>
+                                        <Typography variant="h6" sx={{ fontWeight: 600, color: 'success.main' }}>
+                                          {upload.successful}
+                                        </Typography>
+                                      </Grid>
+                                      <Grid item xs={4}>
+                                        <Typography variant="body2" color="error.main">
+                                          Failed
+                                        </Typography>
+                                        <Typography variant="h6" sx={{ fontWeight: 600, color: 'error.main' }}>
+                                          {upload.failed}
+                                        </Typography>
+                                      </Grid>
+                                    </Grid>
+                                  </Box>
+                                </>
+                              }
+                            />
+                          </ListItem>
+                        </Box>
+                      </Grow>
+                    ))}
+                  </List>
+                </CardContent>
+              </Card>
+            </Grow>
+          </Grid>
         </Grid>
-      </Grid>
-    </Box>
+      </Box>
+    </Fade>
   );
 };
 

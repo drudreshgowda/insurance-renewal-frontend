@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box, Typography, Paper, Grid, Switch,
   List, ListItem, ListItemIcon, ListItemText,
   ListItemSecondaryAction, Alert,
   FormControl, Select, MenuItem,
-  Button
+  Button, Card, CardContent, Divider,
+  useTheme, alpha, Fade, Grow, Zoom
 } from '@mui/material';
 import {
   DarkMode as DarkModeIcon,
@@ -12,7 +13,11 @@ import {
   Language as LanguageIcon,
   Email as EmailIcon,
   Sms as SmsIcon,
-  Save as SaveIcon
+  Save as SaveIcon,
+  Settings as SettingsIcon,
+  Palette as PaletteIcon,
+  Refresh as RefreshIcon,
+  Edit as EditIcon
 } from '@mui/icons-material';
 import { useThemeMode } from '../context/ThemeModeContext';
 import { useSettings } from '../context/SettingsContext';
@@ -21,6 +26,15 @@ const Settings = () => {
   const { mode, toggleMode } = useThemeMode();
   const { settings, updateSettings } = useSettings();
   const [successMessage, setSuccessMessage] = useState('');
+  const [loaded, setLoaded] = useState(false);
+  const theme = useTheme();
+
+  useEffect(() => {
+    // Set loaded state for animations
+    setTimeout(() => {
+      setLoaded(true);
+    }, 100);
+  }, []);
 
   const handleSettingChange = (setting, value) => {
     updateSettings({
@@ -39,184 +53,386 @@ const Settings = () => {
   };
 
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
-        Settings
-      </Typography>
+    <Fade in={true} timeout={800}>
+      <Box sx={{ px: 1 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          mb: 4
+        }}>
+          <Typography variant="h4" fontWeight="600">
+            Settings
+          </Typography>
+        </Box>
 
-      {successMessage && (
-        <Alert severity="success" sx={{ mb: 3 }}>
-          {successMessage}
-        </Alert>
-      )}
+        {successMessage && (
+          <Grow in={Boolean(successMessage)}>
+            <Alert 
+              severity="success" 
+              sx={{ 
+                mb: 3, 
+                borderRadius: 2,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+              }}
+            >
+              {successMessage}
+            </Alert>
+          </Grow>
+        )}
 
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Appearance
-            </Typography>
-            <List>
-              <ListItem>
-                <ListItemIcon>
-                  <DarkModeIcon />
-                </ListItemIcon>
-                <ListItemText 
-                  primary="Dark Mode"
-                  secondary="Toggle between light and dark theme"
-                />
-                <ListItemSecondaryAction>
-                  <Switch
-                    edge="end"
-                    checked={mode === 'dark'}
-                    onChange={toggleMode}
-                  />
-                </ListItemSecondaryAction>
-              </ListItem>
-            </List>
-          </Paper>
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={6}>
+            <Grow in={loaded} timeout={400}>
+              <Card 
+                elevation={0}
+                sx={{ 
+                  borderRadius: 3,
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
+                  mb: 3,
+                  overflow: 'visible',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 12px 32px rgba(0,0,0,0.1)'
+                  }
+                }}
+              >
+                <CardContent sx={{ p: 3 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <PaletteIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
+                    <Typography variant="h6" fontWeight="600">
+                      Appearance
+                    </Typography>
+                  </Box>
+                  <Divider sx={{ mb: 2 }} />
+                  <List disablePadding>
+                    <ListItem 
+                      sx={{ 
+                        borderRadius: 2,
+                        transition: 'background-color 0.2s',
+                        '&:hover': {
+                          backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                        }
+                      }}
+                    >
+                      <ListItemIcon>
+                        <DarkModeIcon color="primary" />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary={<Typography fontWeight="500">Dark Mode</Typography>}
+                        secondary="Toggle between light and dark theme"
+                      />
+                      <ListItemSecondaryAction>
+                        <Switch
+                          edge="end"
+                          checked={mode === 'dark'}
+                          onChange={() => toggleMode(mode === 'dark' ? 'light' : 'dark')}
+                          color="primary"
+                        />
+                      </ListItemSecondaryAction>
+                    </ListItem>
+                  </List>
+                </CardContent>
+              </Card>
+            </Grow>
 
-          <Paper sx={{ p: 3, mt: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Notifications
-            </Typography>
-            <List>
-              <ListItem>
-                <ListItemIcon>
-                  <EmailIcon />
-                </ListItemIcon>
-                <ListItemText
-                  primary="Email Notifications"
-                  secondary="Receive case updates via email"
-                />
-                <ListItemSecondaryAction>
-                  <Switch
-                    edge="end"
-                    checked={settings.emailNotifications}
-                    onChange={(e) => handleSettingChange('emailNotifications', e.target.checked)}
-                  />
-                </ListItemSecondaryAction>
-              </ListItem>
-              <ListItem>
-                <ListItemIcon>
-                  <SmsIcon />
-                </ListItemIcon>
-                <ListItemText
-                  primary="SMS Notifications"
-                  secondary="Receive case updates via SMS"
-                />
-                <ListItemSecondaryAction>
-                  <Switch
-                    edge="end"
-                    checked={settings.smsNotifications}
-                    onChange={(e) => handleSettingChange('smsNotifications', e.target.checked)}
-                  />
-                </ListItemSecondaryAction>
-              </ListItem>
-            </List>
-          </Paper>
+            <Grow in={loaded} timeout={600}>
+              <Card 
+                elevation={0}
+                sx={{ 
+                  borderRadius: 3,
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
+                  overflow: 'visible',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 12px 32px rgba(0,0,0,0.1)'
+                  }
+                }}
+              >
+                <CardContent sx={{ p: 3 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <NotificationsIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
+                    <Typography variant="h6" fontWeight="600">
+                      Notifications
+                    </Typography>
+                  </Box>
+                  <Divider sx={{ mb: 2 }} />
+                  <List disablePadding>
+                    <ListItem 
+                      sx={{ 
+                        borderRadius: 2,
+                        mb: 1,
+                        transition: 'background-color 0.2s',
+                        '&:hover': {
+                          backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                        }
+                      }}
+                    >
+                      <ListItemIcon>
+                        <EmailIcon color="info" />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={<Typography fontWeight="500">Email Notifications</Typography>}
+                        secondary="Receive case updates via email"
+                      />
+                      <ListItemSecondaryAction>
+                        <Switch
+                          edge="end"
+                          checked={settings.emailNotifications}
+                          onChange={(e) => handleSettingChange('emailNotifications', e.target.checked)}
+                          color="primary"
+                        />
+                      </ListItemSecondaryAction>
+                    </ListItem>
+                    <ListItem 
+                      sx={{ 
+                        borderRadius: 2,
+                        transition: 'background-color 0.2s',
+                        '&:hover': {
+                          backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                        }
+                      }}
+                    >
+                      <ListItemIcon>
+                        <SmsIcon color="success" />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={<Typography fontWeight="500">SMS Notifications</Typography>}
+                        secondary="Receive case updates via SMS"
+                      />
+                      <ListItemSecondaryAction>
+                        <Switch
+                          edge="end"
+                          checked={settings.smsNotifications}
+                          onChange={(e) => handleSettingChange('smsNotifications', e.target.checked)}
+                          color="primary"
+                        />
+                      </ListItemSecondaryAction>
+                    </ListItem>
+                  </List>
+                </CardContent>
+              </Card>
+            </Grow>
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <Grow in={loaded} timeout={800}>
+              <Card 
+                elevation={0}
+                sx={{ 
+                  borderRadius: 3,
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
+                  mb: 3,
+                  overflow: 'visible',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 12px 32px rgba(0,0,0,0.1)'
+                  }
+                }}
+              >
+                <CardContent sx={{ p: 3 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <LanguageIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
+                    <Typography variant="h6" fontWeight="600">
+                      Regional Settings
+                    </Typography>
+                  </Box>
+                  <Divider sx={{ mb: 2 }} />
+                  <List disablePadding>
+                    <ListItem 
+                      sx={{ 
+                        borderRadius: 2,
+                        mb: 1,
+                        transition: 'background-color 0.2s',
+                        '&:hover': {
+                          backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                        }
+                      }}
+                    >
+                      <ListItemIcon>
+                        <LanguageIcon color="primary" />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={<Typography fontWeight="500">Language</Typography>}
+                        secondary="Select your preferred language"
+                      />
+                      <ListItemSecondaryAction sx={{ width: '120px' }}>
+                        <FormControl fullWidth size="small">
+                          <Select
+                            value={settings.language}
+                            onChange={(e) => handleSettingChange('language', e.target.value)}
+                            sx={{ 
+                              borderRadius: 2,
+                              '.MuiOutlinedInput-notchedOutline': {
+                                borderColor: alpha(theme.palette.primary.main, 0.2),
+                              },
+                              '&:hover .MuiOutlinedInput-notchedOutline': {
+                                borderColor: theme.palette.primary.main,
+                              },
+                            }}
+                          >
+                            <MenuItem value="en">English</MenuItem>
+                            <MenuItem value="es">Español</MenuItem>
+                            <MenuItem value="fr">Français</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </ListItemSecondaryAction>
+                    </ListItem>
+                    <ListItem 
+                      sx={{ 
+                        borderRadius: 2,
+                        transition: 'background-color 0.2s',
+                        '&:hover': {
+                          backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                        }
+                      }}
+                    >
+                      <ListItemIcon>
+                        <NotificationsIcon color="secondary" />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={<Typography fontWeight="500">Time Zone</Typography>}
+                        secondary="Select your time zone"
+                      />
+                      <ListItemSecondaryAction sx={{ width: '120px' }}>
+                        <FormControl fullWidth size="small">
+                          <Select
+                            value={settings.timezone}
+                            onChange={(e) => handleSettingChange('timezone', e.target.value)}
+                            sx={{ 
+                              borderRadius: 2,
+                              '.MuiOutlinedInput-notchedOutline': {
+                                borderColor: alpha(theme.palette.primary.main, 0.2),
+                              },
+                              '&:hover .MuiOutlinedInput-notchedOutline': {
+                                borderColor: theme.palette.primary.main,
+                              },
+                            }}
+                          >
+                            <MenuItem value="UTC-8">UTC-8</MenuItem>
+                            <MenuItem value="UTC-5">UTC-5</MenuItem>
+                            <MenuItem value="UTC+0">UTC+0</MenuItem>
+                            <MenuItem value="UTC+1">UTC+1</MenuItem>
+                            <MenuItem value="UTC+8">UTC+8</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </ListItemSecondaryAction>
+                    </ListItem>
+                  </List>
+                </CardContent>
+              </Card>
+            </Grow>
+
+            <Grow in={loaded} timeout={1000}>
+              <Card 
+                elevation={0}
+                sx={{ 
+                  borderRadius: 3,
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
+                  overflow: 'visible',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 12px 32px rgba(0,0,0,0.1)'
+                  }
+                }}
+              >
+                <CardContent sx={{ p: 3 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <SettingsIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
+                    <Typography variant="h6" fontWeight="600">
+                      System Settings
+                    </Typography>
+                  </Box>
+                  <Divider sx={{ mb: 2 }} />
+                  <List disablePadding>
+                    <ListItem 
+                      sx={{ 
+                        borderRadius: 2,
+                        mb: 1,
+                        transition: 'background-color 0.2s',
+                        '&:hover': {
+                          backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                        }
+                      }}
+                    >
+                      <ListItemIcon>
+                        <RefreshIcon color="info" />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={<Typography fontWeight="500">Auto Refresh</Typography>}
+                        secondary="Automatically refresh case data every 5 minutes"
+                      />
+                      <ListItemSecondaryAction>
+                        <Switch
+                          edge="end"
+                          checked={settings.autoRefresh}
+                          onChange={(e) => handleSettingChange('autoRefresh', e.target.checked)}
+                          color="primary"
+                        />
+                      </ListItemSecondaryAction>
+                    </ListItem>
+                    <ListItem 
+                      sx={{ 
+                        borderRadius: 2,
+                        transition: 'background-color 0.2s',
+                        '&:hover': {
+                          backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                        }
+                      }}
+                    >
+                      <ListItemIcon>
+                        <EditIcon color="secondary" />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={<Typography fontWeight="500">Show Edit Case Button</Typography>}
+                        secondary="Display the Edit Case button in case details view"
+                      />
+                      <ListItemSecondaryAction>
+                        <Switch
+                          edge="end"
+                          checked={settings.showEditCaseButton !== false}
+                          onChange={(e) => handleSettingChange('showEditCaseButton', e.target.checked)}
+                          color="primary"
+                        />
+                      </ListItemSecondaryAction>
+                    </ListItem>
+                  </List>
+                </CardContent>
+              </Card>
+            </Grow>
+          </Grid>
         </Grid>
 
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Regional Settings
-            </Typography>
-            <List>
-              <ListItem>
-                <ListItemIcon>
-                  <LanguageIcon />
-                </ListItemIcon>
-                <ListItemText
-                  primary="Language"
-                  secondary="Select your preferred language"
-                />
-                <ListItemSecondaryAction sx={{ width: '120px' }}>
-                  <FormControl fullWidth size="small">
-                    <Select
-                      value={settings.language}
-                      onChange={(e) => handleSettingChange('language', e.target.value)}
-                    >
-                      <MenuItem value="en">English</MenuItem>
-                      <MenuItem value="es">Español</MenuItem>
-                      <MenuItem value="fr">Français</MenuItem>
-                    </Select>
-                  </FormControl>
-                </ListItemSecondaryAction>
-              </ListItem>
-              <ListItem>
-                <ListItemIcon>
-                  <NotificationsIcon />
-                </ListItemIcon>
-                <ListItemText
-                  primary="Time Zone"
-                  secondary="Select your time zone"
-                />
-                <ListItemSecondaryAction sx={{ width: '120px' }}>
-                  <FormControl fullWidth size="small">
-                    <Select
-                      value={settings.timezone}
-                      onChange={(e) => handleSettingChange('timezone', e.target.value)}
-                    >
-                      <MenuItem value="UTC-8">UTC-8</MenuItem>
-                      <MenuItem value="UTC-5">UTC-5</MenuItem>
-                      <MenuItem value="UTC+0">UTC+0</MenuItem>
-                      <MenuItem value="UTC+1">UTC+1</MenuItem>
-                      <MenuItem value="UTC+8">UTC+8</MenuItem>
-                    </Select>
-                  </FormControl>
-                </ListItemSecondaryAction>
-              </ListItem>
-            </List>
-          </Paper>
-
-          <Paper sx={{ p: 3, mt: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              System Settings
-            </Typography>
-            <List>
-              <ListItem>
-                <ListItemText
-                  primary="Auto Refresh"
-                  secondary="Automatically refresh case data every 5 minutes"
-                />
-                <ListItemSecondaryAction>
-                  <Switch
-                    edge="end"
-                    checked={settings.autoRefresh}
-                    onChange={(e) => handleSettingChange('autoRefresh', e.target.checked)}
-                  />
-                </ListItemSecondaryAction>
-              </ListItem>
-              <ListItem>
-                <ListItemText
-                  primary="Show Edit Case Button"
-                  secondary="Display the Edit Case button in case details view"
-                />
-                <ListItemSecondaryAction>
-                  <Switch
-                    edge="end"
-                    checked={settings.showEditCaseButton !== false}
-                    onChange={(e) => handleSettingChange('showEditCaseButton', e.target.checked)}
-                  />
-                </ListItemSecondaryAction>
-              </ListItem>
-            </List>
-          </Paper>
-        </Grid>
-      </Grid>
-
-      <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<SaveIcon />}
-          onClick={handleSaveSettings}
-        >
-          Save Settings
-        </Button>
+        <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end' }}>
+          <Zoom in={loaded} style={{ transitionDelay: '400ms' }}>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<SaveIcon />}
+              onClick={handleSaveSettings}
+              sx={{
+                py: 1.2,
+                px: 3,
+                borderRadius: 2,
+                fontWeight: 600,
+                boxShadow: '0 4px 14px rgba(0,118,255,0.25)',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 6px 20px rgba(0,118,255,0.35)',
+                }
+              }}
+            >
+              Save Settings
+            </Button>
+          </Zoom>
+        </Box>
       </Box>
-    </Box>
+    </Fade>
   );
 };
 

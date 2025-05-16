@@ -4,13 +4,23 @@ import {
   Box, Typography, Paper, TextField, Button, 
   List, ListItem, ListItemText, Divider, 
   Chip, CircularProgress, Alert, 
-  FormControl, InputLabel, Select, MenuItem
+  FormControl, InputLabel, Select, MenuItem,
+  Card, CardContent, useTheme, alpha,
+  Fade, Grow, InputAdornment
 } from '@mui/material';
-import { Search as SearchIcon } from '@mui/icons-material';
+import { 
+  Search as SearchIcon,
+  FilterAlt as FilterIcon,
+  Info as InfoIcon,
+  Warning as WarningIcon,
+  Error as ErrorIcon,
+  CheckCircle as CheckCircleIcon
+} from '@mui/icons-material';
 import { fetchLogs } from '../services/api';
 
 const Logs = () => {
   const location = useLocation();
+  const theme = useTheme();
   const queryParams = new URLSearchParams(location.search);
   const caseIdParam = queryParams.get('caseId');
   
@@ -20,8 +30,14 @@ const Logs = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searched, setSearched] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
+    // Set loaded state for animations
+    setTimeout(() => {
+      setLoaded(true);
+    }, 100);
+
     // Auto-search if caseId is provided in URL
     if (caseIdParam) {
       handleSearch();
@@ -148,123 +164,213 @@ const Logs = () => {
     }
   };
 
+  const getLogLevelIcon = (level) => {
+    switch (level) {
+      case 'error': return <ErrorIcon fontSize="small" />;
+      case 'warning': return <WarningIcon fontSize="small" />;
+      case 'info': return <InfoIcon fontSize="small" />;
+      case 'success': return <CheckCircleIcon fontSize="small" />;
+      default: return <InfoIcon fontSize="small" />;
+    }
+  };
+
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
-        Case Logs
-      </Typography>
-      
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Typography variant="body2" color="text.secondary" gutterBottom>
-          Search for detailed logs by Case ID or Policy Number to view the complete activity history.
-        </Typography>
-        
-        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-          <FormControl sx={{ width: 150 }}>
-            <InputLabel>Search By</InputLabel>
-            <Select
-              value={searchType}
-              label="Search By"
-              onChange={(e) => setSearchType(e.target.value)}
-              size="small"
-            >
-              <MenuItem value="caseId">Case ID</MenuItem>
-              <MenuItem value="policyNumber">Policy Number</MenuItem>
-            </Select>
-          </FormControl>
-          
-          <TextField
-            placeholder={searchType === 'caseId' ? "Enter Case ID (e.g., CASE-001)" : "Enter Policy Number (e.g., POL-12345)"}
-            variant="outlined"
-            size="small"
-            fullWidth
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-          />
-          
-          <Button
-            variant="contained"
-            startIcon={<SearchIcon />}
-            onClick={handleSearch}
-            disabled={loading}
-          >
-            Search
-          </Button>
+    <Fade in={true} timeout={800}>
+      <Box sx={{ px: 1 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          mb: 4
+        }}>
+          <Typography variant="h4" fontWeight="600">
+            Case Logs
+          </Typography>
         </Box>
         
-        {loading && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-            <CircularProgress />
-          </Box>
-        )}
-        
-        {error && (
-          <Alert severity="error" sx={{ mt: 2 }}>
-            {error}
-          </Alert>
-        )}
-        
-        {!loading && searched && logs.length === 0 && (
-          <Alert severity="info" sx={{ mt: 2 }}>
-            No logs found for the specified {searchType === 'caseId' ? 'Case ID' : 'Policy Number'}. Please check your input and try again.
-          </Alert>
-        )}
-      </Paper>
-      
-      {logs.length > 0 && (
-        <Paper sx={{ p: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6">
-              Activity Log
-            </Typography>
-            
-            <Typography variant="body2" color="text.secondary">
-              {searchType === 'caseId' ? 'Case ID:' : 'Policy Number:'} <strong>{searchQuery}</strong>
-            </Typography>
-          </Box>
-          
-          <List>
-            {logs.map((log, index) => (
-              <React.Fragment key={log.id}>
-                {index > 0 && <Divider />}
-                <ListItem alignItems="flex-start" sx={{ py: 2 }}>
-                  <ListItemText
-                    primary={
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Typography variant="subtitle1">
-                            {log.action}
-                          </Typography>
-                          <Chip 
-                            label={log.level} 
-                            color={getLogLevelColor(log.level)}
-                            size="small"
-                          />
-                        </Box>
-                        <Typography variant="body2" color="text.secondary">
-                          {new Date(log.timestamp).toLocaleString()}
-                        </Typography>
-                      </Box>
+        <Grow in={loaded} timeout={400}>
+          <Card sx={{ mb: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.05)', borderRadius: 3 }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" fontWeight="600" gutterBottom>
+                Search Logs
+              </Typography>
+              <Typography variant="body2" color="text.secondary" gutterBottom sx={{ mb: 3 }}>
+                Search for detailed logs by Case ID or Policy Number to view the complete activity history.
+              </Typography>
+              
+              <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                <FormControl sx={{ width: 150 }}>
+                  <InputLabel>Search By</InputLabel>
+                  <Select
+                    value={searchType}
+                    label="Search By"
+                    onChange={(e) => setSearchType(e.target.value)}
+                    size="small"
+                    sx={{ borderRadius: 2 }}
+                  >
+                    <MenuItem value="caseId">Case ID</MenuItem>
+                    <MenuItem value="policyNumber">Policy Number</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                <TextField
+                  placeholder={searchType === 'caseId' ? "Enter Case ID (e.g., CASE-001)" : "Enter Policy Number (e.g., POL-12345)"}
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon color="action" />
+                      </InputAdornment>
+                    ),
+                    sx: {
+                      borderRadius: 2,
+                      backgroundColor: theme => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                      '&:hover': {
+                        backgroundColor: theme => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.03)',
+                      },
+                      transition: 'background-color 0.3s'
                     }
-                    secondary={
-                      <Box sx={{ mt: 1 }}>
-                        <Typography variant="body2" sx={{ display: 'block' }}>
-                          {log.details}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                          By: {log.user}
-                        </Typography>
-                      </Box>
-                    }
+                  }}
+                />
+                
+                <Button
+                  variant="contained"
+                  startIcon={<SearchIcon />}
+                  onClick={handleSearch}
+                  disabled={loading}
+                  sx={{
+                    borderRadius: 2,
+                    boxShadow: 2,
+                    minWidth: 100
+                  }}
+                >
+                  Search
+                </Button>
+              </Box>
+              
+              {loading && (
+                <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+                  <CircularProgress />
+                </Box>
+              )}
+              
+              {error && (
+                <Grow in={!!error}>
+                  <Alert severity="error" sx={{ mt: 2, borderRadius: 2 }}>
+                    {error}
+                  </Alert>
+                </Grow>
+              )}
+              
+              {!loading && searched && logs.length === 0 && (
+                <Grow in={true}>
+                  <Alert severity="info" sx={{ mt: 2, borderRadius: 2 }}>
+                    No logs found for the specified {searchType === 'caseId' ? 'Case ID' : 'Policy Number'}. Please check your input and try again.
+                  </Alert>
+                </Grow>
+              )}
+            </CardContent>
+          </Card>
+        </Grow>
+        
+        {logs.length > 0 && (
+          <Grow in={!loading} timeout={600}>
+            <Card sx={{ boxShadow: '0 8px 24px rgba(0,0,0,0.05)', borderRadius: 3 }}>
+              <CardContent sx={{ p: 3 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                  <Typography variant="h6" fontWeight="600">
+                    Activity Log
+                  </Typography>
+                  
+                  <Chip
+                    label={searchType === 'caseId' ? `Case ID: ${searchQuery}` : `Policy: ${searchQuery}`}
+                    color="primary"
+                    variant="outlined"
+                    sx={{ fontWeight: 500 }}
                   />
-                </ListItem>
-              </React.Fragment>
-            ))}
-          </List>
-        </Paper>
-      )}
-    </Box>
+                </Box>
+                
+                <List sx={{ 
+                  bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.01)',
+                  borderRadius: 2,
+                  overflow: 'hidden'
+                }}>
+                  {logs.map((log, index) => (
+                    <React.Fragment key={log.id}>
+                      {index > 0 && <Divider sx={{ opacity: 0.5 }} />}
+                      <ListItem 
+                        alignItems="flex-start" 
+                        sx={{ 
+                          py: 2,
+                          transition: 'background-color 0.2s',
+                          '&:hover': {
+                            backgroundColor: theme => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.03)',
+                          }
+                        }}
+                      >
+                        <ListItemText
+                          primary={
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Typography variant="subtitle1" fontWeight="600">
+                                  {log.action}
+                                </Typography>
+                                <Chip 
+                                  label={log.level} 
+                                  color={getLogLevelColor(log.level)}
+                                  size="small"
+                                  icon={getLogLevelIcon(log.level)}
+                                  sx={{ 
+                                    fontWeight: 500,
+                                    boxShadow: '0 2px 5px rgba(0,0,0,0.08)'
+                                  }}
+                                />
+                              </Box>
+                              <Typography variant="body2" color="text.secondary">
+                                {new Date(log.timestamp).toLocaleString()}
+                              </Typography>
+                            </Box>
+                          }
+                          secondary={
+                            <Box sx={{ mt: 1 }}>
+                              <Typography 
+                                variant="body2" 
+                                component="span"
+                                sx={{ 
+                                  display: 'block',
+                                  mb: 0.5
+                                }}
+                              >
+                                {log.details}
+                              </Typography>
+                              <Typography 
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{
+                                  display: 'flex',
+                                  justifyContent: 'flex-end'
+                                }}
+                              >
+                                User: {log.user}
+                              </Typography>
+                            </Box>
+                          }
+                        />
+                      </ListItem>
+                    </React.Fragment>
+                  ))}
+                </List>
+              </CardContent>
+            </Card>
+          </Grow>
+        )}
+      </Box>
+    </Fade>
   );
 };
 
