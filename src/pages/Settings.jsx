@@ -5,7 +5,7 @@ import {
   ListItemSecondaryAction, Alert,
   FormControl, Select, MenuItem,
   Button, Card, CardContent, Divider,
-  useTheme, alpha, Fade, Grow, Zoom
+  useTheme, alpha, Fade, Grow, Zoom, Dialog, DialogTitle, DialogContent, DialogActions, TextField
 } from '@mui/material';
 import {
   DarkMode as DarkModeIcon,
@@ -17,7 +17,8 @@ import {
   Settings as SettingsIcon,
   Palette as PaletteIcon,
   Refresh as RefreshIcon,
-  Edit as EditIcon
+  Edit as EditIcon,
+  Security as SecurityIcon
 } from '@mui/icons-material';
 import { useThemeMode } from '../context/ThemeModeContext';
 import { useSettings } from '../context/SettingsContext';
@@ -50,6 +51,11 @@ const Settings = () => {
     setTimeout(() => {
       setSuccessMessage('');
     }, 3000);
+  };
+
+  const handleToggleMfa = () => {
+    handleSettingChange('mfaEnabled', !settings.mfaEnabled);
+    setSuccessMessage(`Multi-Factor Authentication ${!settings.mfaEnabled ? 'enabled' : 'disabled'} successfully`);
   };
 
   return (
@@ -349,6 +355,35 @@ const Settings = () => {
                   </Box>
                   <Divider sx={{ mb: 2 }} />
                   <List disablePadding>
+                    <ListItem 
+                      sx={{ 
+                        borderRadius: 2,
+                        mb: 1,
+                        transition: 'background-color 0.2s',
+                        '&:hover': {
+                          backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                        }
+                      }}
+                    >
+                      <ListItemIcon>
+                        <SecurityIcon color="error" />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={<Typography fontWeight="500">Multi-Factor Authentication</Typography>}
+                        secondary={settings.mfaEnabled 
+                          ? "Enabled - OTP required at login" 
+                          : "Disabled - Enable for additional security"}
+                      />
+                      <ListItemSecondaryAction>
+                        <Switch
+                          edge="end"
+                          checked={settings.mfaEnabled === true}
+                          onChange={handleToggleMfa}
+                          color="primary"
+                        />
+                      </ListItemSecondaryAction>
+                    </ListItem>
+                    
                     <ListItem 
                       sx={{ 
                         borderRadius: 2,

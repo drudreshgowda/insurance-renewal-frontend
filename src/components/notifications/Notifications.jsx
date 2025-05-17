@@ -7,7 +7,6 @@ import {
   Typography,
   List,
   ListItem,
-  ListItemText,
   Divider,
   Box,
   Chip,
@@ -19,7 +18,8 @@ import {
   Select,
   MenuItem,
   Badge,
-  Tooltip
+  Tooltip,
+  Paper
 } from '@mui/material';
 import {
   Close as CloseIcon,
@@ -30,14 +30,17 @@ import {
   Alarm as ReminderIcon,
   Assessment as ReportIcon,
   MarkEmailRead as MarkReadIcon,
-  DoneAll as DoneAllIcon
+  DoneAll as DoneAllIcon,
+  FilterList as FilterIcon
 } from '@mui/icons-material';
 import { useNotifications } from '../../context/NotificationsContext';
+import { alpha } from '@mui/material/styles';
 
 const Notifications = ({ open, onClose }) => {
   const { notifications, markAsRead, markAllAsRead } = useNotifications();
   const [tabValue, setTabValue] = useState(0);
   const [typeFilter, setTypeFilter] = useState('all');
+  const [showFilters, setShowFilters] = useState(false);
   
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
@@ -47,7 +50,10 @@ const Notifications = ({ open, onClose }) => {
     setTypeFilter(event.target.value);
   };
   
-  const handleMarkAsRead = (notificationId) => {
+  const handleMarkAsRead = (notificationId, event) => {
+    if (event) {
+      event.stopPropagation();
+    }
     markAsRead(notificationId);
   };
   
@@ -58,17 +64,17 @@ const Notifications = ({ open, onClose }) => {
   const getNotificationIcon = (type) => {
     switch (type) {
       case 'assignment':
-        return <AssignmentIcon color="primary" />;
+        return <AssignmentIcon />;
       case 'update':
-        return <UpdateIcon color="info" />;
+        return <UpdateIcon />;
       case 'system':
-        return <InfoIcon color="warning" />;
+        return <InfoIcon />;
       case 'document':
-        return <DocumentIcon color="success" />;
+        return <DocumentIcon />;
       case 'reminder':
-        return <ReminderIcon color="error" />;
+        return <ReminderIcon />;
       case 'report':
-        return <ReportIcon color="secondary" />;
+        return <ReportIcon />;
       default:
         return <InfoIcon />;
     }
@@ -120,28 +126,109 @@ const Notifications = ({ open, onClose }) => {
         sx: { borderRadius: 2 }
       }}
     >
-      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
-        <Typography variant="h6">Notifications</Typography>
-        <IconButton edge="end" color="inherit" onClick={onClose} aria-label="close">
-          <CloseIcon />
-        </IconButton>
+      <DialogTitle sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        pb: 1,
+        borderBottom: '1px solid', 
+        borderColor: 'divider' 
+      }}>
+        <Typography variant="h6" sx={{ fontWeight: 600 }}>Notifications</Typography>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          {notifications.filter(n => !n.read).length > 0 && (
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<DoneAllIcon />}
+              onClick={handleMarkAllAsRead}
+            >
+              Mark All Read
+            </Button>
+          )}
+          <IconButton 
+            edge="end" 
+            color="inherit" 
+            onClick={onClose} 
+            aria-label="close"
+            size="small"
+          >
+            <CloseIcon />
+          </IconButton>
+        </Box>
       </DialogTitle>
       
-      <Box sx={{ px: 3, pb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Tabs value={tabValue} onChange={handleTabChange}>
-          <Tab label="All" />
+      <Box sx={{ 
+        px: { xs: 2, sm: 3 }, 
+        py: 2, 
+        display: 'flex', 
+        flexDirection: { xs: 'column', sm: 'row' },
+        justifyContent: 'space-between', 
+        alignItems: { xs: 'flex-start', sm: 'center' },
+        gap: 2
+      }}>
+        <Tabs 
+          value={tabValue} 
+          onChange={handleTabChange}
+          sx={{ 
+            minHeight: 'unset',
+            '& .MuiTabs-indicator': { height: 3, borderRadius: '3px 3px 0 0' }
+          }}
+        >
+          <Tab 
+            label="All" 
+            sx={{ 
+              fontWeight: tabValue === 0 ? 600 : 400,
+              minHeight: 'unset',
+              px: { xs: 1, sm: 2 }
+            }} 
+          />
           <Tab 
             label={
               <Badge badgeContent={notifications.filter(n => !n.read).length} color="error" max={99}>
                 <Box sx={{ pr: 1 }}>Unread</Box>
               </Badge>
             } 
+            sx={{ 
+              fontWeight: tabValue === 1 ? 600 : 400,
+              minHeight: 'unset',
+              px: { xs: 1, sm: 2 }
+            }}
           />
-          <Tab label="Read" />
+          <Tab 
+            label="Read" 
+            sx={{ 
+              fontWeight: tabValue === 2 ? 600 : 400,
+              minHeight: 'unset',
+              px: { xs: 1, sm: 2 }
+            }}
+          />
         </Tabs>
         
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <FormControl size="small" sx={{ minWidth: 150 }}>
+        <Box>
+          <Button
+            size="small"
+            startIcon={<FilterIcon />}
+            onClick={() => setShowFilters(!showFilters)}
+            variant={showFilters ? "contained" : "outlined"}
+            color="primary"
+          >
+            Filters
+          </Button>
+        </Box>
+      </Box>
+      
+      {showFilters && (
+        <Box sx={{ 
+          px: 3, 
+          pb: 2, 
+          display: 'flex', 
+          flexWrap: 'wrap',
+          gap: 2,
+          borderBottom: '1px solid', 
+          borderColor: 'divider' 
+        }}>
+          <FormControl size="small" sx={{ minWidth: 200 }}>
             <InputLabel>Filter by Type</InputLabel>
             <Select
               value={typeFilter}
@@ -157,48 +244,67 @@ const Notifications = ({ open, onClose }) => {
               <MenuItem value="report">Report</MenuItem>
             </Select>
           </FormControl>
-          
-          <Tooltip title="Mark all as read">
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<DoneAllIcon />}
-              onClick={handleMarkAllAsRead}
-            >
-              Mark All Read
-            </Button>
-          </Tooltip>
         </Box>
-      </Box>
+      )}
       
-      <DialogContent sx={{ pt: 0 }}>
+      <DialogContent sx={{ pt: 2, px: { xs: 1, sm: 2 } }}>
         {filteredNotifications.length === 0 ? (
-          <Box sx={{ py: 4, textAlign: 'center' }}>
+          <Box sx={{ py: 8, textAlign: 'center' }}>
             <Typography variant="body1" color="text.secondary">
               No notifications found
             </Typography>
           </Box>
         ) : (
-          <List>
+          <List sx={{ p: 0 }}>
             {filteredNotifications.map((notification, index) => (
-              <React.Fragment key={notification.id}>
-                {index > 0 && <Divider />}
+              <Paper
+                key={notification.id}
+                elevation={0}
+                sx={{
+                  mb: 2,
+                  borderRadius: 2,
+                  overflow: 'hidden',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderLeft: notification.read ? '1px solid' : '4px solid',
+                  borderLeftColor: notification.read 
+                    ? 'divider' 
+                    : (theme) => theme.palette[getNotificationTypeColor(notification.type)].main,
+                  backgroundColor: notification.read 
+                    ? 'transparent' 
+                    : (theme) => alpha(theme.palette[getNotificationTypeColor(notification.type)].main, 0.04)
+                }}
+              >
                 <ListItem 
                   alignItems="flex-start"
-                  sx={{
-                    py: 2,
-                    backgroundColor: notification.read ? 'transparent' : 'rgba(25, 118, 210, 0.04)',
-                  }}
+                  sx={{ py: 2 }}
                 >
                   <Box sx={{ display: 'flex', width: '100%' }}>
-                    <Box sx={{ mr: 2, pt: 0.5 }}>
+                    <Box sx={{ 
+                      mr: 2, 
+                      mt: 0.5,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 40,
+                      height: 40,
+                      borderRadius: '50%',
+                      backgroundColor: (theme) => alpha(theme.palette[getNotificationTypeColor(notification.type)].main, 0.12),
+                      color: (theme) => theme.palette[getNotificationTypeColor(notification.type)].main
+                    }}>
                       {getNotificationIcon(notification.type)}
                     </Box>
                     
                     <Box sx={{ flexGrow: 1 }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                          <Typography variant="subtitle1">
+                      <Box sx={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'flex-start', 
+                        flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                        gap: { xs: 1, sm: 0 }
+                      }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5, flexWrap: 'wrap' }}>
+                          <Typography variant="subtitle1" sx={{ fontWeight: notification.read ? 400 : 600 }}>
                             {notification.title}
                           </Typography>
                           <Chip 
@@ -206,6 +312,7 @@ const Notifications = ({ open, onClose }) => {
                             color={getNotificationTypeColor(notification.type)}
                             size="small"
                             variant="outlined"
+                            sx={{ height: 24 }}
                           />
                           {!notification.read && (
                             <Chip 
@@ -216,28 +323,37 @@ const Notifications = ({ open, onClose }) => {
                             />
                           )}
                         </Box>
-                        <Typography variant="body2" color="text.secondary">
-                          {new Date(notification.timestamp).toLocaleString()}
+                        <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
+                          {new Date(notification.timestamp).toLocaleString(undefined, {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
                         </Typography>
                       </Box>
                       
-                      <Typography variant="body2" sx={{ mb: 1 }}>
+                      <Typography variant="body2" sx={{ mt: 1 }}>
                         {notification.message}
                       </Typography>
                       
                       {!notification.read && (
-                        <Button
-                          size="small"
-                          startIcon={<MarkReadIcon />}
-                          onClick={() => handleMarkAsRead(notification.id)}
-                        >
-                          Mark as read
-                        </Button>
+                        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                          <Button
+                            size="small"
+                            startIcon={<MarkReadIcon />}
+                            onClick={(e) => handleMarkAsRead(notification.id, e)}
+                            variant="text"
+                          >
+                            Mark as read
+                          </Button>
+                        </Box>
                       )}
                     </Box>
                   </Box>
                 </ListItem>
-              </React.Fragment>
+              </Paper>
             ))}
           </List>
         )}

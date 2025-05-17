@@ -28,7 +28,8 @@ const Profile = () => {
     company: 'Insurance Company Name',
     role: 'Client Administrator',
     department: 'Policy Management',
-    joinDate: '2024-01-15'
+    joinDate: '2024-01-15',
+    lastLoginDate: '2024-07-14'
   });
   const [successMessage, setSuccessMessage] = useState('');
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
@@ -173,6 +174,19 @@ const Profile = () => {
                     </Typography>
                     <Typography variant="body1" fontWeight="500">
                       {new Date(profileData.joinDate).toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })}
+                    </Typography>
+                  </Box>
+                  
+                  <Box sx={{ mt: 2, width: '100%' }}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Last login date
+                    </Typography>
+                    <Typography variant="body1" fontWeight="500">
+                      {new Date(profileData.lastLoginDate).toLocaleDateString('en-US', { 
                         year: 'numeric', 
                         month: 'long', 
                         day: 'numeric' 

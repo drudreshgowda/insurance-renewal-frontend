@@ -14,7 +14,9 @@ import {
   Policy as PolicyIcon, 
   AssignmentTurnedIn as CompletedIcon, 
   Watch as PendingIcon,
-  ErrorOutline as ErrorIcon
+  ErrorOutline as ErrorIcon,
+  Payments as PaymentsIcon,
+  AccountBalance as AccountBalanceIcon
 } from '@mui/icons-material';
 
 const Dashboard = () => {
@@ -24,7 +26,9 @@ const Dashboard = () => {
     inProgress: 0,
     renewed: 0,
     pendingAction: 0,
-    errors: 0
+    errors: 0,
+    paymentCollected: 0,
+    paymentPending: 0
   });
   
   const [trendData, setTrendData] = useState([]);
@@ -47,16 +51,34 @@ const Dashboard = () => {
       }
     };
     
+    // Initialize with default values to prevent NaN issues
+    const initialStats = {
+      totalCases: 0,
+      inProgress: 0,
+      renewed: 0,
+      pendingAction: 0,
+      errors: 0,
+      paymentCollected: 0,
+      paymentPending: 0
+    };
+    
+    setStats(initialStats);
+    
+    // Load dashboard data
     loadDashboardData();
     
-    // For demo purposes, let's set some mock data
-    setStats({
-      totalCases: 1250,
-      inProgress: 320,
-      renewed: 780,
-      pendingAction: 95,
-      errors: 55
-    });
+    // For demo purposes, let's set some mock data with a slight delay to simulate API fetch
+    setTimeout(() => {
+      setStats({
+        totalCases: 1250,
+        inProgress: 320,
+        renewed: 780,
+        pendingAction: 95,
+        errors: 55,
+        paymentCollected: 185000,
+        paymentPending: 42500
+      });
+    }, 300);
     
     const mockTrendData = [
       { name: 'Mon', newCases: 65, renewals: 42, successRate: 0.85 },
@@ -73,13 +95,30 @@ const Dashboard = () => {
     // Set loaded state for animations
     setTimeout(() => {
       setLoaded(true);
-    }, 100);
+    }, 400);
   }, [dateRange, policyType, caseStatus]);
 
-  const StatCard = ({ title, value, color, icon, index }) => {
+  const StatCard = ({ title, value, color, icon, index, isCurrency }) => {
     // Create a gradient background
     const gradientFrom = alpha(color, theme.palette.mode === 'dark' ? 0.7 : 0.9);
     const gradientTo = alpha(color, theme.palette.mode === 'dark' ? 0.4 : 0.6);
+    
+    // Safe number conversion and formatting
+    let displayValue = value;
+    if (isCurrency) {
+      // Ensure we have a valid number before formatting
+      const numericValue = Number(value);
+      if (!isNaN(numericValue)) {
+        displayValue = new Intl.NumberFormat('en-US', { 
+          style: 'currency', 
+          currency: 'USD',
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0
+        }).format(numericValue);
+      } else {
+        displayValue = '$0'; // Default fallback for NaN values
+      }
+    }
     
     return (
       <Grow in={loaded} style={{ transformOrigin: '0 0 0' }} timeout={(index + 1) * 200}>
@@ -110,7 +149,7 @@ const Dashboard = () => {
               {title}
             </Typography>
             <Typography variant="h3" component="div" color="white" fontWeight="bold">
-              {value}
+              {displayValue}
             </Typography>
           </CardContent>
         </Card>
@@ -176,7 +215,7 @@ const Dashboard = () => {
         
         {/* Stats Cards */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={2.4}>
+          <Grid item xs={12} sm={6} md={4} lg={3}>
             <StatCard 
               title="Total Cases" 
               value={stats.totalCases} 
@@ -185,7 +224,7 @@ const Dashboard = () => {
               index={0}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={2.4}>
+          <Grid item xs={12} sm={6} md={4} lg={3}>
             <StatCard 
               title="In Progress" 
               value={stats.inProgress} 
@@ -194,7 +233,7 @@ const Dashboard = () => {
               index={1}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={2.4}>
+          <Grid item xs={12} sm={6} md={4} lg={3}>
             <StatCard 
               title="Renewed" 
               value={stats.renewed} 
@@ -203,7 +242,7 @@ const Dashboard = () => {
               index={2}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={2.4}>
+          <Grid item xs={12} sm={6} md={4} lg={3}>
             <StatCard 
               title="Pending Action" 
               value={stats.pendingAction} 
@@ -212,13 +251,33 @@ const Dashboard = () => {
               index={3}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={2.4}>
+          <Grid item xs={12} sm={6} md={4} lg={3}>
             <StatCard 
-              title="Errors" 
+              title="Failed" 
               value={stats.errors} 
               color={theme.palette.error.main} 
               icon={<ErrorIcon fontSize="inherit" />}
               index={4}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={4} lg={3}>
+            <StatCard 
+              title="Payments Collected" 
+              value={stats.paymentCollected} 
+              color="#00897b" 
+              icon={<PaymentsIcon fontSize="inherit" />}
+              index={5}
+              isCurrency={true}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={4} lg={3}>
+            <StatCard 
+              title="Payments Pending" 
+              value={stats.paymentPending} 
+              color="#ff9800" 
+              icon={<AccountBalanceIcon fontSize="inherit" />}
+              index={6}
+              isCurrency={true}
             />
           </Grid>
         </Grid>

@@ -15,7 +15,8 @@ export const SettingsProvider = ({ children }) => {
     language: 'en',
     timezone: 'UTC-5',
     autoRefresh: true,
-    showEditCaseButton: true
+    showEditCaseButton: true,
+    mfaEnabled: false
   });
 
   // Load settings from localStorage on component mount

@@ -4,7 +4,7 @@ import {
   AppBar, Box, Drawer, Toolbar, Typography, Divider, 
   List, ListItem, ListItemIcon, ListItemText, IconButton,
   Avatar, Menu, MenuItem, Tooltip, Badge, useTheme,
-  ListItemButton, Switch, styled
+  ListItemButton, Switch, styled, Button
 } from '@mui/material';
 import { 
   Menu as MenuIcon, 
@@ -26,12 +26,17 @@ import {
   WhatsApp as WhatsAppIcon,
   CreditCard as CreditCardIcon,
   CheckCircle as CheckCircleIcon,
-  Timeline as TimelineIcon
+  Timeline as TimelineIcon,
+  DoneAll as DoneAllIcon,
+  Description as DocumentIcon,
+  Alarm as ReminderIcon,
+  Assessment as ReportIcon
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { useThemeMode } from '../../context/ThemeModeContext';
 import { useNotifications } from '../../context/NotificationsContext';
 import NotificationsDialog from '../notifications/Notifications';
+import { alpha } from '@mui/material/styles';
 
 const drawerWidth = 260;
 
@@ -75,7 +80,7 @@ const Layout = ({ children }) => {
   const { currentUser, logout } = useAuth();
   const theme = useTheme();
   const { mode, toggleMode } = useThemeMode();
-  const { notifications, unreadCount } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -412,40 +417,157 @@ const Layout = ({ children }) => {
             anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
             PaperProps={{
               elevation: 3,
-              sx: { mt: 1.5, width: 320 }
+              sx: { 
+                mt: 1.5, 
+                width: 350,
+                borderRadius: 2,
+                overflow: 'hidden'
+              }
             }}
           >
-            {notifications.slice(0, 3).map((notification) => (
-              <MenuItem key={notification.id}>
-                <Box sx={{ display: 'flex', width: '100%' }}>
-                  <Box sx={{ mr: 1.5, pt: 0.5 }}>
-                    {notification.type === 'assignment' && <AssignmentIcon color="primary" />}
-                    {notification.type === 'update' && <UpdateIcon color="info" />}
-                    {notification.type === 'system' && <InfoIcon color="warning" />}
-                  </Box>
-                  <Box sx={{ width: '100%' }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography variant="subtitle2">{notification.title}</Typography>
-                      {!notification.read && (
-                        <Badge color="error" variant="dot" sx={{ ml: 1 }} />
-                      )}
-                    </Box>
-                    <Typography variant="body2" color="text.secondary">
-                      {notification.message}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {new Date(notification.timestamp).toLocaleString()}
-                    </Typography>
-                  </Box>
-                </Box>
-              </MenuItem>
-            ))}
-            <Divider />
-            <MenuItem onClick={handleOpenNotificationsDialog}>
-              <Typography variant="body2" color="primary" sx={{ width: '100%', textAlign: 'center' }}>
-                View all notifications
+            <Box sx={{ 
+              p: 2, 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              borderBottom: `1px solid ${theme.palette.divider}`
+            }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                Notifications
               </Typography>
-            </MenuItem>
+              {unreadCount > 0 && (
+                <Button 
+                  size="small" 
+                  onClick={() => handleOpenNotificationsDialog()}
+                  startIcon={<DoneAllIcon fontSize="small" />}
+                  sx={{ fontSize: '0.75rem' }}
+                >
+                  Mark all read
+                </Button>
+              )}
+            </Box>
+            
+            {notifications.length === 0 ? (
+              <Box sx={{ py: 4, textAlign: 'center' }}>
+                <Typography variant="body2" color="text.secondary">
+                  No notifications
+                </Typography>
+              </Box>
+            ) : (
+              <>
+                <Box sx={{ maxHeight: 350, overflow: 'auto' }}>
+                  {notifications.slice(0, 5).map((notification) => (
+                    <MenuItem 
+                      key={notification.id} 
+                      sx={{ 
+                        py: 1.5,
+                        px: 2,
+                        borderLeft: notification.read ? 'none' : `4px solid ${theme.palette.primary.main}`,
+                        backgroundColor: notification.read ? 'transparent' : alpha(theme.palette.primary.main, 0.04)
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', width: '100%' }}>
+                        <Box 
+                          sx={{ 
+                            mr: 1.5, 
+                            mt: 0.5,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: 36,
+                            height: 36,
+                            borderRadius: '50%',
+                            backgroundColor: alpha(
+                              notification.type === 'assignment' ? theme.palette.primary.main :
+                              notification.type === 'update' ? theme.palette.info.main :
+                              notification.type === 'system' ? theme.palette.warning.main :
+                              notification.type === 'document' ? theme.palette.success.main :
+                              notification.type === 'reminder' ? theme.palette.error.main :
+                              notification.type === 'report' ? theme.palette.secondary.main :
+                              theme.palette.grey[500],
+                              0.12
+                            ),
+                            color: 
+                              notification.type === 'assignment' ? theme.palette.primary.main :
+                              notification.type === 'update' ? theme.palette.info.main :
+                              notification.type === 'system' ? theme.palette.warning.main :
+                              notification.type === 'document' ? theme.palette.success.main :
+                              notification.type === 'reminder' ? theme.palette.error.main :
+                              notification.type === 'report' ? theme.palette.secondary.main :
+                              theme.palette.grey[500]
+                          }}
+                        >
+                          {notification.type === 'assignment' && <AssignmentIcon fontSize="small" />}
+                          {notification.type === 'update' && <UpdateIcon fontSize="small" />}
+                          {notification.type === 'system' && <InfoIcon fontSize="small" />}
+                          {notification.type === 'document' && <DocumentIcon fontSize="small" />}
+                          {notification.type === 'reminder' && <ReminderIcon fontSize="small" />}
+                          {notification.type === 'report' && <ReportIcon fontSize="small" />}
+                        </Box>
+                        <Box sx={{ width: '100%' }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <Typography variant="subtitle2" sx={{ fontWeight: notification.read ? 400 : 600 }}>
+                              {notification.title}
+                            </Typography>
+                            {!notification.read && (
+                              <Box 
+                                sx={{
+                                  width: 8,
+                                  height: 8,
+                                  borderRadius: '50%',
+                                  backgroundColor: theme.palette.error.main,
+                                  ml: 1
+                                }}
+                              />
+                            )}
+                          </Box>
+                          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                            {notification.message}
+                          </Typography>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1, alignItems: 'center' }}>
+                            <Typography variant="caption" color="text.secondary">
+                              {new Date(notification.timestamp).toLocaleString(undefined, {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </Typography>
+                            {!notification.read && (
+                              <Button 
+                                size="small" 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  markAsRead(notification.id);
+                                }}
+                                sx={{ fontSize: '0.7rem', p: 0, minWidth: 'auto', color: theme.palette.text.secondary }}
+                              >
+                                Mark read
+                              </Button>
+                            )}
+                          </Box>
+                        </Box>
+                      </Box>
+                    </MenuItem>
+                  ))}
+                </Box>
+                
+                <Box sx={{ 
+                  p: 1.5, 
+                  borderTop: `1px solid ${theme.palette.divider}`,
+                  textAlign: 'center' 
+                }}>
+                  <Button 
+                    onClick={handleOpenNotificationsDialog}
+                    fullWidth
+                    color="primary"
+                    size="small"
+                  >
+                    View all notifications
+                  </Button>
+                </Box>
+              </>
+            )}
           </Menu>
         </Toolbar>
       </AppBar>
