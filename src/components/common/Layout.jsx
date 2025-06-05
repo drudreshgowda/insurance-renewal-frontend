@@ -30,7 +30,11 @@ import {
   DoneAll as DoneAllIcon,
   Description as DocumentIcon,
   Alarm as ReminderIcon,
-  Assessment as ReportIcon
+  Assessment as ReportIcon,
+  Person as PersonIcon,
+  List as ListIcon,
+  AssignmentTurnedIn as AssignmentTurnedInIcon,
+  Receipt as ReceiptIcon
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { useThemeMode } from '../../context/ThemeModeContext';
@@ -133,10 +137,16 @@ const Layout = ({ children }) => {
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
     { text: 'Upload', icon: <UploadIcon />, path: '/upload' },
-    { text: 'Case Tracking', icon: <CasesIcon />, path: '/cases' },
-    { text: 'Closed Cases', icon: <CheckCircleIcon />, path: '/closed-cases' },
+    { text: 'Case Tracking', icon: <AssignmentIcon />, path: '/cases' },
+    { text: 'Closed Cases', icon: <AssignmentTurnedInIcon />, path: '/closed-cases' },
     { text: 'Policy Timeline', icon: <TimelineIcon />, path: '/policy-timeline' },
-    { text: 'Logs', icon: <LogsIcon />, path: '/logs' },
+    { text: 'Case Logs', icon: <ListIcon />, path: '/logs' },
+  ];
+
+  const secondaryMenuItems = [
+    { text: 'Profile', icon: <PersonIcon />, path: '/profile' },
+    { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
+    { text: 'Billing', icon: <ReceiptIcon />, path: '/billing' },
   ];
 
   const drawer = (
@@ -180,28 +190,32 @@ const Layout = ({ children }) => {
       </List>
       <Divider sx={{ my: 2 }} />
       <List sx={{ px: 1 }}>
-        <ListItem disablePadding>
-          <StyledListItemButton
-            onClick={() => handleNavigate('/profile')}
-            selected={location.pathname === '/profile'}
-          >
-            <ListItemIcon sx={{ minWidth: 40 }}>
-              <ProfileIcon />
-            </ListItemIcon>
-            <ListItemText primary="Profile" />
-          </StyledListItemButton>
-        </ListItem>
-        <ListItem disablePadding>
-          <StyledListItemButton
-            onClick={() => handleNavigate('/settings')}
-            selected={location.pathname === '/settings'}
-          >
-            <ListItemIcon sx={{ minWidth: 40 }}>
-              <SettingsIcon />
-            </ListItemIcon>
-            <ListItemText primary="Settings" />
-          </StyledListItemButton>
-        </ListItem>
+        {secondaryMenuItems.map((item) => (
+          <ListItem key={item.text} disablePadding>
+            <StyledListItemButton
+              onClick={() => handleNavigate(item.path)}
+              selected={location.pathname === item.path}
+            >
+              <ListItemIcon sx={{ 
+                minWidth: 40,
+                color: location.pathname === item.path 
+                  ? theme.palette.primary.main 
+                  : theme.palette.text.secondary
+              }}>
+                {item.icon}
+              </ListItemIcon>
+              <ListItemText 
+                primary={item.text} 
+                primaryTypographyProps={{ 
+                  fontWeight: location.pathname === item.path ? 600 : 400,
+                  color: location.pathname === item.path 
+                    ? theme.palette.primary.main 
+                    : theme.palette.text.primary
+                }}
+              />
+            </StyledListItemButton>
+          </ListItem>
+        ))}
       </List>
     </div>
   );
@@ -246,52 +260,34 @@ const Layout = ({ children }) => {
       </List>
       <Divider sx={{ my: 2 }} />
       <List>
-        <ListItem disablePadding sx={{ display: 'block' }}>
-          <StyledListItemButton
-            onClick={() => handleNavigate('/profile')}
-            selected={location.pathname === '/profile'}
-            sx={{
-              minHeight: 48,
-              justifyContent: 'center',
-              px: 2.5,
-            }}
-          >
-            <Tooltip title="Profile" placement="right">
-              <ListItemIcon
-                sx={{
-                  minWidth: 0,
-                  mr: 'auto',
-                  justifyContent: 'center',
-                }}
-              >
-                <ProfileIcon />
-              </ListItemIcon>
-            </Tooltip>
-          </StyledListItemButton>
-        </ListItem>
-        <ListItem disablePadding sx={{ display: 'block' }}>
-          <StyledListItemButton
-            onClick={() => handleNavigate('/settings')}
-            selected={location.pathname === '/settings'}
-            sx={{
-              minHeight: 48,
-              justifyContent: 'center',
-              px: 2.5,
-            }}
-          >
-            <Tooltip title="Settings" placement="right">
-              <ListItemIcon
-                sx={{
-                  minWidth: 0,
-                  mr: 'auto',
-                  justifyContent: 'center',
-                }}
-              >
-                <SettingsIcon />
-              </ListItemIcon>
-            </Tooltip>
-          </StyledListItemButton>
-        </ListItem>
+        {secondaryMenuItems.map((item) => (
+          <ListItem key={item.text} disablePadding sx={{ display: 'block' }}>
+            <StyledListItemButton
+              onClick={() => handleNavigate(item.path)}
+              selected={location.pathname === item.path}
+              sx={{
+                minHeight: 48,
+                justifyContent: 'center',
+                px: 2.5,
+              }}
+            >
+              <Tooltip title={item.text} placement="right">
+                <ListItemIcon
+                  sx={{
+                    minWidth: 0,
+                    mr: 'auto',
+                    justifyContent: 'center',
+                    color: location.pathname === item.path 
+                      ? theme.palette.primary.main 
+                      : theme.palette.text.secondary
+                  }}
+                >
+                  {item.icon}
+                </ListItemIcon>
+              </Tooltip>
+            </StyledListItemButton>
+          </ListItem>
+        ))}
       </List>
     </div>
   );

@@ -35,6 +35,12 @@ const CaseTracking = () => {
   const theme = useTheme();
   const [loaded, setLoaded] = useState(false);
   
+  // Function to handle customer name click
+  const handleCustomerNameClick = (e, customerName, customerId) => {
+    e.stopPropagation(); // Prevent row click event
+    navigate(`/policy-timeline?customerName=${encodeURIComponent(customerName)}&customerId=${encodeURIComponent(customerId || 'CUST-' + Math.floor(Math.random() * 10000))}`);
+  };
+  
   const mockCases = useMemo(() => [
     {
       id: 'CASE-001',
@@ -609,7 +615,22 @@ const CaseTracking = () => {
                           {caseItem.id}
                         </Typography>
                       </TableCell>
-                      <TableCell>{caseItem.customerName}</TableCell>
+                      <TableCell>
+                        <Typography 
+                          variant="body2" 
+                          sx={{ 
+                            fontWeight: 500,
+                            color: 'primary.main',
+                            cursor: 'pointer',
+                            '&:hover': {
+                              textDecoration: 'underline'
+                            }
+                          }}
+                          onClick={(e) => handleCustomerNameClick(e, caseItem.customerName, caseItem.customerId)}
+                        >
+                          {caseItem.customerName}
+                        </Typography>
+                      </TableCell>
                       <TableCell>{caseItem.policyNumber}</TableCell>
                       <TableCell>{caseItem.batchId}</TableCell>
                       <TableCell>

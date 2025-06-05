@@ -13,6 +13,7 @@ import Logs from './pages/Logs';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
+import Billing from './pages/Billing';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeModeProvider, useThemeMode } from './context/ThemeModeContext';
@@ -289,6 +290,14 @@ function AppWithTheme() {
               <ProtectedRoute>
                 <Layout>
                   <Settings />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/billing" element={
+              <ProtectedRoute>
+                <Layout>
+                  <Billing />
                 </Layout>
               </ProtectedRoute>
             } />

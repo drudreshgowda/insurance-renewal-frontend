@@ -65,10 +65,11 @@ import {
   WhatsApp as WhatsAppIcon,
   ArrowCircleUp as ArrowCircleUpIcon
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const PolicyTimeline = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const theme = useTheme();
   const [searchTerm, setSearchTerm] = useState('');
   const [policyData, setPolicyData] = useState(null);
@@ -80,11 +81,16 @@ const PolicyTimeline = () => {
   const [loaded, setLoaded] = useState(false);
   const [customerSummary, setCustomerSummary] = useState(null);
   const [aiSummary, setAiSummary] = useState(null);
+  
+  // Extract customer data from URL parameters
+  const queryParams = new URLSearchParams(location.search);
+  const customerNameFromUrl = queryParams.get('customerName');
+  const customerIdFromUrl = queryParams.get('customerId');
 
   // Sample policy timeline data
   const mockPolicyData = {
-    customerId: "CUST-12345",
-    customerName: "John Smith",
+    customerId: customerIdFromUrl || "CUST-12345",
+    customerName: customerNameFromUrl || "John Smith",
     policies: [
       {
         policyId: "POL-AUTO-987",
@@ -306,9 +312,20 @@ const PolicyTimeline = () => {
     // This would be replaced with actual API call in a real app
     const fetchPolicyData = async () => {
       try {
+        // In a real app, you would fetch data based on customerIdFromUrl
+        // For example: const response = await api.getPolicyData(customerIdFromUrl);
+        
         // Simulating API call delay
         await new Promise(resolve => setTimeout(resolve, 800));
-        setPolicyData(mockPolicyData);
+        
+        // Use the customer data from URL if available
+        const policyDataToUse = {
+          ...mockPolicyData,
+          customerId: customerIdFromUrl || mockPolicyData.customerId,
+          customerName: customerNameFromUrl || mockPolicyData.customerName
+        };
+        
+        setPolicyData(policyDataToUse);
         setLoading(false);
         // Set loaded state for animations after a brief delay
         setTimeout(() => {
@@ -321,7 +338,7 @@ const PolicyTimeline = () => {
     };
     
     fetchPolicyData();
-  }, []);
+  }, [customerIdFromUrl, customerNameFromUrl]);
 
   useEffect(() => {
     if (policyData) {
@@ -712,7 +729,7 @@ const PolicyTimeline = () => {
         )}
 
         {/* Customer Preferences */}
-        <Grid item xs={12}>
+        <Grid item xs={12} sx={{ mb: 4 }}>
           <Grow in={loaded} timeout={800}>
             <Card 
               elevation={0}
@@ -1227,4 +1244,4 @@ const PolicyTimeline = () => {
   );
 };
 
-export default PolicyTimeline; 
+export default PolicyTimeline;

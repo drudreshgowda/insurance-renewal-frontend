@@ -354,6 +354,104 @@ const CaseDetails = () => {
             </Grow>
           </Grid>
 
+          {/* Policy Features */}
+          <Grid item xs={12}>
+            <Grow in={loaded} timeout={550}>
+              <Card 
+                elevation={0}
+                sx={{ 
+                  borderRadius: 3,
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
+                  overflow: 'visible',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 12px 32px rgba(0,0,0,0.1)'
+                  }
+                }}
+              >
+                <CardContent sx={{ p: 3 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                    <HealthAndSafetyIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
+                    <Typography variant="h6" fontWeight="600">Policy Features</Typography>
+                  </Box>
+                  <Divider sx={{ mb: 3 }} />
+                  <Grid container spacing={3}>
+                    {/* Health Insurance Section */}
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                        <HealthAndSafetyIcon fontSize="small" sx={{ mr: 1 }} /> Health Insurance (Corporate/Group)
+                      </Typography>
+                      <Stack spacing={1.5} sx={{ ml: 1 }}>
+                        <Typography variant="body2">Sum Insured: ₹1L–₹10L; family floater available.</Typography>
+                        <Typography variant="body2">PED Coverage: Included from Day 1.</Typography>
+                        <Typography variant="body2">Cashless Network: 7000+ hospitals PAN-India.</Typography>
+                        <Typography variant="body2">Maternity: ₹50K–₹1L, includes newborn.</Typography>
+                        <Typography variant="body2">Daycare Surgeries: 500+ procedures covered.</Typography>
+                        <Typography variant="body2">Room Rent: No cap; private AC room eligibility.</Typography>
+                        <Typography variant="body2">AYUSH: Coverage up to ₹25K/year.</Typography>
+                      </Stack>
+                    </Grid>
+                    
+                    {/* Wellness Benefits Section */}
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                        <WorkspacePremiumIcon fontSize="small" sx={{ mr: 1 }} /> Wellness Benefits
+                      </Typography>
+                      <Stack spacing={1.5} sx={{ ml: 1 }}>
+                        <Typography variant="body2">Health Checkups: Annual, 35+ parameters.</Typography>
+                        <Typography variant="body2">Doctor at Home: 2 visits/year.</Typography>
+                        <Typography variant="body2">Mental Wellness: Quarterly sessions.</Typography>
+                        <Typography variant="body2">Fitness Access: Subsidized gyms/yoga.</Typography>
+                        <Typography variant="body2">Nutrition Plans: Personalized counseling.</Typography>
+                      </Stack>
+                    </Grid>
+                    
+                    {/* Preventive Care Section */}
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                        <LocalOfferIcon fontSize="small" sx={{ mr: 1 }} /> Preventive Care
+                      </Typography>
+                      <Stack spacing={1.5} sx={{ ml: 1 }}>
+                        <Typography variant="body2">Chronic Condition Support: Diabetes, hypertension, etc.</Typography>
+                        <Typography variant="body2">Digital Health Records: ABDM-compliant.</Typography>
+                        <Typography variant="body2">Teleconsultation: 24x7 access to doctors.</Typography>
+                        <Typography variant="body2">Medicine Delivery: With discounts.</Typography>
+                        <Typography variant="body2">Lab Tests: 15–30% discounted diagnostics.</Typography>
+                      </Stack>
+                    </Grid>
+                    
+                    {/* OPD, Dental & Vision Section */}
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                        <AssignmentIcon fontSize="small" sx={{ mr: 1 }} /> OPD, Dental & Vision
+                      </Typography>
+                      <Stack spacing={1.5} sx={{ ml: 1 }}>
+                        <Typography variant="body2">OPD Cover: ₹2.5K–₹15K annually.</Typography>
+                        <Typography variant="body2">Dental: Annual cleaning & basic procedures.</Typography>
+                        <Typography variant="body2">Vision: Eye check + spectacles up to ₹2K.</Typography>
+                        <Typography variant="body2">Vaccinations: Flu, COVID, travel vaccines included.</Typography>
+                      </Stack>
+                    </Grid>
+                    
+                    {/* Value-Added Services Section */}
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                        <AccountBalanceIcon fontSize="small" sx={{ mr: 1 }} /> Value-Added Services
+                      </Typography>
+                      <Stack spacing={1.5} sx={{ ml: 1 }}>
+                        <Typography variant="body2">Second Opinions: Global/National access.</Typography>
+                        <Typography variant="body2">Claims Helpdesk: Virtual & onsite support.</Typography>
+                        <Typography variant="body2">Health Risk Assessments: With scoring.</Typography>
+                        <Typography variant="body2">Emergency Ambulance: Up to ₹2K per case.</Typography>
+                      </Stack>
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+            </Grow>
+          </Grid>
+
           {/* Case Flow */}
           <Grid item xs={12}>
             <Grow in={loaded} timeout={600}>

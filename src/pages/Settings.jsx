@@ -5,7 +5,8 @@ import {
   ListItemSecondaryAction, Alert,
   FormControl, Select, MenuItem,
   Button, Card, CardContent, Divider,
-  useTheme, alpha, Fade, Grow, Zoom, Dialog, DialogTitle, DialogContent, DialogActions, TextField
+  useTheme, alpha, Fade, Grow, Zoom, Dialog, DialogTitle, DialogContent, DialogActions, TextField,
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow
 } from '@mui/material';
 import {
   DarkMode as DarkModeIcon,
@@ -18,10 +19,13 @@ import {
   Palette as PaletteIcon,
   Refresh as RefreshIcon,
   Edit as EditIcon,
-  Security as SecurityIcon
+  Security as SecurityIcon,
+  Receipt as ReceiptIcon,
+  ArrowForward as ArrowForwardIcon
 } from '@mui/icons-material';
 import { useThemeMode } from '../context/ThemeModeContext';
 import { useSettings } from '../context/SettingsContext';
+import { Link } from 'react-router-dom';
 
 const Settings = () => {
   const { mode, toggleMode } = useThemeMode();
@@ -436,6 +440,55 @@ const Settings = () => {
                       </ListItemSecondaryAction>
                     </ListItem>
                   </List>
+                </CardContent>
+              </Card>
+            </Grow>
+          </Grid>
+        </Grid>
+
+        <Grid container spacing={3} sx={{ mt: 1 }}>
+          <Grid item xs={12}>
+            <Grow in={loaded} timeout={1200}>
+              <Card 
+                elevation={0}
+                sx={{ 
+                  borderRadius: 3,
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
+                  overflow: 'visible',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 12px 32px rgba(0,0,0,0.1)'
+                  }
+                }}
+              >
+                <CardContent sx={{ p: 3 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, justifyContent: 'space-between' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <ReceiptIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
+                      <Typography variant="h6" fontWeight="600">
+                        Billing Information
+                      </Typography>
+                    </Box>
+                    <Button 
+                      component={Link} 
+                      to="/billing"
+                      variant="outlined" 
+                      color="primary"
+                      endIcon={<ArrowForwardIcon />}
+                      sx={{ 
+                        borderRadius: 2,
+                        fontWeight: 500,
+                      }}
+                    >
+                      View Billing Details
+                    </Button>
+                  </Box>
+                  <Divider sx={{ mb: 2 }} />
+                  
+                  <Typography variant="body1" color="text.secondary">
+                    View your complete billing information, including utilization charges, platform charges, and payment history on the dedicated billing page.
+                  </Typography>
                 </CardContent>
               </Card>
             </Grow>

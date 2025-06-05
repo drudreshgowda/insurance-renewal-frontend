@@ -16,7 +16,20 @@ export const SettingsProvider = ({ children }) => {
     timezone: 'UTC-5',
     autoRefresh: true,
     showEditCaseButton: true,
-    mfaEnabled: false
+    mfaEnabled: false,
+    billing: {
+      utilization: [
+        { service: 'Email Notifications', count: 245, cost: 24.50 },
+        { service: 'SMS Notifications', count: 78, cost: 15.60 },
+        { service: 'API Calls', count: 1245, cost: 62.25 }
+      ],
+      platform: [
+        { service: 'Base Subscription', period: 'Monthly', cost: 199.00 },
+        { service: 'Additional Users (5)', period: 'Monthly', cost: 50.00 },
+        { service: 'Premium Support', period: 'Monthly', cost: 99.00 }
+      ],
+      totalMonthly: 450.35
+    }
   });
 
   // Load settings from localStorage on component mount
