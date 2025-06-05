@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Grid, Paper, Typography, Box, Card, CardContent, 
   FormControl, InputLabel, Select, MenuItem, alpha, useTheme,
   Fade, Grow
 } from '@mui/material';
 import { 
-  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, 
   Tooltip, Legend, ResponsiveContainer, AreaChart, Area
 } from 'recharts';
 import { fetchDashboardStats, fetchTrendData } from '../services/api';
@@ -37,20 +37,27 @@ const Dashboard = () => {
   const [caseStatus, setCaseStatus] = useState('all');
   const [loaded, setLoaded] = useState(false);
 
-  useEffect(() => {
-    // In a real app, these would fetch from your API
-    const loadDashboardData = async () => {
-      try {
-        const statsData = await fetchDashboardStats(dateRange, policyType, caseStatus);
-        setStats(statsData);
-        
-        const trends = await fetchTrendData(dateRange, policyType, caseStatus);
-        setTrendData(trends);
-      } catch (error) {
-        console.error("Failed to load dashboard data:", error);
+  // Memoize the loadDashboardData function to avoid recreating it on every render
+  const loadDashboardData = useCallback(async () => {
+    try {
+      const statsData = await fetchDashboardStats(dateRange, policyType, caseStatus);
+      if (statsData) {
+        setStats(prev => ({
+          ...prev,
+          ...statsData
+        }));
       }
-    };
-    
+      
+      const trends = await fetchTrendData(dateRange, policyType, caseStatus);
+      if (trends && Array.isArray(trends)) {
+        setTrendData(trends);
+      }
+    } catch (error) {
+      console.error("Failed to load dashboard data:", error);
+    }
+  }, [dateRange, policyType, caseStatus]);
+
+  useEffect(() => {
     // Initialize with default values to prevent NaN issues
     const initialStats = {
       totalCases: 0,
@@ -68,7 +75,7 @@ const Dashboard = () => {
     loadDashboardData();
     
     // For demo purposes, let's set some mock data with a slight delay to simulate API fetch
-    setTimeout(() => {
+    const mockTimer = setTimeout(() => {
       setStats({
         totalCases: 1250,
         inProgress: 320,
@@ -93,10 +100,16 @@ const Dashboard = () => {
     setTrendData(mockTrendData);
     
     // Set loaded state for animations
-    setTimeout(() => {
+    const loadedTimer = setTimeout(() => {
       setLoaded(true);
     }, 400);
-  }, [dateRange, policyType, caseStatus]);
+
+    // Cleanup timers
+    return () => {
+      clearTimeout(mockTimer);
+      clearTimeout(loadedTimer);
+    };
+  }, [loadDashboardData]); // Include the memoized function in dependencies
 
   const StatCard = ({ title, value, color, icon, index, isCurrency }) => {
     // Create a gradient background

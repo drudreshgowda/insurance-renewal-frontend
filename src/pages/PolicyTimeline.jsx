@@ -54,7 +54,16 @@ import {
   Warning as WarningIcon,
   Phone as PhoneIcon,
   Email as EmailIcon,
-  Description as DescriptionIcon
+  Description as DescriptionIcon,
+  Settings as SettingsIcon,
+  Chat as ChatIcon,
+  AccessTime as AccessTimeIcon,
+  Payments as PaymentsIcon,
+  CreditCard as CreditCardIcon,
+  AccountBalance as AccountBalanceIcon,
+  MailOutline as MailOutlineIcon,
+  WhatsApp as WhatsAppIcon,
+  ArrowCircleUp as ArrowCircleUpIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
@@ -69,6 +78,8 @@ const PolicyTimeline = () => {
   const [filterType, setFilterType] = useState('all');
   const [tabValue, setTabValue] = useState(0);
   const [loaded, setLoaded] = useState(false);
+  const [customerSummary, setCustomerSummary] = useState(null);
+  const [aiSummary, setAiSummary] = useState(null);
 
   // Sample policy timeline data
   const mockPolicyData = {
@@ -312,6 +323,75 @@ const PolicyTimeline = () => {
     fetchPolicyData();
   }, []);
 
+  useEffect(() => {
+    if (policyData) {
+      const totalPolicies = policyData.policies.length;
+      let totalEvents = 0;
+      const eventTypeCounts = {};
+      let earliestStartDate = new Date(); // Initialize with a future date
+      let totalCurrentPremium = 0;
+
+      policyData.policies.forEach(policy => {
+        totalEvents += policy.events.length;
+        totalCurrentPremium += policy.currentPremium;
+        if (new Date(policy.startDate) < earliestStartDate) {
+          earliestStartDate = new Date(policy.startDate);
+        }
+        policy.events.forEach(event => {
+          eventTypeCounts[event.type] = (eventTypeCounts[event.type] || 0) + 1;
+        });
+      });
+
+      const customerTenureYears = Math.floor((new Date() - earliestStartDate) / (365.25 * 24 * 60 * 60 * 1000));
+
+      setCustomerSummary({
+        totalPolicies,
+        totalEvents,
+        eventTypeCounts,
+        earliestStartDate: earliestStartDate.toISOString().split('T')[0],
+        customerTenureYears,
+        totalCurrentPremium
+      });
+
+      // AI Summary Generation (Simulated)
+      const numClaims = eventTypeCounts.claim || 0;
+      let claimLikelihood = "Low";
+      if (numClaims > 2) claimLikelihood = "High";
+      else if (numClaims > 0) claimLikelihood = "Moderate";
+
+      let customerProfile = "Good";
+      if (customerTenureYears > 5 && totalPolicies >= 2 && numClaims <= 1) {
+        customerProfile = "Excellent";
+      } else if (customerTenureYears >= 2 && numClaims < 3) {
+        customerProfile = "Good";
+      } else {
+        customerProfile = "Average";
+      }
+
+      let observations = [
+        `Customer has been with us for ${customerTenureYears} years across ${totalPolicies} policies.`,
+      ];
+      if (numClaims > 0) {
+        observations.push(`They have filed ${numClaims} claim(s) in total.`);
+      }
+      if (eventTypeCounts.renewal > 0) {
+        observations.push(`Regular renewals indicate high retention.`);
+      }
+      if (eventTypeCounts.communication > 0) {
+        observations.push(`Engaged customer with ${eventTypeCounts.communication} communication events.`);
+      }
+      if (eventTypeCounts.payment > 0) {
+        observations.push(`There are ${eventTypeCounts.payment} payment-related events recorded.`);
+      }
+
+      setAiSummary({
+        claimLikelihood,
+        customerProfile,
+        observations: observations.join(" ")
+      });
+    }
+  }, [policyData]);
+
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
   };
@@ -532,6 +612,298 @@ const PolicyTimeline = () => {
             </CardContent>
           </Card>
         </Grow>
+        
+        {/* Customer Summary Card */}
+        {customerSummary && (
+          <Grow in={loaded} timeout={600}>
+            <Card sx={{ mb: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.05)', borderRadius: 3 }}>
+              <CardContent>
+                <Typography variant="h5" fontWeight="600" sx={{ mb: 2 }}>
+                  Customer Overview
+                </Typography>
+                <Grid container spacing={3}>
+                  <Grid item xs={12} sm={6} md={3}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                      <Typography variant="body2" color="text.secondary">Total Policies</Typography>
+                      <Typography variant="h6" fontWeight="600" color="primary.main">{customerSummary.totalPolicies}</Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={3}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                      <Typography variant="body2" color="text.secondary">Total Events</Typography>
+                      <Typography variant="h6" fontWeight="600" color="info.main">{customerSummary.totalEvents}</Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={3}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                      <Typography variant="body2" color="text.secondary">Customer Since</Typography>
+                      <Typography variant="h6" fontWeight="600" color="success.main">{formatDate(customerSummary.earliestStartDate)}</Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={3}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                      <Typography variant="body2" color="text.secondary">Tenure</Typography>
+                      <Typography variant="h6" fontWeight="600" color="warning.main">{customerSummary.customerTenureYears} Years</Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Divider sx={{ my: 2 }} />
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Event Type Breakdown:</Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {Object.entries(customerSummary.eventTypeCounts).map(([type, count]) => (
+                        <Chip
+                          key={type}
+                          label={`${type.charAt(0).toUpperCase() + type.slice(1)}: ${count}`}
+                          size="small"
+                          icon={getEventIcon(type)}
+                          color={getEventColor(type)}
+                          sx={{ fontWeight: 500 }}
+                        />
+                      ))}
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                      <Typography variant="body2" color="text.secondary">Combined Annual Premium</Typography>
+                      <Typography variant="h6" fontWeight="600" color="secondary.main">${customerSummary.totalCurrentPremium.toFixed(2)}</Typography>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+          </Grow>
+        )}
+        
+        {/* AI Powered Summary Card */}
+        {aiSummary && (
+          <Grow in={loaded} timeout={700}>
+            <Card sx={{ mb: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.05)', borderRadius: 3 }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <VerifiedUserIcon sx={{ fontSize: 30, color: 'primary.main', mr: 1.5 }} />
+                  <Typography variant="h5" fontWeight="600">
+                    AI-Powered Insights
+                  </Typography>
+                </Box>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body2" color="text.secondary">Claim Likelihood:</Typography>
+                    <Typography variant="h6" fontWeight="600" color={aiSummary.claimLikelihood === 'High' ? 'error.main' : aiSummary.claimLikelihood === 'Moderate' ? 'warning.main' : 'success.main'}>
+                      {aiSummary.claimLikelihood}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body2" color="text.secondary">Customer Profile:</Typography>
+                    <Typography variant="h6" fontWeight="600" color={aiSummary.customerProfile === 'Excellent' ? 'success.main' : aiSummary.customerProfile === 'Average' ? 'warning.main' : 'primary.main'}>
+                      {aiSummary.customerProfile}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Divider sx={{ my: 2 }} />
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Key Observations:</Typography>
+                    <Typography variant="body1" sx={{ lineHeight: 1.6 }}>
+                      {aiSummary.observations}
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+          </Grow>
+        )}
+
+        {/* Customer Preferences */}
+        <Grid item xs={12}>
+          <Grow in={loaded} timeout={800}>
+            <Card 
+              elevation={0}
+              sx={{ 
+                borderRadius: 3,
+                boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
+                overflow: 'visible',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 12px 32px rgba(0,0,0,0.1)'
+                }
+              }}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                  <SettingsIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
+                  <Typography variant="h6" fontWeight="600">Customer Preferences</Typography>
+                </Box>
+                <Divider sx={{ mb: 3 }} />
+                
+                <Grid container spacing={3}>
+                  {/* Communication Preferences */}
+                  <Grid item xs={12} md={4}>
+                    <Box sx={{ p: 3, bgcolor: alpha(theme.palette.primary.main, 0.04), borderRadius: 2, height: '100%' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                        <ChatIcon color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
+                          Communication Preferences
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <EmailIcon color="action" sx={{ mr: 1, fontSize: 20 }} />
+                            <Typography variant="body2">Email</Typography>
+                          </Box>
+                          <Chip 
+                            label="Preferred" 
+                            size="small" 
+                            color="primary" 
+                            sx={{ fontWeight: 'medium', borderRadius: 5 }} 
+                          />
+                        </Box>
+                        
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <PhoneIcon color="action" sx={{ mr: 1, fontSize: 20 }} />
+                            <Typography variant="body2">Phone Call</Typography>
+                          </Box>
+                          <Chip 
+                            label="Backup" 
+                            size="small" 
+                            variant="outlined" 
+                            sx={{ fontWeight: 'medium', borderRadius: 5 }} 
+                          />
+                        </Box>
+                        
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <WhatsAppIcon color="action" sx={{ mr: 1, fontSize: 20 }} />
+                            <Typography variant="body2">WhatsApp</Typography>
+                          </Box>
+                          <Chip 
+                            label="Accepted" 
+                            size="small" 
+                            variant="outlined"
+                            color="success" 
+                            sx={{ fontWeight: 'medium', borderRadius: 5 }} 
+                          />
+                        </Box>
+                        
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <MailOutlineIcon color="action" sx={{ mr: 1, fontSize: 20 }} />
+                            <Typography variant="body2">Postal Mail</Typography>
+                          </Box>
+                          <Chip 
+                            label="Opted Out" 
+                            size="small" 
+                            variant="outlined"
+                            color="error" 
+                            sx={{ fontWeight: 'medium', borderRadius: 5 }} 
+                          />
+                        </Box>
+                      </Box>
+                    </Box>
+                  </Grid>
+                  
+                  {/* Renewal Timeline Preferences */}
+                  <Grid item xs={12} md={4}>
+                    <Box sx={{ p: 3, bgcolor: alpha(theme.palette.primary.main, 0.04), borderRadius: 2, height: '100%' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                        <AccessTimeIcon color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
+                          Renewal Timeline
+                        </Typography>
+                      </Box>
+                      
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <Box sx={{ mb: 2 }}>
+                          <Box sx={{ mb: 1 }}>
+                            <Typography variant="body2" color="text.secondary">
+                              Typical Renewal Pattern:
+                            </Typography>
+                          </Box>
+                          <Box 
+                            sx={{ 
+                              p: 1.5, 
+                              bgcolor: alpha(theme.palette.primary.main, 0.1), 
+                              color: theme.palette.primary.main, 
+                              borderRadius: 2, 
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1
+                            }}
+                          >
+                            <ArrowCircleUpIcon />
+                            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                              Pays 7-14 days before due date
+                            </Typography>
+                          </Box>
+                        </Box>
+                        
+                        <Box>
+                          <Box sx={{ mb: 1 }}>
+                            <Typography variant="body2" color="text.secondary">
+                              Reminder Schedule:
+                            </Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                            <Typography variant="body2">• 30 days before due date (Email)</Typography>
+                            <Typography variant="body2">• 14 days before due date (Email)</Typography>
+                            <Typography variant="body2">• 7 days before due date (Phone)</Typography>
+                          </Box>
+                        </Box>
+                      </Box>
+                    </Box>
+                  </Grid>
+                  
+                  {/* Payment Method Preferences */}
+                  <Grid item xs={12} md={4}>
+                    <Box sx={{ p: 3, bgcolor: alpha(theme.palette.primary.main, 0.04), borderRadius: 2, height: '100%' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                        <PaymentsIcon color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
+                          Payment Methods
+                        </Typography>
+                      </Box>
+                      
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                        <Box>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                            Primary Payment Method:
+                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1), border: '1px solid', borderColor: alpha(theme.palette.primary.main, 0.2) }}>
+                              <CreditCardIcon color="primary" />
+                            </Avatar>
+                            <Box>
+                              <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+                                Credit Card
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                **** **** **** 5678 • Expires 06/26
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </Box>
+                        
+                        <Box>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                            Alternate Methods Used:
+                          </Typography>
+                          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                            <Chip 
+                              avatar={<Avatar sx={{ bgcolor: 'transparent !important' }}><AccountBalanceIcon fontSize="small" /></Avatar>}
+                              label="Bank Transfer"
+                              size="small"
+                              sx={{ borderRadius: 5 }}
+                            />
+                          </Box>
+                        </Box>
+                      </Box>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+          </Grow>
+        </Grid>
         
         {/* Search and Filter */}
         <Grow in={loaded} timeout={600}>
