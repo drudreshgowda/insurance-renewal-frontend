@@ -34,7 +34,8 @@ import {
   Notifications as NotificationsIcon,
   Search as SearchIcon,
   FilterList as FilterListIcon,
-  Refresh as RefreshIcon
+  Refresh as RefreshIcon,
+  AccountBalance as AccountBalanceIcon
 } from '@mui/icons-material';
 
 const WelcomeModal = ({ open, onClose }) => {
@@ -435,6 +436,289 @@ const WelcomeModal = ({ open, onClose }) => {
     );
   };
 
+  // Closed Cases Animation Component
+  const ClosedCasesAnimation = () => {
+    return (
+      <Box sx={{ position: 'relative', height: 200, mt: 2, overflow: 'hidden', borderRadius: 2, border: `1px solid ${theme.palette.divider}` }}>
+        <Box sx={{ p: 2, bgcolor: theme.palette.background.paper, height: '100%', display: 'flex', flexDirection: 'column' }}>
+          <Fade in={true} timeout={800}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+              <Typography variant="h6" sx={{ color: theme.palette.primary.main }}>Closed Cases</Typography>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Zoom in={true} timeout={800} style={{ transitionDelay: '500ms' }}>
+                  <Box sx={{ 
+                    bgcolor: alpha(theme.palette.primary.main, 0.1), 
+                    borderRadius: '50%',
+                    width: 28,
+                    height: 28,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <SearchIcon sx={{ fontSize: 16, color: theme.palette.primary.main }} />
+                  </Box>
+                </Zoom>
+                <Zoom in={true} timeout={800} style={{ transitionDelay: '700ms' }}>
+                  <Box sx={{ 
+                    bgcolor: alpha(theme.palette.primary.main, 0.1), 
+                    borderRadius: '50%',
+                    width: 28,
+                    height: 28,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <FilterListIcon sx={{ fontSize: 16, color: theme.palette.primary.main }} />
+                  </Box>
+                </Zoom>
+              </Box>
+            </Box>
+          </Fade>
+          
+          {/* Table Header */}
+          <Fade in={true} timeout={1000} style={{ transitionDelay: '400ms' }}>
+            <Box sx={{ 
+              display: 'flex', 
+              bgcolor: alpha(theme.palette.success.main, 0.05),
+              borderRadius: '4px 4px 0 0',
+              p: 1
+            }}>
+              <Box sx={{ flex: 2, fontWeight: 'bold', fontSize: '0.75rem' }}>Policy ID</Box>
+              <Box sx={{ flex: 3, fontWeight: 'bold', fontSize: '0.75rem' }}>Customer</Box>
+              <Box sx={{ flex: 2, fontWeight: 'bold', fontSize: '0.75rem' }}>Completion Date</Box>
+              <Box sx={{ flex: 2, fontWeight: 'bold', fontSize: '0.75rem' }}>Status</Box>
+            </Box>
+          </Fade>
+          
+          {/* Table Rows */}
+          {[
+            { delay: 600, status: 'success' },
+            { delay: 800, status: 'success' },
+            { delay: 1000, status: 'error' },
+            { delay: 1200, status: 'success' }
+          ].map((row, index) => (
+            <Fade 
+              key={`${animationKey}-closed-row-${index}`} 
+              in={true} 
+              timeout={800} 
+              style={{ transitionDelay: `${row.delay}ms` }}
+            >
+              <Box sx={{ 
+                display: 'flex', 
+                borderBottom: `1px solid ${theme.palette.divider}`,
+                p: 1,
+                '&:hover': {
+                  bgcolor: alpha(theme.palette.primary.main, 0.02)
+                }
+              }}>
+                <Box sx={{ flex: 2, fontSize: '0.75rem' }}>POL-{20000 + index}</Box>
+                <Box sx={{ flex: 3, fontSize: '0.75rem' }}>Customer {index + 1}</Box>
+                <Box sx={{ flex: 2, fontSize: '0.75rem' }}>
+                  {new Date(2025, 2, 10 + index).toLocaleDateString()}
+                </Box>
+                <Box sx={{ flex: 2, fontSize: '0.75rem' }}>
+                  <Box sx={{ 
+                    display: 'inline-block',
+                    px: 1,
+                    borderRadius: 4,
+                    fontSize: '0.65rem',
+                    bgcolor: alpha(
+                      row.status === 'success' ? theme.palette.success.main : 
+                      theme.palette.error.main,
+                      0.1
+                    ),
+                    color: 
+                      row.status === 'success' ? theme.palette.success.main : 
+                      theme.palette.error.main
+                  }}>
+                    {row.status === 'success' ? 'Renewed' : 'Declined'}
+                  </Box>
+                </Box>
+              </Box>
+            </Fade>
+          ))}
+        </Box>
+      </Box>
+    );
+  };
+
+  // Case Logs Animation Component
+  const CaseLogsAnimation = () => {
+    return (
+      <Box sx={{ position: 'relative', height: 200, mt: 2, overflow: 'hidden', borderRadius: 2, border: `1px solid ${theme.palette.divider}` }}>
+        <Box sx={{ p: 2, bgcolor: theme.palette.background.paper, height: '100%' }}>
+          <Fade in={true} timeout={800}>
+            <Typography variant="h6" sx={{ mb: 2, color: theme.palette.primary.main }}>Case Logs</Typography>
+          </Fade>
+          
+          {/* Logs */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            {[
+              { delay: 400, user: 'System', action: 'Case created from batch upload', time: '10:30 AM' },
+              { delay: 800, user: 'Ravi Sharma', action: 'Updated customer contact information', time: '11:45 AM' },
+              { delay: 1200, user: 'System', action: 'Document verification completed', time: '2:15 PM' },
+              { delay: 1600, user: 'Priya Patel', action: 'Payment processed', time: '4:30 PM' }
+            ].map((item, index) => (
+              <Fade 
+                key={`${animationKey}-log-${index}`} 
+                in={true} 
+                timeout={800} 
+                style={{ transitionDelay: `${item.delay}ms` }}
+              >
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'flex-start',
+                  p: 1.5,
+                  borderRadius: 1,
+                  bgcolor: index % 2 === 0 ? alpha(theme.palette.primary.main, 0.03) : 'transparent',
+                  border: `1px solid ${index % 2 === 0 ? alpha(theme.palette.primary.main, 0.08) : 'transparent'}`
+                }}>
+                  <Box sx={{ 
+                    width: 8, 
+                    height: 8, 
+                    borderRadius: '50%', 
+                    bgcolor: index % 2 === 0 ? theme.palette.primary.main : theme.palette.info.main,
+                    mt: 0.8,
+                    mr: 1.5
+                  }} />
+                  <Box sx={{ flex: 1 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>{item.user}</Typography>
+                      <Typography variant="caption" color="textSecondary">{item.time}</Typography>
+                    </Box>
+                    <Typography variant="body2" color="textSecondary">{item.action}</Typography>
+                  </Box>
+                </Box>
+              </Fade>
+            ))}
+          </Box>
+        </Box>
+      </Box>
+    );
+  };
+
+  // Profile Animation Component
+  const ProfileAnimation = () => {
+    return (
+      <Box sx={{ position: 'relative', height: 200, mt: 2, overflow: 'hidden', borderRadius: 2, border: `1px solid ${theme.palette.divider}` }}>
+        <Box sx={{ p: 2, bgcolor: theme.palette.background.paper, height: '100%' }}>
+          <Fade in={true} timeout={800}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+              <Zoom in={true} timeout={1000}>
+                <Box sx={{ 
+                  width: 60, 
+                  height: 60, 
+                  borderRadius: '50%', 
+                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  mr: 2
+                }}>
+                  <Typography variant="h5" sx={{ color: theme.palette.primary.main }}>RS</Typography>
+                </Box>
+              </Zoom>
+              <Box>
+                <Fade in={true} timeout={800} style={{ transitionDelay: '400ms' }}>
+                  <Typography variant="h6">Rahul Singh</Typography>
+                </Fade>
+                <Fade in={true} timeout={800} style={{ transitionDelay: '600ms' }}>
+                  <Typography variant="body2" color="textSecondary">Insurance Agent</Typography>
+                </Fade>
+              </Box>
+            </Box>
+          </Fade>
+          
+          {/* Profile Info */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+            {[
+              { delay: 800, label: 'Email', value: 'rahul.singh@example.com' },
+              { delay: 1000, label: 'Phone', value: '+91 98765 43210' },
+              { delay: 1200, label: 'Branch', value: 'Mumbai Central' }
+            ].map((item, index) => (
+              <Fade 
+                key={`${animationKey}-profile-${index}`} 
+                in={true} 
+                timeout={800} 
+                style={{ transitionDelay: `${item.delay}ms` }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Typography variant="body2" sx={{ width: 80, color: theme.palette.text.secondary }}>{item.label}:</Typography>
+                  <Typography variant="body2">{item.value}</Typography>
+                </Box>
+              </Fade>
+            ))}
+          </Box>
+        </Box>
+      </Box>
+    );
+  };
+
+  // Billing Animation Component
+  const BillingAnimation = () => {
+    return (
+      <Box sx={{ position: 'relative', height: 200, mt: 2, overflow: 'hidden', borderRadius: 2, border: `1px solid ${theme.palette.divider}` }}>
+        <Box sx={{ p: 2, bgcolor: theme.palette.background.paper, height: '100%' }}>
+          <Fade in={true} timeout={800}>
+            <Typography variant="h6" sx={{ mb: 2, color: theme.palette.primary.main }}>Billing & Subscription</Typography>
+          </Fade>
+          
+          {/* Current Plan */}
+          <Fade in={true} timeout={1000} style={{ transitionDelay: '400ms' }}>
+            <Box sx={{ 
+              p: 2, 
+              bgcolor: alpha(theme.palette.success.main, 0.05), 
+              borderRadius: 2,
+              border: `1px solid ${alpha(theme.palette.success.main, 0.1)}`,
+              mb: 2
+            }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                <Typography variant="subtitle2">Current Plan</Typography>
+                <Box sx={{ 
+                  bgcolor: alpha(theme.palette.success.main, 0.1),
+                  color: theme.palette.success.main,
+                  px: 1,
+                  borderRadius: 1,
+                  fontSize: '0.7rem',
+                  fontWeight: 'bold',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}>
+                  ACTIVE
+                </Box>
+              </Box>
+              <Typography variant="h6" sx={{ mb: 1 }}>Enterprise Plan</Typography>
+              <Typography variant="body2" color="textSecondary">₹25,000 / month</Typography>
+            </Box>
+          </Fade>
+          
+          {/* Payment Method */}
+          <Fade in={true} timeout={1000} style={{ transitionDelay: '800ms' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box sx={{ 
+                p: 1.5, 
+                bgcolor: 'background.paper', 
+                borderRadius: 1,
+                border: `1px solid ${theme.palette.divider}`,
+                width: 50,
+                height: 30,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Typography variant="subtitle2" sx={{ fontSize: '0.7rem' }}>VISA</Typography>
+              </Box>
+              <Box>
+                <Typography variant="body2">•••• •••• •••• 4242</Typography>
+                <Typography variant="caption" color="textSecondary">Expires 12/2026</Typography>
+              </Box>
+            </Box>
+          </Fade>
+        </Box>
+      </Box>
+    );
+  };
+
   const steps = [
     {
       label: 'Welcome to the Insurance Policy Renewal Portal',
@@ -598,6 +882,114 @@ const WelcomeModal = ({ open, onClose }) => {
         </>
       ),
       animation: SettingsAnimation
+    },
+    {
+      label: 'Closed Cases',
+      icon: <CheckCircleIcon color="primary" />,
+      description: (
+        <>
+          <Typography variant="body1" paragraph>
+            The Closed Cases section shows you all the cases that have been closed:
+          </Typography>
+          <Box component="ul" sx={{ pl: 2 }}>
+            <Typography component="li" variant="body1" sx={{ mb: 1 }}>
+              View all closed cases in a sortable and filterable table
+            </Typography>
+            <Typography component="li" variant="body1" sx={{ mb: 1 }}>
+              Track case status from upload to completion
+            </Typography>
+            <Typography component="li" variant="body1" sx={{ mb: 1 }}>
+              Access detailed case information by clicking on any case
+            </Typography>
+            <Typography component="li" variant="body1">
+              Flag priority cases for urgent attention
+            </Typography>
+          </Box>
+          <ClosedCasesAnimation />
+        </>
+      ),
+      animation: ClosedCasesAnimation
+    },
+    {
+      label: 'Case Logs',
+      icon: <TimelineIcon color="primary" />,
+      description: (
+        <>
+          <Typography variant="body1" paragraph>
+            The Case Logs section shows you all the case-related activities:
+          </Typography>
+          <Box component="ul" sx={{ pl: 2 }}>
+            <Typography component="li" variant="body1" sx={{ mb: 1 }}>
+              View all case-related activities in a sortable and filterable table
+            </Typography>
+            <Typography component="li" variant="body1" sx={{ mb: 1 }}>
+              Track case-related activities from creation to completion
+            </Typography>
+            <Typography component="li" variant="body1" sx={{ mb: 1 }}>
+              Access detailed case-related activity information by clicking on any activity
+            </Typography>
+            <Typography component="li" variant="body1">
+              Flag priority case-related activities for urgent attention
+            </Typography>
+          </Box>
+          <CaseLogsAnimation />
+        </>
+      ),
+      animation: CaseLogsAnimation
+    },
+    {
+      label: 'Profile Management',
+      icon: <SettingsIcon color="primary" />,
+      description: (
+        <>
+          <Typography variant="body1" paragraph>
+            The Profile section shows your personal information:
+          </Typography>
+          <Box component="ul" sx={{ pl: 2 }}>
+            <Typography component="li" variant="body1" sx={{ mb: 1 }}>
+              View your name, email, and phone number
+            </Typography>
+            <Typography component="li" variant="body1" sx={{ mb: 1 }}>
+              Manage your branch information
+            </Typography>
+            <Typography component="li" variant="body1" sx={{ mb: 1 }}>
+              Access detailed profile information
+            </Typography>
+            <Typography component="li" variant="body1">
+              Manage your profile settings
+            </Typography>
+          </Box>
+          <ProfileAnimation />
+        </>
+      ),
+      animation: ProfileAnimation
+    },
+    {
+      label: 'Billing & Subscription',
+      icon: <AccountBalanceIcon color="primary" />,
+      description: (
+        <>
+          <Typography variant="body1" paragraph>
+            The Billing section shows your billing and subscription details:
+          </Typography>
+          <Box component="ul" sx={{ pl: 2 }}>
+            <Typography component="li" variant="body1" sx={{ mb: 1 }}>
+              View your current plan and subscription details
+            </Typography>
+            <Typography component="li" variant="body1" sx={{ mb: 1 }}>
+              Manage your payment method
+            </Typography>
+            <Typography component="li" variant="body1" sx={{ mb: 1 }}>
+              Access detailed billing and subscription information
+            </Typography>
+            <Typography component="li" variant="body1">
+              Manage your billing and subscription settings
+            </Typography>
+          </Box>
+          <BillingAnimation />
+        </>
+      ),
+      animation: BillingAnimation
     },
     {
       label: 'Ready to Start!',
