@@ -39,30 +39,30 @@ const Billing = () => {
   // Sample invoice data
   const [invoices, setInvoices] = useState([
     { 
-      id: 'INV-2023-001', 
+      id: 'INV-2023-IN001', 
       date: '2023-10-01', 
-      amount: 1250.00, 
+      amount: 95000.00, 
       status: 'Paid', 
       pdfUrl: '#'
     },
     { 
-      id: 'INV-2023-002', 
+      id: 'INV-2023-IN002', 
       date: '2023-11-01', 
-      amount: 1320.50, 
+      amount: 102500.50, 
       status: 'Paid', 
       pdfUrl: '#'
     },
     { 
-      id: 'INV-2023-003', 
+      id: 'INV-2023-IN003', 
       date: '2023-12-01', 
-      amount: 1450.75, 
+      amount: 108750.75, 
       status: 'Pending', 
       pdfUrl: '#'
     },
     { 
-      id: 'INV-2024-001', 
+      id: 'INV-2024-IN001', 
       date: '2024-01-01', 
-      amount: 1380.25, 
+      amount: 105000.25, 
       status: 'Pending', 
       pdfUrl: '#'
     }
@@ -328,7 +328,7 @@ const Billing = () => {
                     <TableRow key={index}>
                       <TableCell>{item.service}</TableCell>
                       <TableCell align="center">{item.count.toLocaleString()}</TableCell>
-                      <TableCell align="right">${item.cost.toFixed(2)}</TableCell>
+                      <TableCell align="right">₹{item.cost.toFixed(2)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -353,13 +353,13 @@ const Billing = () => {
                     <TableRow key={index}>
                       <TableCell>{item.service}</TableCell>
                       <TableCell align="center">{item.period}</TableCell>
-                      <TableCell align="right">${item.cost.toFixed(2)}</TableCell>
+                      <TableCell align="right">₹{item.cost.toFixed(2)}</TableCell>
                     </TableRow>
                   ))}
                   <TableRow sx={{ backgroundColor: alpha(theme.palette.primary.main, 0.05) }}>
                     <TableCell><Typography fontWeight="600">Total Monthly Charges</Typography></TableCell>
                     <TableCell align="center"></TableCell>
-                    <TableCell align="right"><Typography fontWeight="600">${filteredData.totalMonthly.toFixed(2)}</Typography></TableCell>
+                    <TableCell align="right"><Typography fontWeight="600">₹{filteredData.totalMonthly.toFixed(2)}</Typography></TableCell>
                   </TableRow>
                 </TableBody>
               </Table>
@@ -417,7 +417,7 @@ const Billing = () => {
                         </Box>
                       </TableCell>
                       <TableCell>{new Date(invoice.date).toLocaleDateString()}</TableCell>
-                      <TableCell align="right">${invoice.amount.toFixed(2)}</TableCell>
+                      <TableCell align="right">₹{invoice.amount.toFixed(2)}</TableCell>
                       <TableCell align="center">
                         <Chip 
                           label={invoice.status} 

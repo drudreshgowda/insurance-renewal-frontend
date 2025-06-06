@@ -679,3 +679,79 @@ export const saveUserSettings = async (settings) => {
     }, 600);
   });
 };
+
+// Fetch batch upload status data
+export const fetchBatchStatus = async () => {
+  // In a real app, this would call the API
+  // return apiRequest('/batches/status');
+  
+  // Mock implementation
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const mockBatchData = [
+        {
+          id: 'BATCH-001',
+          uploadDate: '2025-04-01',
+          fileName: 'April_Auto_Renewals.xlsx',
+          totalCases: 125,
+          status: {
+            renewed: 85,
+            inProgress: 25,
+            failed: 10,
+            pending: 5
+          }
+        },
+        {
+          id: 'BATCH-002',
+          uploadDate: '2025-04-05',
+          fileName: 'April_Home_Renewals.xlsx',
+          totalCases: 78,
+          status: {
+            renewed: 45,
+            inProgress: 20,
+            failed: 8,
+            pending: 5
+          }
+        },
+        {
+          id: 'BATCH-003',
+          uploadDate: '2025-04-10',
+          fileName: 'April_Life_Renewals.xlsx',
+          totalCases: 92,
+          status: {
+            renewed: 30,
+            inProgress: 42,
+            failed: 5,
+            pending: 15
+          }
+        },
+        {
+          id: 'BATCH-004',
+          uploadDate: '2025-04-15',
+          fileName: 'April_Health_Renewals.xlsx',
+          totalCases: 110,
+          status: {
+            renewed: 20,
+            inProgress: 65,
+            failed: 5,
+            pending: 20
+          }
+        },
+        {
+          id: 'BATCH-005',
+          uploadDate: '2025-04-20',
+          fileName: 'April_Commercial_Renewals.xlsx',
+          totalCases: 45,
+          status: {
+            renewed: 5,
+            inProgress: 25,
+            failed: 0,
+            pending: 15
+          }
+        }
+      ];
+      
+      resolve(mockBatchData);
+    }, 500);
+  });
+};

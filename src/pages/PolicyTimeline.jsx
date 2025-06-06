@@ -682,7 +682,7 @@ const PolicyTimeline = () => {
                   <Grid item xs={12}>
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                       <Typography variant="body2" color="text.secondary">Combined Annual Premium</Typography>
-                      <Typography variant="h6" fontWeight="600" color="secondary.main">${customerSummary.totalCurrentPremium.toFixed(2)}</Typography>
+                      <Typography variant="h6" fontWeight="600" color="secondary.main">₹{customerSummary.totalCurrentPremium.toFixed(2)}</Typography>
                     </Box>
                   </Grid>
                 </Grid>
@@ -1093,7 +1093,7 @@ const PolicyTimeline = () => {
                       Current Premium
                     </Typography>
                     <Typography variant="h6" fontWeight="600" color="primary.main">
-                      ${currentPolicy.currentPremium.toFixed(2)}
+                      ₹{currentPolicy.currentPremium.toFixed(2)}
                     </Typography>
                   </Box>
                   <Box>
@@ -1223,7 +1223,7 @@ const PolicyTimeline = () => {
                                   </Typography>
                                   <Typography variant="body2">
                                     {typeof value === 'number' && key.toLowerCase().includes('premium') 
-                                      ? `$${value.toFixed(2)}`
+                                      ? `₹${value.toFixed(2)}`
                                       : value.toString()}
                                   </Typography>
                                 </Box>

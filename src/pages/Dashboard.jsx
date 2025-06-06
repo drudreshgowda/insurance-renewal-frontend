@@ -6,9 +6,10 @@ import {
 } from '@mui/material';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, 
-  Tooltip, Legend, ResponsiveContainer, AreaChart, Area
+  Tooltip, Legend, ResponsiveContainer, AreaChart, Area,
+  PieChart, Pie, Cell
 } from 'recharts';
-import { fetchDashboardStats, fetchTrendData } from '../services/api';
+import { fetchDashboardStats, fetchTrendData, fetchBatchStatus } from '../services/api';
 import { 
   Timeline as TimelineIcon,
   Policy as PolicyIcon, 
@@ -32,10 +33,12 @@ const Dashboard = () => {
   });
   
   const [trendData, setTrendData] = useState([]);
+  const [batchData, setBatchData] = useState([]);
   const [dateRange, setDateRange] = useState('week');
   const [policyType, setPolicyType] = useState('all');
   const [caseStatus, setCaseStatus] = useState('all');
   const [loaded, setLoaded] = useState(false);
+  const [selectedBatch, setSelectedBatch] = useState('all');
 
   // Memoize the loadDashboardData function to avoid recreating it on every render
   const loadDashboardData = useCallback(async () => {
@@ -51,6 +54,12 @@ const Dashboard = () => {
       const trends = await fetchTrendData(dateRange, policyType, caseStatus);
       if (trends && Array.isArray(trends)) {
         setTrendData(trends);
+      }
+
+      // Fetch batch status data
+      const batchStatusData = await fetchBatchStatus();
+      if (batchStatusData && Array.isArray(batchStatusData)) {
+        setBatchData(batchStatusData);
       }
     } catch (error) {
       console.error("Failed to load dashboard data:", error);
@@ -82,8 +91,8 @@ const Dashboard = () => {
         renewed: 780,
         pendingAction: 95,
         errors: 55,
-        paymentCollected: 185000,
-        paymentPending: 42500
+        paymentCollected: 13850000,
+        paymentPending: 3250000
       });
     }, 300);
     
@@ -98,6 +107,72 @@ const Dashboard = () => {
     ];
     
     setTrendData(mockTrendData);
+    
+    // Set mock batch data for initial load
+    const mockBatchData = [
+      {
+        id: 'BATCH-001',
+        uploadDate: '2025-04-01',
+        fileName: 'April_Auto_Renewals.xlsx',
+        totalCases: 125,
+        status: {
+          renewed: 85,
+          inProgress: 25,
+          failed: 10,
+          pending: 5
+        }
+      },
+      {
+        id: 'BATCH-002',
+        uploadDate: '2025-04-05',
+        fileName: 'April_Home_Renewals.xlsx',
+        totalCases: 78,
+        status: {
+          renewed: 45,
+          inProgress: 20,
+          failed: 8,
+          pending: 5
+        }
+      },
+      {
+        id: 'BATCH-003',
+        uploadDate: '2025-04-10',
+        fileName: 'April_Life_Renewals.xlsx',
+        totalCases: 92,
+        status: {
+          renewed: 30,
+          inProgress: 42,
+          failed: 5,
+          pending: 15
+        }
+      },
+      {
+        id: 'BATCH-004',
+        uploadDate: '2025-04-15',
+        fileName: 'April_Health_Renewals.xlsx',
+        totalCases: 110,
+        status: {
+          renewed: 20,
+          inProgress: 65,
+          failed: 5,
+          pending: 20
+        }
+      },
+      {
+        id: 'BATCH-005',
+        uploadDate: '2025-04-20',
+        fileName: 'April_Commercial_Renewals.xlsx',
+        totalCases: 45,
+        status: {
+          renewed: 5,
+          inProgress: 25,
+          failed: 0,
+          pending: 15
+        }
+      }
+    ];
+    
+    setBatchData(mockBatchData);
     
     // Set loaded state for animations
     const loadedTimer = setTimeout(() => {
@@ -122,14 +197,14 @@ const Dashboard = () => {
       // Ensure we have a valid number before formatting
       const numericValue = Number(value);
       if (!isNaN(numericValue)) {
-        displayValue = new Intl.NumberFormat('en-US', { 
+        displayValue = new Intl.NumberFormat('en-IN', { 
           style: 'currency', 
-          currency: 'USD',
+          currency: 'INR',
           minimumFractionDigits: 0,
           maximumFractionDigits: 0
         }).format(numericValue);
       } else {
-        displayValue = '$0'; // Default fallback for NaN values
+        displayValue = '₹0'; // Default fallback for NaN values
       }
     }
     
@@ -157,11 +232,11 @@ const Dashboard = () => {
           >
             {icon}
           </Box>
-          <CardContent sx={{ position: 'relative', zIndex: 1 }}>
+          <CardContent sx={{ position: 'relative', zIndex: 1, textAlign: 'center', py: 2 }}>
             <Typography variant="h6" component="div" color="white" fontWeight="500" gutterBottom>
               {title}
             </Typography>
-            <Typography variant="h3" component="div" color="white" fontWeight="bold">
+            <Typography variant="h4" component="div" color="white" fontWeight="bold">
               {displayValue}
             </Typography>
           </CardContent>
@@ -174,7 +249,7 @@ const Dashboard = () => {
     <Fade in={true} timeout={800}>
       <Box sx={{ px: 1 }}>
         <Typography variant="h4" gutterBottom sx={{ mb: 3 }}>
-          Insurance Policy Renewal Dashboard
+          Renewal Dashboard
         </Typography>
         
         {/* Filters */}
@@ -377,6 +452,162 @@ const Dashboard = () => {
                     />
                   </AreaChart>
                 </ResponsiveContainer>
+              </Paper>
+            </Grow>
+          </Grid>
+
+          {/* Batch Status Chart */}
+          <Grid item xs={12}>
+            <Grow in={loaded} style={{ transformOrigin: '0 0 0' }} timeout={800}>
+              <Paper sx={{ p: 3, height: 450, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Box>
+                    <Typography variant="h6" gutterBottom fontWeight="600" sx={{ mb: 0 }}>
+                      Batch Upload Status
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Status breakdown of cases by batch upload
+                    </Typography>
+                  </Box>
+                  
+                  <FormControl sx={{ minWidth: 200 }} size="small">
+                    <InputLabel>Select Batch</InputLabel>
+                    <Select
+                      value={selectedBatch}
+                      label="Select Batch"
+                      onChange={(e) => setSelectedBatch(e.target.value)}
+                    >
+                      <MenuItem value="all">All Batches</MenuItem>
+                      {batchData.map((batch) => (
+                        <MenuItem key={batch.id} value={batch.id}>
+                          {batch.fileName}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Box>
+                
+                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, height: '85%' }}>
+                  <Box sx={{ width: { xs: '100%', md: '60%' }, height: '100%' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart 
+                        data={selectedBatch === 'all' ? batchData : batchData.filter(batch => batch.id === selectedBatch)}
+                        layout="vertical"
+                        barGap={0}
+                        barCategoryGap="15%"
+                      >
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.1} horizontal={false} />
+                        <XAxis type="number" />
+                        <YAxis 
+                          dataKey="fileName" 
+                          type="category" 
+                          width={150}
+                          tick={{ fontSize: 12 }}
+                        />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: theme.palette.mode === 'dark' ? '#2a2a2a' : '#fff',
+                            borderRadius: 8,
+                            boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                          }}
+                        />
+                        <Legend />
+                        <Bar 
+                          dataKey="status.renewed" 
+                          stackId="a" 
+                          fill={theme.palette.success.main} 
+                          name="Renewed" 
+                        />
+                        <Bar 
+                          dataKey="status.inProgress" 
+                          stackId="a" 
+                          fill={theme.palette.warning.main} 
+                          name="In Progress" 
+                        />
+                        <Bar 
+                          dataKey="status.pending" 
+                          stackId="a" 
+                          fill={theme.palette.info.main} 
+                          name="Pending" 
+                        />
+                        <Bar 
+                          dataKey="status.failed" 
+                          stackId="a" 
+                          fill={theme.palette.error.main} 
+                          name="Failed" 
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </Box>
+                  
+                  <Box sx={{ 
+                    width: { xs: '100%', md: '40%' }, 
+                    height: '100%',
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                  }}>
+                    {selectedBatch !== 'all' && batchData.filter(batch => batch.id === selectedBatch).length > 0 && (
+                      <>
+                        <Typography variant="h6" align="center" gutterBottom>
+                          {batchData.find(batch => batch.id === selectedBatch)?.fileName}
+                        </Typography>
+                        <ResponsiveContainer width="100%" height="70%">
+                          <PieChart>
+                            <Pie
+                              data={(() => {
+                                const batch = batchData.find(b => b.id === selectedBatch);
+                                if (!batch) return [];
+                                return [
+                                  { name: 'Renewed', value: batch.status.renewed, color: theme.palette.success.main },
+                                  { name: 'In Progress', value: batch.status.inProgress, color: theme.palette.warning.main },
+                                  { name: 'Pending', value: batch.status.pending, color: theme.palette.info.main },
+                                  { name: 'Failed', value: batch.status.failed, color: theme.palette.error.main }
+                                ];
+                              })()}
+                              cx="50%"
+                              cy="50%"
+                              labelLine={false}
+                              outerRadius={80}
+                              fill="#8884d8"
+                              dataKey="value"
+                              nameKey="name"
+                              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                            >
+                              {(() => {
+                                const batch = batchData.find(b => b.id === selectedBatch);
+                                if (!batch) return null;
+                                return [
+                                  { name: 'Renewed', value: batch.status.renewed, color: theme.palette.success.main },
+                                  { name: 'In Progress', value: batch.status.inProgress, color: theme.palette.warning.main },
+                                  { name: 'Pending', value: batch.status.pending, color: theme.palette.info.main },
+                                  { name: 'Failed', value: batch.status.failed, color: theme.palette.error.main }
+                                ].map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={entry.color} />
+                                ));
+                              })()}
+                            </Pie>
+                            <Tooltip 
+                              formatter={(value, name) => [value, name]}
+                              contentStyle={{ 
+                                backgroundColor: theme.palette.mode === 'dark' ? '#2a2a2a' : '#fff',
+                                borderRadius: 8,
+                                boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                              }}
+                            />
+                            <Legend />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </>
+                    )}
+                    {selectedBatch === 'all' && (
+                      <Typography variant="body1" align="center" sx={{ mt: 4 }}>
+                        Select a specific batch to view detailed breakdown
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
               </Paper>
             </Grow>
           </Grid>

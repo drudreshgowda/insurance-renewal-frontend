@@ -21,17 +21,21 @@ import {
   Edit as EditIcon,
   Security as SecurityIcon,
   Receipt as ReceiptIcon,
-  ArrowForward as ArrowForwardIcon
+  ArrowForward as ArrowForwardIcon,
+  Help as HelpIcon,
+  School as SchoolIcon
 } from '@mui/icons-material';
 import { useThemeMode } from '../context/ThemeModeContext';
 import { useSettings } from '../context/SettingsContext';
 import { Link } from 'react-router-dom';
+import WelcomeModal from '../components/common/WelcomeModal';
 
 const Settings = () => {
   const { mode, toggleMode } = useThemeMode();
   const { settings, updateSettings } = useSettings();
   const [successMessage, setSuccessMessage] = useState('');
   const [loaded, setLoaded] = useState(false);
+  const [welcomeModalOpen, setWelcomeModalOpen] = useState(false);
   const theme = useTheme();
 
   useEffect(() => {
@@ -60,6 +64,14 @@ const Settings = () => {
   const handleToggleMfa = () => {
     handleSettingChange('mfaEnabled', !settings.mfaEnabled);
     setSuccessMessage(`Multi-Factor Authentication ${!settings.mfaEnabled ? 'enabled' : 'disabled'} successfully`);
+  };
+  
+  const handleOpenWelcomeGuide = () => {
+    setWelcomeModalOpen(true);
+  };
+  
+  const handleCloseWelcomeGuide = () => {
+    setWelcomeModalOpen(false);
   };
 
   return (
@@ -493,6 +505,80 @@ const Settings = () => {
               </Card>
             </Grow>
           </Grid>
+          
+          {/* Help Section */}
+          <Grid item xs={12}>
+            <Grow in={loaded} timeout={1400}>
+              <Card 
+                elevation={0}
+                sx={{ 
+                  borderRadius: 3,
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
+                  overflow: 'visible',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 12px 32px rgba(0,0,0,0.1)'
+                  }
+                }}
+              >
+                <CardContent sx={{ p: 3 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <HelpIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
+                    <Typography variant="h6" fontWeight="600">
+                      Help & Resources
+                    </Typography>
+                  </Box>
+                  <Divider sx={{ mb: 2 }} />
+                  
+                  <List disablePadding>
+                    <ListItem 
+                      button
+                      onClick={handleOpenWelcomeGuide}
+                      sx={{ 
+                        borderRadius: 2,
+                        mb: 1,
+                        transition: 'background-color 0.2s',
+                        '&:hover': {
+                          backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                        }
+                      }}
+                    >
+                      <ListItemIcon>
+                        <SchoolIcon color="primary" />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={<Typography fontWeight="500">Portal Welcome Guide</Typography>}
+                        secondary="View the introduction guide to the portal features"
+                      />
+                    </ListItem>
+                    
+                    <ListItem 
+                      component="a"
+                      href="https://support.example.com" 
+                      target="_blank"
+                      sx={{ 
+                        borderRadius: 2,
+                        mb: 1,
+                        transition: 'background-color 0.2s',
+                        '&:hover': {
+                          backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                        }
+                      }}
+                    >
+                      <ListItemIcon>
+                        <HelpIcon color="info" />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={<Typography fontWeight="500">Support Center</Typography>}
+                        secondary="Access our knowledge base and support articles"
+                      />
+                    </ListItem>
+                  </List>
+                </CardContent>
+              </Card>
+            </Grow>
+          </Grid>
         </Grid>
 
         <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end' }}>
@@ -502,10 +588,10 @@ const Settings = () => {
               color="primary"
               startIcon={<SaveIcon />}
               onClick={handleSaveSettings}
-              sx={{
-                py: 1.2,
-                px: 3,
+              sx={{ 
                 borderRadius: 2,
+                px: 3,
+                py: 1,
                 fontWeight: 600,
                 boxShadow: '0 4px 14px rgba(0,118,255,0.25)',
                 transition: 'transform 0.2s, box-shadow 0.2s',
@@ -519,6 +605,9 @@ const Settings = () => {
             </Button>
           </Zoom>
         </Box>
+        
+        {/* Welcome Modal */}
+        <WelcomeModal open={welcomeModalOpen} onClose={handleCloseWelcomeGuide} />
       </Box>
     </Fade>
   );

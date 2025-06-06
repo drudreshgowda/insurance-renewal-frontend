@@ -52,7 +52,8 @@ import {
   AccountBalance as AccountBalanceIcon,
   CheckCircle as CheckCircleIcon,
   WhatsApp as WhatsAppIcon,
-  CreditCard as CreditCardIcon
+  CreditCard as CreditCardIcon,
+  Home as HomeIcon
 } from '@mui/icons-material';
 import { useSettings } from '../context/SettingsContext';
 import { useTheme } from '@mui/material/styles';
@@ -335,7 +336,7 @@ const CaseDetails = () => {
                             Premium
                           </Typography>
                           <Typography variant="body1" fontWeight="500">
-                            ${caseData.policyDetails.premium.toLocaleString()}
+                            ₹{caseData.policyDetails.premium.toLocaleString()}
                           </Typography>
                         </Box>
                         <Box>
@@ -377,75 +378,172 @@ const CaseDetails = () => {
                   </Box>
                   <Divider sx={{ mb: 3 }} />
                   <Grid container spacing={3}>
-                    {/* Health Insurance Section */}
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-                        <HealthAndSafetyIcon fontSize="small" sx={{ mr: 1 }} /> Health Insurance (Corporate/Group)
-                      </Typography>
-                      <Stack spacing={1.5} sx={{ ml: 1 }}>
-                        <Typography variant="body2">Sum Insured: ₹1L–₹10L; family floater available.</Typography>
-                        <Typography variant="body2">PED Coverage: Included from Day 1.</Typography>
-                        <Typography variant="body2">Cashless Network: 7000+ hospitals PAN-India.</Typography>
-                        <Typography variant="body2">Maternity: ₹50K–₹1L, includes newborn.</Typography>
-                        <Typography variant="body2">Daycare Surgeries: 500+ procedures covered.</Typography>
-                        <Typography variant="body2">Room Rent: No cap; private AC room eligibility.</Typography>
-                        <Typography variant="body2">AYUSH: Coverage up to ₹25K/year.</Typography>
-                      </Stack>
-                    </Grid>
+                    {caseData.policyDetails.type === 'Health' && (
+                      <>
+                        {/* Health Insurance Section */}
+                        <Grid item xs={12} md={6}>
+                          <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                            <HealthAndSafetyIcon fontSize="small" sx={{ mr: 1 }} /> Health Insurance (Corporate/Group)
+                          </Typography>
+                          <Stack spacing={1.5} sx={{ ml: 1 }}>
+                            <Typography variant="body2">Sum Insured: ₹1L–₹10L; family floater available.</Typography>
+                            <Typography variant="body2">PED Coverage: Included from Day 1.</Typography>
+                            <Typography variant="body2">Cashless Network: 7000+ hospitals PAN-India.</Typography>
+                            <Typography variant="body2">Maternity: ₹50K–₹1L, includes newborn.</Typography>
+                            <Typography variant="body2">Daycare Surgeries: 500+ procedures covered.</Typography>
+                            <Typography variant="body2">Room Rent: No cap; private AC room eligibility.</Typography>
+                            <Typography variant="body2">AYUSH: Coverage up to ₹25K/year.</Typography>
+                          </Stack>
+                        </Grid>
+                        
+                        {/* Wellness Benefits Section */}
+                        <Grid item xs={12} md={6}>
+                          <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                            <WorkspacePremiumIcon fontSize="small" sx={{ mr: 1 }} /> Wellness Benefits
+                          </Typography>
+                          <Stack spacing={1.5} sx={{ ml: 1 }}>
+                            <Typography variant="body2">Health Checkups: Annual, 35+ parameters.</Typography>
+                            <Typography variant="body2">Doctor at Home: 2 visits/year.</Typography>
+                            <Typography variant="body2">Mental Wellness: Quarterly sessions.</Typography>
+                            <Typography variant="body2">Fitness Access: Subsidized gyms/yoga.</Typography>
+                            <Typography variant="body2">Nutrition Plans: Personalized counseling.</Typography>
+                          </Stack>
+                        </Grid>
+                        
+                        {/* Preventive Care Section */}
+                        <Grid item xs={12} md={6}>
+                          <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                            <LocalOfferIcon fontSize="small" sx={{ mr: 1 }} /> Preventive Care
+                          </Typography>
+                          <Stack spacing={1.5} sx={{ ml: 1 }}>
+                            <Typography variant="body2">Chronic Condition Support: Diabetes, hypertension, etc.</Typography>
+                            <Typography variant="body2">Digital Health Records: ABDM-compliant.</Typography>
+                            <Typography variant="body2">Teleconsultation: 24x7 access to doctors.</Typography>
+                            <Typography variant="body2">Medicine Delivery: With discounts.</Typography>
+                            <Typography variant="body2">Lab Tests: 15–30% discounted diagnostics.</Typography>
+                          </Stack>
+                        </Grid>
+                        
+                        {/* OPD, Dental & Vision Section */}
+                        <Grid item xs={12} md={6}>
+                          <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                            <AssignmentIcon fontSize="small" sx={{ mr: 1 }} /> OPD, Dental & Vision
+                          </Typography>
+                          <Stack spacing={1.5} sx={{ ml: 1 }}>
+                            <Typography variant="body2">OPD Cover: ₹2.5K–₹15K annually.</Typography>
+                            <Typography variant="body2">Dental: Annual cleaning & basic procedures.</Typography>
+                            <Typography variant="body2">Vision: Eye check + spectacles up to ₹2K.</Typography>
+                            <Typography variant="body2">Vaccinations: Flu, COVID, travel vaccines included.</Typography>
+                          </Stack>
+                        </Grid>
+                        
+                        {/* Value-Added Services Section */}
+                        <Grid item xs={12} md={6}>
+                          <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                            <AccountBalanceIcon fontSize="small" sx={{ mr: 1 }} /> Value-Added Services
+                          </Typography>
+                          <Stack spacing={1.5} sx={{ ml: 1 }}>
+                            <Typography variant="body2">Second Opinions: Global/National access.</Typography>
+                            <Typography variant="body2">Claims Helpdesk: Virtual & onsite support.</Typography>
+                            <Typography variant="body2">Health Risk Assessments: With scoring.</Typography>
+                            <Typography variant="body2">Emergency Ambulance: Up to ₹2K per case.</Typography>
+                          </Stack>
+                        </Grid>
+                      </>
+                    )}
                     
-                    {/* Wellness Benefits Section */}
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-                        <WorkspacePremiumIcon fontSize="small" sx={{ mr: 1 }} /> Wellness Benefits
-                      </Typography>
-                      <Stack spacing={1.5} sx={{ ml: 1 }}>
-                        <Typography variant="body2">Health Checkups: Annual, 35+ parameters.</Typography>
-                        <Typography variant="body2">Doctor at Home: 2 visits/year.</Typography>
-                        <Typography variant="body2">Mental Wellness: Quarterly sessions.</Typography>
-                        <Typography variant="body2">Fitness Access: Subsidized gyms/yoga.</Typography>
-                        <Typography variant="body2">Nutrition Plans: Personalized counseling.</Typography>
-                      </Stack>
-                    </Grid>
+                    {caseData.policyDetails.type === 'Auto' && (
+                      <>
+                        {/* Auto Insurance Section */}
+                        <Grid item xs={12} md={6}>
+                          <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                            <DirectionsCarIcon fontSize="small" sx={{ mr: 1 }} /> Auto Insurance
+                          </Typography>
+                          <Stack spacing={1.5} sx={{ ml: 1 }}>
+                            <Typography variant="body2">Comprehensive Coverage: Own damage + third-party liability.</Typography>
+                            <Typography variant="body2">Zero Depreciation: Full claim without depreciation deduction.</Typography>
+                            <Typography variant="body2">Roadside Assistance: 24x7 emergency support.</Typography>
+                            <Typography variant="body2">NCB Protection: No claims bonus safeguard.</Typography>
+                            <Typography variant="body2">Engine Protection: Coverage for hydrostatic lock damage.</Typography>
+                          </Stack>
+                        </Grid>
+                        
+                        <Grid item xs={12} md={6}>
+                          <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                            <LocalOfferIcon fontSize="small" sx={{ mr: 1 }} /> Additional Benefits
+                          </Typography>
+                          <Stack spacing={1.5} sx={{ ml: 1 }}>
+                            <Typography variant="body2">Key Replacement: Coverage for lost or damaged keys.</Typography>
+                            <Typography variant="body2">Return to Invoice: Full invoice value in case of total loss.</Typography>
+                            <Typography variant="body2">Personal Accident Cover: ₹15 lakh for owner-driver.</Typography>
+                            <Typography variant="body2">Passenger Cover: ₹1 lakh per passenger.</Typography>
+                            <Typography variant="body2">Consumables Cover: For oils, lubricants, etc.</Typography>
+                          </Stack>
+                        </Grid>
+                      </>
+                    )}
                     
-                    {/* Preventive Care Section */}
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-                        <LocalOfferIcon fontSize="small" sx={{ mr: 1 }} /> Preventive Care
-                      </Typography>
-                      <Stack spacing={1.5} sx={{ ml: 1 }}>
-                        <Typography variant="body2">Chronic Condition Support: Diabetes, hypertension, etc.</Typography>
-                        <Typography variant="body2">Digital Health Records: ABDM-compliant.</Typography>
-                        <Typography variant="body2">Teleconsultation: 24x7 access to doctors.</Typography>
-                        <Typography variant="body2">Medicine Delivery: With discounts.</Typography>
-                        <Typography variant="body2">Lab Tests: 15–30% discounted diagnostics.</Typography>
-                      </Stack>
-                    </Grid>
+                    {caseData.policyDetails.type === 'Life' && (
+                      <>
+                        {/* Life Insurance Section */}
+                        <Grid item xs={12} md={6}>
+                          <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                            <WorkspacePremiumIcon fontSize="small" sx={{ mr: 1 }} /> Life Insurance
+                          </Typography>
+                          <Stack spacing={1.5} sx={{ ml: 1 }}>
+                            <Typography variant="body2">Term Coverage: Up to ₹2 Crore sum assured.</Typography>
+                            <Typography variant="body2">Critical Illness: Coverage for 36 critical conditions.</Typography>
+                            <Typography variant="body2">Accidental Death: Double sum assured payout.</Typography>
+                            <Typography variant="body2">Premium Waiver: On disability or critical illness.</Typography>
+                            <Typography variant="body2">Tax Benefits: Under Section 80C and 10(10D).</Typography>
+                          </Stack>
+                        </Grid>
+                        
+                        <Grid item xs={12} md={6}>
+                          <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                            <AccountBalanceIcon fontSize="small" sx={{ mr: 1 }} /> Investment Benefits
+                          </Typography>
+                          <Stack spacing={1.5} sx={{ ml: 1 }}>
+                            <Typography variant="body2">Guaranteed Returns: 5-6% annual guaranteed returns.</Typography>
+                            <Typography variant="body2">Maturity Benefits: Lump sum payment at policy maturity.</Typography>
+                            <Typography variant="body2">Loyalty Additions: Extra bonus for long-term policyholders.</Typography>
+                            <Typography variant="body2">Partial Withdrawals: Available after lock-in period.</Typography>
+                            <Typography variant="body2">Loan Facility: Up to 80% of surrender value.</Typography>
+                          </Stack>
+                        </Grid>
+                      </>
+                    )}
                     
-                    {/* OPD, Dental & Vision Section */}
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-                        <AssignmentIcon fontSize="small" sx={{ mr: 1 }} /> OPD, Dental & Vision
-                      </Typography>
-                      <Stack spacing={1.5} sx={{ ml: 1 }}>
-                        <Typography variant="body2">OPD Cover: ₹2.5K–₹15K annually.</Typography>
-                        <Typography variant="body2">Dental: Annual cleaning & basic procedures.</Typography>
-                        <Typography variant="body2">Vision: Eye check + spectacles up to ₹2K.</Typography>
-                        <Typography variant="body2">Vaccinations: Flu, COVID, travel vaccines included.</Typography>
-                      </Stack>
-                    </Grid>
-                    
-                    {/* Value-Added Services Section */}
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-                        <AccountBalanceIcon fontSize="small" sx={{ mr: 1 }} /> Value-Added Services
-                      </Typography>
-                      <Stack spacing={1.5} sx={{ ml: 1 }}>
-                        <Typography variant="body2">Second Opinions: Global/National access.</Typography>
-                        <Typography variant="body2">Claims Helpdesk: Virtual & onsite support.</Typography>
-                        <Typography variant="body2">Health Risk Assessments: With scoring.</Typography>
-                        <Typography variant="body2">Emergency Ambulance: Up to ₹2K per case.</Typography>
-                      </Stack>
-                    </Grid>
+                    {caseData.policyDetails.type === 'Home' && (
+                      <>
+                        {/* Home Insurance Section */}
+                        <Grid item xs={12} md={6}>
+                          <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                            <HomeIcon fontSize="small" sx={{ mr: 1 }} /> Home Insurance
+                          </Typography>
+                          <Stack spacing={1.5} sx={{ ml: 1 }}>
+                            <Typography variant="body2">Structure Coverage: Up to ₹5 Crore building value.</Typography>
+                            <Typography variant="body2">Contents Protection: Furniture, appliances, valuables.</Typography>
+                            <Typography variant="body2">Natural Disasters: Flood, earthquake, storm damage.</Typography>
+                            <Typography variant="body2">Burglary & Theft: Coverage for stolen possessions.</Typography>
+                            <Typography variant="body2">Temporary Accommodation: If home becomes uninhabitable.</Typography>
+                          </Stack>
+                        </Grid>
+                        
+                        <Grid item xs={12} md={6}>
+                          <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                            <LocalOfferIcon fontSize="small" sx={{ mr: 1 }} /> Additional Protections
+                          </Typography>
+                          <Stack spacing={1.5} sx={{ ml: 1 }}>
+                            <Typography variant="body2">Liability Coverage: For third-party injuries on property.</Typography>
+                            <Typography variant="body2">Electrical Equipment: Protection against short circuits.</Typography>
+                            <Typography variant="body2">Rent Loss Cover: Compensation for lost rental income.</Typography>
+                            <Typography variant="body2">Renovation Coverage: Protection during home improvements.</Typography>
+                            <Typography variant="body2">Jewelry & Valuables: Special coverage for high-value items.</Typography>
+                          </Stack>
+                        </Grid>
+                      </>
+                    )}
                   </Grid>
                 </CardContent>
               </Card>
@@ -838,7 +936,7 @@ const CaseDetails = () => {
                         <Grid item xs={12} md={3}>
                           <Box sx={{ textAlign: 'center', p: 1 }}>
                             <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-                              $4,850
+                              ₹4,850
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
                               Total Paid (YTD)
@@ -945,10 +1043,10 @@ const CaseDetails = () => {
                             <Divider />
                             <Box>
                               <Typography variant="body2">
-                                • Auto Accident (2023): $3,200
+                                • Auto Accident (2023): ₹3,200
                               </Typography>
                               <Typography variant="body2">
-                                • Home Water Damage (2022): $1,850
+                                • Home Water Damage (2022): ₹1,850
                               </Typography>
                             </Box>
                             <Divider />
@@ -1020,7 +1118,7 @@ const CaseDetails = () => {
                             </Box>
                             <Box sx={{ textAlign: 'center', p: 1, bgcolor: 'background.default', borderRadius: 1 }}>
                               <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                                Monthly EMI: ${Math.round(caseData.policyDetails.premium / 12)}
+                                ₹{Math.round(caseData.policyDetails.premium / 12)}
                               </Typography>
                             </Box>
                           </CardContent>
@@ -1051,7 +1149,7 @@ const CaseDetails = () => {
                             </Box>
                             <Box sx={{ textAlign: 'center', p: 1, bgcolor: 'background.default', borderRadius: 1 }}>
                               <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                                Quarterly: ${Math.round((caseData.policyDetails.premium * 0.98) / 4)}
+                                ₹{Math.round((caseData.policyDetails.premium * 0.98) / 4)}
                               </Typography>
                             </Box>
                           </CardContent>
@@ -1082,7 +1180,7 @@ const CaseDetails = () => {
                             </Box>
                             <Box sx={{ textAlign: 'center', p: 1, bgcolor: 'background.default', borderRadius: 1 }}>
                               <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                                Annual: ${Math.round(caseData.policyDetails.premium * 0.95)}
+                                ₹{Math.round(caseData.policyDetails.premium * 0.95)}
                               </Typography>
                             </Box>
                           </CardContent>
@@ -1227,7 +1325,7 @@ const CaseDetails = () => {
                           <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
                             {key.charAt(0).toUpperCase() + key.slice(1)}
                           </Typography>
-                          <Typography variant="body1">{value}</Typography>
+                          <Typography variant="body1">{typeof value === 'string' ? value.replace(/\$/g, '₹') : value}</Typography>
                         </Box>
                       </Grid>
                     ))}

@@ -19,8 +19,8 @@ export const AuthProvider = ({ children }) => {
           // Mock user data
           setCurrentUser({
             id: '123',
-            name: 'Client Admin',
-            email: 'admin@client.com',
+            name: 'Rajesh Kumar',
+            email: 'rajesh@client.com',
             role: 'client_admin'
           });
         }
@@ -53,7 +53,7 @@ export const AuthProvider = ({ children }) => {
         
         const userData = {
           id: '123',
-          name: 'Client Admin',
+          name: 'Rajesh Kumar',
           email: email,
           role: 'client_admin'
         };
@@ -98,8 +98,8 @@ export const AuthProvider = ({ children }) => {
           // Here we'll create it again with the same data as in login
           const userData = {
             id: '123',
-            name: 'Client Admin',
-            email: 'admin@client.com',
+            name: 'Rajesh Kumar',
+            email: 'rajesh@client.com',
             role: 'client_admin'
           };
           

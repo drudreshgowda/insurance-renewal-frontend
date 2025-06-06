@@ -13,22 +13,22 @@ export const SettingsProvider = ({ children }) => {
     emailNotifications: true,
     smsNotifications: false,
     language: 'en',
-    timezone: 'UTC-5',
+    timezone: 'IST',
     autoRefresh: true,
     showEditCaseButton: true,
     mfaEnabled: false,
     billing: {
       utilization: [
-        { service: 'Email Notifications', count: 245, cost: 24.50 },
-        { service: 'SMS Notifications', count: 78, cost: 15.60 },
-        { service: 'API Calls', count: 1245, cost: 62.25 }
+        { service: 'Email Notifications', count: 245, cost: 1850.00 },
+        { service: 'SMS Notifications', count: 78, cost: 1200.00 },
+        { service: 'API Calls', count: 1245, cost: 4950.00 }
       ],
       platform: [
-        { service: 'Base Subscription', period: 'Monthly', cost: 199.00 },
-        { service: 'Additional Users (5)', period: 'Monthly', cost: 50.00 },
-        { service: 'Premium Support', period: 'Monthly', cost: 99.00 }
+        { service: 'Base Subscription', period: 'Monthly', cost: 15000.00 },
+        { service: 'Additional Users (5)', period: 'Monthly', cost: 3750.00 },
+        { service: 'Premium Support', period: 'Monthly', cost: 7500.00 }
       ],
-      totalMonthly: 450.35
+      totalMonthly: 34250.00
     }
   });
 

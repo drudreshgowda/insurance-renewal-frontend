@@ -36,9 +36,9 @@ import {
   AssignmentTurnedIn as AssignmentTurnedInIcon,
   Receipt as ReceiptIcon
 } from '@mui/icons-material';
-import { useAuth } from '../../context/AuthContext';
-import { useThemeMode } from '../../context/ThemeModeContext';
-import { useNotifications } from '../../context/NotificationsContext';
+import { useAuth } from '../../context/AuthContext.js';
+import { useThemeMode } from '../../context/ThemeModeContext.js';
+import { useNotifications } from '../../context/NotificationsContext.js';
 import NotificationsDialog from '../notifications/Notifications';
 import { alpha } from '@mui/material/styles';
 

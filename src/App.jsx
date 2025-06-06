@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Layout from './components/common/Layout';
+import WelcomeModal from './components/common/WelcomeModal';
 import Dashboard from './pages/Dashboard';
 import Upload from './pages/Upload';
 import CaseTracking from './pages/CaseTracking';
@@ -15,13 +16,26 @@ import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Billing from './pages/Billing';
 import ProtectedRoute from './components/common/ProtectedRoute';
-import { AuthProvider } from './context/AuthContext';
-import { ThemeModeProvider, useThemeMode } from './context/ThemeModeContext';
-import { NotificationsProvider } from './context/NotificationsContext';
+import { AuthProvider } from './context/AuthContext.js';
+import { ThemeModeProvider, useThemeMode } from './context/ThemeModeContext.js';
+import { NotificationsProvider } from './context/NotificationsContext.js';
 import SettingsProvider from './context/SettingsContext';
 
 function AppWithTheme() {
   const { mode } = useThemeMode();
+  const [welcomeModalOpen, setWelcomeModalOpen] = useState(false);
+  
+  // Check if the user is a first-time user
+  useEffect(() => {
+    const hasSeenWelcomeScreen = localStorage.getItem('welcomeScreenSeen');
+    if (!hasSeenWelcomeScreen) {
+      setWelcomeModalOpen(true);
+    }
+  }, []);
+
+  const handleCloseWelcomeModal = () => {
+    setWelcomeModalOpen(false);
+  };
   
   const theme = useMemo(() => createTheme({
     palette: {
@@ -305,6 +319,7 @@ function AppWithTheme() {
             {/* Redirect any unknown routes to dashboard */}
             <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
+            <WelcomeModal open={welcomeModalOpen} onClose={handleCloseWelcomeModal} />
           </Router>
         </SettingsProvider>
       </AuthProvider>
