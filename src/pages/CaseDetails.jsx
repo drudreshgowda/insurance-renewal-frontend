@@ -457,7 +457,7 @@ const CaseDetails = () => {
                         {/* Auto Insurance Section */}
                         <Grid item xs={12} md={6}>
                           <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-                            <DirectionsCarIcon fontSize="small" sx={{ mr: 1 }} /> Auto Insurance
+                            <DirectionsCarIcon fontSize="small" sx={{ mr: 1 }} /> Vehicle Insurance
                           </Typography>
                           <Stack spacing={1.5} sx={{ ml: 1 }}>
                             <Typography variant="body2">Comprehensive Coverage: Own damage + third-party liability.</Typography>
@@ -1043,7 +1043,7 @@ const CaseDetails = () => {
                             <Divider />
                             <Box>
                               <Typography variant="body2">
-                                • Auto Accident (2023): ₹3,200
+                                • Vehicle Accident (2023): ₹3,200
                               </Typography>
                               <Typography variant="body2">
                                 • Home Water Damage (2022): ₹1,850
@@ -1211,10 +1211,10 @@ const CaseDetails = () => {
                           </Avatar>
                           <Box>
                             <Typography variant="h6" gutterBottom>
-                              Enhanced Auto Protection
+                              Enhanced Vehicle Protection
                             </Typography>
                             <Typography variant="body2" sx={{ mb: 1 }}>
-                              Based on your existing Auto policy and claims history, we recommend upgrading to our Enhanced Auto Protection plan.
+                              Based on your existing Vehicle policy and claims history, we recommend upgrading to our Enhanced Vehicle Protection plan.
                             </Typography>
                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
                               <Chip label="Roadside Assistance" size="small" />
@@ -1278,7 +1278,7 @@ const CaseDetails = () => {
                               Premium Bundle Discount
                             </Typography>
                             <Typography variant="body2" sx={{ mb: 1 }}>
-                              Bundle your Auto, Home, and Life policies to receive our maximum discount package.
+                              Bundle your Vehicle, Home, and Life policies to receive our maximum discount package.
                             </Typography>
                             <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
                               Save up to 25% on all policies

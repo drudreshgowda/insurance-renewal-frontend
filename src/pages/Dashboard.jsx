@@ -2,12 +2,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Grid, Paper, Typography, Box, Card, CardContent, 
   FormControl, InputLabel, Select, MenuItem, alpha, useTheme,
-  Fade, Grow
+  Fade, Grow, TextField
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, 
-  Tooltip, Legend, ResponsiveContainer, AreaChart, Area,
-  PieChart, Pie, Cell
+  Tooltip, Legend, ResponsiveContainer, AreaChart, Area, LineChart, Line
 } from 'recharts';
 import { fetchDashboardStats, fetchTrendData, fetchBatchStatus } from '../services/api';
 import { 
@@ -39,11 +41,13 @@ const Dashboard = () => {
   const [caseStatus, setCaseStatus] = useState('all');
   const [loaded, setLoaded] = useState(false);
   const [selectedBatch, setSelectedBatch] = useState('all');
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
 
   // Memoize the loadDashboardData function to avoid recreating it on every render
   const loadDashboardData = useCallback(async () => {
     try {
-      const statsData = await fetchDashboardStats(dateRange, policyType, caseStatus);
+      const statsData = await fetchDashboardStats(dateRange, policyType, caseStatus, startDate, endDate);
       if (statsData) {
         setStats(prev => ({
           ...prev,
@@ -51,7 +55,7 @@ const Dashboard = () => {
         }));
       }
       
-      const trends = await fetchTrendData(dateRange, policyType, caseStatus);
+      const trends = await fetchTrendData(dateRange, policyType, caseStatus, startDate, endDate);
       if (trends && Array.isArray(trends)) {
         setTrendData(trends);
       }
@@ -64,7 +68,7 @@ const Dashboard = () => {
     } catch (error) {
       console.error("Failed to load dashboard data:", error);
     }
-  }, [dateRange, policyType, caseStatus]);
+  }, [dateRange, policyType, caseStatus, startDate, endDate]);
 
   useEffect(() => {
     // Initialize with default values to prevent NaN issues
@@ -107,72 +111,6 @@ const Dashboard = () => {
     ];
     
     setTrendData(mockTrendData);
-    
-    // Set mock batch data for initial load
-    const mockBatchData = [
-      {
-        id: 'BATCH-001',
-        uploadDate: '2025-04-01',
-        fileName: 'April_Auto_Renewals.xlsx',
-        totalCases: 125,
-        status: {
-          renewed: 85,
-          inProgress: 25,
-          failed: 10,
-          pending: 5
-        }
-      },
-      {
-        id: 'BATCH-002',
-        uploadDate: '2025-04-05',
-        fileName: 'April_Home_Renewals.xlsx',
-        totalCases: 78,
-        status: {
-          renewed: 45,
-          inProgress: 20,
-          failed: 8,
-          pending: 5
-        }
-      },
-      {
-        id: 'BATCH-003',
-        uploadDate: '2025-04-10',
-        fileName: 'April_Life_Renewals.xlsx',
-        totalCases: 92,
-        status: {
-          renewed: 30,
-          inProgress: 42,
-          failed: 5,
-          pending: 15
-        }
-      },
-      {
-        id: 'BATCH-004',
-        uploadDate: '2025-04-15',
-        fileName: 'April_Health_Renewals.xlsx',
-        totalCases: 110,
-        status: {
-          renewed: 20,
-          inProgress: 65,
-          failed: 5,
-          pending: 20
-        }
-      },
-      {
-        id: 'BATCH-005',
-        uploadDate: '2025-04-20',
-        fileName: 'April_Commercial_Renewals.xlsx',
-        totalCases: 45,
-        status: {
-          renewed: 5,
-          inProgress: 25,
-          failed: 0,
-          pending: 15
-        }
-      }
-    ];
-    
-    setBatchData(mockBatchData);
     
     // Set loaded state for animations
     const loadedTimer = setTimeout(() => {
@@ -261,13 +199,99 @@ const Dashboard = () => {
                 <Select
                   value={dateRange}
                   label="Date Range"
-                  onChange={(e) => setDateRange(e.target.value)}
+                  onChange={(e) => {
+                    setDateRange(e.target.value);
+                    // Reset custom date range when switching to preset ranges
+                    if (e.target.value !== 'custom') {
+                      setStartDate(null);
+                      setEndDate(null);
+                    }
+                  }}
                 >
                   <MenuItem value="day">Daily</MenuItem>
                   <MenuItem value="week">Weekly</MenuItem>
                   <MenuItem value="month">Monthly</MenuItem>
+                  <MenuItem value="custom">Custom Range</MenuItem>
                 </Select>
               </FormControl>
+              
+              {dateRange === 'custom' && (
+                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                  <Box sx={{ display: 'flex', gap: 2 }}>
+                    <DatePicker
+                      label="Start Date"
+                      value={startDate}
+                      onChange={(newValue) => setStartDate(newValue)}
+                      slotProps={{
+                        textField: {
+                          size: "small",
+                          fullWidth: true,
+                          sx: {
+                            minWidth: 160,
+                            '& .MuiOutlinedInput-root': {
+                              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
+                              '&:hover': {
+                                backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
+                              },
+                              '&.Mui-focused': {
+                                backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
+                              },
+                            },
+                            '& .MuiInputLabel-root': {
+                              color: theme.palette.text.secondary,
+                            },
+                            '& .MuiOutlinedInput-notchedOutline': {
+                              borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                            },
+                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                              borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
+                            },
+                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                              borderColor: theme.palette.primary.main,
+                            },
+                          }
+                        }
+                      }}
+                    />
+                    <DatePicker
+                      label="End Date"
+                      value={endDate}
+                      onChange={(newValue) => setEndDate(newValue)}
+                      minDate={startDate}
+                      slotProps={{
+                        textField: {
+                          size: "small",
+                          fullWidth: true,
+                          sx: {
+                            minWidth: 160,
+                            '& .MuiOutlinedInput-root': {
+                              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
+                              '&:hover': {
+                                backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
+                              },
+                              '&.Mui-focused': {
+                                backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
+                              },
+                            },
+                            '& .MuiInputLabel-root': {
+                              color: theme.palette.text.secondary,
+                            },
+                            '& .MuiOutlinedInput-notchedOutline': {
+                              borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                            },
+                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                              borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
+                            },
+                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                              borderColor: theme.palette.primary.main,
+                            },
+                          }
+                        }
+                      }}
+                    />
+                  </Box>
+                </LocalizationProvider>
+              )}
               
               <FormControl sx={{ minWidth: 160 }} size="small">
                 <InputLabel>Policy Type</InputLabel>
@@ -277,8 +301,8 @@ const Dashboard = () => {
                   onChange={(e) => setPolicyType(e.target.value)}
                 >
                   <MenuItem value="all">All Types</MenuItem>
-                  <MenuItem value="auto">Auto</MenuItem>
-                  <MenuItem value="home">Home</MenuItem>
+                  <MenuItem value="vehicle">Vehicle</MenuItem>
+                  <MenuItem value="health">Health</MenuItem>
                   <MenuItem value="life">Life</MenuItem>
                 </Select>
               </FormControl>
@@ -456,8 +480,8 @@ const Dashboard = () => {
             </Grow>
           </Grid>
 
-          {/* Batch Status Chart */}
-          <Grid item xs={12}>
+          {/* Batch Status and Payment Status Charts */}
+          <Grid item xs={12} md={6}>
             <Grow in={loaded} style={{ transformOrigin: '0 0 0' }} timeout={800}>
               <Paper sx={{ p: 3, height: 450, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -487,126 +511,143 @@ const Dashboard = () => {
                   </FormControl>
                 </Box>
                 
-                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, height: '85%' }}>
-                  <Box sx={{ width: { xs: '100%', md: '60%' }, height: '100%' }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart 
-                        data={selectedBatch === 'all' ? batchData : batchData.filter(batch => batch.id === selectedBatch)}
-                        layout="vertical"
-                        barGap={0}
-                        barCategoryGap="15%"
-                      >
-                        <CartesianGrid strokeDasharray="3 3" opacity={0.1} horizontal={false} />
-                        <XAxis type="number" />
-                        <YAxis 
-                          dataKey="fileName" 
-                          type="category" 
-                          width={150}
-                          tick={{ fontSize: 12 }}
-                        />
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: theme.palette.mode === 'dark' ? '#2a2a2a' : '#fff',
-                            borderRadius: 8,
-                            boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
-                          }}
-                        />
-                        <Legend />
-                        <Bar 
-                          dataKey="status.renewed" 
-                          stackId="a" 
-                          fill={theme.palette.success.main} 
-                          name="Renewed" 
-                        />
-                        <Bar 
-                          dataKey="status.inProgress" 
-                          stackId="a" 
-                          fill={theme.palette.warning.main} 
-                          name="In Progress" 
-                        />
-                        <Bar 
-                          dataKey="status.pending" 
-                          stackId="a" 
-                          fill={theme.palette.info.main} 
-                          name="Pending" 
-                        />
-                        <Bar 
-                          dataKey="status.failed" 
-                          stackId="a" 
-                          fill={theme.palette.error.main} 
-                          name="Failed" 
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
+                <Box sx={{ height: '85%' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart 
+                      data={selectedBatch === 'all' ? batchData : batchData.filter(batch => batch.id === selectedBatch)}
+                      layout="vertical"
+                      barGap={0}
+                      barCategoryGap="15%"
+                    >
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.1} horizontal={false} />
+                      <XAxis type="number" />
+                      <YAxis 
+                        dataKey="fileName" 
+                        type="category" 
+                        width={150}
+                        tick={{ fontSize: 12 }}
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: theme.palette.mode === 'dark' ? '#2a2a2a' : '#fff',
+                          borderRadius: 8,
+                          boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                        }}
+                      />
+                      <Legend />
+                      <Bar 
+                        dataKey="status.renewed" 
+                        stackId="a" 
+                        fill={theme.palette.success.main} 
+                        name="Renewed" 
+                      />
+                      <Bar 
+                        dataKey="status.inProgress" 
+                        stackId="a" 
+                        fill={theme.palette.warning.main} 
+                        name="In Progress" 
+                      />
+                      <Bar 
+                        dataKey="status.pending" 
+                        stackId="a" 
+                        fill={theme.palette.info.main} 
+                        name="Pending" 
+                      />
+                      <Bar 
+                        dataKey="status.failed" 
+                        stackId="a" 
+                        fill={theme.palette.error.main} 
+                        name="Failed" 
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </Box>
+              </Paper>
+            </Grow>
+          </Grid>
+
+          {/* Payment Status Chart */}
+          <Grid item xs={12} md={6}>
+            <Grow in={loaded} style={{ transformOrigin: '0 0 0' }} timeout={900}>
+              <Paper sx={{ p: 3, height: 450, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Box>
+                    <Typography variant="h6" gutterBottom fontWeight="600" sx={{ mb: 0 }}>
+                      Payment Status
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Payment trends over time
+                    </Typography>
                   </Box>
                   
-                  <Box sx={{ 
-                    width: { xs: '100%', md: '40%' }, 
-                    height: '100%',
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                  }}>
-                    {selectedBatch !== 'all' && batchData.filter(batch => batch.id === selectedBatch).length > 0 && (
-                      <>
-                        <Typography variant="h6" align="center" gutterBottom>
-                          {batchData.find(batch => batch.id === selectedBatch)?.fileName}
-                        </Typography>
-                        <ResponsiveContainer width="100%" height="70%">
-                          <PieChart>
-                            <Pie
-                              data={(() => {
-                                const batch = batchData.find(b => b.id === selectedBatch);
-                                if (!batch) return [];
-                                return [
-                                  { name: 'Renewed', value: batch.status.renewed, color: theme.palette.success.main },
-                                  { name: 'In Progress', value: batch.status.inProgress, color: theme.palette.warning.main },
-                                  { name: 'Pending', value: batch.status.pending, color: theme.palette.info.main },
-                                  { name: 'Failed', value: batch.status.failed, color: theme.palette.error.main }
-                                ];
-                              })()}
-                              cx="50%"
-                              cy="50%"
-                              labelLine={false}
-                              outerRadius={80}
-                              fill="#8884d8"
-                              dataKey="value"
-                              nameKey="name"
-                              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                            >
-                              {(() => {
-                                const batch = batchData.find(b => b.id === selectedBatch);
-                                if (!batch) return null;
-                                return [
-                                  { name: 'Renewed', value: batch.status.renewed, color: theme.palette.success.main },
-                                  { name: 'In Progress', value: batch.status.inProgress, color: theme.palette.warning.main },
-                                  { name: 'Pending', value: batch.status.pending, color: theme.palette.info.main },
-                                  { name: 'Failed', value: batch.status.failed, color: theme.palette.error.main }
-                                ].map((entry, index) => (
-                                  <Cell key={`cell-${index}`} fill={entry.color} />
-                                ));
-                              })()}
-                            </Pie>
-                            <Tooltip 
-                              formatter={(value, name) => [value, name]}
-                              contentStyle={{ 
-                                backgroundColor: theme.palette.mode === 'dark' ? '#2a2a2a' : '#fff',
-                                borderRadius: 8,
-                                boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
-                              }}
-                            />
-                            <Legend />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </>
-                    )}
-                    {selectedBatch === 'all' && (
-                      <Typography variant="body1" align="center" sx={{ mt: 4 }}>
-                        Select a specific batch to view detailed breakdown
-                      </Typography>
-                    )}
-                  </Box>
+                  <FormControl sx={{ minWidth: 200 }} size="small">
+                    <InputLabel>Select Batch</InputLabel>
+                    <Select
+                      value={selectedBatch}
+                      label="Select Batch"
+                      onChange={(e) => setSelectedBatch(e.target.value)}
+                    >
+                      <MenuItem value="all">All Batches</MenuItem>
+                      {batchData.map((batch) => (
+                        <MenuItem key={batch.id} value={batch.id}>
+                          {batch.fileName}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Box>
+                
+                <Box sx={{ height: '85%' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={selectedBatch === 'all' ? batchData : batchData.filter(batch => batch.id === selectedBatch)}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                      <XAxis 
+                        dataKey="fileName" 
+                        tick={{ fontSize: 12 }}
+                        angle={-45}
+                        textAnchor="end"
+                        height={70}
+                      />
+                      <YAxis 
+                        tickFormatter={(value) => `₹${(value / 100000).toFixed(1)}L`}
+                      />
+                      <Tooltip 
+                        formatter={(value) => new Intl.NumberFormat('en-IN', { 
+                          style: 'currency', 
+                          currency: 'INR',
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 0
+                        }).format(value)}
+                        contentStyle={{ 
+                          backgroundColor: theme.palette.mode === 'dark' ? '#2a2a2a' : '#fff',
+                          borderRadius: 8,
+                          boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                        }}
+                      />
+                      <Legend />
+                      <Line 
+                        type="monotone" 
+                        dataKey="payment.received" 
+                        stroke={theme.palette.success.main} 
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
+                        name="Payment Received"
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="payment.pending" 
+                        stroke={theme.palette.warning.main} 
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
+                        name="Payment Pending"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
                 </Box>
               </Paper>
             </Grow>

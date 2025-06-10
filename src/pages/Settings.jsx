@@ -588,7 +588,7 @@ const Settings = () => {
               color="primary"
               startIcon={<SaveIcon />}
               onClick={handleSaveSettings}
-              sx={{ 
+              sx={{
                 borderRadius: 2,
                 px: 3,
                 py: 1,

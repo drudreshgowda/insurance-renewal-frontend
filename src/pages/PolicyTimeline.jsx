@@ -90,11 +90,11 @@ const PolicyTimeline = () => {
   // Sample policy timeline data
   const mockPolicyData = {
     customerId: customerIdFromUrl || "CUST-12345",
-    customerName: customerNameFromUrl || "John Smith",
+    customerName: customerNameFromUrl || "Arjun Sharma",
     policies: [
       {
-        policyId: "POL-AUTO-987",
-        policyType: "Auto Insurance",
+        policyId: "POL-VEHICLE-987",
+        policyType: "Vehicle Insurance",
         currentPremium: 1250.00,
         startDate: "2018-06-15",
         events: [
@@ -103,11 +103,11 @@ const PolicyTimeline = () => {
             date: "2018-06-15",
             type: "creation",
             title: "Policy Created",
-            description: "Auto insurance policy initiated with basic coverage",
+            description: "Vehicle insurance policy initiated with basic coverage",
             details: {
               premium: 980.00,
-              coverage: "Basic coverage with $500 deductible",
-              agent: "Alice Johnson"
+              coverage: "Basic coverage with ₹25,000 deductible",
+              agent: "Priya Patel"
             }
           },
           {
@@ -118,8 +118,8 @@ const PolicyTimeline = () => {
             description: "Added comprehensive coverage to the policy",
             details: {
               premium: 1120.00,
-              coverage: "Comprehensive coverage with $250 deductible",
-              agent: "Bob Miller"
+              coverage: "Comprehensive coverage with ₹15,000 deductible",
+              agent: "Rajesh Kumar"
             }
           },
           {
@@ -130,8 +130,8 @@ const PolicyTimeline = () => {
             description: "Annual policy renewal with 5% loyalty discount",
             details: {
               premium: 1064.00,
-              coverage: "Comprehensive coverage with $250 deductible",
-              agent: "Alice Johnson"
+              coverage: "Comprehensive coverage with ₹15,000 deductible",
+              agent: "Priya Patel"
             }
           },
           {
@@ -143,8 +143,8 @@ const PolicyTimeline = () => {
             details: {
               claimAmount: 1200.00,
               status: "Approved",
-              deductible: 250.00,
-              handledBy: "Carol Davis"
+              deductible: 15000.00,
+              handledBy: "Ananya Reddy"
             }
           },
           {
@@ -155,8 +155,8 @@ const PolicyTimeline = () => {
             description: "Annual policy renewal with adjusted premium after claim",
             details: {
               premium: 1150.00,
-              coverage: "Comprehensive coverage with $250 deductible",
-              agent: "Alice Johnson"
+              coverage: "Comprehensive coverage with ₹15,000 deductible",
+              agent: "Priya Patel"
             }
           },
           {
@@ -180,7 +180,7 @@ const PolicyTimeline = () => {
             details: {
               premium: 1195.00,
               coverage: "Comprehensive coverage with roadside assistance",
-              agent: "David Wilson"
+              agent: "Amit Shah"
             }
           },
           {
@@ -193,7 +193,7 @@ const PolicyTimeline = () => {
               premium: 1135.00,
               discount: "5% multi-policy discount applied",
               coverage: "Comprehensive coverage with roadside assistance",
-              agent: "Alice Johnson"
+              agent: "Priya Patel"
             }
           },
           {
@@ -203,7 +203,7 @@ const PolicyTimeline = () => {
             title: "Coverage Review",
             description: "Scheduled call to review current coverage options",
             details: {
-              agent: "Alice Johnson",
+              agent: "Priya Patel",
               outcome: "No changes requested by customer",
               followUp: "Annual review scheduled for same time next year"
             }
@@ -217,14 +217,14 @@ const PolicyTimeline = () => {
             details: {
               premium: 1250.00,
               coverage: "Comprehensive coverage with roadside assistance and rental car service",
-              agent: "Alice Johnson"
+              agent: "Priya Patel"
             }
           }
         ]
       },
       {
-        policyId: "POL-HOME-456",
-        policyType: "Home Insurance",
+        policyId: "POL-LIFE-456",
+        policyType: "Life Insurance",
         currentPremium: 950.00,
         startDate: "2020-09-22",
         events: [
@@ -233,11 +233,11 @@ const PolicyTimeline = () => {
             date: "2020-09-22",
             type: "creation",
             title: "Policy Created",
-            description: "Home insurance policy initiated with standard coverage",
+            description: "Life insurance policy initiated with standard coverage",
             details: {
               premium: 850.00,
-              coverage: "Standard home coverage with $1000 deductible",
-              agent: "Bob Miller"
+              coverage: "Standard Life coverage with ₹50,000 deductible",
+              agent: "Rajesh Kumar"
             }
           },
           {
@@ -245,11 +245,11 @@ const PolicyTimeline = () => {
             date: "2021-08-15",
             type: "modification",
             title: "Coverage Update",
-            description: "Added flood protection coverage",
+            description: "Added critical illness coverage",
             details: {
               premium: 925.00,
-              coverage: "Enhanced coverage with flood protection",
-              agent: "Carol Davis"
+              coverage: "Enhanced coverage with critical illness protection",
+              agent: "Ananya Reddy"
             }
           },
           {
@@ -260,9 +260,9 @@ const PolicyTimeline = () => {
             description: "Annual policy renewal with bundle discount",
             details: {
               premium: 879.00,
-              discount: "5% bundle discount with auto policy",
-              coverage: "Enhanced coverage with flood protection",
-              agent: "Bob Miller"
+              discount: "5% bundle discount with Vehicle policy",
+              coverage: "Enhanced coverage with critical illness protection",
+              agent: "Rajesh Kumar"
             }
           },
           {
@@ -270,12 +270,12 @@ const PolicyTimeline = () => {
             date: "2022-09-22",
             type: "renewal",
             title: "Policy Renewed",
-            description: "Annual policy renewal with home security discount",
+            description: "Annual policy renewal with loyalty discount",
             details: {
               premium: 850.00,
-              discount: "Added 3% home security system discount",
-              coverage: "Enhanced coverage with flood protection",
-              agent: "Alice Johnson"
+              discount: "Added 3% loyalty discount",
+              coverage: "Enhanced coverage with critical illness protection",
+              agent: "Priya Patel"
             }
           },
           {
@@ -283,12 +283,12 @@ const PolicyTimeline = () => {
             date: "2023-04-18",
             type: "claim",
             title: "Claim Filed",
-            description: "Claim filed for water damage from broken pipe",
+            description: "Claim filed for critical illness coverage",
             details: {
               claimAmount: 3200.00,
               status: "Approved",
-              deductible: 1000.00,
-              handledBy: "David Wilson"
+              deductible: 50000.00,
+              handledBy: "Amit Shah"
             }
           },
           {
@@ -299,8 +299,8 @@ const PolicyTimeline = () => {
             description: "Annual policy renewal with premium adjustment after claim",
             details: {
               premium: 950.00,
-              coverage: "Enhanced coverage with flood protection",
-              agent: "Carol Davis"
+              coverage: "Enhanced coverage with critical illness protection",
+              agent: "Ananya Reddy"
             }
           }
         ]

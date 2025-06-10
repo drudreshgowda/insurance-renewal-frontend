@@ -699,6 +699,10 @@ export const fetchBatchStatus = async () => {
             inProgress: 25,
             failed: 10,
             pending: 5
+          },
+          payment: {
+            received: 75,
+            pending: 50
           }
         },
         {
@@ -711,6 +715,10 @@ export const fetchBatchStatus = async () => {
             inProgress: 20,
             failed: 8,
             pending: 5
+          },
+          payment: {
+            received: 40,
+            pending: 38
           }
         },
         {
@@ -723,6 +731,10 @@ export const fetchBatchStatus = async () => {
             inProgress: 42,
             failed: 5,
             pending: 15
+          },
+          payment: {
+            received: 28,
+            pending: 64
           }
         },
         {
@@ -735,6 +747,10 @@ export const fetchBatchStatus = async () => {
             inProgress: 65,
             failed: 5,
             pending: 20
+          },
+          payment: {
+            received: 15,
+            pending: 95
           }
         },
         {
@@ -747,6 +763,10 @@ export const fetchBatchStatus = async () => {
             inProgress: 25,
             failed: 0,
             pending: 15
+          },
+          payment: {
+            received: 5,
+            pending: 40
           }
         }
       ];

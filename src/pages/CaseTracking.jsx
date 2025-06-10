@@ -44,19 +44,19 @@ const CaseTracking = () => {
   const mockCases = useMemo(() => [
     {
       id: 'CASE-001',
-      customerName: 'John Smith',
+      customerName: 'Arjun Sharma',
       policyNumber: 'POL-12345',
       status: 'Assigned',
-      agent: 'Alice Johnson',
+      agent: 'Priya Patel',
       uploadDate: '2025-04-08',
       isPriority: false,
       batchId: 'BATCH-2025-04-08-A',
       contactInfo: {
-        email: 'john.smith@example.com',
-        phone: '555-123-4567'
+        email: 'arjun.sharma@gmail.com',
+        phone: '9876543210'
       },
       policyDetails: {
-        type: 'Auto',
+        type: 'Vehicle',
         expiryDate: '2025-05-15',
         premium: 1250.00
       },
@@ -64,16 +64,16 @@ const CaseTracking = () => {
     },
     {
       id: 'CASE-002',
-      customerName: 'Sarah Williams',
+      customerName: 'Meera Kapoor',
       policyNumber: 'POL-23456',
       status: 'Renewed',
-      agent: 'Bob Miller',
+      agent: 'Rajesh Kumar',
       uploadDate: '2025-04-07',
       isPriority: true,
       batchId: 'BATCH-2025-04-07-B',
       contactInfo: {
-        email: 'sarah.w@example.com',
-        phone: '555-234-5678'
+        email: 'meera.kapoor@gmail.com',
+        phone: '9876543211'
       },
       policyDetails: {
         type: 'Home',
@@ -84,16 +84,16 @@ const CaseTracking = () => {
     },
     {
       id: 'CASE-003',
-      customerName: 'Michael Johnson',
+      customerName: 'Vikram Singh',
       policyNumber: 'POL-34567',
       status: 'Failed',
-      agent: 'Carol Davis',
+      agent: 'Ananya Reddy',
       uploadDate: '2025-04-06',
       isPriority: false,
       batchId: 'BATCH-2025-04-06-A',
       contactInfo: {
-        email: 'michael.j@example.com',
-        phone: '555-345-6789'
+        email: 'vikram.singh@gmail.com',
+        phone: '9876543212'
       },
       policyDetails: {
         type: 'Life',
@@ -104,16 +104,16 @@ const CaseTracking = () => {
     },
     {
       id: 'CASE-004',
-      customerName: 'Emily Brown',
+      customerName: 'Priyanka Gupta',
       policyNumber: 'POL-45678',
       status: 'In Progress',
-      agent: 'David Wilson',
+      agent: 'Amit Shah',
       uploadDate: '2025-04-05',
       isPriority: false,
       batchId: 'BATCH-2025-04-05-C',
       contactInfo: {
-        email: 'emily.b@example.com',
-        phone: '555-456-7890'
+        email: 'priyanka.gupta@gmail.com',
+        phone: '9876543213'
       },
       policyDetails: {
         type: 'Auto',
@@ -124,7 +124,7 @@ const CaseTracking = () => {
     },
     {
       id: 'CASE-005',
-      customerName: 'Robert Taylor',
+      customerName: 'Rahul Verma',
       policyNumber: 'POL-56789',
       status: 'Uploaded',
       agent: 'Unassigned',
@@ -132,8 +132,8 @@ const CaseTracking = () => {
       isPriority: false,
       batchId: 'BATCH-2025-04-10-A',
       contactInfo: {
-        email: 'robert.t@example.com',
-        phone: '555-567-8901'
+        email: 'rahul.verma@gmail.com',
+        phone: '9876543214'
       },
       policyDetails: {
         type: 'Home',
@@ -879,10 +879,10 @@ const CaseTracking = () => {
                 }}
               >
                 <MenuItem value="all">All Agents</MenuItem>
-                <MenuItem value="Alice Johnson">Alice Johnson</MenuItem>
-                <MenuItem value="Bob Miller">Bob Miller</MenuItem>
-                <MenuItem value="Carol Davis">Carol Davis</MenuItem>
-                <MenuItem value="David Wilson">David Wilson</MenuItem>
+                <MenuItem value="Priya Patel">Priya Patel</MenuItem>
+                <MenuItem value="Rajesh Kumar">Rajesh Kumar</MenuItem>
+                <MenuItem value="Ananya Reddy">Ananya Reddy</MenuItem>
+                <MenuItem value="Amit Shah">Amit Shah</MenuItem>
                 <MenuItem value="Unassigned">Unassigned</MenuItem>
               </Select>
             </FormControl>
@@ -1036,6 +1036,7 @@ const CaseTracking = () => {
                     <MenuItem value="Auto">Auto</MenuItem>
                     <MenuItem value="Home">Home</MenuItem>
                     <MenuItem value="Life">Life</MenuItem>
+                    <MenuItem value="Vehicle">Vehicle</MenuItem>
                   </Select>
                 </FormControl>
                 
@@ -1081,10 +1082,10 @@ const CaseTracking = () => {
                     sx={{ borderRadius: 2 }}
                   >
                     <MenuItem value="">Unassigned</MenuItem>
-                    <MenuItem value="Alice Johnson">Alice Johnson</MenuItem>
-                    <MenuItem value="Bob Miller">Bob Miller</MenuItem>
-                    <MenuItem value="Carol Davis">Carol Davis</MenuItem>
-                    <MenuItem value="David Wilson">David Wilson</MenuItem>
+                    <MenuItem value="Priya Patel">Priya Patel</MenuItem>
+                    <MenuItem value="Rajesh Kumar">Rajesh Kumar</MenuItem>
+                    <MenuItem value="Ananya Reddy">Ananya Reddy</MenuItem>
+                    <MenuItem value="Amit Shah">Amit Shah</MenuItem>
                   </Select>
                 </FormControl>
               </Box>

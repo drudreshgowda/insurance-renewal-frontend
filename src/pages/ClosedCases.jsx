@@ -36,17 +36,17 @@ const ClosedCases = () => {
   const mockCases = useMemo(() => [
     {
       id: 'CASE-002',
-      customerName: 'Sarah Williams',
+      customerName: 'Meera Kapoor',
       policyNumber: 'POL-23456',
       status: 'Renewed',
-      agent: 'Bob Miller',
+      agent: 'Rajesh Kumar',
       uploadDate: '2025-04-07',
       closedDate: '2025-04-15',
       isPriority: false,
       batchId: 'BATCH-2025-04-07-B',
       contactInfo: {
-        email: 'sarah.w@example.com',
-        phone: '555-234-5678'
+        email: 'meera.kapoor@gmail.com',
+        phone: '9876543211'
       },
       policyDetails: {
         type: 'Home',
@@ -57,17 +57,17 @@ const ClosedCases = () => {
     },
     {
       id: 'CASE-006',
-      customerName: 'James Anderson',
+      customerName: 'Aditya Malhotra',
       policyNumber: 'POL-67890',
       status: 'Renewed',
-      agent: 'Carol Davis',
+      agent: 'Ananya Reddy',
       uploadDate: '2025-04-02',
       closedDate: '2025-04-10',
       isPriority: true,
       batchId: 'BATCH-2025-04-02-A',
       contactInfo: {
-        email: 'james.a@example.com',
-        phone: '555-789-0123'
+        email: 'aditya.malhotra@gmail.com',
+        phone: '9876543215'
       },
       policyDetails: {
         type: 'Auto',
@@ -78,17 +78,17 @@ const ClosedCases = () => {
     },
     {
       id: 'CASE-008',
-      customerName: 'Michelle Lee',
+      customerName: 'Neha Sharma',
       policyNumber: 'POL-89012',
       status: 'Renewed',
-      agent: 'Alice Johnson',
+      agent: 'Priya Patel',
       uploadDate: '2025-03-25',
       closedDate: '2025-04-05',
       isPriority: false,
       batchId: 'BATCH-2025-03-25-D',
       contactInfo: {
-        email: 'michelle.l@example.com',
-        phone: '555-012-3456'
+        email: 'neha.sharma@gmail.com',
+        phone: '9876543216'
       },
       policyDetails: {
         type: 'Life',
@@ -633,10 +633,10 @@ const ClosedCases = () => {
                 }}
               >
                 <MenuItem value="all">All Agents</MenuItem>
-                <MenuItem value="alice johnson">Alice Johnson</MenuItem>
-                <MenuItem value="bob miller">Bob Miller</MenuItem>
-                <MenuItem value="carol davis">Carol Davis</MenuItem>
-                <MenuItem value="david wilson">David Wilson</MenuItem>
+                <MenuItem value="Priya Patel">Priya Patel</MenuItem>
+                <MenuItem value="Rajesh Kumar">Rajesh Kumar</MenuItem>
+                <MenuItem value="Ananya Reddy">Ananya Reddy</MenuItem>
+                <MenuItem value="Amit Shah">Amit Shah</MenuItem>
               </Select>
             </FormControl>
           </MenuItem>
