@@ -15,6 +15,16 @@ import Login from './pages/Login';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Billing from './pages/Billing';
+import Users from './pages/Users';
+import EmailDashboard from './pages/EmailDashboard';
+import EmailInbox from './pages/Email';
+import EmailDetail from './pages/EmailDetail';
+import EmailAnalytics from './pages/EmailAnalytics';
+import BulkEmail from './pages/BulkEmail';
+
+import Campaigns from './pages/Campaigns';
+import Feedback from './pages/Feedback';
+import Claims from './pages/Claims';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext.js';
 import { ThemeModeProvider, useThemeMode } from './context/ThemeModeContext.js';
@@ -317,6 +327,80 @@ function AppWithTheme() {
             } />
             
             {/* Redirect any unknown routes to dashboard */}
+            <Route path="/users" element={
+              <ProtectedRoute>
+                <Layout>
+                  <Users />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/emails" element={
+              <ProtectedRoute>
+                <Layout>
+                  <EmailInbox />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/emails/dashboard" element={
+              <ProtectedRoute>
+                <Layout>
+                  <EmailDashboard />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/emails/detail/:emailId" element={
+              <ProtectedRoute>
+                <Layout>
+                  <EmailDetail />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/emails/analytics" element={
+              <ProtectedRoute>
+                <Layout>
+                  <EmailAnalytics />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/emails/bulk" element={
+              <ProtectedRoute>
+                <Layout>
+                  <BulkEmail />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/emails/settings" element={<Navigate to="/settings?tab=email" replace />} />
+            
+            <Route path="/campaigns" element={
+              <ProtectedRoute>
+                <Layout>
+                  <Campaigns />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/feedback" element={
+              <ProtectedRoute>
+                <Layout>
+                  <Feedback />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/claims" element={
+              <ProtectedRoute>
+                <Layout>
+                  <Claims />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
             <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
             <WelcomeModal open={welcomeModalOpen} onClose={handleCloseWelcomeModal} />
