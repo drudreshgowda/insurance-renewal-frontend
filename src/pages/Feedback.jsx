@@ -6,7 +6,8 @@ import {
   MenuItem, Tabs, Tab, List, ListItem, ListItemText, ListItemIcon, Divider,
   Alert, useTheme, Fade, Grow, IconButton, Tooltip, Avatar, Badge,
   Paper, Switch, FormControlLabel, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, LinearProgress, AvatarGroup
+  TableContainer, TableHead, TableRow, LinearProgress, AvatarGroup, Toolbar,
+  Checkbox, Menu
 } from '@mui/material';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, 
@@ -28,7 +29,12 @@ import {
   SentimentSatisfied as SentimentSatisfiedIcon, SentimentDissatisfied as SentimentDissatisfiedIcon,
   SentimentNeutral as SentimentNeutralIcon, Assignment as SurveyIcon,
   TextFields as TextFieldsIcon, CheckBox as CheckBoxIcon, LinearScale as LinearScaleIcon,
-  Category as CategoryIcon, SentimentSatisfied as SentimentIcon
+  Category as CategoryIcon, SentimentSatisfied as SentimentIcon,
+  AttachFile as AttachFileIcon, Phone as PhoneIcon, Web as WebIcon,
+  Person as PersonIcon, AccessTime as AccessTimeIcon, Business as BusinessIcon,
+  Search as SearchIcon, CalendarToday as CalendarIcon, MoreVert as MoreVertIcon,
+  Comment as CommentIcon, History as HistoryIcon, Drawer as DrawerIcon,
+  Archive as ArchiveIcon, Reply as ReplyIcon, PersonAdd as AssignIcon
 } from '@mui/icons-material';
 
 const Feedback = () => {
@@ -47,13 +53,22 @@ const Feedback = () => {
   const [templateDialog, setTemplateDialog] = useState(false);
   const [automationDialog, setAutomationDialog] = useState(false);
   const [settingsDialog, setSettingsDialog] = useState(false);
+  const [dateRangeDialog, setDateRangeDialog] = useState(false);
   
   // Form states
   const [searchTerm, setSearchTerm] = useState('');
+  const [feedbackFilter, setFeedbackFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [ratingFilter, setRatingFilter] = useState('all');
+  const [channelFilter, setChannelFilter] = useState('all');
+  const [assignedFilter, setAssignedFilter] = useState('all');
+  const [dateRange, setDateRange] = useState({ from: '', to: '' });
+  const [selectedFeedbackIds, setSelectedFeedbackIds] = useState([]);
+  const [bulkActionsVisible, setBulkActionsVisible] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [assignedAgent, setAssignedAgent] = useState('');
+  const [feedbackDetailOpen, setFeedbackDetailOpen] = useState(false);
+  const [actionMenus, setActionMenus] = useState({});
   
   // Survey form states
   const [surveyForm, setSurveyForm] = useState({
@@ -110,36 +125,178 @@ const Feedback = () => {
     {
       id: 1,
       customer: 'John Smith',
+      customerEmail: 'john.smith@email.com',
+      customerPhone: '+1234567890',
       rating: 5,
       category: 'Service Quality',
-      message: 'Excellent service! Very satisfied with the claim process.',
-      date: '2024-12-28',
+      message: 'Excellent service! Very satisfied with the claim process. The agent was professional and resolved my issue quickly.',
+      fullMessage: 'Excellent service! Very satisfied with the claim process. The agent was professional and resolved my issue quickly. I would definitely recommend this service to others.',
+      date: '2024-12-28T10:30:00Z',
       status: 'resolved',
       sentiment: 'positive',
-      channel: 'email'
+      channel: 'email',
+      flagged: false,
+      hasAttachments: false,
+      assignedTo: 'Alice Cooper',
+      tags: ['Appreciation', 'Claims'],
+      priority: 'low',
+      responseTime: '2 hours',
+      location: 'New York, USA'
     },
     {
       id: 2,
       customer: 'Sarah Johnson',
+      customerEmail: 'sarah.j@email.com',
+      customerPhone: '+1234567891',
       rating: 2,
       category: 'Response Time',
-      message: 'Took too long to get a response. Very disappointed.',
-      date: '2024-12-28',
+      message: 'Took too long to get a response. Very disappointed with the delay.',
+      fullMessage: 'Took too long to get a response. Very disappointed with the delay. I waited over 48 hours for a simple inquiry response which is unacceptable.',
+      date: '2024-12-28T14:15:00Z',
       status: 'unaddressed',
       sentiment: 'negative',
       channel: 'survey',
-      flagged: true
+      flagged: true,
+      hasAttachments: false,
+      assignedTo: null,
+      tags: ['Complaint', 'Response Time'],
+      priority: 'high',
+      responseTime: null,
+      location: 'California, USA'
     },
     {
       id: 3,
       customer: 'Mike Davis',
+      customerEmail: 'mike.davis@email.com',
+      customerPhone: '+1234567892',
       rating: 4,
       category: 'Policy Information',
-      message: 'Good information provided, but could be clearer.',
-      date: '2024-12-27',
+      message: 'Good information provided, but could be clearer in some areas.',
+      fullMessage: 'Good information provided, but could be clearer in some areas. The policy documents are comprehensive but sometimes hard to understand for average customers.',
+      date: '2024-12-27T16:45:00Z',
       status: 'in_progress',
       sentiment: 'positive',
-      channel: 'whatsapp'
+      channel: 'whatsapp',
+      flagged: false,
+      hasAttachments: false,
+      assignedTo: 'Bob Wilson',
+      tags: ['Suggestion', 'Policy'],
+      priority: 'medium',
+      responseTime: '1 day',
+      location: 'Texas, USA'
+    },
+    {
+      id: 4,
+      customer: 'Emma Wilson',
+      customerEmail: 'emma.wilson@email.com',
+      customerPhone: '+1234567893',
+      rating: 1,
+      category: 'Claims Process',
+      message: 'Terrible experience. My claim was denied without proper explanation.',
+      fullMessage: 'Terrible experience. My claim was denied without proper explanation. I have been a loyal customer for 10 years and this treatment is unacceptable. I am attaching all relevant documents for review.',
+      date: '2024-12-27T11:30:00Z',
+      status: 'unaddressed',
+      sentiment: 'negative',
+      channel: 'email',
+      flagged: true,
+      hasAttachments: true,
+      attachments: [
+        { name: 'claim_documents.pdf', size: '2.3MB', type: 'pdf' },
+        { name: 'correspondence.pdf', size: '1.1MB', type: 'pdf' }
+      ],
+      assignedTo: null,
+      tags: ['Complaint', 'Claims', 'Urgent'],
+      priority: 'urgent',
+      responseTime: null,
+      location: 'Florida, USA'
+    },
+    {
+      id: 5,
+      customer: 'Robert Chen',
+      customerEmail: 'robert.chen@email.com',
+      customerPhone: '+1234567894',
+      rating: 3,
+      category: 'Service Quality',
+      message: 'Average service. Could be better. Uploading screenshots of issues.',
+      fullMessage: 'Average service. Could be better. Uploading screenshots of the issues I encountered with the mobile app. The interface is confusing and some features don\'t work properly.',
+      date: '2024-12-26T09:20:00Z',
+      status: 'in_progress',
+      sentiment: 'neutral',
+      channel: 'web',
+      flagged: true,
+      hasAttachments: true,
+      attachments: [
+        { name: 'screenshot1.png', size: '0.8MB', type: 'image' },
+        { name: 'screenshot2.png', size: '1.2MB', type: 'image' }
+      ],
+      assignedTo: 'Carol Brown',
+      tags: ['Bug Report', 'Mobile App'],
+      priority: 'medium',
+      responseTime: '6 hours',
+      location: 'Washington, USA'
+    },
+    {
+      id: 6,
+      customer: 'Lisa Anderson',
+      customerEmail: 'lisa.anderson@email.com',
+      customerPhone: '+1234567895',
+      rating: 2,
+      category: 'Policy Information',
+      message: 'Confusing policy terms. Need clarification urgently.',
+      fullMessage: 'Confusing policy terms. Need clarification urgently. The renewal notice has terms that are different from my original policy and I need to understand what changed.',
+      date: '2024-12-26T13:45:00Z',
+      status: 'unaddressed',
+      sentiment: 'negative',
+      channel: 'phone',
+      flagged: false,
+      hasAttachments: false,
+      assignedTo: null,
+      tags: ['Policy', 'Clarification'],
+      priority: 'high',
+      responseTime: null,
+      location: 'Illinois, USA'
+    },
+    {
+      id: 7,
+      customer: 'David Brown',
+      customerEmail: 'david.brown@email.com',
+      customerPhone: '+1234567896',
+      rating: 5,
+      category: 'Customer Support',
+      message: 'Outstanding support from your team. Thank you!',
+      fullMessage: 'Outstanding support from your team. Thank you! The representative was knowledgeable, patient, and went above and beyond to help me resolve my billing issue.',
+      date: '2024-12-25T15:20:00Z',
+      status: 'resolved',
+      sentiment: 'positive',
+      channel: 'email',
+      flagged: false,
+      hasAttachments: false,
+      assignedTo: 'Alice Cooper',
+      tags: ['Appreciation', 'Support'],
+      priority: 'low',
+      responseTime: '30 minutes',
+      location: 'Georgia, USA'
+    },
+    {
+      id: 8,
+      customer: 'Maria Garcia',
+      customerEmail: 'maria.garcia@email.com',
+      customerPhone: '+1234567897',
+      rating: 1,
+      category: 'Billing',
+      message: 'Billing error on my account. This needs immediate attention.',
+      fullMessage: 'Billing error on my account. This needs immediate attention. I was charged twice for the same premium payment and need this resolved immediately.',
+      date: '2024-12-25T08:10:00Z',
+      status: 'unaddressed',
+      sentiment: 'negative',
+      channel: 'sms',
+      flagged: true,
+      hasAttachments: false,
+      assignedTo: null,
+      tags: ['Billing', 'Error', 'Urgent'],
+      priority: 'urgent',
+      responseTime: null,
+      location: 'Arizona, USA'
     }
   ]);
 
@@ -303,13 +460,55 @@ const Feedback = () => {
 
   const filteredFeedback = recentFeedback.filter(feedback => {
     const matchesSearch = feedback.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         feedback.message.toLowerCase().includes(searchTerm.toLowerCase());
+                         feedback.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         feedback.customerEmail.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Main feedback filter
+    let matchesFeedbackFilter = true;
+    switch (feedbackFilter) {
+      case 'all':
+        matchesFeedbackFilter = true;
+        break;
+      case 'unaddressed':
+        matchesFeedbackFilter = feedback.status === 'unaddressed';
+        break;
+      case 'negative':
+        matchesFeedbackFilter = feedback.rating <= 2;
+        break;
+      case 'flagged':
+        matchesFeedbackFilter = feedback.flagged === true;
+        break;
+      case 'attachments':
+        matchesFeedbackFilter = feedback.hasAttachments === true;
+        break;
+      case 'resolved':
+        matchesFeedbackFilter = feedback.status === 'resolved';
+        break;
+      default:
+        matchesFeedbackFilter = true;
+    }
+    
     const matchesStatus = statusFilter === 'all' || feedback.status === statusFilter;
     const matchesRating = ratingFilter === 'all' || 
                          (ratingFilter === 'negative' && feedback.rating <= 2) ||
                          (ratingFilter === 'neutral' && feedback.rating === 3) ||
                          (ratingFilter === 'positive' && feedback.rating >= 4);
-    return matchesSearch && matchesStatus && matchesRating;
+    const matchesChannel = channelFilter === 'all' || feedback.channel === channelFilter;
+    const matchesAssigned = assignedFilter === 'all' || 
+                           (assignedFilter === 'unassigned' && !feedback.assignedTo) ||
+                           feedback.assignedTo === assignedFilter;
+    
+    // Date range filter
+    let matchesDateRange = true;
+    if (dateRange.from && dateRange.to) {
+      const feedbackDate = new Date(feedback.date);
+      const fromDate = new Date(dateRange.from);
+      const toDate = new Date(dateRange.to);
+      toDate.setHours(23, 59, 59, 999); // Include the entire end date
+      matchesDateRange = feedbackDate >= fromDate && feedbackDate <= toDate;
+    }
+    
+    return matchesSearch && matchesFeedbackFilter && matchesStatus && matchesRating && matchesChannel && matchesAssigned && matchesDateRange;
   });
 
   // StatCard component similar to other modules
@@ -401,8 +600,76 @@ const Feedback = () => {
       case 'sms': return <SmsIcon />;
       case 'whatsapp': return <WhatsAppIcon />;
       case 'survey': return <SurveyIcon />;
+      case 'phone': return <PhoneIcon />;
+      case 'web': return <WebIcon />;
       default: return <InboxIcon />;
     }
+  };
+
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case 'urgent': return '#f44336';
+      case 'high': return '#ff9800';
+      case 'medium': return '#2196f3';
+      case 'low': return '#4caf50';
+      default: return '#757575';
+    }
+  };
+
+  const handleSelectFeedback = (feedbackId) => {
+    setSelectedFeedbackIds(prev => {
+      const newSelection = prev.includes(feedbackId) 
+        ? prev.filter(id => id !== feedbackId)
+        : [...prev, feedbackId];
+      setBulkActionsVisible(newSelection.length > 0);
+      return newSelection;
+    });
+  };
+
+  const handleSelectAllFeedback = (checked) => {
+    const newSelection = checked ? filteredFeedback.map(f => f.id) : [];
+    setSelectedFeedbackIds(newSelection);
+    setBulkActionsVisible(newSelection.length > 0);
+  };
+
+  const handleBulkAction = (action) => {
+    console.log(`Bulk ${action} for feedback IDs:`, selectedFeedbackIds);
+    // In real app, this would call an API
+    setSelectedFeedbackIds([]);
+    setBulkActionsVisible(false);
+  };
+
+  const handleFlagFeedback = (feedbackId) => {
+    // Update feedback to flagged status
+    console.log('Flagging feedback:', feedbackId);
+    // In real app, this would call an API to update the feedback flag status
+    // You could update the local state here for immediate UI feedback
+  };
+
+  const handleActionMenuClick = (event, feedbackId) => {
+    setActionMenus(prev => ({ ...prev, [feedbackId]: event.currentTarget }));
+  };
+
+  const handleActionMenuClose = (feedbackId) => {
+    setActionMenus(prev => ({ ...prev, [feedbackId]: null }));
+  };
+
+  const handleArchiveFeedback = (feedbackId) => {
+    console.log('Archiving feedback:', feedbackId);
+    // In real app, this would call an API to archive the feedback
+    handleActionMenuClose(feedbackId);
+  };
+
+  const handleDeleteFeedback = (feedbackId) => {
+    console.log('Deleting feedback:', feedbackId);
+    // In real app, this would call an API to delete the feedback
+    handleActionMenuClose(feedbackId);
+  };
+
+  const handleEditFeedback = (feedbackId) => {
+    console.log('Editing feedback:', feedbackId);
+    // In real app, this would open an edit dialog or navigate to edit page
+    handleActionMenuClose(feedbackId);
   };
 
   const TabPanel = ({ children, value, index, ...other }) => (
@@ -866,153 +1133,919 @@ const Feedback = () => {
     </Box>
   );
 
-  const FeedbackInboxTab = () => (
-    <Box>
-      <Typography variant="h5" gutterBottom>Feedback Inbox</Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Real-time view of all incoming feedback and customer responses
-      </Typography>
-      
-      {/* Filters and Actions */}
-      <Paper sx={{ p: 2, mb: 3, borderRadius: 2 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={4}>
-            <TextField
-              fullWidth
-              placeholder="Search feedback..."
-              size="small"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              InputProps={{ sx: { borderRadius: 2 } }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={2}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Status</InputLabel>
-              <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-                <MenuItem value="all">All Status</MenuItem>
-                <MenuItem value="unaddressed">Unaddressed</MenuItem>
-                <MenuItem value="in_progress">In Progress</MenuItem>
-                <MenuItem value="resolved">Resolved</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} sm={6} md={2}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Rating</InputLabel>
-              <Select value={ratingFilter} onChange={(e) => setRatingFilter(e.target.value)}>
-                <MenuItem value="all">All Ratings</MenuItem>
-                <MenuItem value="negative">1-2 Stars</MenuItem>
-                <MenuItem value="neutral">3 Stars</MenuItem>
-                <MenuItem value="positive">4-5 Stars</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <Button startIcon={<FilterIcon />} variant="outlined" size="small">
-                Advanced Filters
-              </Button>
-              <Button startIcon={<GetAppIcon />} variant="outlined" size="small">
-                Export
-              </Button>
-              <Button startIcon={<RefreshIcon />} variant="outlined" size="small">
-                Refresh
-              </Button>
-            </Box>
-          </Grid>
-        </Grid>
-      </Paper>
+  const FeedbackInboxTab = () => {
+    // Get counts for each filter
+    const getFilterCounts = () => {
+      return {
+        all: recentFeedback.length,
+        unaddressed: recentFeedback.filter(f => f.status === 'unaddressed').length,
+        negative: recentFeedback.filter(f => f.rating <= 2).length,
+        flagged: recentFeedback.filter(f => f.flagged === true).length,
+        attachments: recentFeedback.filter(f => f.hasAttachments === true).length,
+        resolved: recentFeedback.filter(f => f.status === 'resolved').length
+      };
+    };
 
-      {/* Feedback List */}
-      <Grid container spacing={2}>
-        {filteredFeedback.map((feedback) => (
-          <Grid item xs={12} key={feedback.id}>
-            <Card sx={{ borderRadius: 2, border: feedback.flagged ? `2px solid ${theme.palette.error.main}` : 'none' }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Avatar sx={{ bgcolor: theme.palette.primary.main }}>
-                      {feedback.customer.charAt(0)}
-                    </Avatar>
-                    <Box>
-                      <Typography variant="subtitle1" fontWeight="600">
-                        {feedback.customer}
-                      </Typography>
+    const filterCounts = getFilterCounts();
+
+    return (
+      <Box>
+        {/* Header */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Box>
+            <Typography variant="h5" gutterBottom>Feedback Inbox</Typography>
+            <Typography variant="body2" color="text.secondary">
+              Real-time view of all incoming feedback and customer responses
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            {selectedFeedbackIds.length > 0 && (
+              <Chip 
+                label={`${selectedFeedbackIds.length} selected`} 
+                color="primary" 
+                variant="outlined"
+              />
+            )}
+            <Button
+              variant="outlined"
+              startIcon={<RefreshIcon />}
+              size="small"
+            >
+              Refresh
+            </Button>
+          </Box>
+        </Box>
+
+        {/* 1. Navigation & Sub-Folder Tabs */}
+        <Paper sx={{ mb: 3, borderRadius: 3 }}>
+          <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+            <Typography variant="h6" gutterBottom>Filter Categories</Typography>
+            <Grid container spacing={2}>
+              {[
+                { 
+                  key: 'all', 
+                  label: 'All Feedback', 
+                  icon: '🔁', 
+                  color: 'primary',
+                  count: filterCounts.all
+                },
+                { 
+                  key: 'unaddressed', 
+                  label: 'Unaddressed', 
+                  icon: '🚩', 
+                  color: 'error',
+                  count: filterCounts.unaddressed
+                },
+                { 
+                  key: 'negative', 
+                  label: 'Negative / Low Rating', 
+                  icon: '❗', 
+                  color: 'error',
+                  count: filterCounts.negative
+                },
+                { 
+                  key: 'flagged', 
+                  label: 'Flagged for Follow-Up', 
+                  icon: '🔍', 
+                  color: 'warning',
+                  count: filterCounts.flagged
+                },
+                { 
+                  key: 'attachments', 
+                  label: 'With Attachments', 
+                  icon: '📎', 
+                  color: 'info',
+                  count: filterCounts.attachments
+                },
+                { 
+                  key: 'resolved', 
+                  label: 'Resolved Feedback', 
+                  icon: '✅', 
+                  color: 'success',
+                  count: filterCounts.resolved
+                }
+              ].map((filter) => (
+                <Grid item xs={6} sm={4} md={2} key={filter.key}>
+                  <Button
+                    fullWidth
+                    variant={feedbackFilter === filter.key ? "contained" : "outlined"}
+                    color={filter.color}
+                    onClick={() => setFeedbackFilter(filter.key)}
+                    sx={{ 
+                      borderRadius: 2, 
+                      py: 1.5,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 0.5,
+                      height: '80px'
+                    }}
+                  >
+                    <Typography variant="h6">{filter.icon}</Typography>
+                    <Typography variant="body2" fontWeight="600" fontSize="0.75rem" textAlign="center">
+                      {filter.label}
+                    </Typography>
+                    <Typography 
+                      variant="h6" 
+                      fontWeight="bold" 
+                      color={feedbackFilter === filter.key ? "inherit" : filter.color}
+                    >
+                      {filter.count}
+                    </Typography>
+                  </Button>
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
+        </Paper>
+
+        {/* 3. Filter & Search Panel */}
+        <Paper sx={{ p: 2, mb: 3, borderRadius: 2 }}>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} md={3}>
+              <TextField
+                fullWidth
+                placeholder="Search customers, feedback, email..."
+                size="small"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                InputProps={{
+                  startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />,
+                  sx: { borderRadius: 2 }
+                }}
+              />
+            </Grid>
+            <Grid item xs={6} sm={3} md={2}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Channel</InputLabel>
+                <Select value={channelFilter} onChange={(e) => setChannelFilter(e.target.value)}>
+                  <MenuItem value="all">All Channels</MenuItem>
+                  <MenuItem value="email">Email</MenuItem>
+                  <MenuItem value="sms">SMS</MenuItem>
+                  <MenuItem value="whatsapp">WhatsApp</MenuItem>
+                  <MenuItem value="phone">Phone</MenuItem>
+                  <MenuItem value="web">Web</MenuItem>
+                  <MenuItem value="survey">Survey</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={6} sm={3} md={2}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Assigned To</InputLabel>
+                <Select value={assignedFilter} onChange={(e) => setAssignedFilter(e.target.value)}>
+                  <MenuItem value="all">All Agents</MenuItem>
+                  <MenuItem value="unassigned">Unassigned</MenuItem>
+                  <MenuItem value="Alice Cooper">Alice Cooper</MenuItem>
+                  <MenuItem value="Bob Wilson">Bob Wilson</MenuItem>
+                  <MenuItem value="Carol Brown">Carol Brown</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={6} sm={3} md={2}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Priority</InputLabel>
+                <Select value={ratingFilter} onChange={(e) => setRatingFilter(e.target.value)}>
+                  <MenuItem value="all">All Priorities</MenuItem>
+                  <MenuItem value="urgent">Urgent</MenuItem>
+                  <MenuItem value="high">High</MenuItem>
+                  <MenuItem value="medium">Medium</MenuItem>
+                  <MenuItem value="low">Low</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={6} sm={6} md={3}>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Button 
+                  startIcon={<CalendarIcon />} 
+                  variant="outlined" 
+                  size="small"
+                  onClick={() => setDateRangeDialog(true)}
+                  sx={{ borderRadius: 2 }}
+                  color={dateRange.from && dateRange.to ? "primary" : "inherit"}
+                >
+                  {dateRange.from && dateRange.to ? "Date Filtered" : "Date Range"}
+                </Button>
+                <Button 
+                  startIcon={<GetAppIcon />} 
+                  variant="outlined" 
+                  size="small"
+                  sx={{ borderRadius: 2 }}
+                >
+                  Export
+                </Button>
+              </Box>
+            </Grid>
+          </Grid>
+        </Paper>
+
+        {/* Bulk Actions Toolbar */}
+        {bulkActionsVisible && (
+          <Grow in={bulkActionsVisible} timeout={300}>
+            <Paper sx={{ 
+              p: 2, 
+              mb: 3, 
+              borderRadius: 3, 
+              bgcolor: alpha(theme.palette.primary.main, 0.05),
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`
+            }}>
+              <Toolbar sx={{ px: '0 !important', minHeight: 'auto !important' }}>
+                <Typography variant="h6" sx={{ flex: 1 }}>
+                  {selectedFeedbackIds.length} feedback item(s) selected
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button
+                    startIcon={<PersonIcon />}
+                    variant="contained"
+                    size="small"
+                    onClick={() => handleBulkAction('assign')}
+                    sx={{ borderRadius: 2 }}
+                  >
+                    Bulk Assign
+                  </Button>
+                  <Button
+                    startIcon={<CheckCircleIcon />}
+                    variant="contained"
+                    color="success"
+                    size="small"
+                    onClick={() => handleBulkAction('resolve')}
+                    sx={{ borderRadius: 2 }}
+                  >
+                    Mark Resolved
+                  </Button>
+                  <Button
+                    startIcon={<FlagIcon />}
+                    variant="contained"
+                    color="warning"
+                    size="small"
+                    onClick={() => handleBulkAction('flag')}
+                    sx={{ borderRadius: 2 }}
+                  >
+                    Flag for Follow-Up
+                  </Button>
+                  <Button
+                    startIcon={<GetAppIcon />}
+                    variant="outlined"
+                    size="small"
+                    onClick={() => handleBulkAction('export')}
+                    sx={{ borderRadius: 2 }}
+                  >
+                    Export Selected
+                  </Button>
+                  <Button
+                    startIcon={<CloseIcon />}
+                    variant="text"
+                    size="small"
+                    onClick={() => {
+                      setSelectedFeedbackIds([]);
+                      setBulkActionsVisible(false);
+                    }}
+                    sx={{ borderRadius: 2 }}
+                  >
+                    Clear Selection
+                  </Button>
+                </Box>
+              </Toolbar>
+            </Paper>
+          </Grow>
+        )}
+
+        {/* 2. Feedback Listing Table */}
+        <Paper 
+          elevation={0} 
+          sx={{ 
+            borderRadius: 3,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
+            overflow: 'visible'
+          }}
+        >
+          <TableContainer sx={{ maxHeight: 600, overflow: 'auto' }}>
+            <Table stickyHeader>
+              <TableHead>
+                <TableRow>
+                  <TableCell 
+                    padding="checkbox"
+                    sx={{ 
+                      bgcolor: theme.palette.background.paper,
+                      borderBottom: `2px solid ${theme.palette.divider}`,
+                      position: 'sticky',
+                      top: 0,
+                      zIndex: 100
+                    }}
+                  >
+                    <Checkbox
+                      indeterminate={selectedFeedbackIds.length > 0 && selectedFeedbackIds.length < filteredFeedback.length}
+                      checked={filteredFeedback.length > 0 && selectedFeedbackIds.length === filteredFeedback.length}
+                      onChange={(e) => handleSelectAllFeedback(e.target.checked)}
+                    />
+                  </TableCell>
+                  <TableCell 
+                    sx={{ 
+                      fontWeight: 600,
+                      bgcolor: theme.palette.background.paper,
+                      borderBottom: `2px solid ${theme.palette.divider}`,
+                      position: 'sticky',
+                      top: 0,
+                      zIndex: 100
+                    }}
+                  >
+                    Date & Time
+                  </TableCell>
+                  <TableCell 
+                    sx={{ 
+                      fontWeight: 600,
+                      bgcolor: theme.palette.background.paper,
+                      borderBottom: `2px solid ${theme.palette.divider}`,
+                      position: 'sticky',
+                      top: 0,
+                      zIndex: 100
+                    }}
+                  >
+                    Customer
+                  </TableCell>
+                  <TableCell 
+                    sx={{ 
+                      fontWeight: 600,
+                      bgcolor: theme.palette.background.paper,
+                      borderBottom: `2px solid ${theme.palette.divider}`,
+                      position: 'sticky',
+                      top: 0,
+                      zIndex: 100
+                    }}
+                  >
+                    Rating
+                  </TableCell>
+                  <TableCell 
+                    sx={{ 
+                      fontWeight: 600,
+                      bgcolor: theme.palette.background.paper,
+                      borderBottom: `2px solid ${theme.palette.divider}`,
+                      position: 'sticky',
+                      top: 0,
+                      zIndex: 100
+                    }}
+                  >
+                    Feedback Snippet
+                  </TableCell>
+                  <TableCell 
+                    sx={{ 
+                      fontWeight: 600,
+                      bgcolor: theme.palette.background.paper,
+                      borderBottom: `2px solid ${theme.palette.divider}`,
+                      position: 'sticky',
+                      top: 0,
+                      zIndex: 100
+                    }}
+                  >
+                    Channel
+                  </TableCell>
+                  <TableCell 
+                    sx={{ 
+                      fontWeight: 600,
+                      bgcolor: theme.palette.background.paper,
+                      borderBottom: `2px solid ${theme.palette.divider}`,
+                      position: 'sticky',
+                      top: 0,
+                      zIndex: 100
+                    }}
+                  >
+                    Category/Tag
+                  </TableCell>
+                  <TableCell 
+                    sx={{ 
+                      fontWeight: 600,
+                      bgcolor: theme.palette.background.paper,
+                      borderBottom: `2px solid ${theme.palette.divider}`,
+                      position: 'sticky',
+                      top: 0,
+                      zIndex: 100
+                    }}
+                  >
+                    Status
+                  </TableCell>
+                  <TableCell 
+                    sx={{ 
+                      fontWeight: 600,
+                      bgcolor: theme.palette.background.paper,
+                      borderBottom: `2px solid ${theme.palette.divider}`,
+                      position: 'sticky',
+                      top: 0,
+                      zIndex: 100
+                    }}
+                  >
+                    Assigned To
+                  </TableCell>
+                  <TableCell 
+                    sx={{ 
+                      fontWeight: 600,
+                      bgcolor: theme.palette.background.paper,
+                      borderBottom: `2px solid ${theme.palette.divider}`,
+                      position: 'sticky',
+                      top: 0,
+                      zIndex: 100
+                    }}
+                  >
+                    Actions
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredFeedback.map((feedback) => (
+                  <TableRow 
+                    key={feedback.id}
+                    hover
+                    selected={selectedFeedbackIds.includes(feedback.id)}
+                    sx={{ 
+                      '&:hover': { cursor: 'pointer' },
+                      borderLeft: feedback.priority === 'urgent' ? `4px solid ${getPriorityColor(feedback.priority)}` : 'none'
+                    }}
+                  >
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        checked={selectedFeedbackIds.includes(feedback.id)}
+                        onChange={() => handleSelectFeedback(feedback.id)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Box>
+                        <Typography variant="body2" fontWeight="600">
+                          {new Date(feedback.date).toLocaleDateString()}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {new Date(feedback.date).toLocaleTimeString()}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          {[...Array(5)].map((_, i) => (
-                            <StarIcon
-                              key={i}
-                              fontSize="small"
-                              sx={{ 
-                                color: i < feedback.rating ? '#ffc107' : '#e0e0e0' 
-                              }}
+                        <Avatar sx={{ width: 32, height: 32, bgcolor: theme.palette.primary.main }}>
+                          {feedback.customer.charAt(0)}
+                        </Avatar>
+                        <Box>
+                          <Typography variant="body2" fontWeight="600">
+                            {feedback.customer}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {feedback.customerEmail}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        {[...Array(5)].map((_, i) => (
+                          <StarIcon
+                            key={i}
+                            fontSize="small"
+                            sx={{ 
+                              color: i < feedback.rating ? '#ffc107' : '#e0e0e0' 
+                            }}
+                          />
+                        ))}
+                        <Typography variant="body2" sx={{ ml: 1 }}>
+                          {feedback.rating}/5
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ maxWidth: 200 }}>
+                        <Typography variant="body2" sx={{ 
+                          overflow: 'hidden', 
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {feedback.message}
+                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5 }}>
+                          {feedback.hasAttachments && (
+                            <Chip 
+                              icon={<AttachFileIcon />} 
+                              label={`${feedback.attachments?.length || 0} files`} 
+                              size="small" 
+                              color="info" 
+                              variant="outlined" 
+                            />
+                          )}
+                          {feedback.flagged && (
+                            <Chip 
+                              icon={<FlagIcon />} 
+                              label="Flagged" 
+                              size="small" 
+                              color="error" 
+                              variant="outlined" 
+                            />
+                          )}
+                        </Box>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {getChannelIcon(feedback.channel)}
+                        <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>
+                          {feedback.channel}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        <Chip 
+                          label={feedback.category} 
+                          size="small" 
+                          variant="outlined" 
+                          color="primary"
+                        />
+                        {feedback.tags?.slice(0, 2).map((tag, idx) => (
+                          <Chip 
+                            key={idx}
+                            label={tag} 
+                            size="small" 
+                            variant="filled"
+                            sx={{ fontSize: '0.7rem' }}
+                          />
+                        ))}
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Chip 
+                        label={feedback.status.replace('_', ' ').toUpperCase()}
+                        color={getStatusColor(feedback.status)}
+                        size="small"
+                        variant="filled"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color={feedback.assignedTo ? "text.primary" : "text.secondary"}>
+                        {feedback.assignedTo || 'Unassigned'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', gap: 0.5 }}>
+                        <Tooltip title="View Details">
+                          <IconButton 
+                            size="small" 
+                            onClick={() => {
+                              setSelectedFeedback(feedback);
+                              setFeedbackDetailOpen(true);
+                            }}
+                          >
+                            <ViewIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Mark as Resolved">
+                          <IconButton 
+                            size="small" 
+                            color="success"
+                            onClick={() => handleResolveFeedback(feedback.id)}
+                            disabled={feedback.status === 'resolved'}
+                          >
+                            <CheckCircleIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Flag for Follow-up">
+                          <IconButton 
+                            size="small" 
+                            color="warning"
+                            onClick={() => handleFlagFeedback(feedback.id)}
+                            disabled={feedback.flagged}
+                          >
+                            <FlagIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="More Actions">
+                          <IconButton 
+                            size="small"
+                            onClick={(e) => handleActionMenuClick(e, feedback.id)}
+                          >
+                            <MoreVertIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Menu
+                          anchorEl={actionMenus[feedback.id]}
+                          open={Boolean(actionMenus[feedback.id])}
+                          onClose={() => handleActionMenuClose(feedback.id)}
+                          transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                          anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                        >
+                          <MenuItem onClick={() => {
+                            handleReplyFeedback(feedback);
+                            handleActionMenuClose(feedback.id);
+                          }}>
+                            <ListItemIcon>
+                              <ReplyIcon fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText>Reply</ListItemText>
+                          </MenuItem>
+                          <MenuItem onClick={() => {
+                            handleAssignFeedback(feedback);
+                            handleActionMenuClose(feedback.id);
+                          }}>
+                            <ListItemIcon>
+                              <AssignIcon fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText>Assign Agent</ListItemText>
+                          </MenuItem>
+                          <MenuItem onClick={() => {
+                            handleEditFeedback(feedback.id);
+                            handleActionMenuClose(feedback.id);
+                          }}>
+                            <ListItemIcon>
+                              <EditIcon fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText>Edit</ListItemText>
+                          </MenuItem>
+                          <Divider />
+                          <MenuItem onClick={() => {
+                            handleArchiveFeedback(feedback.id);
+                            handleActionMenuClose(feedback.id);
+                          }}>
+                            <ListItemIcon>
+                              <ArchiveIcon fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText>Archive</ListItemText>
+                          </MenuItem>
+                          <MenuItem onClick={() => {
+                            handleDeleteFeedback(feedback.id);
+                            handleActionMenuClose(feedback.id);
+                          }} sx={{ color: 'error.main' }}>
+                            <ListItemIcon>
+                              <DeleteIcon fontSize="small" color="error" />
+                            </ListItemIcon>
+                            <ListItemText>Delete</ListItemText>
+                          </MenuItem>
+                        </Menu>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
+
+
+
+        {/* 6. Feedback Detail View - Right Drawer */}
+        <Dialog 
+          open={feedbackDetailOpen} 
+          onClose={() => setFeedbackDetailOpen(false)} 
+          maxWidth="md" 
+          fullWidth
+          PaperProps={{ sx: { borderRadius: 3 } }}
+        >
+          <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h6">Feedback Details</Typography>
+            <IconButton onClick={() => setFeedbackDetailOpen(false)}>
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent>
+            {selectedFeedback && (
+              <Grid container spacing={3}>
+                {/* Customer Profile */}
+                <Grid item xs={12} md={4}>
+                  <Paper sx={{ p: 2, borderRadius: 2 }}>
+                    <Typography variant="h6" gutterBottom>Customer Profile</Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                      <Avatar sx={{ width: 48, height: 48, bgcolor: theme.palette.primary.main }}>
+                        {selectedFeedback.customer.charAt(0)}
+                      </Avatar>
+                      <Box>
+                        <Typography variant="subtitle1" fontWeight="600">
+                          {selectedFeedback.customer}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {selectedFeedback.customerEmail}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {selectedFeedback.customerPhone}
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <Box sx={{ mb: 2 }}>
+                      <Typography variant="body2" color="text.secondary">Location</Typography>
+                      <Typography variant="body1">{selectedFeedback.location}</Typography>
+                    </Box>
+                  </Paper>
+                </Grid>
+
+                {/* Feedback Content */}
+                <Grid item xs={12} md={8}>
+                  <Paper sx={{ p: 2, borderRadius: 2, mb: 2 }}>
+                    <Typography variant="h6" gutterBottom>Full Feedback Content</Typography>
+                    <Typography variant="body1" paragraph>
+                      {selectedFeedback.fullMessage}
+                    </Typography>
+                    
+                    {/* Rating Breakdown */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                      <Typography variant="subtitle2">Rating:</Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        {[...Array(5)].map((_, i) => (
+                          <StarIcon
+                            key={i}
+                            fontSize="small"
+                            sx={{ 
+                              color: i < selectedFeedback.rating ? '#ffc107' : '#e0e0e0' 
+                            }}
+                          />
+                        ))}
+                        <Typography variant="body1" sx={{ ml: 1 }}>
+                          {selectedFeedback.rating}/5
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    {/* Tags & Category */}
+                    <Box sx={{ mb: 2 }}>
+                      <Typography variant="subtitle2" gutterBottom>Tags & Category</Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        <Chip 
+                          label={selectedFeedback.category} 
+                          color="primary" 
+                          variant="filled"
+                        />
+                        {selectedFeedback.tags?.map((tag, idx) => (
+                          <Chip 
+                            key={idx}
+                            label={tag} 
+                            size="small" 
+                            variant="outlined"
+                          />
+                        ))}
+                      </Box>
+                    </Box>
+
+                    {/* Attachments */}
+                    {selectedFeedback.hasAttachments && (
+                      <Box sx={{ mb: 2 }}>
+                        <Typography variant="subtitle2" gutterBottom>Attachment Preview</Typography>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                          {selectedFeedback.attachments?.map((attachment, idx) => (
+                            <Chip
+                              key={idx}
+                              icon={<AttachFileIcon />}
+                              label={`${attachment.name} (${attachment.size})`}
+                              variant="outlined"
+                              color="info"
+                              clickable
+                              onClick={() => console.log('Download:', attachment.name)}
                             />
                           ))}
                         </Box>
-                        <Typography variant="caption" color="text.secondary">
-                          {new Date(feedback.date).toLocaleDateString()}
+                      </Box>
+                    )}
+                  </Paper>
+
+                  {/* Action Logs */}
+                  <Paper sx={{ p: 2, borderRadius: 2 }}>
+                    <Typography variant="h6" gutterBottom>Action Logs</Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <HistoryIcon color="primary" />
+                      <Box>
+                        <Typography variant="body2">
+                          Received → {selectedFeedback.flagged ? 'Flagged → ' : ''}{selectedFeedback.status === 'resolved' ? 'Resolved' : 'In Progress'}
                         </Typography>
-                        {getChannelIcon(feedback.channel)}
+                        <Typography variant="caption" color="text.secondary">
+                          Last updated: {new Date(selectedFeedback.date).toLocaleString()}
+                        </Typography>
                       </Box>
                     </Box>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    {feedback.flagged && <FlagIcon color="error" />}
-                    <Chip 
-                      label={feedback.status.replace('_', ' ').toUpperCase()}
-                      color={getStatusColor(feedback.status)}
-                      size="small"
-                    />
-                  </Box>
+                  </Paper>
+                </Grid>
+              </Grid>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ p: 3 }}>
+            <Button onClick={() => setFeedbackDetailOpen(false)}>Close</Button>
+            <Button 
+              variant="outlined" 
+              startIcon={<CommentIcon />}
+              onClick={() => {
+                setFeedbackDetailOpen(false);
+                handleReplyFeedback(selectedFeedback);
+              }}
+            >
+              Reply
+            </Button>
+            <Button 
+              variant="outlined" 
+              startIcon={<PersonIcon />}
+              onClick={() => {
+                setFeedbackDetailOpen(false);
+                handleAssignFeedback(selectedFeedback);
+              }}
+            >
+              Assign
+            </Button>
+            <Button 
+              variant="contained" 
+              startIcon={<CheckCircleIcon />}
+              onClick={() => {
+                handleResolveFeedback(selectedFeedback.id);
+                setFeedbackDetailOpen(false);
+              }}
+              disabled={selectedFeedback?.status === 'resolved'}
+            >
+              Mark Resolved
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Date Range Filter Dialog */}
+        <Dialog open={dateRangeDialog} onClose={() => setDateRangeDialog(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>Select Date Range</DialogTitle>
+          <DialogContent>
+            <Grid container spacing={2} sx={{ mt: 1 }}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="From Date"
+                  type="date"
+                  value={dateRange.from}
+                  onChange={(e) => setDateRange(prev => ({ ...prev, from: e.target.value }))}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="To Date"
+                  type="date"
+                  value={dateRange.to}
+                  onChange={(e) => setDateRange(prev => ({ ...prev, to: e.target.value }))}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  <Chip 
+                    label="Today" 
+                    clickable 
+                    onClick={() => {
+                      const today = new Date().toISOString().split('T')[0];
+                      setDateRange({ from: today, to: today });
+                    }}
+                  />
+                  <Chip 
+                    label="Last 7 days" 
+                    clickable 
+                    onClick={() => {
+                      const today = new Date();
+                      const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+                      setDateRange({ 
+                        from: lastWeek.toISOString().split('T')[0], 
+                        to: today.toISOString().split('T')[0] 
+                      });
+                    }}
+                  />
+                  <Chip 
+                    label="Last 30 days" 
+                    clickable 
+                    onClick={() => {
+                      const today = new Date();
+                      const lastMonth = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+                      setDateRange({ 
+                        from: lastMonth.toISOString().split('T')[0], 
+                        to: today.toISOString().split('T')[0] 
+                      });
+                    }}
+                  />
+                  <Chip 
+                    label="This Month" 
+                    clickable 
+                    onClick={() => {
+                      const today = new Date();
+                      const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                      setDateRange({ 
+                        from: firstDayOfMonth.toISOString().split('T')[0], 
+                        to: today.toISOString().split('T')[0] 
+                      });
+                    }}
+                  />
                 </Box>
-                
-                <Typography variant="body1" sx={{ mb: 2 }}>
-                  {feedback.message}
-                </Typography>
-                
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Chip label={feedback.category} variant="outlined" size="small" />
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button 
-                      size="small" 
-                      variant="outlined"
-                      onClick={() => handleViewFeedback(feedback)}
-                    >
-                      View
-                    </Button>
-                    <Button 
-                      size="small" 
-                      variant="outlined"
-                      onClick={() => handleReplyFeedback(feedback)}
-                    >
-                      Reply
-                    </Button>
-                    <Button 
-                      size="small" 
-                      variant="outlined"
-                      onClick={() => handleAssignFeedback(feedback)}
-                    >
-                      Assign
-                    </Button>
-                    <Button 
-                      size="small" 
-                      variant="contained"
-                      onClick={() => handleResolveFeedback(feedback.id)}
-                      disabled={feedback.status === 'resolved'}
-                    >
-                      Resolve
-                    </Button>
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-    </Box>
-  );
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button 
+              onClick={() => {
+                setDateRange({ from: '', to: '' });
+                setDateRangeDialog(false);
+              }}
+            >
+              Clear
+            </Button>
+            <Button onClick={() => setDateRangeDialog(false)}>Cancel</Button>
+            <Button 
+              onClick={() => setDateRangeDialog(false)} 
+              variant="contained"
+              disabled={!dateRange.from || !dateRange.to}
+            >
+              Apply Filter
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
+    );
+  };
 
   const SurveyCampaignsTab = () => (
     <Box>
