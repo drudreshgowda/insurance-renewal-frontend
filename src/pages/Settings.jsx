@@ -50,7 +50,12 @@ import {
   Error as ErrorIcon,
   Sync as SyncIcon,
   SyncDisabled as SyncDisabledIcon,
-  Merge as MergeIcon
+  Merge as MergeIcon,
+  Speed as SpeedIcon,
+  Description as DescriptionIcon,
+  Analytics as AnalyticsIcon,
+  Verified as VerifiedIcon,
+  Timeline as TrackingIcon
 } from '@mui/icons-material';
 import { useThemeMode } from '../context/ThemeModeContext';
 import { useSettings } from '../context/SettingsContext';
@@ -1635,110 +1640,103 @@ const Settings = () => {
                 </ListItemSecondaryAction>
               </ListItem>
             </List>
-
-            <Box sx={{ mt: 3 }}>
-              <Typography variant="subtitle2" gutterBottom>
-                Data Retention Period
-              </Typography>
-              <TextField
-                type="number"
-                value={campaignSettings.dataRetentionDays}
-                onChange={(e) => handleCampaignSettingChange('dataRetentionDays', parseInt(e.target.value))}
-                InputProps={{
-                  endAdornment: <Typography variant="body2" color="text.secondary">days</Typography>
-                }}
-                sx={{ width: 200 }}
-              />
-            </Box>
-          </CardContent>
-        </Card>
-
-        {/* Rate Limiting & Throttling */}
-        <Card sx={{ mb: 3, borderRadius: 3 }}>
-          <CardContent sx={{ p: 3 }}>
-            <Typography variant="h6" fontWeight="600" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <AccessTimeIcon color="primary" />
-              Rate Limiting & Throttling
-            </Typography>
             
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={4}>
-                <Typography variant="subtitle2" gutterBottom>
-                  Email Rate Limit (per hour)
-                </Typography>
+            <Grid container spacing={2} sx={{ mt: 2 }}>
+              <Grid item xs={12} sm={6}>
                 <TextField
-                  type="number"
                   fullWidth
-                  value={campaignSettings.emailRateLimit}
-                  onChange={(e) => handleCampaignSettingChange('emailRateLimit', parseInt(e.target.value))}
-                />
-              </Grid>
-              
-              <Grid item xs={12} md={4}>
-                <Typography variant="subtitle2" gutterBottom>
-                  SMS Rate Limit (per hour)
-                </Typography>
-                <TextField
+                  label="Data Retention (Days)"
                   type="number"
-                  fullWidth
-                  value={campaignSettings.smsRateLimit}
-                  onChange={(e) => handleCampaignSettingChange('smsRateLimit', parseInt(e.target.value))}
-                />
-              </Grid>
-              
-              <Grid item xs={12} md={4}>
-                <Typography variant="subtitle2" gutterBottom>
-                  WhatsApp Rate Limit (per hour)
-                </Typography>
-                <TextField
-                  type="number"
-                  fullWidth
-                  value={campaignSettings.whatsappRateLimit}
-                  onChange={(e) => handleCampaignSettingChange('whatsappRateLimit', parseInt(e.target.value))}
-                />
-              </Grid>
-              
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2" gutterBottom>
-                  Batch Size
-                </Typography>
-                <TextField
-                  type="number"
-                  fullWidth
-                  value={campaignSettings.batchSize}
-                  onChange={(e) => handleCampaignSettingChange('batchSize', parseInt(e.target.value))}
-                  helperText="Number of messages to send in each batch"
-                />
-              </Grid>
-              
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2" gutterBottom>
-                  Retry Attempts
-                </Typography>
-                <TextField
-                  type="number"
-                  fullWidth
-                  value={campaignSettings.retryAttempts}
-                  onChange={(e) => handleCampaignSettingChange('retryAttempts', parseInt(e.target.value))}
-                  helperText="Number of retry attempts for failed messages"
+                  value={campaignSettings.dataRetentionDays}
+                  onChange={(e) => handleCampaignSettingChange('dataRetentionDays', parseInt(e.target.value))}
+                  inputProps={{ min: 30, max: 2555 }}
+                  helperText="How long to retain campaign data (30-2555 days)"
                 />
               </Grid>
             </Grid>
           </CardContent>
         </Card>
 
-        {/* Template Settings */}
+        {/* Rate Limiting & Performance */}
         <Card sx={{ mb: 3, borderRadius: 3 }}>
           <CardContent sx={{ p: 3 }}>
             <Typography variant="h6" fontWeight="600" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <MergeIcon color="primary" />
-              Template Management
+              <SpeedIcon color="primary" />
+              Rate Limiting & Performance
+            </Typography>
+            
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6} md={4}>
+                <TextField
+                  fullWidth
+                  label="Email Rate Limit (per hour)"
+                  type="number"
+                  value={campaignSettings.emailRateLimit}
+                  onChange={(e) => handleCampaignSettingChange('emailRateLimit', parseInt(e.target.value))}
+                  inputProps={{ min: 100, max: 10000 }}
+                  helperText="Maximum emails per hour"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                <TextField
+                  fullWidth
+                  label="SMS Rate Limit (per hour)"
+                  type="number"
+                  value={campaignSettings.smsRateLimit}
+                  onChange={(e) => handleCampaignSettingChange('smsRateLimit', parseInt(e.target.value))}
+                  inputProps={{ min: 50, max: 1000 }}
+                  helperText="Maximum SMS per hour"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                <TextField
+                  fullWidth
+                  label="WhatsApp Rate Limit (per hour)"
+                  type="number"
+                  value={campaignSettings.whatsappRateLimit}
+                  onChange={(e) => handleCampaignSettingChange('whatsappRateLimit', parseInt(e.target.value))}
+                  inputProps={{ min: 20, max: 500 }}
+                  helperText="Maximum WhatsApp messages per hour"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                <TextField
+                  fullWidth
+                  label="Batch Size"
+                  type="number"
+                  value={campaignSettings.batchSize}
+                  onChange={(e) => handleCampaignSettingChange('batchSize', parseInt(e.target.value))}
+                  inputProps={{ min: 10, max: 1000 }}
+                  helperText="Messages per batch"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                <TextField
+                  fullWidth
+                  label="Retry Attempts"
+                  type="number"
+                  value={campaignSettings.retryAttempts}
+                  onChange={(e) => handleCampaignSettingChange('retryAttempts', parseInt(e.target.value))}
+                  inputProps={{ min: 1, max: 5 }}
+                  helperText="Failed message retry attempts"
+                />
+              </Grid>
+            </Grid>
+          </CardContent>
+        </Card>
+
+        {/* Template & Content Settings */}
+        <Card sx={{ mb: 3, borderRadius: 3 }}>
+          <CardContent sx={{ p: 3 }}>
+            <Typography variant="h6" fontWeight="600" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <DescriptionIcon color="primary" />
+              Template & Content Management
             </Typography>
             
             <List>
               <ListItem>
                 <ListItemIcon>
-                  <CheckCircleIcon color="info" />
+                  <CheckCircleIcon color="warning" />
                 </ListItemIcon>
                 <ListItemText
                   primary="Template Approval Required"
@@ -1754,11 +1752,11 @@ const Settings = () => {
               
               <ListItem>
                 <ListItemIcon>
-                  <RuleIcon color="warning" />
+                  <VerifiedIcon color="success" />
                 </ListItemIcon>
                 <ListItemText
                   primary="DLT Template Required"
-                  secondary="Require DLT template ID for SMS/WhatsApp messages"
+                  secondary="Require DLT template ID for SMS/WhatsApp campaigns"
                 />
                 <ListItemSecondaryAction>
                   <Switch
@@ -1770,7 +1768,7 @@ const Settings = () => {
               
               <ListItem>
                 <ListItemIcon>
-                  <SaveIcon color="success" />
+                  <SaveIcon color="info" />
                 </ListItemIcon>
                 <ListItemText
                   primary="Auto-save Templates"
@@ -1791,18 +1789,18 @@ const Settings = () => {
         <Card sx={{ mb: 3, borderRadius: 3 }}>
           <CardContent sx={{ p: 3 }}>
             <Typography variant="h6" fontWeight="600" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <DataUsageIcon color="primary" />
+              <AnalyticsIcon color="primary" />
               Analytics & Reporting
             </Typography>
             
             <List>
               <ListItem>
                 <ListItemIcon>
-                  <DataUsageIcon color="success" />
+                  <TrackingIcon color="success" />
                 </ListItemIcon>
                 <ListItemText
-                  primary="Campaign Tracking"
-                  secondary="Enable detailed tracking and analytics for campaigns"
+                  primary="Tracking Enabled"
+                  secondary="Enable open, click, and delivery tracking"
                 />
                 <ListItemSecondaryAction>
                   <Switch
@@ -1812,52 +1810,47 @@ const Settings = () => {
                 </ListItemSecondaryAction>
               </ListItem>
             </List>
-
-            <Box sx={{ mt: 3 }}>
-              <Typography variant="subtitle2" gutterBottom>
-                Webhook URL (Optional)
-              </Typography>
-              <TextField
-                fullWidth
-                value={campaignSettings.webhookUrl}
-                onChange={(e) => handleCampaignSettingChange('webhookUrl', e.target.value)}
-                placeholder="https://your-domain.com/webhook"
-                helperText="Receive real-time campaign events"
-                sx={{ mb: 3 }}
-              />
-              
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth>
-                    <InputLabel>Reporting Interval</InputLabel>
-                    <Select
-                      value={campaignSettings.reportingInterval}
-                      onChange={(e) => handleCampaignSettingChange('reportingInterval', e.target.value)}
-                    >
-                      <MenuItem value="realtime">Real-time</MenuItem>
-                      <MenuItem value="hourly">Hourly</MenuItem>
-                      <MenuItem value="daily">Daily</MenuItem>
-                      <MenuItem value="weekly">Weekly</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth>
-                    <InputLabel>Export Format</InputLabel>
-                    <Select
-                      value={campaignSettings.exportFormat}
-                      onChange={(e) => handleCampaignSettingChange('exportFormat', e.target.value)}
-                    >
-                      <MenuItem value="csv">CSV</MenuItem>
-                      <MenuItem value="xlsx">Excel (XLSX)</MenuItem>
-                      <MenuItem value="json">JSON</MenuItem>
-                      <MenuItem value="pdf">PDF Report</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
+            
+            <Grid container spacing={3} sx={{ mt: 1 }}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Webhook URL"
+                  value={campaignSettings.webhookUrl}
+                  onChange={(e) => handleCampaignSettingChange('webhookUrl', e.target.value)}
+                  placeholder="https://your-domain.com/webhook"
+                  helperText="URL to receive campaign event notifications"
+                />
               </Grid>
-            </Box>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Reporting Interval</InputLabel>
+                  <Select
+                    value={campaignSettings.reportingInterval}
+                    onChange={(e) => handleCampaignSettingChange('reportingInterval', e.target.value)}
+                  >
+                    <MenuItem value="realtime">Real-time</MenuItem>
+                    <MenuItem value="hourly">Hourly</MenuItem>
+                    <MenuItem value="daily">Daily</MenuItem>
+                    <MenuItem value="weekly">Weekly</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Export Format</InputLabel>
+                  <Select
+                    value={campaignSettings.exportFormat}
+                    onChange={(e) => handleCampaignSettingChange('exportFormat', e.target.value)}
+                  >
+                    <MenuItem value="csv">CSV</MenuItem>
+                    <MenuItem value="xlsx">Excel (XLSX)</MenuItem>
+                    <MenuItem value="pdf">PDF Report</MenuItem>
+                    <MenuItem value="json">JSON</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
           </CardContent>
         </Card>
 
@@ -1866,16 +1859,18 @@ const Settings = () => {
           <Button
             variant="outlined"
             onClick={() => setCampaignSettings({})}
+            sx={{ borderRadius: 2 }}
           >
             Reset to Defaults
           </Button>
           <Button
             variant="contained"
-            startIcon={<SaveIcon />}
             onClick={() => {
-              setSuccessMessage('Campaign settings saved successfully!');
-              setTimeout(() => setSuccessMessage(''), 3000);
+              handleSaveSettings();
+              // Show success message
             }}
+            startIcon={<SaveIcon />}
+            sx={{ borderRadius: 2 }}
           >
             Save Campaign Settings
           </Button>

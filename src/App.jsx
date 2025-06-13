@@ -23,6 +23,8 @@ import EmailAnalytics from './pages/EmailAnalytics';
 import BulkEmail from './pages/BulkEmail';
 
 import Campaigns from './pages/Campaigns';
+import CampaignDetails from './pages/CampaignDetails';
+import TemplateManager from './pages/TemplateManager';
 import Feedback from './pages/Feedback';
 import Claims from './pages/Claims';
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -381,6 +383,22 @@ function AppWithTheme() {
               <ProtectedRoute>
                 <Layout>
                   <Campaigns />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/campaigns/:campaignId" element={
+              <ProtectedRoute>
+                <Layout>
+                  <CampaignDetails />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/templates" element={
+              <ProtectedRoute>
+                <Layout>
+                  <TemplateManager />
                 </Layout>
               </ProtectedRoute>
             } />

@@ -1,126 +1,180 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
-  Box,
-  Typography,
-  Paper,
-  Grid,
-  Card,
-  CardContent,
-  Button,
-  Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Checkbox,
-  FormControlLabel,
-  FormGroup,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  IconButton,
-  Tooltip,
-  Avatar,
-  AvatarGroup,
-  LinearProgress,
-  Tabs,
-  Tab,
-  Stepper,
-  Step,
-  StepLabel,
-  StepContent,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  Divider,
-  Alert,
-  Badge,
-  useTheme,
-  alpha,
-  Fade,
-  Grow,
-  Collapse,
-  Switch,
-  RadioGroup,
-  Radio,
-  FormLabel,
-  Autocomplete,
-  FormHelperText
+  Box, Typography, Grid, Card, CardContent, Button, Chip, Dialog, DialogTitle,
+  DialogContent, DialogActions, TextField, FormControl, InputLabel, Select,
+  MenuItem, Tabs, Tab, List, ListItem, ListItemText, ListItemIcon, Divider,
+  Alert, useTheme, alpha, Fade, Grow, IconButton, Tooltip, Avatar, Badge,
+  Paper, Switch, FormControlLabel, Autocomplete, Table, TableBody, TableCell,
+  TableContainer, TableHead, TableRow, Stepper, Step, StepLabel, StepContent,
+  LinearProgress, AvatarGroup, Menu, Checkbox, FormGroup, DatePicker
 } from '@mui/material';
 import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Launch as LaunchIcon,
-  Pause as PauseIcon,
-  PlayArrow as PlayIcon,
-  Stop as StopIcon,
-  Visibility as ViewIcon,
-  Download as DownloadIcon,
-  Upload as UploadIcon,
-  Email as EmailIcon,
-  Sms as SmsIcon,
-  WhatsApp as WhatsAppIcon,
-  Schedule as ScheduleIcon,
-  People as PeopleIcon,
-  Analytics as AnalyticsIcon,
-  Settings as SettingsIcon,
-  Campaign as CampaignIcon,
-  TrendingUp as TrendingUpIcon,
-  TrendingDown as TrendingDownIcon,
-  CheckCircle as CheckCircleIcon,
-  Error as ErrorIcon,
-  Warning as WarningIcon,
-  Info as InfoIcon,
-  FilterList as FilterIcon,
-  Search as SearchIcon,
-  MoreVert as MoreIcon,
-  ContentCopy as CopyIcon,
-  Preview as PreviewIcon,
-  Send as SendIcon,
-  Timer as TimerIcon,
-  Group as GroupIcon,
-  Security as SecurityIcon,
-  Verified as VerifiedIcon,
-  Block as BlockIcon,
-  Assignment as TemplateIcon,
-  Dashboard as DashboardIcon,
-  BarChart as BarChartIcon,
-  PieChart as PieChartIcon,
-  Timeline as TimelineIcon,
-  Map as MapIcon,
-  Language as LanguageIcon,
-  AccessTime as AccessTimeIcon,
-  CalendarToday as CalendarIcon,
-  Refresh as RefreshIcon,
-  Close as CloseIcon
+  Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Launch as LaunchIcon,
+  Pause as PauseIcon, PlayArrow as PlayIcon, Visibility as ViewIcon,
+  Analytics as AnalyticsIcon, Email as EmailIcon, Sms as SmsIcon,
+  WhatsApp as WhatsAppIcon, Campaign as CampaignIcon, People as PeopleIcon,
+  Assignment as AssignmentIcon, Schedule as ScheduleIcon, FilterList as FilterIcon,
+  Search as SearchIcon, Refresh as RefreshIcon, GetApp as GetAppIcon,
+  TrendingUp as TrendingUpIcon, CheckCircle as CheckCircleIcon,
+  Error as ErrorIcon, Warning as WarningIcon, Close as CloseIcon,
+  Save as SaveIcon, Send as SendIcon, MoreVert as MoreVertIcon,
+  ContentCopy as ContentCopyIcon, ContentCopy as CopyIcon, Preview as PreviewIcon
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+
+// Dialog Components (defined before main component to avoid hoisting issues)
+const TemplateDialog = ({ 
+  open, 
+  onClose, 
+  mockTemplates, 
+  getChannelColor, 
+  getChannelIcon, 
+  handleTemplateAction, 
+  navigate 
+}) => (
+  <Dialog 
+    open={open} 
+    onClose={onClose}
+    maxWidth="md"
+    fullWidth
+  >
+    <DialogTitle>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h6">Template Manager</Typography>
+        <IconButton onClick={onClose}>
+          <CloseIcon />
+        </IconButton>
+      </Box>
+    </DialogTitle>
+    <DialogContent>
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="body2" color="text.secondary" gutterBottom>
+          Manage your campaign templates across all channels
+        </Typography>
+      </Box>
+      
+      <Grid container spacing={2}>
+        {mockTemplates.map((template) => (
+          <Grid item xs={12} sm={6} md={4} key={template.id}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                  <Avatar 
+                    sx={{ 
+                      width: 32, 
+                      height: 32, 
+                      bgcolor: getChannelColor(template.type)
+                    }}
+                  >
+                    {getChannelIcon(template.type)}
+                  </Avatar>
+                  <Typography variant="subtitle2" fontWeight="600">
+                    {template.name}
+                  </Typography>
+                </Box>
+                
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  {template.description}
+                </Typography>
+                
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Chip 
+                    label={template.type?.toUpperCase() || 'UNKNOWN'}
+                    size="small"
+                    sx={{ bgcolor: getChannelColor(template.type), color: 'white' }}
+                  />
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <IconButton 
+                      size="small"
+                      onClick={() => handleTemplateAction('edit', template)}
+                    >
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton 
+                      size="small"
+                      onClick={() => handleTemplateAction('duplicate', template)}
+                    >
+                      <CopyIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+    </DialogContent>
+    <DialogActions>
+      <Button onClick={onClose}>Close</Button>
+      <Button 
+        variant="contained" 
+        startIcon={<AddIcon />}
+        onClick={() => navigate('/templates')}
+      >
+        Create New Template
+      </Button>
+    </DialogActions>
+  </Dialog>
+);
 
 const CampaignManager = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const [loaded, setLoaded] = useState(false);
-  const [activeTab, setActiveTab] = useState(0);
+
+  // StatCard component similar to Dashboard
+  const StatCard = ({ title, value, color, icon, index }) => {
+    // Create a gradient background
+    const gradientFrom = alpha(color, theme.palette.mode === 'dark' ? 0.7 : 0.9);
+    const gradientTo = alpha(color, theme.palette.mode === 'dark' ? 0.4 : 0.6);
+    
+    return (
+      <Grow in={loaded} style={{ transformOrigin: '0 0 0' }} timeout={(index + 1) * 200}>
+        <Card 
+          sx={{ 
+            height: '100%', 
+            background: `linear-gradient(135deg, ${gradientFrom} 0%, ${gradientTo} 100%)`,
+            borderRadius: 4,
+            boxShadow: `0 10px 20px ${alpha(color, 0.2)}`,
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          <Box
+            sx={{
+              position: 'absolute',
+              top: -20,
+              right: -20,
+              opacity: 0.15,
+              transform: 'rotate(25deg)',
+              fontSize: '8rem',
+              color: 'white'
+            }}
+          >
+            {icon}
+          </Box>
+          <CardContent sx={{ position: 'relative', zIndex: 1, textAlign: 'center', py: 2 }}>
+            <Typography variant="h6" component="div" color="white" fontWeight="500" gutterBottom>
+              {title}
+            </Typography>
+            <Typography variant="h4" component="div" color="white" fontWeight="bold">
+              {value}
+            </Typography>
+          </CardContent>
+        </Card>
+      </Grow>
+    );
+  };
   const [campaigns, setCampaigns] = useState([]);
-  const [templates, setTemplates] = useState([]);
-  const [audiences, setAudiences] = useState([]);
+  const [filteredCampaigns, setFilteredCampaigns] = useState([]);
   
   // Dialog states
   const [createCampaignDialog, setCreateCampaignDialog] = useState(false);
   const [templateDialog, setTemplateDialog] = useState(false);
   const [audienceDialog, setAudienceDialog] = useState(false);
-  const [previewDialog, setPreviewDialog] = useState(false);
   const [analyticsDialog, setAnalyticsDialog] = useState(false);
+  const [advancedFiltersDialog, setAdvancedFiltersDialog] = useState(false);
+  const [exportDialog, setExportDialog] = useState(false);
   
   // Campaign creation states
   const [campaignStep, setCampaignStep] = useState(0);
@@ -131,23 +185,109 @@ const CampaignManager = () => {
     channels: [],
     audience: '',
     template: '',
-    schedule: 'immediate',
-    scheduledDate: null,
-    tags: [],
+    scheduledDate: '',
     status: 'draft'
   });
   
-  // Filter and search states
+  // Filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [channelFilter, setChannelFilter] = useState('all');
+  const [advancedFilters, setAdvancedFilters] = useState({
+    dateRange: { start: '', end: '' },
+    campaignType: 'all',
+    audienceSize: { min: '', max: '' },
+    performance: 'all',
+    tags: []
+  });
   
+  // Export states
+  const [exportFormat, setExportFormat] = useState('csv');
+  const [exportData, setExportData] = useState('all');
+  
+  // Mock data
+  const [templates] = useState([
+    { 
+      id: 1, 
+      name: 'Policy Renewal Email', 
+      type: 'email', 
+      category: 'renewal',
+      description: 'Professional email template for policy renewals',
+      lastModified: '2024-12-20',
+      usage: 45
+    },
+    { 
+      id: 2, 
+      name: 'Welcome WhatsApp', 
+      type: 'whatsapp', 
+      category: 'welcome',
+      description: 'Friendly welcome message for new customers',
+      lastModified: '2024-12-18',
+      usage: 23
+    },
+    { 
+      id: 3, 
+      name: 'Payment Reminder SMS', 
+      type: 'sms', 
+      category: 'payment',
+      description: 'Concise payment reminder message',
+      lastModified: '2024-12-15',
+      usage: 67
+    },
+    { 
+      id: 4, 
+      name: 'Claim Update Email', 
+      type: 'email', 
+      category: 'claims',
+      description: 'Template for claim status updates',
+      lastModified: '2024-12-22',
+      usage: 12
+    }
+  ]);
+  
+  const [audiences] = useState([
+    { 
+      id: 1, 
+      name: 'Policy Holders - Expiring Q4', 
+      size: 15420,
+      description: 'Customers with policies expiring in Q4 2024',
+      segments: ['High Value', 'Auto Insurance', 'Health Insurance'],
+      lastUpdated: '2024-12-20'
+    },
+    { 
+      id: 2, 
+      name: 'New Customers - December', 
+      size: 2340,
+      description: 'Customers who joined in December 2024',
+      segments: ['New Joiners', 'Auto Insurance'],
+      lastUpdated: '2024-12-22'
+    },
+    { 
+      id: 3, 
+      name: 'High Value Customers', 
+      size: 5670,
+      description: 'Premium customers with high policy values',
+      segments: ['Premium', 'Multi-Policy', 'Long Term'],
+      lastUpdated: '2024-12-19'
+    },
+    { 
+      id: 4, 
+      name: 'Lapsed Policy Holders', 
+      size: 8920,
+      description: 'Customers with recently lapsed policies',
+      segments: ['Lapsed', 'Re-engagement'],
+      lastUpdated: '2024-12-21'
+    }
+  ]);
+
   useEffect(() => {
     loadCampaigns();
-    loadTemplates();
-    loadAudiences();
     setTimeout(() => setLoaded(true), 100);
   }, []);
+
+  useEffect(() => {
+    filterCampaigns();
+  }, [campaigns, searchTerm, statusFilter, channelFilter, advancedFilters]);
 
   const loadCampaigns = () => {
     const mockCampaigns = [
@@ -163,161 +303,121 @@ const CampaignManager = () => {
         progress: 67,
         createdDate: '2024-12-20',
         scheduledDate: '2024-12-25',
-        lastModified: '2024-12-28',
         tags: ['renewal', 'urgent', 'multi-channel'],
         metrics: {
           sent: 10331,
           delivered: 9876,
           opened: 6543,
           clicked: 1234,
-          converted: 456,
-          bounced: 234,
-          unsubscribed: 12
-        },
-        channelMetrics: {
-          email: { sent: 5000, delivered: 4800, opened: 3200, clicked: 800 },
-          sms: { sent: 3000, delivered: 2950, opened: 2100, clicked: 300 },
-          whatsapp: { sent: 2331, delivered: 2126, opened: 1243, clicked: 134 }
+          bounced: 234
         }
       },
       {
         id: 2,
         name: 'New Customer Welcome Series',
-        description: 'Onboarding campaign for new customers',
+        description: 'Welcome campaign for new customers',
         type: 'welcome',
         channels: ['email', 'whatsapp'],
         audience: 'New Customers - December',
         audienceSize: 2340,
         status: 'scheduled',
         progress: 0,
-        createdDate: '2024-12-28',
+        createdDate: '2024-12-22',
         scheduledDate: '2025-01-01',
-        lastModified: '2024-12-28',
         tags: ['welcome', 'onboarding'],
         metrics: {
           sent: 0,
           delivered: 0,
           opened: 0,
           clicked: 0,
-          converted: 0,
-          bounced: 0,
-          unsubscribed: 0
-        },
-        channelMetrics: {
-          email: { sent: 0, delivered: 0, opened: 0, clicked: 0 },
-          whatsapp: { sent: 0, delivered: 0, opened: 0, clicked: 0 }
+          bounced: 0
         }
       },
       {
         id: 3,
-        name: 'Premium Payment Reminder',
-        description: 'Automated reminders for pending payments',
-        type: 'reminder',
+        name: 'Payment Reminder Campaign',
+        description: 'Automated payment reminders',
+        type: 'payment',
         channels: ['sms', 'email'],
-        audience: 'Pending Payments',
-        audienceSize: 8760,
+        audience: 'High Value Customers',
+        audienceSize: 5670,
         status: 'completed',
         progress: 100,
         createdDate: '2024-12-15',
         scheduledDate: '2024-12-18',
-        lastModified: '2024-12-22',
-        tags: ['payment', 'reminder', 'automated'],
+        tags: ['payment', 'automated'],
         metrics: {
-          sent: 8760,
-          delivered: 8654,
-          opened: 5432,
-          clicked: 2876,
-          converted: 1234,
-          bounced: 106,
-          unsubscribed: 23
-        },
-        channelMetrics: {
-          email: { sent: 4380, delivered: 4327, opened: 2716, clicked: 1438 },
-          sms: { sent: 4380, delivered: 4327, opened: 2716, clicked: 1438 }
+          sent: 5670,
+          delivered: 5580,
+          opened: 4200,
+          clicked: 890,
+          bounced: 90
         }
       }
     ];
     setCampaigns(mockCampaigns);
   };
 
-  const loadTemplates = () => {
-    const mockTemplates = [
-      {
-        id: 1,
-        name: 'Policy Renewal Reminder',
-        type: 'email',
-        category: 'renewal',
-        subject: 'Your Policy Renewal - Action Required',
-        preview: 'Dear {{Name}}, Your policy {{PolicyNumber}} is due for renewal...',
-        lastModified: '2024-12-20',
-        usage: 45
-      },
-      {
-        id: 2,
-        name: 'Welcome Message',
-        type: 'whatsapp',
-        category: 'welcome',
-        subject: 'Welcome to Intelipro Insurance',
-        preview: 'Hi {{Name}}! Welcome to our insurance family...',
-        lastModified: '2024-12-18',
-        usage: 23
-      },
-      {
-        id: 3,
-        name: 'Payment Reminder SMS',
-        type: 'sms',
-        category: 'payment',
-        subject: 'Payment Due Reminder',
-        preview: 'Hi {{Name}}, your premium payment of {{Amount}} is due...',
-        lastModified: '2024-12-15',
-        usage: 67
-      }
-    ];
-    setTemplates(mockTemplates);
-  };
+  const filterCampaigns = () => {
+    let filtered = campaigns;
 
-  const loadAudiences = () => {
-    const mockAudiences = [
-      {
-        id: 1,
-        name: 'Policy Holders - Expiring Q4',
-        description: 'Customers with policies expiring in Q4 2024',
-        size: 15420,
-        segments: ['Premium', 'Standard'],
-        lastUpdated: '2024-12-28',
-        consent: { email: 14200, sms: 13800, whatsapp: 12100 }
-      },
-      {
-        id: 2,
-        name: 'New Customers - December',
-        description: 'Customers who joined in December 2024',
-        size: 2340,
-        segments: ['New'],
-        lastUpdated: '2024-12-28',
-        consent: { email: 2340, sms: 2100, whatsapp: 1890 }
-      },
-      {
-        id: 3,
-        name: 'High Value Customers',
-        description: 'Customers with premium policies above $5000',
-        size: 5670,
-        segments: ['Premium', 'VIP'],
-        lastUpdated: '2024-12-25',
-        consent: { email: 5670, sms: 5200, whatsapp: 4800 }
-      }
-    ];
-    setAudiences(mockAudiences);
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'active': return 'success';
-      case 'scheduled': return 'info';
-      case 'paused': return 'warning';
-      case 'completed': return 'primary';
-      case 'failed': return 'error';
-      default: return 'default';
+    // Basic filters
+    if (searchTerm) {
+      filtered = filtered.filter(campaign =>
+        campaign.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        campaign.description.toLowerCase().includes(searchTerm.toLowerCase())
+      );
     }
+
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(campaign => campaign.status === statusFilter);
+    }
+
+    if (channelFilter !== 'all') {
+      filtered = filtered.filter(campaign => 
+        campaign.channels.includes(channelFilter)
+      );
+    }
+
+    // Advanced filters
+    if (advancedFilters.campaignType !== 'all') {
+      filtered = filtered.filter(campaign => campaign.type === advancedFilters.campaignType);
+    }
+
+    if (advancedFilters.audienceSize.min) {
+      filtered = filtered.filter(campaign => 
+        campaign.audienceSize >= parseInt(advancedFilters.audienceSize.min)
+      );
+    }
+
+    if (advancedFilters.audienceSize.max) {
+      filtered = filtered.filter(campaign => 
+        campaign.audienceSize <= parseInt(advancedFilters.audienceSize.max)
+      );
+    }
+
+    if (advancedFilters.performance !== 'all') {
+      filtered = filtered.filter(campaign => {
+        const openRate = campaign.metrics.delivered > 0 
+          ? (campaign.metrics.opened / campaign.metrics.delivered) * 100 
+          : 0;
+        
+        switch (advancedFilters.performance) {
+          case 'high': return openRate >= 70;
+          case 'medium': return openRate >= 40 && openRate < 70;
+          case 'low': return openRate < 40;
+          default: return true;
+        }
+      });
+    }
+
+    if (advancedFilters.tags.length > 0) {
+      filtered = filtered.filter(campaign => 
+        campaign.tags?.some(tag => advancedFilters.tags.includes(tag))
+      );
+    }
+
+    setFilteredCampaigns(filtered);
   };
 
   const getChannelIcon = (channel) => {
@@ -338,188 +438,171 @@ const CampaignManager = () => {
     }
   };
 
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'active': return 'success';
+      case 'scheduled': return 'info';
+      case 'paused': return 'warning';
+      case 'completed': return 'default';
+      case 'draft': return 'secondary';
+      default: return 'default';
+    }
+  };
+
   const handleCreateCampaign = () => {
+    setNewCampaign({
+      name: '',
+      description: '',
+      type: 'promotional',
+      channels: [],
+      audience: '',
+      template: '',
+      scheduledDate: '',
+      status: 'draft'
+    });
+    setCampaignStep(0);
     setCreateCampaignDialog(true);
-    setCampaignStep(0);
-    setNewCampaign({
-      name: '',
-      description: '',
-      type: 'promotional',
-      channels: [],
-      audience: '',
-      template: '',
-      schedule: 'immediate',
-      scheduledDate: null,
-      tags: [],
-      status: 'draft'
-    });
   };
-
-  // Validation state
-  const [validationErrors, setValidationErrors] = useState({});
-
-  const validateStep = (step) => {
-    const errors = {};
-    
-    switch (step) {
-      case 0: // Campaign Details
-        if (!newCampaign.name.trim()) {
-          errors.name = 'Campaign name is required';
-        }
-        if (!newCampaign.description.trim()) {
-          errors.description = 'Campaign description is required';
-        }
-        if (newCampaign.name.length > 100) {
-          errors.name = 'Campaign name must be less than 100 characters';
-        }
-        break;
-      case 1: // Channel Selection
-        if (newCampaign.channels.length === 0) {
-          errors.channels = 'Please select at least one channel';
-        }
-        break;
-      case 2: // Audience Selection
-        if (!newCampaign.audience) {
-          errors.audience = 'Please select an audience';
-        }
-        break;
-      case 3: // Scheduling
-        if (newCampaign.schedule === 'scheduled' && !newCampaign.scheduledDate) {
-          errors.scheduledDate = 'Please select a date and time for scheduling';
-        }
-        if (newCampaign.schedule === 'scheduled' && newCampaign.scheduledDate) {
-          const selectedDate = new Date(newCampaign.scheduledDate);
-          const now = new Date();
-          if (selectedDate <= now) {
-            errors.scheduledDate = 'Scheduled date must be in the future';
-          }
-        }
-        break;
-      default:
-        break;
-    }
-    
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const handleCampaignStepNext = () => {
-    if (validateStep(campaignStep)) {
-      setCampaignStep(prev => prev + 1);
-    }
-  };
-
-  const handleCampaignStepBack = () => {
-    setCampaignStep(prev => prev - 1);
-    setValidationErrors({});
-  };
-
-  const handleCloseDialog = () => {
-    setCreateCampaignDialog(false);
-    setCampaignStep(0);
-    setValidationErrors({});
-    setNewCampaign({
-      name: '',
-      description: '',
-      type: 'promotional',
-      channels: [],
-      audience: '',
-      template: '',
-      schedule: 'immediate',
-      scheduledDate: null,
-      tags: [],
-      status: 'draft'
-    });
-  };
-
-  const handleSaveCampaignWithValidation = () => {
-    if (validateStep(campaignStep)) {
-      handleSaveCampaign();
-      handleCloseDialog();
-    }
-  };
-
-  const getStepProgress = () => {
-    return ((campaignStep + 1) / 4) * 100;
-  };
-
-  // Memoized input handlers to prevent re-renders
-  const handleCampaignNameChange = useCallback((e) => {
-    setNewCampaign(prev => ({ ...prev, name: e.target.value }));
-  }, []);
-
-  const handleCampaignDescriptionChange = useCallback((e) => {
-    setNewCampaign(prev => ({ ...prev, description: e.target.value }));
-  }, []);
-
-  const handleCampaignTypeChange = useCallback((e) => {
-    setNewCampaign(prev => ({ ...prev, type: e.target.value }));
-  }, []);
-
-  const handleCampaignTagsChange = useCallback((e, value) => {
-    setNewCampaign(prev => ({ ...prev, tags: value }));
-  }, []);
-
-  const handleChannelChange = useCallback((channel, checked) => {
-    const channels = checked 
-      ? [...newCampaign.channels, channel]
-      : newCampaign.channels.filter(c => c !== channel);
-    setNewCampaign(prev => ({ ...prev, channels }));
-  }, [newCampaign.channels]);
-
-  const handleAudienceChange = useCallback((e) => {
-    setNewCampaign(prev => ({ ...prev, audience: e.target.value }));
-  }, []);
-
-  const handleScheduleChange = useCallback((e) => {
-    setNewCampaign(prev => ({ ...prev, schedule: e.target.value }));
-  }, []);
-
-  const handleScheduledDateChange = useCallback((e) => {
-    setNewCampaign(prev => ({ ...prev, scheduledDate: e.target.value }));
-  }, []);
 
   const handleSaveCampaign = () => {
     const campaign = {
-      id: campaigns.length + 1,
       ...newCampaign,
-      audienceSize: 0, // Will be updated when audience is loaded
-      createdDate: new Date().toISOString().split('T')[0],
-      lastModified: new Date().toISOString().split('T')[0],
+      id: campaigns.length + 1,
+      audienceSize: audiences.find(a => a.name === newCampaign.audience)?.size || 0,
       progress: 0,
-      metrics: {
-        sent: 0,
-        delivered: 0,
-        opened: 0,
-        clicked: 0,
-        converted: 0,
-        bounced: 0,
-        unsubscribed: 0
-      },
-      channelMetrics: {}
+      createdDate: new Date().toISOString().split('T')[0],
+      tags: [],
+      metrics: { sent: 0, delivered: 0, opened: 0, clicked: 0, bounced: 0 }
     };
+    
     setCampaigns(prev => [...prev, campaign]);
     setCreateCampaignDialog(false);
   };
 
-  const filteredCampaigns = campaigns.filter(campaign => {
-    const matchesSearch = campaign.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         campaign.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || campaign.status === statusFilter;
-    const matchesChannel = channelFilter === 'all' || campaign.channels.includes(channelFilter);
-    return matchesSearch && matchesStatus && matchesChannel;
-  });
+  const handleLaunchCampaign = (campaignId) => {
+    setCampaigns(prev => prev.map(campaign => 
+      campaign.id === campaignId ? { ...campaign, status: 'active' } : campaign
+    ));
+  };
+
+  const handlePauseCampaign = (campaignId) => {
+    setCampaigns(prev => prev.map(campaign => 
+      campaign.id === campaignId ? { ...campaign, status: 'paused' } : campaign
+    ));
+  };
+
+  const handleViewDetails = (campaignId) => {
+    navigate(`/campaigns/${campaignId}`);
+  };
+
+  const handleAnalytics = (campaignId) => {
+    setAnalyticsDialog(true);
+  };
+
+  const handleAdvancedFilters = () => {
+    setAdvancedFiltersDialog(true);
+  };
+
+  const handleExport = () => {
+    setExportDialog(true);
+  };
+
+  const handleExportConfirm = () => {
+    // Mock export functionality
+    const dataToExport = exportData === 'filtered' ? filteredCampaigns : campaigns;
+    const filename = `campaigns_export_${new Date().toISOString().split('T')[0]}.${exportFormat}`;
+    
+    // In a real app, this would generate and download the file
+    console.log(`Exporting ${dataToExport.length} campaigns as ${exportFormat} to ${filename}`);
+    
+    setExportDialog(false);
+    // Show success message (you could add a snackbar here)
+  };
+
+  const handleApplyAdvancedFilters = () => {
+    setAdvancedFiltersDialog(false);
+    // Filters are applied automatically via useEffect
+  };
+
+  const handleResetAdvancedFilters = () => {
+    setAdvancedFilters({
+      dateRange: { start: '', end: '' },
+      campaignType: 'all',
+      audienceSize: { min: '', max: '' },
+      performance: 'all',
+      tags: []
+    });
+  };
+
+  const handleTemplateAction = (action, template) => {
+    switch (action) {
+      case 'edit':
+        navigate('/templates', { state: { editTemplate: template } });
+        break;
+      case 'duplicate':
+        console.log('Duplicating template:', template.name);
+        break;
+      case 'delete':
+        console.log('Deleting template:', template.name);
+        break;
+      case 'preview':
+        console.log('Previewing template:', template.name);
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handleAudienceAction = (action, audience) => {
+    switch (action) {
+      case 'edit':
+        console.log('Editing audience:', audience.name);
+        break;
+      case 'duplicate':
+        console.log('Duplicating audience:', audience.name);
+        break;
+      case 'delete':
+        console.log('Deleting audience:', audience.name);
+        break;
+      case 'view':
+        console.log('Viewing audience details:', audience.name);
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handleEditCampaign = (campaignId) => {
+    const campaign = campaigns.find(c => c.id === campaignId);
+    if (campaign) {
+      setNewCampaign(campaign);
+      setCampaignStep(0);
+      setCreateCampaignDialog(true);
+    }
+  };
+
+  const handleResumeCampaign = (campaignId) => {
+    setCampaigns(prev => prev.map(campaign => 
+      campaign.id === campaignId ? { ...campaign, status: 'active' } : campaign
+    ));
+  };
+
+  const handleStopCampaign = (campaignId) => {
+    setCampaigns(prev => prev.map(campaign => 
+      campaign.id === campaignId ? { ...campaign, status: 'completed' } : campaign
+    ));
+  };
 
   const CampaignCard = ({ campaign }) => (
     <Grow in={loaded} timeout={300}>
-      <Card sx={{ 
+          <Card sx={{ 
         mb: 2, 
-        borderRadius: 3,
-        boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
+            borderRadius: 3,
+        boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
         transition: 'transform 0.2s, box-shadow 0.2s',
         '&:hover': {
           transform: 'translateY(-2px)',
-          boxShadow: '0 12px 32px rgba(0,0,0,0.1)'
+          boxShadow: '0 8px 24px rgba(0,0,0,0.1)'
         }
       }}>
         <CardContent sx={{ p: 3 }}>
@@ -530,163 +613,175 @@ const CampaignManager = () => {
                   {campaign.name}
                 </Typography>
                 <Chip 
-                  label={campaign.status.toUpperCase()}
+                  label={campaign.status?.toUpperCase()}
                   color={getStatusColor(campaign.status)}
                   size="small"
                 />
-                {campaign.status === 'active' && (
-                  <Chip 
-                    label={`${campaign.progress}%`}
-                    color="info"
-                    size="small"
-                    variant="outlined"
-                  />
-                )}
               </Box>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
+              
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                 {campaign.description}
               </Typography>
-                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                 {(campaign.tags || []).map((tag, index) => (
-                   <Chip key={index} label={tag} size="small" variant="outlined" />
-                 ))}
-               </Box>
+              
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  {campaign.channels.map((channel, index) => (
+                    <Tooltip key={index} title={channel?.toUpperCase() || 'UNKNOWN'}>
+                      <Avatar 
+                        sx={{ 
+                          width: 32, 
+                          height: 32, 
+                          bgcolor: getChannelColor(channel),
+                          fontSize: '0.875rem'
+                        }}
+                      >
+                        {getChannelIcon(channel)}
+                      </Avatar>
+                    </Tooltip>
+                  ))}
+                </Box>
+                <Typography variant="body2" color="text.secondary">
+                  {campaign.audienceSize?.toLocaleString()} recipients
+              </Typography>
+              </Box>
+              
+              {campaign.status === 'active' && (
+                <Box sx={{ mb: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body2">Progress</Typography>
+                    <Typography variant="body2">{campaign.progress}%</Typography>
+                  </Box>
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={campaign.progress} 
+                    sx={{ borderRadius: 1 }}
+                  />
+                </Box>
+              )}
+              
+              <Box sx={{ display: 'flex', gap: 2, fontSize: '0.875rem' }}>
+                <Typography variant="caption" color="text.secondary">
+                  Created: {new Date(campaign.createdDate).toLocaleDateString()}
+                </Typography>
+                {campaign.scheduledDate && (
+                  <Typography variant="caption" color="text.secondary">
+                    Scheduled: {new Date(campaign.scheduledDate).toLocaleDateString()}
+                  </Typography>
+                )}
+              </Box>
             </Box>
+            
             <Box sx={{ display: 'flex', gap: 1 }}>
-              <Tooltip title="View Analytics">
-                <IconButton size="small" onClick={() => setAnalyticsDialog(campaign)}>
+              {campaign.status === 'draft' && (
+                <Tooltip title="Launch Campaign">
+                  <IconButton 
+                    size="small" 
+                    color="success"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleLaunchCampaign(campaign.id);
+                    }}
+                  >
+                    <LaunchIcon />
+                  </IconButton>
+                </Tooltip>
+              )}
+              {campaign.status === 'active' && (
+                <Tooltip title="Pause Campaign">
+                  <IconButton 
+                    size="small" 
+                    color="warning"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePauseCampaign(campaign.id);
+                    }}
+                  >
+                    <PauseIcon />
+                  </IconButton>
+                </Tooltip>
+              )}
+              {campaign.status === 'paused' && (
+                <Tooltip title="Resume Campaign">
+                  <IconButton 
+                    size="small" 
+                    color="success"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleResumeCampaign(campaign.id);
+                    }}
+                  >
+                    <PlayIcon />
+                  </IconButton>
+                </Tooltip>
+              )}
+              <Tooltip title="View Details">
+                <IconButton 
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleViewDetails(campaign.id);
+                  }}
+                >
+                  <ViewIcon />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Analytics">
+                <IconButton 
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAnalytics(campaign.id);
+                  }}
+                >
                   <AnalyticsIcon />
                 </IconButton>
               </Tooltip>
               <Tooltip title="Edit Campaign">
-                <IconButton size="small">
+                <IconButton 
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEditCampaign(campaign.id);
+                  }}
+                >
                   <EditIcon />
                 </IconButton>
               </Tooltip>
-              <Tooltip title="More Actions">
-                <IconButton size="small">
-                  <MoreIcon />
-                </IconButton>
-              </Tooltip>
             </Box>
           </Box>
-
-                     <Grid container spacing={2} sx={{ mb: 2 }}>
-             <Grid item xs={12} sm={6} md={3}>
-               <Box sx={{ textAlign: 'center' }}>
-                 <Typography variant="h5" fontWeight="600" color="primary">
-                   {(campaign.audienceSize || 0).toLocaleString()}
-                 </Typography>
-                 <Typography variant="caption" color="text.secondary">
-                   Audience Size
-                 </Typography>
-               </Box>
-             </Grid>
-             <Grid item xs={12} sm={6} md={3}>
-               <Box sx={{ textAlign: 'center' }}>
-                 <Typography variant="h5" fontWeight="600" color="success.main">
-                   {(campaign.metrics?.sent || 0).toLocaleString()}
-                 </Typography>
-                 <Typography variant="caption" color="text.secondary">
-                   Messages Sent
-                 </Typography>
-               </Box>
-             </Grid>
-             <Grid item xs={12} sm={6} md={3}>
-               <Box sx={{ textAlign: 'center' }}>
-                 <Typography variant="h5" fontWeight="600" color="info.main">
-                   {(campaign.metrics?.opened || 0).toLocaleString()}
-                 </Typography>
-                 <Typography variant="caption" color="text.secondary">
-                   Opened
-                 </Typography>
-               </Box>
-             </Grid>
-             <Grid item xs={12} sm={6} md={3}>
-               <Box sx={{ textAlign: 'center' }}>
-                 <Typography variant="h5" fontWeight="600" color="warning.main">
-                   {(campaign.metrics?.clicked || 0).toLocaleString()}
-                 </Typography>
-                 <Typography variant="caption" color="text.secondary">
-                   Clicked
-                 </Typography>
-               </Box>
-             </Grid>
-           </Grid>
-
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                         <Box sx={{ display: 'flex', gap: 1 }}>
-               {(campaign.channels || []).map((channel, index) => (
-                 <Tooltip key={index} title={channel.toUpperCase()}>
-                   <Avatar 
-                     sx={{ 
-                       width: 32, 
-                       height: 32, 
-                       bgcolor: getChannelColor(channel),
-                       fontSize: '0.875rem'
-                     }}
-                   >
-                     {getChannelIcon(channel)}
-                   </Avatar>
-                 </Tooltip>
-               ))}
-             </Box>
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              {campaign.status === 'active' && (
-                <Button
-                  startIcon={<PauseIcon />}
-                  variant="outlined"
-                  size="small"
-                  color="warning"
-                >
-                  Pause
-                </Button>
-              )}
-              {campaign.status === 'paused' && (
-                <Button
-                  startIcon={<PlayIcon />}
-                  variant="outlined"
-                  size="small"
-                  color="success"
-                >
-                  Resume
-                </Button>
-              )}
-              {campaign.status === 'scheduled' && (
-                <Button
-                  startIcon={<LaunchIcon />}
-                  variant="contained"
-                  size="small"
-                  color="primary"
-                >
-                  Launch Now
-                </Button>
-              )}
-              <Button
-                startIcon={<ViewIcon />}
-                variant="outlined"
-                size="small"
-              >
-                View Details
-              </Button>
-            </Box>
-          </Box>
-
+          
           {campaign.status === 'active' && (
-            <Box sx={{ mt: 2 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Campaign Progress
+              <Box sx={{ 
+                display: 'flex', 
+              justifyContent: 'space-between', 
+              pt: 2, 
+              borderTop: `1px solid ${theme.palette.divider}`,
+              fontSize: '0.875rem'
+            }}>
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="h6" color="primary">
+                  {campaign.metrics.sent?.toLocaleString()}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {campaign.progress}%
-                </Typography>
+                <Typography variant="caption" color="text.secondary">Sent</Typography>
               </Box>
-              <LinearProgress 
-                variant="determinate" 
-                value={campaign.progress} 
-                sx={{ borderRadius: 1, height: 6 }}
-              />
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="h6" color="success.main">
+                  {campaign.metrics.delivered?.toLocaleString()}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">Delivered</Typography>
+              </Box>
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="h6" color="info.main">
+                  {campaign.metrics.opened?.toLocaleString()}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">Opened</Typography>
+              </Box>
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="h6" color="warning.main">
+                  {campaign.metrics.clicked?.toLocaleString()}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">Clicked</Typography>
+              </Box>
             </Box>
           )}
         </CardContent>
@@ -694,494 +789,164 @@ const CampaignManager = () => {
     </Grow>
   );
 
-  const CampaignCreationDialog = () => (
-      <Dialog 
-        open={createCampaignDialog} 
-        onClose={handleCloseDialog}
-        maxWidth="md"
-        fullWidth
-        PaperProps={{
-          sx: { borderRadius: 3, minHeight: '70vh' }
-        }}
-      >
-        <DialogTitle sx={{ 
-          fontWeight: 600, 
-          pb: 1,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          borderBottom: `1px solid ${theme.palette.divider}`
-        }}>
-          <Box>
-            <Typography variant="h6" fontWeight="600">
-              Create New Campaign
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Step {campaignStep + 1} of 4 - {['Campaign Details', 'Select Channels', 'Choose Audience', 'Schedule Campaign'][campaignStep]}
-            </Typography>
-          </Box>
-          <IconButton 
-            onClick={handleCloseDialog}
-            sx={{ 
-              color: 'text.secondary',
-              '&:hover': { 
-                bgcolor: 'action.hover',
-                color: 'text.primary'
-              }
-            }}
-          >
+  const CreateCampaignDialog = () => (
+    <Dialog 
+      open={createCampaignDialog} 
+      onClose={() => setCreateCampaignDialog(false)}
+      maxWidth="md"
+      fullWidth
+    >
+      <DialogTitle>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h6">Create New Campaign</Typography>
+          <IconButton onClick={() => setCreateCampaignDialog(false)}>
             <CloseIcon />
           </IconButton>
-        </DialogTitle>
-
-        {/* Progress Bar */}
-        <Box sx={{ px: 3, pt: 2 }}>
-          <LinearProgress 
-            variant="determinate" 
-            value={getStepProgress()} 
-            sx={{ 
-              borderRadius: 1, 
-              height: 6,
-              bgcolor: alpha(theme.palette.primary.main, 0.1),
-              '& .MuiLinearProgress-bar': {
-                borderRadius: 1
-              }
-            }}
-          />
         </Box>
-
-        <DialogContent dividers sx={{ minHeight: '400px' }}>
-          {/* Validation Errors Alert */}
-          {Object.keys(validationErrors).length > 0 && (
-            <Alert 
-              severity="error" 
-              sx={{ mb: 3, borderRadius: 2 }}
-              onClose={() => setValidationErrors({})}
-            >
-              <Typography variant="subtitle2" gutterBottom>
-                Please fix the following errors:
-              </Typography>
-              <ul style={{ margin: 0, paddingLeft: '20px' }}>
-                {Object.values(validationErrors).map((error, index) => (
-                  <li key={index}>{error}</li>
-                ))}
-              </ul>
-            </Alert>
-          )}
-
-          <Stepper activeStep={campaignStep} orientation="vertical">
-            {/* Step 1: Basic Information */}
-            <Step>
-              <StepLabel>Campaign Details</StepLabel>
-              <StepContent>
-                <Grid container spacing={2} sx={{ mt: 1 }}>
-                  <Grid item xs={12}>
-                                         <TextField
-                       fullWidth
-                       label="Campaign Name"
-                       value={newCampaign.name}
-                       onChange={handleCampaignNameChange}
-                       placeholder="Enter campaign name"
-                       error={!!validationErrors.name}
-                       helperText={validationErrors.name || `${newCampaign.name.length}/100 characters`}
-                       inputProps={{ maxLength: 100 }}
-                     />
-                  </Grid>
-                  <Grid item xs={12}>
-                                         <TextField
-                       fullWidth
-                       multiline
-                       rows={3}
-                       label="Description"
-                       value={newCampaign.description}
-                       onChange={handleCampaignDescriptionChange}
-                       placeholder="Describe your campaign objectives and target audience"
-                       error={!!validationErrors.description}
-                       helperText={validationErrors.description || "Provide a clear description of your campaign"}
-                     />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <FormControl fullWidth>
-                      <InputLabel>Campaign Type</InputLabel>
-                                             <Select
-                         value={newCampaign.type}
-                         onChange={handleCampaignTypeChange}
-                       >
-                        <MenuItem value="promotional">
-                          <Box>
-                            <Typography variant="body2" fontWeight="500">Promotional</Typography>
-                            <Typography variant="caption" color="text.secondary">Marketing and sales campaigns</Typography>
-                          </Box>
-                        </MenuItem>
-                        <MenuItem value="renewal">
-                          <Box>
-                            <Typography variant="body2" fontWeight="500">Renewal</Typography>
-                            <Typography variant="caption" color="text.secondary">Policy renewal reminders</Typography>
-                          </Box>
-                        </MenuItem>
-                        <MenuItem value="welcome">
-                          <Box>
-                            <Typography variant="body2" fontWeight="500">Welcome</Typography>
-                            <Typography variant="caption" color="text.secondary">New customer onboarding</Typography>
-                          </Box>
-                        </MenuItem>
-                        <MenuItem value="reminder">
-                          <Box>
-                            <Typography variant="body2" fontWeight="500">Reminder</Typography>
-                            <Typography variant="caption" color="text.secondary">Payment and deadline reminders</Typography>
-                          </Box>
-                        </MenuItem>
-                        <MenuItem value="newsletter">
-                          <Box>
-                            <Typography variant="body2" fontWeight="500">Newsletter</Typography>
-                            <Typography variant="caption" color="text.secondary">Regular updates and news</Typography>
-                          </Box>
-                        </MenuItem>
-                        <MenuItem value="survey">
-                          <Box>
-                            <Typography variant="body2" fontWeight="500">Survey</Typography>
-                            <Typography variant="caption" color="text.secondary">Feedback and research campaigns</Typography>
-                          </Box>
-                        </MenuItem>
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                                         <Autocomplete
-                       multiple
-                       options={['renewal', 'urgent', 'promotional', 'seasonal', 'automated', 'high-priority', 'follow-up']}
-                       value={newCampaign.tags}
-                       onChange={handleCampaignTagsChange}
-                       renderInput={(params) => (
-                         <TextField {...params} label="Tags" placeholder="Add tags for organization" />
-                       )}
-                       renderTags={(value, getTagProps) =>
-                         value.map((option, index) => (
-                           <Chip variant="outlined" label={option} {...getTagProps({ index })} />
-                         ))
-                       }
-                     />
-                  </Grid>
+      </DialogTitle>
+      <DialogContent dividers>
+        <Stepper activeStep={campaignStep} orientation="vertical">
+          <Step>
+            <StepLabel>Campaign Information</StepLabel>
+            <StepContent>
+              <Grid container spacing={2} sx={{ mt: 1 }}>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Campaign Name"
+                    value={newCampaign.name}
+                    onChange={(e) => setNewCampaign(prev => ({ ...prev, name: e.target.value }))}
+                  />
                 </Grid>
-                                 <Box sx={{ mt: 3, display: 'flex', gap: 1 }}>
-                   <Button
-                     variant="contained"
-                     onClick={handleCampaignStepNext}
-                     disabled={!newCampaign.name || !newCampaign.description}
-                   >
-                     Continue
-                   </Button>
-                  <Button
-                    variant="outlined"
-                    onClick={handleCloseDialog}
-                  >
-                    Cancel
-                  </Button>
-                </Box>
-              </StepContent>
-            </Step>
-
-            {/* Step 2: Channel Selection */}
-            <Step>
-              <StepLabel>Select Channels</StepLabel>
-              <StepContent>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Choose the channels for your campaign. You can select multiple channels for better reach.
-                </Typography>
-                
-                {validationErrors.channels && (
-                  <Alert severity="error" sx={{ mt: 2, mb: 2 }}>
-                    {validationErrors.channels}
-                  </Alert>
-                )}
-
-                <FormGroup sx={{ mt: 2 }}>
-                  <FormControlLabel
-                    control={
-                                           <Checkbox
-                       checked={newCampaign.channels.includes('email')}
-                       onChange={(e) => handleChannelChange('email', e.target.checked)}
-                     />
-                    }
-                    label={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1 }}>
-                        <Avatar sx={{ bgcolor: '#1976d2', width: 40, height: 40 }}>
-                          <EmailIcon />
-                        </Avatar>
-                        <Box>
-                          <Typography variant="body2" fontWeight="500">Email</Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Rich HTML emails with tracking, attachments, and personalization
-                          </Typography>
-                        </Box>
-                      </Box>
-                    }
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={3}
+                    label="Description"
+                    value={newCampaign.description}
+                    onChange={(e) => setNewCampaign(prev => ({ ...prev, description: e.target.value }))}
                   />
-                  <FormControlLabel
-                    control={
-                                           <Checkbox
-                       checked={newCampaign.channels.includes('sms')}
-                       onChange={(e) => handleChannelChange('sms', e.target.checked)}
-                     />
-                    }
-                    label={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1 }}>
-                        <Avatar sx={{ bgcolor: '#388e3c', width: 40, height: 40 }}>
-                          <SmsIcon />
-                        </Avatar>
-                        <Box>
-                          <Typography variant="body2" fontWeight="500">SMS</Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            DLT-compliant text messages with high delivery rates
-                          </Typography>
-                        </Box>
-                      </Box>
-                    }
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Campaign Type</InputLabel>
+                    <Select
+                      value={newCampaign.type}
+                      onChange={(e) => setNewCampaign(prev => ({ ...prev, type: e.target.value }))}
+                    >
+                      <MenuItem value="promotional">Promotional</MenuItem>
+                      <MenuItem value="transactional">Transactional</MenuItem>
+                      <MenuItem value="renewal">Renewal</MenuItem>
+                      <MenuItem value="welcome">Welcome</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    type="datetime-local"
+                    label="Scheduled Date"
+                    value={newCampaign.scheduledDate}
+                    onChange={(e) => setNewCampaign(prev => ({ ...prev, scheduledDate: e.target.value }))}
+                    InputLabelProps={{ shrink: true }}
                   />
-                  <FormControlLabel
-                    control={
-                                           <Checkbox
-                       checked={newCampaign.channels.includes('whatsapp')}
-                       onChange={(e) => handleChannelChange('whatsapp', e.target.checked)}
-                     />
-                    }
-                    label={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1 }}>
-                        <Avatar sx={{ bgcolor: '#25d366', width: 40, height: 40 }}>
-                          <WhatsAppIcon />
-                        </Avatar>
-                        <Box>
-                          <Typography variant="body2" fontWeight="500">WhatsApp</Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            WhatsApp Business API messages with media support
-                          </Typography>
-                        </Box>
-                      </Box>
-                    }
-                  />
-                </FormGroup>
-
-                {newCampaign.channels.length > 0 && (
-                  <Alert severity="info" sx={{ mt: 2 }}>
-                    <Typography variant="body2">
-                      Selected channels: {newCampaign.channels.map(c => c.toUpperCase()).join(', ')}
-                    </Typography>
-                  </Alert>
-                )}
-
-                                 <Box sx={{ mt: 3, display: 'flex', gap: 1 }}>
-                   <Button onClick={handleCampaignStepBack}>
-                     Back
-                   </Button>
-                   <Button
-                     variant="contained"
-                     onClick={handleCampaignStepNext}
-                     disabled={newCampaign.channels.length === 0}
-                   >
-                     Continue
-                   </Button>
-                </Box>
-              </StepContent>
-            </Step>
-
-            {/* Step 3: Audience Selection */}
-            <Step>
-              <StepLabel>Select Audience</StepLabel>
-              <StepContent>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Choose your target audience for this campaign.
-                </Typography>
-
-                {validationErrors.audience && (
-                  <Alert severity="error" sx={{ mt: 2, mb: 2 }}>
-                    {validationErrors.audience}
-                  </Alert>
-                )}
-
-                <FormControl fullWidth sx={{ mb: 2 }} error={!!validationErrors.audience}>
-                  <InputLabel>Choose Audience</InputLabel>
-                                     <Select
-                     value={newCampaign.audience}
-                     onChange={handleAudienceChange}
-                   >
-                    {audiences.map((audience) => (
-                      <MenuItem key={audience.id} value={audience.name}>
-                        <Box sx={{ py: 1 }}>
-                          <Typography variant="body2" fontWeight="500">
-                            {audience.name}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {audience.size.toLocaleString()} contacts • {audience.description}
-                          </Typography>
-                          <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
-                            <Chip size="small" label={`Email: ${audience.consent.email}`} />
-                            <Chip size="small" label={`SMS: ${audience.consent.sms}`} />
-                            <Chip size="small" label={`WhatsApp: ${audience.consent.whatsapp}`} />
-                          </Box>
-                        </Box>
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {validationErrors.audience && (
-                    <FormHelperText>{validationErrors.audience}</FormHelperText>
-                  )}
-                </FormControl>
-
+                </Grid>
+              </Grid>
+              <Box sx={{ mt: 2 }}>
                 <Button
-                  startIcon={<UploadIcon />}
-                  variant="outlined"
-                  fullWidth
-                  sx={{ mb: 2 }}
+                  variant="contained"
+                  onClick={() => setCampaignStep(1)}
+                  disabled={!newCampaign.name}
                 >
-                  Upload New Audience (CSV)
+                  Continue
                 </Button>
-
-                {newCampaign.audience && (
-                  <Alert severity="success" sx={{ mt: 2 }}>
-                    <Typography variant="body2">
-                      Selected audience: {newCampaign.audience}
-                    </Typography>
-                  </Alert>
-                )}
-
-                                 <Box sx={{ mt: 3, display: 'flex', gap: 1 }}>
-                   <Button onClick={handleCampaignStepBack}>
-                     Back
-                   </Button>
-                   <Button
-                     variant="contained"
-                     onClick={handleCampaignStepNext}
-                     disabled={!newCampaign.audience}
-                   >
-                     Continue
-                   </Button>
+              </Box>
+            </StepContent>
+          </Step>
+          
+          <Step>
+            <StepLabel>Select Channels</StepLabel>
+            <StepContent>
+              <FormControl component="fieldset" sx={{ mt: 1 }}>
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                  {['email', 'sms', 'whatsapp'].map((channel) => (
+                    <FormControlLabel
+                      key={channel}
+                      control={
+                        <Switch
+                          checked={newCampaign.channels.includes(channel)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setNewCampaign(prev => ({
+                                ...prev,
+                                channels: [...prev.channels, channel]
+                              }));
+                            } else {
+                              setNewCampaign(prev => ({
+                                ...prev,
+                                channels: prev.channels.filter(c => c !== channel)
+                              }));
+                            }
+                          }}
+                        />
+                      }
+                      label={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          {getChannelIcon(channel)}
+                          {channel.toUpperCase()}
+                        </Box>
+                      }
+                    />
+                  ))}
                 </Box>
-              </StepContent>
-            </Step>
-
-            {/* Step 4: Scheduling */}
-            <Step>
-              <StepLabel>Schedule Campaign</StepLabel>
-              <StepContent>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Choose when to send your campaign.
-                </Typography>
-
-                {validationErrors.scheduledDate && (
-                  <Alert severity="error" sx={{ mt: 2, mb: 2 }}>
-                    {validationErrors.scheduledDate}
-                  </Alert>
-                )}
-
-                <FormControl component="fieldset" sx={{ mb: 2 }}>
-                  <FormLabel component="legend">When to send?</FormLabel>
-                                     <RadioGroup
-                     value={newCampaign.schedule}
-                     onChange={handleScheduleChange}
-                   >
-                    <FormControlLabel
-                      value="immediate"
-                      control={<Radio />}
-                      label={
-                        <Box>
-                          <Typography variant="body2" fontWeight="500">Send immediately</Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Campaign will start as soon as it's created
-                          </Typography>
-                        </Box>
-                      }
-                    />
-                    <FormControlLabel
-                      value="scheduled"
-                      control={<Radio />}
-                      label={
-                        <Box>
-                          <Typography variant="body2" fontWeight="500">Schedule for later</Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Choose a specific date and time to send
-                          </Typography>
-                        </Box>
-                      }
-                    />
-                  </RadioGroup>
-                </FormControl>
-                
-                {newCampaign.schedule === 'scheduled' && (
-                                     <TextField
-                     fullWidth
-                     type="datetime-local"
-                     label="Schedule Date & Time"
-                     value={newCampaign.scheduledDate || ''}
-                     onChange={handleScheduledDateChange}
-                     InputLabelProps={{ shrink: true }}
-                     error={!!validationErrors.scheduledDate}
-                     helperText={validationErrors.scheduledDate || "Select when you want the campaign to be sent"}
-                     inputProps={{
-                       min: new Date().toISOString().slice(0, 16)
-                     }}
-                   />
-                )}
-                
-                                 <Box sx={{ mt: 3, display: 'flex', gap: 1 }}>
-                   <Button onClick={handleCampaignStepBack}>
-                     Back
-                   </Button>
-                   <Button
-                     variant="contained"
-                     onClick={handleSaveCampaignWithValidation}
-                     startIcon={<CheckCircleIcon />}
-                   >
-                     Create Campaign
-                   </Button>
-                 </Box>
-               </StepContent>
-             </Step>
-           </Stepper>
-         </DialogContent>
-
-         <DialogActions sx={{ p: 3, borderTop: `1px solid ${theme.palette.divider}` }}>
-           <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-             <Typography variant="body2" color="text.secondary">
-               {campaignStep === 0 && "Fill in the basic campaign information"}
-               {campaignStep === 1 && "Select communication channels"}
-               {campaignStep === 2 && "Choose your target audience"}
-               {campaignStep === 3 && "Set the campaign schedule"}
-             </Typography>
-             <Box sx={{ display: 'flex', gap: 1 }}>
-               <Button
-                 variant="outlined"
-                 onClick={handleCloseDialog}
-               >
-                 Cancel
-               </Button>
-               {campaignStep > 0 && (
-                 <Button
-                   onClick={handleCampaignStepBack}
-                 >
-                   Back
-                 </Button>
-               )}
-               {campaignStep < 3 ? (
-                 <Button
-                   variant="contained"
-                   onClick={handleCampaignStepNext}
-                 >
-                   Next
-                 </Button>
-               ) : (
-                 <Button
-                   variant="contained"
-                   onClick={handleSaveCampaignWithValidation}
-                   startIcon={<CheckCircleIcon />}
-                 >
-                   Create Campaign
-                 </Button>
-               )}
-             </Box>
-           </Box>
-         </DialogActions>
-       </Dialog>
-     );
+              </FormControl>
+              <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+                <Button onClick={() => setCampaignStep(0)}>Back</Button>
+                <Button
+                  variant="contained"
+                  onClick={() => setCampaignStep(2)}
+                  disabled={newCampaign.channels.length === 0}
+                >
+                  Continue
+                </Button>
+              </Box>
+            </StepContent>
+          </Step>
+          
+          <Step>
+            <StepLabel>Select Audience</StepLabel>
+            <StepContent>
+              <FormControl fullWidth sx={{ mt: 1 }}>
+                <InputLabel>Target Audience</InputLabel>
+                <Select
+                  value={newCampaign.audience}
+                  onChange={(e) => setNewCampaign(prev => ({ ...prev, audience: e.target.value }))}
+                >
+                  {audiences.map((audience) => (
+                    <MenuItem key={audience.id} value={audience.name}>
+                      {audience.name} ({audience.size.toLocaleString()} contacts)
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+                <Button onClick={() => setCampaignStep(1)}>Back</Button>
+                <Button
+                  variant="contained"
+                  onClick={handleSaveCampaign}
+                  disabled={!newCampaign.audience}
+                  startIcon={<SaveIcon />}
+                >
+                  Create Campaign
+                </Button>
+              </Box>
+            </StepContent>
+          </Step>
+        </Stepper>
+      </DialogContent>
+    </Dialog>
+  );
 
   return (
     <Fade in timeout={800}>
@@ -1203,9 +968,10 @@ const CampaignManager = () => {
           </Box>
           <Box sx={{ display: 'flex', gap: 2 }}>
             <Button
-              startIcon={<TemplateIcon />}
+              startIcon={<AssignmentIcon />}
               variant="outlined"
               onClick={() => setTemplateDialog(true)}
+              sx={{ borderRadius: 2 }}
             >
               Templates
             </Button>
@@ -1213,6 +979,7 @@ const CampaignManager = () => {
               startIcon={<PeopleIcon />}
               variant="outlined"
               onClick={() => setAudienceDialog(true)}
+              sx={{ borderRadius: 2 }}
             >
               Audiences
             </Button>
@@ -1230,100 +997,44 @@ const CampaignManager = () => {
         {/* Stats Cards */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
           <Grid item xs={12} sm={6} md={3}>
-            <Grow in={loaded} timeout={200}>
-              <Card sx={{ 
-                borderRadius: 3,
-                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                color: 'white'
-              }}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Box>
-                      <Typography variant="h4" fontWeight="600">
-                        {campaigns.length}
-                      </Typography>
-                      <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                        Total Campaigns
-                      </Typography>
-                    </Box>
-                    <CampaignIcon sx={{ fontSize: 40, opacity: 0.8 }} />
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grow>
+            <StatCard 
+              title="Total Campaigns"
+              value={campaigns.length}
+              color={theme.palette.primary.main}
+              icon={<CampaignIcon />}
+              index={0}
+            />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <Grow in={loaded} timeout={300}>
-              <Card sx={{ 
-                borderRadius: 3,
-                background: `linear-gradient(135deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
-                color: 'white'
-              }}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Box>
-                      <Typography variant="h4" fontWeight="600">
-                        {campaigns.filter(c => c.status === 'active').length}
-                      </Typography>
-                      <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                        Active Campaigns
-                      </Typography>
-                    </Box>
-                    <PlayIcon sx={{ fontSize: 40, opacity: 0.8 }} />
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grow>
+            <StatCard 
+              title="Active Campaigns"
+              value={campaigns.filter(c => c.status === 'active').length}
+              color={theme.palette.success.main}
+              icon={<CheckCircleIcon />}
+              index={1}
+            />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <Grow in={loaded} timeout={400}>
-              <Card sx={{ 
-                borderRadius: 3,
-                background: `linear-gradient(135deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`,
-                color: 'white'
-              }}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                         <Box>
-                       <Typography variant="h4" fontWeight="600">
-                         {campaigns.reduce((sum, c) => sum + (c.metrics?.sent || 0), 0).toLocaleString()}
-                       </Typography>
-                       <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                         Messages Sent
-                       </Typography>
-                     </Box>
-                    <SendIcon sx={{ fontSize: 40, opacity: 0.8 }} />
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grow>
+            <StatCard 
+              title="Scheduled"
+              value={campaigns.filter(c => c.status === 'scheduled').length}
+              color={theme.palette.info.main}
+              icon={<ScheduleIcon />}
+              index={2}
+            />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <Grow in={loaded} timeout={500}>
-              <Card sx={{ 
-                borderRadius: 3,
-                background: `linear-gradient(135deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`,
-                color: 'white'
-              }}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                         <Box>
-                       <Typography variant="h4" fontWeight="600">
-                         {Math.round(campaigns.reduce((sum, c) => sum + (c.metrics?.clicked || 0), 0) / campaigns.reduce((sum, c) => sum + (c.metrics?.sent || 0), 0) * 100) || 0}%
-                       </Typography>
-                       <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                         Avg. Click Rate
-                       </Typography>
-                     </Box>
-                    <TrendingUpIcon sx={{ fontSize: 40, opacity: 0.8 }} />
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grow>
+            <StatCard 
+              title="Total Reach"
+              value={campaigns.reduce((sum, c) => sum + (c.audienceSize || 0), 0).toLocaleString()}
+              color={theme.palette.warning.main}
+              icon={<TrendingUpIcon />}
+              index={3}
+            />
           </Grid>
         </Grid>
 
-        {/* Filters and Search */}
+        {/* Filters */}
         <Paper sx={{ p: 3, mb: 3, borderRadius: 3 }}>
           <Grid container spacing={2} alignItems="center">
             <Grid item xs={12} md={4}>
@@ -1333,7 +1044,7 @@ const CampaignManager = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 InputProps={{
-                  startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />
+                  startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />,
                 }}
               />
             </Grid>
@@ -1349,7 +1060,7 @@ const CampaignManager = () => {
                   <MenuItem value="scheduled">Scheduled</MenuItem>
                   <MenuItem value="paused">Paused</MenuItem>
                   <MenuItem value="completed">Completed</MenuItem>
-                  <MenuItem value="failed">Failed</MenuItem>
+                  <MenuItem value="draft">Draft</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -1368,19 +1079,27 @@ const CampaignManager = () => {
               </FormControl>
             </Grid>
             <Grid item xs={12} md={4}>
-              <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Button
+                  startIcon={<FilterIcon />}
+                  variant="outlined"
+                  onClick={handleAdvancedFilters}
+                >
+                  Advanced Filters
+                </Button>
+                <Button
+                  startIcon={<GetAppIcon />}
+                  variant="outlined"
+                  onClick={handleExport}
+                >
+                  Export
+                </Button>
                 <Button
                   startIcon={<RefreshIcon />}
                   variant="outlined"
                   onClick={loadCampaigns}
                 >
                   Refresh
-                </Button>
-                <Button
-                  startIcon={<DownloadIcon />}
-                  variant="outlined"
-                >
-                  Export
                 </Button>
               </Box>
             </Grid>
@@ -1396,8 +1115,8 @@ const CampaignManager = () => {
                 No campaigns found
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                {searchTerm || statusFilter !== 'all' || channelFilter !== 'all' 
-                  ? 'Try adjusting your filters or search terms'
+                {searchTerm || statusFilter !== 'all' || channelFilter !== 'all'
+                  ? 'Try adjusting your filters'
                   : 'Create your first campaign to get started'
                 }
               </Typography>
@@ -1419,7 +1138,407 @@ const CampaignManager = () => {
         </Box>
 
         {/* Dialogs */}
-        <CampaignCreationDialog />
+        <CreateCampaignDialog />
+        <TemplateDialog 
+          open={templateDialog}
+          onClose={() => setTemplateDialog(false)}
+          mockTemplates={templates}
+          getChannelColor={getChannelColor}
+          getChannelIcon={getChannelIcon}
+          handleTemplateAction={handleTemplateAction}
+          navigate={navigate}
+        />
+        
+        {/* Audience Dialog */}
+        <Dialog 
+          open={audienceDialog} 
+          onClose={() => setAudienceDialog(false)}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="h6">Audience Manager</Typography>
+              <IconButton onClick={() => setAudienceDialog(false)}>
+                <CloseIcon />
+              </IconButton>
+            </Box>
+          </DialogTitle>
+          <DialogContent>
+            <Box sx={{ mb: 3 }}>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                sx={{ mb: 2 }}
+              >
+                Create New Audience
+              </Button>
+            </Box>
+            
+            <Grid container spacing={2}>
+              {audiences.map((audience) => (
+                <Grid item xs={12} md={6} key={audience.id}>
+                  <Card sx={{ height: '100%' }}>
+                    <CardContent>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                        <Typography variant="h6">{audience.name}</Typography>
+                        <IconButton size="small">
+                          <MoreVertIcon />
+                        </IconButton>
+                      </Box>
+                      
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        {audience.description}
+                      </Typography>
+                      
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                        <PeopleIcon sx={{ mr: 1, color: 'primary.main' }} />
+                        <Typography variant="h5" color="primary" fontWeight="600">
+                          {audience.size.toLocaleString()}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+                          contacts
+                        </Typography>
+                      </Box>
+                      
+                      <Box sx={{ mb: 2 }}>
+                        <Typography variant="caption" color="text.secondary" gutterBottom>
+                          Segments
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {audience.segments.map((segment, index) => (
+                            <Chip key={index} label={segment} size="small" variant="outlined" />
+                          ))}
+                        </Box>
+                      </Box>
+                      
+                      <Typography variant="caption" color="text.secondary">
+                        Last updated: {new Date(audience.lastUpdated).toLocaleDateString()}
+                      </Typography>
+                      
+                      <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+                        <Button 
+                          size="small" 
+                          variant="outlined"
+                          onClick={() => handleAudienceAction('view', audience)}
+                        >
+                          View Details
+                        </Button>
+                        <Button 
+                          size="small" 
+                          variant="outlined"
+                          onClick={() => handleAudienceAction('edit', audience)}
+                        >
+                          Edit
+                        </Button>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          </DialogContent>
+        </Dialog>
+
+        {/* Advanced Filters Dialog */}
+        <Dialog 
+          open={advancedFiltersDialog} 
+          onClose={() => setAdvancedFiltersDialog(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="h6">Advanced Filters</Typography>
+              <IconButton onClick={() => setAdvancedFiltersDialog(false)}>
+                <CloseIcon />
+              </IconButton>
+            </Box>
+          </DialogTitle>
+          <DialogContent>
+            <Grid container spacing={3} sx={{ mt: 1 }}>
+              <Grid item xs={12}>
+                <FormControl fullWidth>
+                  <InputLabel>Campaign Type</InputLabel>
+                  <Select
+                    value={advancedFilters.campaignType}
+                    onChange={(e) => setAdvancedFilters(prev => ({ 
+                      ...prev, 
+                      campaignType: e.target.value 
+                    }))}
+                  >
+                    <MenuItem value="all">All Types</MenuItem>
+                    <MenuItem value="renewal">Renewal</MenuItem>
+                    <MenuItem value="welcome">Welcome</MenuItem>
+                    <MenuItem value="payment">Payment</MenuItem>
+                    <MenuItem value="promotional">Promotional</MenuItem>
+                    <MenuItem value="claims">Claims</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              
+              <Grid item xs={6}>
+                <TextField
+                  fullWidth
+                  label="Min Audience Size"
+                  type="number"
+                  value={advancedFilters.audienceSize.min}
+                  onChange={(e) => setAdvancedFilters(prev => ({ 
+                    ...prev, 
+                    audienceSize: { ...prev.audienceSize, min: e.target.value }
+                  }))}
+                />
+              </Grid>
+              
+              <Grid item xs={6}>
+                <TextField
+                  fullWidth
+                  label="Max Audience Size"
+                  type="number"
+                  value={advancedFilters.audienceSize.max}
+                  onChange={(e) => setAdvancedFilters(prev => ({ 
+                    ...prev, 
+                    audienceSize: { ...prev.audienceSize, max: e.target.value }
+                  }))}
+                />
+              </Grid>
+              
+              <Grid item xs={12}>
+                <FormControl fullWidth>
+                  <InputLabel>Performance</InputLabel>
+                  <Select
+                    value={advancedFilters.performance}
+                    onChange={(e) => setAdvancedFilters(prev => ({ 
+                      ...prev, 
+                      performance: e.target.value 
+                    }))}
+                  >
+                    <MenuItem value="all">All Performance</MenuItem>
+                    <MenuItem value="high">High (70%+ open rate)</MenuItem>
+                    <MenuItem value="medium">Medium (40-70% open rate)</MenuItem>
+                    <MenuItem value="low">Low (&lt;40% open rate)</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              
+              <Grid item xs={12}>
+                <Typography variant="subtitle2" gutterBottom>Tags</Typography>
+                <FormGroup>
+                  {['renewal', 'urgent', 'multi-channel', 'welcome', 'onboarding', 'payment', 'automated'].map((tag) => (
+                    <FormControlLabel
+                      key={tag}
+                      control={
+                        <Checkbox
+                          checked={advancedFilters.tags.includes(tag)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setAdvancedFilters(prev => ({ 
+                                ...prev, 
+                                tags: [...prev.tags, tag]
+                              }));
+                            } else {
+                              setAdvancedFilters(prev => ({ 
+                                ...prev, 
+                                tags: prev.tags.filter(t => t !== tag)
+                              }));
+                            }
+                          }}
+                        />
+                      }
+                      label={tag}
+                    />
+                  ))}
+                </FormGroup>
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleResetAdvancedFilters}>Reset</Button>
+            <Button onClick={() => setAdvancedFiltersDialog(false)}>Cancel</Button>
+            <Button variant="contained" onClick={handleApplyAdvancedFilters}>
+              Apply Filters
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Export Dialog */}
+        <Dialog 
+          open={exportDialog} 
+          onClose={() => setExportDialog(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="h6">Export Campaigns</Typography>
+              <IconButton onClick={() => setExportDialog(false)}>
+                <CloseIcon />
+              </IconButton>
+            </Box>
+          </DialogTitle>
+          <DialogContent>
+            <Grid container spacing={3} sx={{ mt: 1 }}>
+              <Grid item xs={12}>
+                <FormControl fullWidth>
+                  <InputLabel>Export Format</InputLabel>
+                  <Select
+                    value={exportFormat}
+                    onChange={(e) => setExportFormat(e.target.value)}
+                  >
+                    <MenuItem value="csv">CSV</MenuItem>
+                    <MenuItem value="xlsx">Excel (XLSX)</MenuItem>
+                    <MenuItem value="pdf">PDF Report</MenuItem>
+                    <MenuItem value="json">JSON</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              
+              <Grid item xs={12}>
+                <FormControl fullWidth>
+                  <InputLabel>Data to Export</InputLabel>
+                  <Select
+                    value={exportData}
+                    onChange={(e) => setExportData(e.target.value)}
+                  >
+                    <MenuItem value="all">All Campaigns ({campaigns.length})</MenuItem>
+                    <MenuItem value="filtered">Filtered Results ({filteredCampaigns.length})</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              
+              <Grid item xs={12}>
+                <Alert severity="info">
+                  The export will include campaign details, metrics, audience information, and performance data.
+                </Alert>
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setExportDialog(false)}>Cancel</Button>
+            <Button variant="contained" onClick={handleExportConfirm} startIcon={<GetAppIcon />}>
+              Export
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Analytics Dialog */}
+        <Dialog 
+          open={analyticsDialog} 
+          onClose={() => setAnalyticsDialog(false)}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="h6">Campaign Analytics</Typography>
+              <IconButton onClick={() => setAnalyticsDialog(false)}>
+                <CloseIcon />
+              </IconButton>
+            </Box>
+          </DialogTitle>
+          <DialogContent>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6} md={3}>
+                <Card>
+                  <CardContent sx={{ textAlign: 'center' }}>
+                    <Typography variant="h4" color="primary" fontWeight="600">
+                      {campaigns.reduce((sum, c) => sum + c.metrics.sent, 0).toLocaleString()}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Total Messages Sent
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              
+              <Grid item xs={12} sm={6} md={3}>
+                <Card>
+                  <CardContent sx={{ textAlign: 'center' }}>
+                    <Typography variant="h4" color="success.main" fontWeight="600">
+                      {campaigns.reduce((sum, c) => sum + c.metrics.delivered, 0).toLocaleString()}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Total Delivered
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              
+              <Grid item xs={12} sm={6} md={3}>
+                <Card>
+                  <CardContent sx={{ textAlign: 'center' }}>
+                    <Typography variant="h4" color="info.main" fontWeight="600">
+                      {campaigns.reduce((sum, c) => sum + c.metrics.opened, 0).toLocaleString()}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Total Opened
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              
+              <Grid item xs={12} sm={6} md={3}>
+                <Card>
+                  <CardContent sx={{ textAlign: 'center' }}>
+                    <Typography variant="h4" color="warning.main" fontWeight="600">
+                      {campaigns.reduce((sum, c) => sum + c.metrics.clicked, 0).toLocaleString()}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Total Clicked
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              
+              <Grid item xs={12}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>Campaign Performance</Typography>
+                    <TableContainer>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Campaign</TableCell>
+                            <TableCell align="right">Sent</TableCell>
+                            <TableCell align="right">Delivered</TableCell>
+                            <TableCell align="right">Open Rate</TableCell>
+                            <TableCell align="right">Click Rate</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {campaigns.map((campaign) => {
+                            const openRate = campaign.metrics.delivered > 0 
+                              ? ((campaign.metrics.opened / campaign.metrics.delivered) * 100).toFixed(1)
+                              : '0.0';
+                            const clickRate = campaign.metrics.opened > 0 
+                              ? ((campaign.metrics.clicked / campaign.metrics.opened) * 100).toFixed(1)
+                              : '0.0';
+                            
+                            return (
+                              <TableRow key={campaign.id}>
+                                <TableCell>{campaign.name}</TableCell>
+                                <TableCell align="right">{campaign.metrics.sent.toLocaleString()}</TableCell>
+                                <TableCell align="right">{campaign.metrics.delivered.toLocaleString()}</TableCell>
+                                <TableCell align="right">{openRate}%</TableCell>
+                                <TableCell align="right">{clickRate}%</TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setAnalyticsDialog(false)}>Close</Button>
+            <Button variant="contained" onClick={() => navigate('/campaigns/analytics')}>
+              View Detailed Analytics
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </Fade>
   );
