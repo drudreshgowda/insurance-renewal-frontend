@@ -1429,6 +1429,461 @@ const Settings = () => {
   };
 
   // System Settings Tab Content
+  const CampaignsSettingsTab = () => {
+    const [campaignSettings, setCampaignSettings] = useState({
+      // Integration Settings
+      emailProvider: 'sendgrid',
+      emailApiKey: '',
+      whatsappProvider: 'meta',
+      whatsappApiKey: '',
+      whatsappPhoneId: '',
+      smsProvider: 'msg91',
+      smsApiKey: '',
+      smsSenderId: '',
+      
+      // Compliance Settings
+      consentRequired: true,
+      dndCompliance: true,
+      optInRequired: true,
+      dataRetentionDays: 365,
+      
+      // Throttling & Limits
+      emailRateLimit: 1000,
+      smsRateLimit: 100,
+      whatsappRateLimit: 80,
+      batchSize: 50,
+      retryAttempts: 3,
+      
+      // Template Settings
+      templateApprovalRequired: false,
+      dltTemplateRequired: true,
+      autoSaveTemplates: true,
+      
+      // Analytics & Reporting
+      trackingEnabled: true,
+      webhookUrl: '',
+      reportingInterval: 'daily',
+      exportFormat: 'csv'
+    });
+
+    const handleCampaignSettingChange = (key, value) => {
+      setCampaignSettings(prev => ({ ...prev, [key]: value }));
+    };
+
+    return (
+      <Box>
+        <Typography variant="h5" fontWeight="600" gutterBottom>
+          Campaign Management Settings
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
+          Configure multi-channel campaign settings, integrations, and compliance options
+        </Typography>
+
+        {/* Integration Settings */}
+        <Card sx={{ mb: 3, borderRadius: 3 }}>
+          <CardContent sx={{ p: 3 }}>
+            <Typography variant="h6" fontWeight="600" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <EmailIcon color="primary" />
+              Channel Integrations
+            </Typography>
+            
+            <Grid container spacing={3}>
+              {/* Email Provider */}
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth sx={{ mb: 2 }}>
+                  <InputLabel>Email Provider</InputLabel>
+                  <Select
+                    value={campaignSettings.emailProvider}
+                    onChange={(e) => handleCampaignSettingChange('emailProvider', e.target.value)}
+                  >
+                    <MenuItem value="sendgrid">SendGrid</MenuItem>
+                    <MenuItem value="ses">Amazon SES</MenuItem>
+                    <MenuItem value="mailgun">Mailgun</MenuItem>
+                    <MenuItem value="smtp">Custom SMTP</MenuItem>
+                  </Select>
+                </FormControl>
+                <TextField
+                  fullWidth
+                  label="Email API Key"
+                  type="password"
+                  value={campaignSettings.emailApiKey}
+                  onChange={(e) => handleCampaignSettingChange('emailApiKey', e.target.value)}
+                  placeholder="Enter your email provider API key"
+                />
+              </Grid>
+
+              {/* WhatsApp Provider */}
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth sx={{ mb: 2 }}>
+                  <InputLabel>WhatsApp Provider</InputLabel>
+                  <Select
+                    value={campaignSettings.whatsappProvider}
+                    onChange={(e) => handleCampaignSettingChange('whatsappProvider', e.target.value)}
+                  >
+                    <MenuItem value="meta">Meta WhatsApp Business API</MenuItem>
+                    <MenuItem value="twilio">Twilio WhatsApp</MenuItem>
+                    <MenuItem value="gupshup">Gupshup</MenuItem>
+                  </Select>
+                </FormControl>
+                <TextField
+                  fullWidth
+                  label="WhatsApp API Key"
+                  type="password"
+                  value={campaignSettings.whatsappApiKey}
+                  onChange={(e) => handleCampaignSettingChange('whatsappApiKey', e.target.value)}
+                  placeholder="Enter WhatsApp API key"
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  fullWidth
+                  label="WhatsApp Phone Number ID"
+                  value={campaignSettings.whatsappPhoneId}
+                  onChange={(e) => handleCampaignSettingChange('whatsappPhoneId', e.target.value)}
+                  placeholder="Enter phone number ID"
+                />
+              </Grid>
+
+              {/* SMS Provider */}
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth sx={{ mb: 2 }}>
+                  <InputLabel>SMS Provider</InputLabel>
+                  <Select
+                    value={campaignSettings.smsProvider}
+                    onChange={(e) => handleCampaignSettingChange('smsProvider', e.target.value)}
+                  >
+                    <MenuItem value="msg91">MSG91</MenuItem>
+                    <MenuItem value="airtel">Airtel IQ</MenuItem>
+                    <MenuItem value="aws-sns">AWS SNS</MenuItem>
+                    <MenuItem value="twilio">Twilio SMS</MenuItem>
+                  </Select>
+                </FormControl>
+                <TextField
+                  fullWidth
+                  label="SMS API Key"
+                  type="password"
+                  value={campaignSettings.smsApiKey}
+                  onChange={(e) => handleCampaignSettingChange('smsApiKey', e.target.value)}
+                  placeholder="Enter SMS provider API key"
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  fullWidth
+                  label="SMS Sender ID"
+                  value={campaignSettings.smsSenderId}
+                  onChange={(e) => handleCampaignSettingChange('smsSenderId', e.target.value)}
+                  placeholder="Enter sender ID (e.g., INTPRO)"
+                />
+              </Grid>
+            </Grid>
+          </CardContent>
+        </Card>
+
+        {/* Compliance Settings */}
+        <Card sx={{ mb: 3, borderRadius: 3 }}>
+          <CardContent sx={{ p: 3 }}>
+            <Typography variant="h6" fontWeight="600" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <ShieldIcon color="primary" />
+              Compliance & Consent
+            </Typography>
+            
+            <List>
+              <ListItem>
+                <ListItemIcon>
+                  <CheckCircleIcon color="success" />
+                </ListItemIcon>
+                <ListItemText
+                  primary="Consent Required"
+                  secondary="Require explicit consent before sending campaigns"
+                />
+                <ListItemSecondaryAction>
+                  <Switch
+                    checked={campaignSettings.consentRequired}
+                    onChange={(e) => handleCampaignSettingChange('consentRequired', e.target.checked)}
+                  />
+                </ListItemSecondaryAction>
+              </ListItem>
+              
+              <ListItem>
+                <ListItemIcon>
+                  <ShieldIcon color="warning" />
+                </ListItemIcon>
+                <ListItemText
+                  primary="DND Compliance"
+                  secondary="Check Do Not Disturb registry before sending SMS"
+                />
+                <ListItemSecondaryAction>
+                  <Switch
+                    checked={campaignSettings.dndCompliance}
+                    onChange={(e) => handleCampaignSettingChange('dndCompliance', e.target.checked)}
+                  />
+                </ListItemSecondaryAction>
+              </ListItem>
+              
+              <ListItem>
+                <ListItemIcon>
+                  <PersonIcon color="info" />
+                </ListItemIcon>
+                <ListItemText
+                  primary="Opt-in Required"
+                  secondary="Require users to opt-in for marketing communications"
+                />
+                <ListItemSecondaryAction>
+                  <Switch
+                    checked={campaignSettings.optInRequired}
+                    onChange={(e) => handleCampaignSettingChange('optInRequired', e.target.checked)}
+                  />
+                </ListItemSecondaryAction>
+              </ListItem>
+            </List>
+
+            <Box sx={{ mt: 3 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Data Retention Period
+              </Typography>
+              <TextField
+                type="number"
+                value={campaignSettings.dataRetentionDays}
+                onChange={(e) => handleCampaignSettingChange('dataRetentionDays', parseInt(e.target.value))}
+                InputProps={{
+                  endAdornment: <Typography variant="body2" color="text.secondary">days</Typography>
+                }}
+                sx={{ width: 200 }}
+              />
+            </Box>
+          </CardContent>
+        </Card>
+
+        {/* Rate Limiting & Throttling */}
+        <Card sx={{ mb: 3, borderRadius: 3 }}>
+          <CardContent sx={{ p: 3 }}>
+            <Typography variant="h6" fontWeight="600" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <AccessTimeIcon color="primary" />
+              Rate Limiting & Throttling
+            </Typography>
+            
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={4}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Email Rate Limit (per hour)
+                </Typography>
+                <TextField
+                  type="number"
+                  fullWidth
+                  value={campaignSettings.emailRateLimit}
+                  onChange={(e) => handleCampaignSettingChange('emailRateLimit', parseInt(e.target.value))}
+                />
+              </Grid>
+              
+              <Grid item xs={12} md={4}>
+                <Typography variant="subtitle2" gutterBottom>
+                  SMS Rate Limit (per hour)
+                </Typography>
+                <TextField
+                  type="number"
+                  fullWidth
+                  value={campaignSettings.smsRateLimit}
+                  onChange={(e) => handleCampaignSettingChange('smsRateLimit', parseInt(e.target.value))}
+                />
+              </Grid>
+              
+              <Grid item xs={12} md={4}>
+                <Typography variant="subtitle2" gutterBottom>
+                  WhatsApp Rate Limit (per hour)
+                </Typography>
+                <TextField
+                  type="number"
+                  fullWidth
+                  value={campaignSettings.whatsappRateLimit}
+                  onChange={(e) => handleCampaignSettingChange('whatsappRateLimit', parseInt(e.target.value))}
+                />
+              </Grid>
+              
+              <Grid item xs={12} md={6}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Batch Size
+                </Typography>
+                <TextField
+                  type="number"
+                  fullWidth
+                  value={campaignSettings.batchSize}
+                  onChange={(e) => handleCampaignSettingChange('batchSize', parseInt(e.target.value))}
+                  helperText="Number of messages to send in each batch"
+                />
+              </Grid>
+              
+              <Grid item xs={12} md={6}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Retry Attempts
+                </Typography>
+                <TextField
+                  type="number"
+                  fullWidth
+                  value={campaignSettings.retryAttempts}
+                  onChange={(e) => handleCampaignSettingChange('retryAttempts', parseInt(e.target.value))}
+                  helperText="Number of retry attempts for failed messages"
+                />
+              </Grid>
+            </Grid>
+          </CardContent>
+        </Card>
+
+        {/* Template Settings */}
+        <Card sx={{ mb: 3, borderRadius: 3 }}>
+          <CardContent sx={{ p: 3 }}>
+            <Typography variant="h6" fontWeight="600" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <MergeIcon color="primary" />
+              Template Management
+            </Typography>
+            
+            <List>
+              <ListItem>
+                <ListItemIcon>
+                  <CheckCircleIcon color="info" />
+                </ListItemIcon>
+                <ListItemText
+                  primary="Template Approval Required"
+                  secondary="Require admin approval before using new templates"
+                />
+                <ListItemSecondaryAction>
+                  <Switch
+                    checked={campaignSettings.templateApprovalRequired}
+                    onChange={(e) => handleCampaignSettingChange('templateApprovalRequired', e.target.checked)}
+                  />
+                </ListItemSecondaryAction>
+              </ListItem>
+              
+              <ListItem>
+                <ListItemIcon>
+                  <RuleIcon color="warning" />
+                </ListItemIcon>
+                <ListItemText
+                  primary="DLT Template Required"
+                  secondary="Require DLT template ID for SMS/WhatsApp messages"
+                />
+                <ListItemSecondaryAction>
+                  <Switch
+                    checked={campaignSettings.dltTemplateRequired}
+                    onChange={(e) => handleCampaignSettingChange('dltTemplateRequired', e.target.checked)}
+                  />
+                </ListItemSecondaryAction>
+              </ListItem>
+              
+              <ListItem>
+                <ListItemIcon>
+                  <SaveIcon color="success" />
+                </ListItemIcon>
+                <ListItemText
+                  primary="Auto-save Templates"
+                  secondary="Automatically save template drafts while editing"
+                />
+                <ListItemSecondaryAction>
+                  <Switch
+                    checked={campaignSettings.autoSaveTemplates}
+                    onChange={(e) => handleCampaignSettingChange('autoSaveTemplates', e.target.checked)}
+                  />
+                </ListItemSecondaryAction>
+              </ListItem>
+            </List>
+          </CardContent>
+        </Card>
+
+        {/* Analytics & Reporting */}
+        <Card sx={{ mb: 3, borderRadius: 3 }}>
+          <CardContent sx={{ p: 3 }}>
+            <Typography variant="h6" fontWeight="600" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <DataUsageIcon color="primary" />
+              Analytics & Reporting
+            </Typography>
+            
+            <List>
+              <ListItem>
+                <ListItemIcon>
+                  <DataUsageIcon color="success" />
+                </ListItemIcon>
+                <ListItemText
+                  primary="Campaign Tracking"
+                  secondary="Enable detailed tracking and analytics for campaigns"
+                />
+                <ListItemSecondaryAction>
+                  <Switch
+                    checked={campaignSettings.trackingEnabled}
+                    onChange={(e) => handleCampaignSettingChange('trackingEnabled', e.target.checked)}
+                  />
+                </ListItemSecondaryAction>
+              </ListItem>
+            </List>
+
+            <Box sx={{ mt: 3 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Webhook URL (Optional)
+              </Typography>
+              <TextField
+                fullWidth
+                value={campaignSettings.webhookUrl}
+                onChange={(e) => handleCampaignSettingChange('webhookUrl', e.target.value)}
+                placeholder="https://your-domain.com/webhook"
+                helperText="Receive real-time campaign events"
+                sx={{ mb: 3 }}
+              />
+              
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Reporting Interval</InputLabel>
+                    <Select
+                      value={campaignSettings.reportingInterval}
+                      onChange={(e) => handleCampaignSettingChange('reportingInterval', e.target.value)}
+                    >
+                      <MenuItem value="realtime">Real-time</MenuItem>
+                      <MenuItem value="hourly">Hourly</MenuItem>
+                      <MenuItem value="daily">Daily</MenuItem>
+                      <MenuItem value="weekly">Weekly</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Export Format</InputLabel>
+                    <Select
+                      value={campaignSettings.exportFormat}
+                      onChange={(e) => handleCampaignSettingChange('exportFormat', e.target.value)}
+                    >
+                      <MenuItem value="csv">CSV</MenuItem>
+                      <MenuItem value="xlsx">Excel (XLSX)</MenuItem>
+                      <MenuItem value="json">JSON</MenuItem>
+                      <MenuItem value="pdf">PDF Report</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+              </Grid>
+            </Box>
+          </CardContent>
+        </Card>
+
+        {/* Save Button */}
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+          <Button
+            variant="outlined"
+            onClick={() => setCampaignSettings({})}
+          >
+            Reset to Defaults
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<SaveIcon />}
+            onClick={() => {
+              setSuccessMessage('Campaign settings saved successfully!');
+              setTimeout(() => setSuccessMessage(''), 3000);
+            }}
+          >
+            Save Campaign Settings
+          </Button>
+        </Box>
+      </Box>
+    );
+  };
+
   const SystemSettingsTab = () => (
     <Box>
       <Typography variant="h5" fontWeight="600" gutterBottom>
@@ -1642,9 +2097,9 @@ const Settings = () => {
             <TabPanel value={tabValue} index={2}>
               <EmailSettingsTab />
             </TabPanel>
-            <TabPanel value={tabValue} index={3}>
-              <ModuleSettingsTab moduleName="Campaigns" icon={<CampaignIcon sx={{ color: theme.palette.primary.main }} />} />
-            </TabPanel>
+                    <TabPanel value={tabValue} index={3}>
+          <CampaignsSettingsTab />
+        </TabPanel>
             <TabPanel value={tabValue} index={4}>
               <ModuleSettingsTab moduleName="Claims" icon={<GavelIcon sx={{ color: theme.palette.primary.main }} />} />
             </TabPanel>
