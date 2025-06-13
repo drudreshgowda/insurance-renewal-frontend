@@ -8,7 +8,7 @@ import {
   useTheme, alpha, Fade, Grow, Zoom, Dialog, DialogTitle, DialogContent, DialogActions,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
   FormControlLabel, Checkbox, RadioGroup, Radio, FormLabel,
-  Chip, IconButton, Grid
+  Chip, IconButton, Grid, Avatar
 } from '@mui/material';
 import {
   DarkMode as DarkModeIcon,
@@ -1989,6 +1989,297 @@ const Settings = () => {
     </Box>
   );
 
+  // Feedback Settings Tab
+  const FeedbackSettingsTab = () => (
+    <Box>
+      <Typography variant="h5" fontWeight="600" gutterBottom>
+        Feedback & Surveys Settings
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        Configure feedback collection, survey preferences, and integrations
+      </Typography>
+
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={6}>
+          <Card sx={{ borderRadius: 3, boxShadow: '0 8px 24px rgba(0,0,0,0.05)' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" gutterBottom>General Settings</Typography>
+              <Divider sx={{ mb: 2 }} />
+              <List disablePadding>
+                <ListItem sx={{ borderRadius: 2, mb: 1 }}>
+                  <ListItemText 
+                    primary={<Typography fontWeight="500">Default Survey Language</Typography>}
+                    secondary="Language for new surveys and feedback forms"
+                  />
+                  <ListItemSecondaryAction>
+                    <FormControl size="small" sx={{ minWidth: 120 }}>
+                      <Select
+                        value={settings.feedbackLanguage || 'en-US'}
+                        onChange={(e) => handleSettingChange('feedbackLanguage', e.target.value)}
+                        sx={{ borderRadius: 2 }}
+                      >
+                        <MenuItem value="en-US">English (US)</MenuItem>
+                        <MenuItem value="en-GB">English (UK)</MenuItem>
+                        <MenuItem value="es">Spanish</MenuItem>
+                        <MenuItem value="fr">French</MenuItem>
+                        <MenuItem value="de">German</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </ListItemSecondaryAction>
+                </ListItem>
+                <ListItem sx={{ borderRadius: 2, mb: 1 }}>
+                  <ListItemText 
+                    primary={<Typography fontWeight="500">Data Retention Period</Typography>}
+                    secondary="How long to keep feedback and survey responses"
+                  />
+                  <ListItemSecondaryAction>
+                    <FormControl size="small" sx={{ minWidth: 120 }}>
+                      <Select
+                        value={settings.feedbackRetention || 24}
+                        onChange={(e) => handleSettingChange('feedbackRetention', e.target.value)}
+                        sx={{ borderRadius: 2 }}
+                      >
+                        <MenuItem value={12}>12 months</MenuItem>
+                        <MenuItem value={24}>24 months</MenuItem>
+                        <MenuItem value={36}>36 months</MenuItem>
+                        <MenuItem value={60}>5 years</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </ListItemSecondaryAction>
+                </ListItem>
+                <ListItem sx={{ borderRadius: 2 }}>
+                  <ListItemText 
+                    primary={<Typography fontWeight="500">Auto-Archive Responses</Typography>}
+                    secondary="Automatically archive old survey responses"
+                  />
+                  <ListItemSecondaryAction>
+                    <Switch
+                      edge="end"
+                      checked={settings.autoArchiveFeedback !== false}
+                      onChange={(e) => handleSettingChange('autoArchiveFeedback', e.target.checked)}
+                      color="primary"
+                    />
+                  </ListItemSecondaryAction>
+                </ListItem>
+              </List>
+            </CardContent>
+          </Card>
+        </Grid>
+        
+        <Grid item xs={12} md={6}>
+          <Card sx={{ borderRadius: 3, boxShadow: '0 8px 24px rgba(0,0,0,0.05)' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" gutterBottom>Notifications</Typography>
+              <Divider sx={{ mb: 2 }} />
+              <List disablePadding>
+                <ListItem sx={{ borderRadius: 2, mb: 1 }}>
+                  <ListItemText 
+                    primary={<Typography fontWeight="500">Email Notifications</Typography>}
+                    secondary="Receive alerts for new feedback submissions"
+                  />
+                  <ListItemSecondaryAction>
+                    <Switch
+                      edge="end"
+                      checked={settings.feedbackEmailNotifications !== false}
+                      onChange={(e) => handleSettingChange('feedbackEmailNotifications', e.target.checked)}
+                      color="primary"
+                    />
+                  </ListItemSecondaryAction>
+                </ListItem>
+                <ListItem sx={{ borderRadius: 2, mb: 1 }}>
+                  <ListItemText 
+                    primary={<Typography fontWeight="500">SMS Alerts</Typography>}
+                    secondary="Critical feedback notifications via SMS"
+                  />
+                  <ListItemSecondaryAction>
+                    <Switch
+                      edge="end"
+                      checked={settings.feedbackSmsAlerts === true}
+                      onChange={(e) => handleSettingChange('feedbackSmsAlerts', e.target.checked)}
+                      color="primary"
+                    />
+                  </ListItemSecondaryAction>
+                </ListItem>
+                <ListItem sx={{ borderRadius: 2, mb: 1 }}>
+                  <ListItemText 
+                    primary={<Typography fontWeight="500">Weekly Reports</Typography>}
+                    secondary="Automated feedback summary emails"
+                  />
+                  <ListItemSecondaryAction>
+                    <Switch
+                      edge="end"
+                      checked={settings.feedbackWeeklyReports !== false}
+                      onChange={(e) => handleSettingChange('feedbackWeeklyReports', e.target.checked)}
+                      color="primary"
+                    />
+                  </ListItemSecondaryAction>
+                </ListItem>
+                <ListItem sx={{ borderRadius: 2 }}>
+                  <ListItemText 
+                    primary={<Typography fontWeight="500">Real-time Alerts</Typography>}
+                    secondary="Instant notifications for negative feedback"
+                  />
+                  <ListItemSecondaryAction>
+                    <Switch
+                      edge="end"
+                      checked={settings.feedbackRealTimeAlerts === true}
+                      onChange={(e) => handleSettingChange('feedbackRealTimeAlerts', e.target.checked)}
+                      color="primary"
+                    />
+                  </ListItemSecondaryAction>
+                </ListItem>
+              </List>
+            </CardContent>
+          </Card>
+        </Grid>
+        
+        <Grid item xs={12}>
+          <Card sx={{ borderRadius: 3, boxShadow: '0 8px 24px rgba(0,0,0,0.05)' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" gutterBottom>Integrations</Typography>
+              <Divider sx={{ mb: 2 }} />
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Card sx={{ textAlign: 'center', p: 2, border: '1px solid', borderColor: 'divider' }}>
+                    <Box sx={{ mb: 2 }}>
+                      <Avatar sx={{ bgcolor: '#4A154B', mx: 'auto', mb: 1 }}>
+                        <Typography variant="h6" color="white">S</Typography>
+                      </Avatar>
+                    </Box>
+                    <Typography variant="h6" gutterBottom>Slack</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      Send feedback notifications to Slack channels
+                    </Typography>
+                    <Button 
+                      variant={settings.slackIntegration ? "contained" : "outlined"} 
+                      fullWidth
+                      onClick={() => handleSettingChange('slackIntegration', !settings.slackIntegration)}
+                    >
+                      {settings.slackIntegration ? "Connected" : "Connect"}
+                    </Button>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Card sx={{ textAlign: 'center', p: 2, border: '1px solid', borderColor: 'divider' }}>
+                    <Box sx={{ mb: 2 }}>
+                      <Avatar sx={{ bgcolor: '#00A1C9', mx: 'auto', mb: 1 }}>
+                        <Typography variant="h6" color="white">SF</Typography>
+                      </Avatar>
+                    </Box>
+                    <Typography variant="h6" gutterBottom>Salesforce</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      Sync customer feedback with CRM records
+                    </Typography>
+                    <Button 
+                      variant={settings.salesforceIntegration ? "contained" : "outlined"} 
+                      fullWidth
+                      onClick={() => handleSettingChange('salesforceIntegration', !settings.salesforceIntegration)}
+                    >
+                      {settings.salesforceIntegration ? "Connected" : "Connect"}
+                    </Button>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Card sx={{ textAlign: 'center', p: 2, border: '1px solid', borderColor: 'divider' }}>
+                    <Box sx={{ mb: 2 }}>
+                      <Avatar sx={{ bgcolor: '#FF7A59', mx: 'auto', mb: 1 }}>
+                        <Typography variant="h6" color="white">H</Typography>
+                      </Avatar>
+                    </Box>
+                    <Typography variant="h6" gutterBottom>HubSpot</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      Integrate with marketing automation workflows
+                    </Typography>
+                    <Button 
+                      variant={settings.hubspotIntegration ? "contained" : "outlined"} 
+                      fullWidth
+                      onClick={() => handleSettingChange('hubspotIntegration', !settings.hubspotIntegration)}
+                    >
+                      {settings.hubspotIntegration ? "Connected" : "Connect"}
+                    </Button>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Card sx={{ textAlign: 'center', p: 2, border: '1px solid', borderColor: 'divider' }}>
+                    <Box sx={{ mb: 2 }}>
+                      <Avatar sx={{ bgcolor: '#FF4A00', mx: 'auto', mb: 1 }}>
+                        <Typography variant="h6" color="white">Z</Typography>
+                      </Avatar>
+                    </Box>
+                    <Typography variant="h6" gutterBottom>Zapier</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      Connect feedback to 1000+ apps and services
+                    </Typography>
+                    <Button 
+                      variant={settings.zapierIntegration ? "contained" : "outlined"} 
+                      fullWidth
+                      onClick={() => handleSettingChange('zapierIntegration', !settings.zapierIntegration)}
+                    >
+                      {settings.zapierIntegration ? "Connected" : "Connect"}
+                    </Button>
+                  </Card>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12}>
+          <Card sx={{ borderRadius: 3, boxShadow: '0 8px 24px rgba(0,0,0,0.05)' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" gutterBottom>Survey Automation</Typography>
+              <Divider sx={{ mb: 2 }} />
+              <List disablePadding>
+                <ListItem sx={{ borderRadius: 2, mb: 1 }}>
+                  <ListItemText 
+                    primary={<Typography fontWeight="500">Auto-send Post-Purchase Surveys</Typography>}
+                    secondary="Automatically send satisfaction surveys after policy purchases"
+                  />
+                  <ListItemSecondaryAction>
+                    <Switch
+                      edge="end"
+                      checked={settings.autoPostPurchaseSurvey === true}
+                      onChange={(e) => handleSettingChange('autoPostPurchaseSurvey', e.target.checked)}
+                      color="primary"
+                    />
+                  </ListItemSecondaryAction>
+                </ListItem>
+                <ListItem sx={{ borderRadius: 2, mb: 1 }}>
+                  <ListItemText 
+                    primary={<Typography fontWeight="500">Follow-up Reminders</Typography>}
+                    secondary="Send reminders for incomplete survey responses"
+                  />
+                  <ListItemSecondaryAction>
+                    <Switch
+                      edge="end"
+                      checked={settings.surveyReminders !== false}
+                      onChange={(e) => handleSettingChange('surveyReminders', e.target.checked)}
+                      color="primary"
+                    />
+                  </ListItemSecondaryAction>
+                </ListItem>
+                <ListItem sx={{ borderRadius: 2 }}>
+                  <ListItemText 
+                    primary={<Typography fontWeight="500">Smart Response Routing</Typography>}
+                    secondary="Automatically route negative feedback to support team"
+                  />
+                  <ListItemSecondaryAction>
+                    <Switch
+                      edge="end"
+                      checked={settings.smartRouting === true}
+                      onChange={(e) => handleSettingChange('smartRouting', e.target.checked)}
+                      color="primary"
+                    />
+                  </ListItemSecondaryAction>
+                </ListItem>
+              </List>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+    </Box>
+  );
+
   // Module Settings Placeholder (for other modules)
   const ModuleSettingsTab = ({ moduleName, icon }) => (
     <Box>
@@ -2099,7 +2390,7 @@ const Settings = () => {
               <ModuleSettingsTab moduleName="Claims" icon={<GavelIcon sx={{ color: theme.palette.primary.main }} />} />
             </TabPanel>
             <TabPanel value={tabValue} index={5}>
-              <ModuleSettingsTab moduleName="Feedback" icon={<FeedbackIcon sx={{ color: theme.palette.primary.main }} />} />
+              <FeedbackSettingsTab />
             </TabPanel>
             <TabPanel value={tabValue} index={6}>
               <SystemSettingsTab />
