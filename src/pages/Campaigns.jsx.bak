@@ -123,27 +123,10 @@ const CampaignManager = () => {
   const [loaded, setLoaded] = useState(false);
 
   // StatCard component similar to Dashboard
-  const StatCard = ({ title, value, color, icon, index, isCurrency }) => {
+  const StatCard = ({ title, value, color, icon, index }) => {
     // Create a gradient background
     const gradientFrom = alpha(color, theme.palette.mode === 'dark' ? 0.7 : 0.9);
     const gradientTo = alpha(color, theme.palette.mode === 'dark' ? 0.4 : 0.6);
-    
-    // Safe number conversion and formatting
-    let displayValue = value;
-    if (isCurrency) {
-      // Ensure we have a valid number before formatting
-      const numericValue = Number(value);
-      if (!isNaN(numericValue)) {
-        displayValue = new Intl.NumberFormat('en-IN', { 
-          style: 'currency', 
-          currency: 'INR',
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 0
-        }).format(numericValue);
-      } else {
-        displayValue = '₹0'; // Default fallback for NaN values
-      }
-    }
     
     return (
       <Grow in={loaded} style={{ transformOrigin: '0 0 0' }} timeout={(index + 1) * 200}>
@@ -164,7 +147,8 @@ const CampaignManager = () => {
               right: -20,
               opacity: 0.15,
               transform: 'rotate(25deg)',
-              fontSize: '8rem'
+              fontSize: '8rem',
+              color: 'white'
             }}
           >
             {icon}
@@ -174,7 +158,7 @@ const CampaignManager = () => {
               {title}
             </Typography>
             <Typography variant="h4" component="div" color="white" fontWeight="bold">
-              {displayValue}
+              {value}
             </Typography>
           </CardContent>
         </Card>
@@ -467,18 +451,6 @@ const CampaignManager = () => {
 
   const handleCreateCampaign = (e) => {
     if (e) e.preventDefault();
-    
-    setNewCampaign({
-      name: '',
-      description: '',
-      type: 'promotional',
-      channels: [],
-      audience: '',
-      template: '',
-      scheduledDate: '',
-      status: 'draft'
-    });
-    setCampaignStep(0);
     setCreateCampaignDialog(true);
   };
 
@@ -807,216 +779,35 @@ const CampaignManager = () => {
     </Grow>
   );
 
-  const CreateCampaignDialog = () => (
-    <Dialog 
-      open={createCampaignDialog} 
-      onClose={() => setCreateCampaignDialog(false)}
-      maxWidth="md"
-      fullWidth
-    >
-      <DialogTitle>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h6">Create New Campaign</Typography>
-          <IconButton 
-            onClick={(e) => {
-              e.preventDefault();
-              setCreateCampaignDialog(false);
-            }}
-            type="button"
-          >
-            <CloseIcon />
-          </IconButton>
-        </Box>
-      </DialogTitle>
-      <DialogContent dividers>
-        <form onSubmit={(e) => e.preventDefault()}>
-          <Stepper activeStep={campaignStep} orientation="vertical">
-          <Step>
-            <StepLabel>Campaign Information</StepLabel>
-            <StepContent>
-              <Grid container spacing={2} sx={{ mt: 1 }}>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Campaign Name"
-                    value={newCampaign.name}
-                    onChange={(e) => {
-                      e.preventDefault();
-                      setNewCampaign(prev => ({ ...prev, name: e.target.value }));
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    multiline
-                    rows={3}
-                    label="Description"
-                    value={newCampaign.description}
-                    onChange={(e) => {
-                      e.preventDefault();
-                      setNewCampaign(prev => ({ ...prev, description: e.target.value }));
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth>
-                    <InputLabel>Campaign Type</InputLabel>
-                    <Select
-                      value={newCampaign.type}
-                      onChange={(e) => {
-                        e.preventDefault();
-                        setNewCampaign(prev => ({ ...prev, type: e.target.value }));
-                      }}
-                    >
-                      <MenuItem value="promotional">Promotional</MenuItem>
-                      <MenuItem value="transactional">Transactional</MenuItem>
-                      <MenuItem value="renewal">Renewal</MenuItem>
-                      <MenuItem value="welcome">Welcome</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    type="datetime-local"
-                    label="Scheduled Date"
-                    value={newCampaign.scheduledDate}
-                    onChange={(e) => {
-                      e.preventDefault();
-                      setNewCampaign(prev => ({ ...prev, scheduledDate: e.target.value }));
-                    }}
-                    InputLabelProps={{ shrink: true }}
-                  />
-                </Grid>
-              </Grid>
-              <Box sx={{ mt: 2 }}>
-                <Button
-                  variant="contained"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setCampaignStep(1);
-                  }}
-                  disabled={!newCampaign.name}
-                  type="button"
-                >
-                  Continue
-                </Button>
-              </Box>
-            </StepContent>
-          </Step>
-          
-          <Step>
-            <StepLabel>Select Channels</StepLabel>
-            <StepContent>
-              <FormControl component="fieldset" sx={{ mt: 1 }}>
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                  {['email', 'sms', 'whatsapp'].map((channel) => (
-                    <FormControlLabel
-                      key={channel}
-                      control={
-                        <Switch
-                          checked={newCampaign.channels.includes(channel)}
-                          onChange={(e) => {
-                            e.preventDefault();
-                            if (e.target.checked) {
-                              setNewCampaign(prev => ({
-                                ...prev,
-                                channels: [...prev.channels, channel]
-                              }));
-                            } else {
-                              setNewCampaign(prev => ({
-                                ...prev,
-                                channels: prev.channels.filter(c => c !== channel)
-                              }));
-                            }
-                          }}
-                        />
-                      }
-                      label={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          {getChannelIcon(channel)}
-                          {channel.toUpperCase()}
-                        </Box>
-                      }
-                    />
-                  ))}
-                </Box>
-              </FormControl>
-              <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
-                <Button 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setCampaignStep(0);
-                  }}
-                  type="button"
-                >
-                  Back
-                </Button>
-                <Button
-                  variant="contained"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setCampaignStep(2);
-                  }}
-                  disabled={newCampaign.channels.length === 0}
-                  type="button"
-                >
-                  Continue
-                </Button>
-              </Box>
-            </StepContent>
-          </Step>
-          
-          <Step>
-            <StepLabel>Select Audience</StepLabel>
-            <StepContent>
-              <FormControl fullWidth sx={{ mt: 1 }}>
-                <InputLabel>Target Audience</InputLabel>
-                <Select
-                  value={newCampaign.audience}
-                  onChange={(e) => {
-                    e.preventDefault();
-                    setNewCampaign(prev => ({ ...prev, audience: e.target.value }));
-                  }}
-                >
-                  {audiences.map((audience) => (
-                    <MenuItem key={audience.id} value={audience.name}>
-                      {audience.name} ({audience.size.toLocaleString()} contacts)
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
-                <Button 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setCampaignStep(1);
-                  }}
-                  type="button"
-                >
-                  Back
-                </Button>
-                <Button
-                  variant="contained"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleSaveCampaign();
-                  }}
-                  disabled={!newCampaign.audience}
-                  startIcon={<SaveIcon />}
-                  type="button"
-                >
-                  Create Campaign
-                </Button>
-              </Box>
-            </StepContent>
-          </Step>
-        </Stepper>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
+
+  const CreateCampaignDialog = () => {
+    // Simple dialog with a single button
+    return (
+      <Dialog 
+        open={createCampaignDialog} 
+        onClose={() => setCreateCampaignDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h6">Create New Campaign</Typography>
+            <IconButton onClick={() => setCreateCampaignDialog(false)}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent dividers>
+          <Typography paragraph>
+            The form functionality is currently being fixed. Please try again later.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCreateCampaignDialog(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+    );
+  };
 
   return (
     <Fade in timeout={800}>
@@ -1096,11 +887,10 @@ const CampaignManager = () => {
           <Grid item xs={12} sm={6} md={3}>
             <StatCard 
               title="Total Reach"
-              value={campaigns.reduce((sum, c) => sum + (c.audienceSize || 0), 0)}
+              value={campaigns.reduce((sum, c) => sum + (c.audienceSize || 0), 0).toLocaleString()}
               color={theme.palette.warning.main}
               icon={<TrendingUpIcon />}
               index={3}
-              isCurrency={false}
             />
           </Grid>
         </Grid>

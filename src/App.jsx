@@ -26,6 +26,7 @@ import Campaigns from './pages/Campaigns';
 import CampaignDetails from './pages/CampaignDetails';
 import TemplateManager from './pages/TemplateManager';
 import Feedback from './pages/Feedback';
+import SurveyDesigner from './pages/SurveyDesigner';
 import Claims from './pages/Claims';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext.js';
@@ -408,6 +409,18 @@ function AppWithTheme() {
                 <Layout>
                   <Feedback />
                 </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/survey-designer" element={
+              <ProtectedRoute>
+                <SurveyDesigner />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/survey-designer/:surveyId" element={
+              <ProtectedRoute>
+                <SurveyDesigner />
               </ProtectedRoute>
             } />
             
