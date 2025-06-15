@@ -122,8 +122,8 @@ const CampaignManager = () => {
   const navigate = useNavigate();
   const [loaded, setLoaded] = useState(false);
 
-  // StatCard component similar to Dashboard
-  const StatCard = ({ title, value, color, icon, index, isCurrency }) => {
+  // StatCard component matching Renewal Dashboard styling
+  const StatCard = ({ title, value, color, icon, index, isCurrency, subtitle }) => {
     // Create a gradient background
     const gradientFrom = alpha(color, theme.palette.mode === 'dark' ? 0.7 : 0.9);
     const gradientTo = alpha(color, theme.palette.mode === 'dark' ? 0.4 : 0.6);
@@ -176,6 +176,11 @@ const CampaignManager = () => {
             <Typography variant="h4" component="div" color="white" fontWeight="bold">
               {displayValue}
             </Typography>
+            {subtitle && (
+              <Typography variant="body2" sx={{ opacity: 0.9, color: 'white', mt: 1 }}>
+                {subtitle}
+              </Typography>
+            )}
           </CardContent>
         </Card>
       </Grow>

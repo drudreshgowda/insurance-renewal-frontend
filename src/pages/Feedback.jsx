@@ -622,22 +622,22 @@ const Feedback = () => {
           >
             {icon}
           </Box>
-          <CardContent sx={{ position: 'relative', zIndex: 1, color: 'white', py: 3 }}>
-            <Typography variant="h6" component="div" fontWeight="500" gutterBottom>
+          <CardContent sx={{ position: 'relative', zIndex: 1, textAlign: 'center', py: 2 }}>
+            <Typography variant="h6" component="div" color="white" fontWeight="500" gutterBottom>
               {title}
             </Typography>
-            <Typography variant="h4" component="div" fontWeight="bold" sx={{ mb: 1 }}>
+            <Typography variant="h4" component="div" color="white" fontWeight="bold">
               {displayValue}
             </Typography>
             {subtitle && (
-              <Typography variant="body2" sx={{ opacity: 0.9 }}>
+              <Typography variant="body2" sx={{ opacity: 0.9, color: 'white', mt: 1 }}>
                 {subtitle}
               </Typography>
             )}
             {trend && (
-              <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mt: 1 }}>
                 {trend > 0 ? <TrendingUpIcon fontSize="small" /> : <TrendingDownIcon fontSize="small" />}
-                <Typography variant="caption" sx={{ ml: 0.5 }}>
+                <Typography variant="caption" sx={{ ml: 0.5, color: 'white' }}>
                   {trend > 0 ? '+' : ''}{trend}% from last month
                 </Typography>
               </Box>

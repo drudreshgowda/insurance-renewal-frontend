@@ -5,7 +5,7 @@ import {
   ListItemText, ListItemIcon, ListItemButton, ListItemSecondaryAction,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, 
   FormControl, InputLabel, Select, MenuItem, Switch, FormControlLabel, 
-  Alert, Fab, useTheme, alpha, Fade, Collapse, Badge, Tabs, Tab
+  Alert, Fab, useTheme, alpha, Fade, Collapse, Badge, Tabs, Tab, Grow
 } from '@mui/material';
 import FlowBuilder from '../components/whatsapp/FlowBuilder';
 import TemplateManager from '../components/whatsapp/TemplateManager';
@@ -38,13 +38,13 @@ import {
   Description as TemplateIconTab,
   BarChart as AnalyticsIconTab,
   People as AudienceIcon,
-  Settings as AutomationIcon,
-  AdminPanelSettings as SettingsIconTab
+  Settings as AutomationIcon
 } from '@mui/icons-material';
 
 const WhatsappFlow = () => {
   const theme = useTheme();
   const [activeTab, setActiveTab] = useState(0);
+  const [loaded, setLoaded] = useState(false);
   const [flows, setFlows] = useState([]);
   const [selectedFlow, setSelectedFlow] = useState(null);
   const [createFlowDialog, setCreateFlowDialog] = useState(false);
@@ -56,7 +56,7 @@ const WhatsappFlow = () => {
   const [selectedFlowForEdit, setSelectedFlowForEdit] = useState(null);
   const [templateManagerOpen, setTemplateManagerOpen] = useState(false);
   const [analyticsDialogOpen, setAnalyticsDialogOpen] = useState(false);
-  const [permissionsDialogOpen, setPermissionsDialogOpen] = useState(false);
+
   const [newFlow, setNewFlow] = useState({
     name: '',
     description: '',
@@ -65,6 +65,11 @@ const WhatsappFlow = () => {
     targetAudience: '',
     schedule: 'immediate'
   });
+
+  // Set loaded state for animations
+  useEffect(() => {
+    setLoaded(true);
+  }, []);
 
   // Mock data for WhatsApp flows
   useEffect(() => {
@@ -293,89 +298,93 @@ const WhatsappFlow = () => {
   );
 
   // Dashboard Tab Component
+  // StatCard component matching Renewal Dashboard styling
+  const StatCard = ({ title, value, color, icon, index, subtitle }) => {
+    // Create a gradient background
+    const gradientFrom = alpha(color, theme.palette.mode === 'dark' ? 0.7 : 0.9);
+    const gradientTo = alpha(color, theme.palette.mode === 'dark' ? 0.4 : 0.6);
+    
+    return (
+      <Grow in={loaded} style={{ transformOrigin: '0 0 0' }} timeout={(index + 1) * 200}>
+        <Card 
+          sx={{ 
+            height: '100%', 
+            background: `linear-gradient(135deg, ${gradientFrom} 0%, ${gradientTo} 100%)`,
+            borderRadius: 4,
+            boxShadow: `0 10px 20px ${alpha(color, 0.2)}`,
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          <Box
+            sx={{
+              position: 'absolute',
+              top: -20,
+              right: -20,
+              opacity: 0.15,
+              transform: 'rotate(25deg)',
+              fontSize: '8rem'
+            }}
+          >
+            {icon}
+          </Box>
+          <CardContent sx={{ position: 'relative', zIndex: 1, textAlign: 'center', py: 2 }}>
+            <Typography variant="h6" component="div" color="white" fontWeight="500" gutterBottom>
+              {title}
+            </Typography>
+            <Typography variant="h4" component="div" color="white" fontWeight="bold">
+              {value}
+            </Typography>
+            {subtitle && (
+              <Typography variant="body2" sx={{ opacity: 0.9, color: 'white', mt: 1 }}>
+                {subtitle}
+              </Typography>
+            )}
+          </CardContent>
+        </Card>
+      </Grow>
+    );
+  };
+
   const DashboardTab = () => (
     <Box>
       {/* Stats Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
-            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-            color: 'white'
-          }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography variant="h4" fontWeight="bold">
-                    {flows.length}
-                  </Typography>
-                  <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                    Total Flows
-                  </Typography>
-                </Box>
-                <TimelineIcon sx={{ fontSize: 40, opacity: 0.8 }} />
-              </Box>
-            </CardContent>
-          </Card>
+          <StatCard 
+            title="Total Flows"
+            value={flows.length}
+            color={theme.palette.primary.main}
+            icon={<TimelineIcon fontSize="inherit" />}
+            index={0}
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
-            background: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
-            color: 'white'
-          }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography variant="h4" fontWeight="bold">
-                    {totalStats.totalRecipients.toLocaleString()}
-                  </Typography>
-                  <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                    Total Recipients
-                  </Typography>
-                </Box>
-                <GroupIcon sx={{ fontSize: 40, opacity: 0.8 }} />
-              </Box>
-            </CardContent>
-          </Card>
+          <StatCard 
+            title="Total Recipients"
+            value={totalStats.totalRecipients.toLocaleString()}
+            color={theme.palette.success.main}
+            icon={<GroupIcon fontSize="inherit" />}
+            index={1}
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
-            background: `linear-gradient(135deg, ${theme.palette.info.main} 0%, ${theme.palette.info.dark} 100%)`,
-            color: 'white'
-          }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography variant="h4" fontWeight="bold">
-                    {((totalStats.totalDelivered / totalStats.totalRecipients) * 100 || 0).toFixed(1)}%
-                  </Typography>
-                  <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                    Delivery Rate
-                  </Typography>
-                </Box>
-                <SendIcon sx={{ fontSize: 40, opacity: 0.8 }} />
-              </Box>
-            </CardContent>
-          </Card>
+          <StatCard 
+            title="Delivery Rate"
+            value={`${((totalStats.totalDelivered / totalStats.totalRecipients) * 100 || 0).toFixed(1)}%`}
+            color={theme.palette.info.main}
+            icon={<SendIcon fontSize="inherit" />}
+            index={2}
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
-            background: `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.dark} 100%)`,
-            color: 'white'
-          }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography variant="h4" fontWeight="bold">
-                    {((totalStats.totalReplied / totalStats.totalOpened) * 100 || 0).toFixed(1)}%
-                  </Typography>
-                  <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                    Reply Rate
-                  </Typography>
-                </Box>
-                <TrendingUpIcon sx={{ fontSize: 40, opacity: 0.8 }} />
-              </Box>
-            </CardContent>
-          </Card>
+          <StatCard 
+            title="Reply Rate"
+            value={`${((totalStats.totalReplied / totalStats.totalOpened) * 100 || 0).toFixed(1)}%`}
+            color={theme.palette.warning.main}
+            icon={<TrendingUpIcon fontSize="inherit" />}
+            index={3}
+          />
         </Grid>
       </Grid>
 
@@ -816,100 +825,7 @@ const WhatsappFlow = () => {
     </Box>
   );
 
-  const SettingsTab = () => (
-    <Box>
-      <Typography variant="h6" fontWeight="bold" gutterBottom>
-        Settings & Permissions
-      </Typography>
-      
-      {/* Permissions Section */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>Flow-specific Access Permissions</Typography>
-          <List>
-            <ListItem>
-              <ListItemIcon>
-                <Avatar sx={{ bgcolor: 'primary.main' }}>RK</Avatar>
-              </ListItemIcon>
-              <ListItemText
-                primary="Rajesh Kumar"
-                secondary="Admin - Full access to edit, view, and publish"
-              />
-              <ListItemSecondaryAction>
-                <FormControl size="small">
-                  <Select value="admin" displayEmpty>
-                    <MenuItem value="admin">Admin</MenuItem>
-                    <MenuItem value="editor">Editor</MenuItem>
-                    <MenuItem value="viewer">Viewer</MenuItem>
-                  </Select>
-                </FormControl>
-              </ListItemSecondaryAction>
-            </ListItem>
-            <ListItem>
-              <ListItemIcon>
-                <Avatar sx={{ bgcolor: 'secondary.main' }}>SM</Avatar>
-              </ListItemIcon>
-              <ListItemText
-                primary="Sarah Manager"
-                secondary="Editor - Can edit and view flows"
-              />
-              <ListItemSecondaryAction>
-                <FormControl size="small">
-                  <Select value="editor" displayEmpty>
-                    <MenuItem value="admin">Admin</MenuItem>
-                    <MenuItem value="editor">Editor</MenuItem>
-                    <MenuItem value="viewer">Viewer</MenuItem>
-                  </Select>
-                </FormControl>
-              </ListItemSecondaryAction>
-            </ListItem>
-          </List>
-          <Button variant="outlined" startIcon={<AddIcon />} sx={{ mt: 2 }}>
-            Add User
-          </Button>
-        </CardContent>
-      </Card>
 
-      {/* Audit Logs */}
-      <Card>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>Change Log</Typography>
-          <List>
-            <ListItem>
-              <ListItemIcon>
-                <EditIcon color="primary" />
-              </ListItemIcon>
-              <ListItemText
-                primary="Flow 'Welcome Series' modified"
-                secondary="Rajesh Kumar • 2 hours ago • Added new message block"
-              />
-            </ListItem>
-            <ListItem>
-              <ListItemIcon>
-                <CheckCircleIcon color="success" />
-              </ListItemIcon>
-              <ListItemText
-                primary="Flow 'Policy Renewal' published"
-                secondary="Sarah Manager • 1 day ago • Published to production"
-              />
-            </ListItem>
-            <ListItem>
-              <ListItemIcon>
-                <ScheduleIcon color="warning" />
-              </ListItemIcon>
-              <ListItemText
-                primary="Template approval pending"
-                secondary="System • 2 days ago • Waiting for admin approval"
-              />
-            </ListItem>
-          </List>
-          <Button variant="outlined" sx={{ mt: 2 }}>
-            View All Logs
-          </Button>
-        </CardContent>
-      </Card>
-    </Box>
-  );
 
   return (
     <Fade in timeout={800}>
@@ -966,7 +882,6 @@ const WhatsappFlow = () => {
             <Tab icon={<AnalyticsIconTab />} label="Analytics" />
             <Tab icon={<AudienceIcon />} label="Audience" />
             <Tab icon={<AutomationIcon />} label="Automation" />
-            <Tab icon={<SettingsIconTab />} label="Settings" />
           </Tabs>
         </Paper>
 
@@ -988,9 +903,6 @@ const WhatsappFlow = () => {
         </TabPanel>
         <TabPanel value={activeTab} index={5}>
           <AutomationTab />
-        </TabPanel>
-        <TabPanel value={activeTab} index={6}>
-          <SettingsTab />
         </TabPanel>
 
         {/* Dialogs */}
@@ -1236,96 +1148,7 @@ const WhatsappFlow = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Permissions & Audit Logs */}
-      <Dialog
-        open={permissionsDialogOpen}
-        onClose={() => setPermissionsDialogOpen(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h6">Flow Permissions & Audit Logs</Typography>
-            <IconButton onClick={() => setPermissionsDialogOpen(false)}>
-              <CloseIcon />
-            </IconButton>
-          </Box>
-        </DialogTitle>
-        <DialogContent>
-          <Typography variant="h6" gutterBottom>Flow-specific Access Permissions</Typography>
-          <List>
-            <ListItem>
-              <ListItemIcon>
-                <Avatar sx={{ bgcolor: 'primary.main' }}>RK</Avatar>
-              </ListItemIcon>
-              <ListItemText
-                primary="Rajesh Kumar"
-                secondary="Admin - Full access to edit, view, and publish"
-              />
-              <ListItemSecondaryAction>
-                <FormControl size="small">
-                  <Select value="admin" displayEmpty>
-                    <MenuItem value="admin">Admin</MenuItem>
-                    <MenuItem value="editor">Editor</MenuItem>
-                    <MenuItem value="viewer">Viewer</MenuItem>
-                  </Select>
-                </FormControl>
-              </ListItemSecondaryAction>
-            </ListItem>
-            <ListItem>
-              <ListItemIcon>
-                <Avatar sx={{ bgcolor: 'secondary.main' }}>SM</Avatar>
-              </ListItemIcon>
-              <ListItemText
-                primary="Sarah Manager"
-                secondary="Editor - Can edit and view flows"
-              />
-              <ListItemSecondaryAction>
-                <FormControl size="small">
-                  <Select value="editor" displayEmpty>
-                    <MenuItem value="admin">Admin</MenuItem>
-                    <MenuItem value="editor">Editor</MenuItem>
-                    <MenuItem value="viewer">Viewer</MenuItem>
-                  </Select>
-                </FormControl>
-              </ListItemSecondaryAction>
-            </ListItem>
-          </List>
 
-          <Divider sx={{ my: 3 }} />
-
-          <Typography variant="h6" gutterBottom>Change Log</Typography>
-          <List>
-            <ListItem>
-              <ListItemIcon>
-                <EditIcon color="primary" />
-              </ListItemIcon>
-              <ListItemText
-                primary="Flow 'Welcome Series' modified"
-                secondary="Rajesh Kumar • 2 hours ago • Added new message block"
-              />
-            </ListItem>
-            <ListItem>
-              <ListItemIcon>
-                <CheckCircleIcon color="success" />
-              </ListItemIcon>
-              <ListItemText
-                primary="Flow 'Policy Renewal' published"
-                secondary="Sarah Manager • 1 day ago • Published to production"
-              />
-            </ListItem>
-            <ListItem>
-              <ListItemIcon>
-                <ScheduleIcon color="warning" />
-              </ListItemIcon>
-              <ListItemText
-                primary="Template approval pending"
-                secondary="System • 2 days ago • Waiting for admin approval"
-              />
-            </ListItem>
-          </List>
-        </DialogContent>
-      </Dialog>
 
 
       </Box>

@@ -2794,6 +2794,149 @@ const Settings = () => {
             </CardContent>
           </Card>
         </Grid>
+
+        {/* Flow Permissions */}
+        <Grid item xs={12}>
+          <Card sx={{ borderRadius: 3, boxShadow: '0 8px 24px rgba(0,0,0,0.05)' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" gutterBottom>Flow Access Permissions</Typography>
+              <Divider sx={{ mb: 3 }} />
+              
+              <List disablePadding>
+                <ListItem sx={{ borderRadius: 2, mb: 1, bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
+                  <ListItemIcon>
+                    <Avatar sx={{ bgcolor: 'primary.main' }}>RK</Avatar>
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={<Typography fontWeight="500">Rajesh Kumar</Typography>}
+                    secondary="Admin - Full access to edit, view, and publish flows"
+                  />
+                  <ListItemSecondaryAction>
+                    <FormControl size="small" sx={{ minWidth: 120 }}>
+                      <Select value="admin" displayEmpty>
+                        <MenuItem value="admin">Admin</MenuItem>
+                        <MenuItem value="editor">Editor</MenuItem>
+                        <MenuItem value="viewer">Viewer</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </ListItemSecondaryAction>
+                </ListItem>
+                
+                <ListItem sx={{ borderRadius: 2, mb: 1, bgcolor: alpha(theme.palette.secondary.main, 0.05) }}>
+                  <ListItemIcon>
+                    <Avatar sx={{ bgcolor: 'secondary.main' }}>SM</Avatar>
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={<Typography fontWeight="500">Sarah Manager</Typography>}
+                    secondary="Editor - Can edit and view flows"
+                  />
+                  <ListItemSecondaryAction>
+                    <FormControl size="small" sx={{ minWidth: 120 }}>
+                      <Select value="editor" displayEmpty>
+                        <MenuItem value="admin">Admin</MenuItem>
+                        <MenuItem value="editor">Editor</MenuItem>
+                        <MenuItem value="viewer">Viewer</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </ListItemSecondaryAction>
+                </ListItem>
+
+                <ListItem sx={{ borderRadius: 2, mb: 1, bgcolor: alpha(theme.palette.info.main, 0.05) }}>
+                  <ListItemIcon>
+                    <Avatar sx={{ bgcolor: 'info.main' }}>JD</Avatar>
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={<Typography fontWeight="500">John Developer</Typography>}
+                    secondary="Viewer - Can only view flows and analytics"
+                  />
+                  <ListItemSecondaryAction>
+                    <FormControl size="small" sx={{ minWidth: 120 }}>
+                      <Select value="viewer" displayEmpty>
+                        <MenuItem value="admin">Admin</MenuItem>
+                        <MenuItem value="editor">Editor</MenuItem>
+                        <MenuItem value="viewer">Viewer</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </ListItemSecondaryAction>
+                </ListItem>
+              </List>
+              
+              <Box sx={{ mt: 2 }}>
+                <Button variant="outlined" startIcon={<AddIcon />} sx={{ borderRadius: 2 }}>
+                  Add User Permission
+                </Button>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Audit Logs */}
+        <Grid item xs={12}>
+          <Card sx={{ borderRadius: 3, boxShadow: '0 8px 24px rgba(0,0,0,0.05)' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" gutterBottom>Flow Activity & Audit Logs</Typography>
+              <Divider sx={{ mb: 3 }} />
+              
+              <List disablePadding>
+                <ListItem sx={{ borderRadius: 2, mb: 1, bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
+                  <ListItemIcon>
+                    <EditIcon color="primary" />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={<Typography fontWeight="500">Flow 'Welcome Series' modified</Typography>}
+                    secondary="Rajesh Kumar • 2 hours ago • Added new message block and updated conditions"
+                  />
+                </ListItem>
+                
+                <ListItem sx={{ borderRadius: 2, mb: 1, bgcolor: alpha(theme.palette.success.main, 0.05) }}>
+                  <ListItemIcon>
+                    <CheckCircleIcon color="success" />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={<Typography fontWeight="500">Flow 'Policy Renewal' published</Typography>}
+                    secondary="Sarah Manager • 1 day ago • Published to production environment"
+                  />
+                </ListItem>
+                
+                <ListItem sx={{ borderRadius: 2, mb: 1, bgcolor: alpha(theme.palette.warning.main, 0.05) }}>
+                  <ListItemIcon>
+                    <ScheduleIcon color="warning" />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={<Typography fontWeight="500">Template approval pending</Typography>}
+                    secondary="System • 2 days ago • Waiting for WhatsApp Business API approval"
+                  />
+                </ListItem>
+
+                <ListItem sx={{ borderRadius: 2, mb: 1, bgcolor: alpha(theme.palette.info.main, 0.05) }}>
+                  <ListItemIcon>
+                    <AnalyticsIcon color="info" />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={<Typography fontWeight="500">Analytics report generated</Typography>}
+                    secondary="John Developer • 3 days ago • Monthly flow performance report exported"
+                  />
+                </ListItem>
+
+                <ListItem sx={{ borderRadius: 2, bgcolor: alpha(theme.palette.error.main, 0.05) }}>
+                  <ListItemIcon>
+                    <ErrorIcon color="error" />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={<Typography fontWeight="500">Flow 'Customer Support' failed</Typography>}
+                    secondary="System • 5 days ago • API rate limit exceeded, flow automatically paused"
+                  />
+                </ListItem>
+              </List>
+              
+              <Box sx={{ mt: 2 }}>
+                <Button variant="outlined" sx={{ borderRadius: 2 }}>
+                  View All Activity Logs
+                </Button>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
       </Grid>
 
       {/* Save Button */}
