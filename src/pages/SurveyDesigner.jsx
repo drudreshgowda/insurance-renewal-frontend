@@ -88,7 +88,7 @@ const SurveyDesigner = () => {
 
   const loadSurvey = (id) => {
     // Mock loading survey data
-    console.log('Loading survey:', id);
+    // Loading survey: ${id}
   };
 
   // Function to toggle category expansion
@@ -363,7 +363,7 @@ const SurveyDesigner = () => {
 
   // Survey Actions
   const handleSaveDraft = () => {
-    console.log('Saving survey draft:', surveyBuilder);
+    // Saving survey draft
     // Implement save logic
   };
 
@@ -376,7 +376,7 @@ const SurveyDesigner = () => {
   };
 
   const handleConfirmPublish = () => {
-    console.log('Publishing survey:', surveyBuilder, publishForm);
+    // Publishing survey
     setPublishDialog(false);
   };
 

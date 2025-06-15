@@ -45,9 +45,11 @@ import {
   Rule as RuleIcon,
   Add as AddIcon,
   Delete as DeleteIcon,
+  Restore as RestoreIcon,
   AccountCircle as AccountCircleIcon,
   CheckCircle as CheckCircleIcon,
   Error as ErrorIcon,
+  Warning as WarningIcon,
   Sync as SyncIcon,
   SyncDisabled as SyncDisabledIcon,
   Merge as MergeIcon,
@@ -55,7 +57,8 @@ import {
   Description as DescriptionIcon,
   Analytics as AnalyticsIcon,
   Verified as VerifiedIcon,
-  Timeline as TrackingIcon
+  Timeline as TrackingIcon,
+  WhatsApp as WhatsAppIcon
 } from '@mui/icons-material';
 import { useThemeMode } from '../context/ThemeModeContext';
 import { useSettings } from '../context/SettingsContext';
@@ -167,13 +170,350 @@ const Settings = () => {
     syncInterval: 5
   });
 
+  // WhatsApp Flow Settings State
+  const [whatsappSettings, setWhatsappSettings] = useState({
+    businessApiEnabled: true,
+    webhookUrl: 'https://api.intelipro.com/webhooks/whatsapp',
+    phoneNumberId: '',
+    accessToken: '',
+    verifyToken: 'whatsapp_verify_token_2024',
+    messageTemplatesEnabled: true,
+    flowBuilderEnabled: true,
+    analyticsEnabled: true,
+    autoResponseEnabled: true,
+    businessHours: {
+      enabled: true,
+      start: '09:00',
+      end: '18:00',
+      timezone: 'Asia/Kolkata'
+    },
+    fallbackMessage: 'Thank you for your message. We will get back to you soon.',
+    maxRetries: 3,
+    retryDelay: 300,
+    rateLimiting: {
+      enabled: true,
+      messagesPerMinute: 60,
+      messagesPerHour: 1000
+    }
+  });
+
+  // User Management State
+  const [users, setUsers] = useState([
+    {
+      id: 1,
+      name: 'Rajesh Kumar',
+      email: 'rajesh@client.com',
+      role: 'admin',
+      status: 'active',
+      lastLogin: new Date().toISOString(),
+      permissions: [
+        // Core Pages
+        'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs', 'claims',
+        // Email Pages  
+        'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
+        // Marketing Pages
+        'campaigns', 'templates',
+        // Survey Pages
+        'feedback', 'survey-designer',
+        // WhatsApp Pages
+        'whatsapp-flow',
+        // Admin Pages
+        'settings', 'billing', 'users',
+        // Personal Pages
+        'profile'
+      ],
+      createdAt: '2024-01-15T08:00:00Z'
+    },
+    {
+      id: 2,
+      name: 'John Smith',
+      email: 'john.smith@company.com',
+      role: 'admin',
+      status: 'active',
+      lastLogin: '2024-07-14T10:30:00Z',
+      permissions: [
+        // Core Pages
+        'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs', 'claims',
+        // Email Pages  
+        'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
+        // Marketing Pages
+        'campaigns', 'templates',
+        // Survey Pages
+        'feedback', 'survey-designer',
+        // WhatsApp Pages
+        'whatsapp-flow',
+        // Admin Pages
+        'settings', 'billing', 'users',
+        // Personal Pages
+        'profile'
+      ],
+      createdAt: '2024-01-15T08:00:00Z'
+    },
+    {
+      id: 3,
+      name: 'Sarah Johnson',
+      email: 'sarah.johnson@company.com',
+      role: 'manager',
+      status: 'active',
+      lastLogin: '2024-07-14T09:15:00Z',
+      permissions: [
+        // Core Pages
+        'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs', 'claims',
+        // Email Pages
+        'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
+        // Marketing Pages
+        'campaigns', 'templates',
+        // Survey Pages
+        'feedback', 'survey-designer',
+        // WhatsApp Pages
+        'whatsapp-flow',
+        // Personal Pages
+        'profile'
+      ],
+      createdAt: '2024-02-10T10:30:00Z'
+    },
+    {
+      id: 4,
+      name: 'Mike Wilson',
+      email: 'mike.wilson@company.com',
+      role: 'agent',
+      status: 'active',
+      lastLogin: '2024-07-13T16:45:00Z',
+      permissions: [
+        // Core Pages
+        'dashboard', 'cases', 'closed-cases', 'policy-timeline', 'logs',
+        // Email Pages
+        'emails', 'email-dashboard',
+        // WhatsApp Pages
+        'whatsapp-flow',
+        // Personal Pages
+        'profile'
+      ],
+      createdAt: '2024-03-05T14:20:00Z'
+    },
+    {
+      id: 5,
+      name: 'Lisa Brown',
+      email: 'lisa.brown@company.com',
+      role: 'viewer',
+      status: 'inactive',
+      lastLogin: '2024-07-10T11:20:00Z',
+      permissions: [
+        // Core Pages (read-only)
+        'dashboard', 'cases', 'closed-cases', 'policy-timeline',
+        // Personal Pages
+        'profile'
+      ],
+      createdAt: '2024-04-12T09:45:00Z'
+    }
+  ]);
+
+  const [roles, setRoles] = useState([
+    {
+      id: 1,
+      name: 'admin',
+      displayName: 'Administrator',
+      description: 'Full access to all features and settings',
+      permissions: [
+        // Core Pages
+        'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs', 'claims',
+        // Email Pages  
+        'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
+        // Marketing Pages
+        'campaigns', 'templates',
+        // Survey Pages
+        'feedback', 'survey-designer',
+        // WhatsApp Pages
+        'whatsapp-flow',
+        // Admin Pages
+        'settings', 'billing', 'users',
+        // Personal Pages
+        'profile'
+      ],
+      isSystem: true,
+      userCount: 1
+    },
+    {
+      id: 2,
+      name: 'manager',
+      displayName: 'Manager',
+      description: 'Access to most features except system administration',
+      permissions: [
+        // Core Pages
+        'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs', 'claims',
+        // Email Pages
+        'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
+        // Marketing Pages
+        'campaigns', 'templates',
+        // Survey Pages
+        'feedback', 'survey-designer',
+        // WhatsApp Pages
+        'whatsapp-flow',
+        // Personal Pages
+        'profile'
+        // Note: Excludes admin pages (settings, billing, users)
+      ],
+      isSystem: true,
+      userCount: 1
+    },
+    {
+      id: 3,
+      name: 'agent',
+      displayName: 'Agent',
+      description: 'Access to case management and email features',
+      permissions: [
+        // Core Pages
+        'dashboard', 'cases', 'closed-cases', 'policy-timeline', 'logs',
+        // Email Pages
+        'emails', 'email-dashboard',
+        // Personal Pages
+        'profile'
+      ],
+      isSystem: true,
+      userCount: 1
+    },
+    {
+      id: 4,
+      name: 'viewer',
+      displayName: 'Viewer',
+      description: 'Read-only access to basic features',
+      permissions: [
+        // Core Pages (read-only)
+        'dashboard', 'cases', 'closed-cases', 'policy-timeline',
+        // Personal Pages
+        'profile'
+      ],
+      isSystem: true,
+      userCount: 1
+    }
+  ]);
+
+  const [availablePermissions] = useState([
+    // Core Insurance & Case Management Pages
+    { id: 'dashboard', name: 'Dashboard', description: 'View main dashboard with analytics and overview', category: 'Core Pages', route: '/' },
+    { id: 'upload', name: 'Upload Data', description: 'Upload policy and case data files', category: 'Core Pages', route: '/upload' },
+    { id: 'cases', name: 'Case Tracking', description: 'View and manage active cases', category: 'Core Pages', route: '/cases' },
+    { id: 'closed-cases', name: 'Closed Cases', description: 'View and manage closed cases', category: 'Core Pages', route: '/closed-cases' },
+    { id: 'policy-timeline', name: 'Policy Timeline', description: 'View policy timeline and history', category: 'Core Pages', route: '/policy-timeline' },
+    { id: 'logs', name: 'Case Logs', description: 'View system and case logs', category: 'Core Pages', route: '/logs' },
+    { id: 'claims', name: 'Claims Management', description: 'Manage insurance claims processing', category: 'Core Pages', route: '/claims' },
+    
+    // Email Management Pages
+    { id: 'emails', name: 'Email Inbox', description: 'Access email inbox and management', category: 'Email Pages', route: '/emails' },
+    { id: 'email-dashboard', name: 'Email Dashboard', description: 'View email analytics and dashboard', category: 'Email Pages', route: '/emails/dashboard' },
+    { id: 'email-analytics', name: 'Email Analytics', description: 'View detailed email analytics and reports', category: 'Email Pages', route: '/emails/analytics' },
+    { id: 'bulk-email', name: 'Bulk Email', description: 'Send bulk emails and campaigns', category: 'Email Pages', route: '/emails/bulk' },
+    
+    // Campaign & Marketing Pages
+    { id: 'campaigns', name: 'Campaigns', description: 'Manage marketing campaigns', category: 'Marketing Pages', route: '/campaigns' },
+    { id: 'templates', name: 'Template Manager', description: 'Manage email and document templates', category: 'Marketing Pages', route: '/templates' },
+    
+    // Feedback & Survey Pages
+    { id: 'feedback', name: 'Feedback & Surveys', description: 'Manage customer feedback and surveys', category: 'Survey Pages', route: '/feedback' },
+    { id: 'survey-designer', name: 'Survey Designer', description: 'Create and design custom surveys', category: 'Survey Pages', route: '/survey-designer' },
+    
+    // WhatsApp Pages
+    { id: 'whatsapp-flow', name: 'WhatsApp Flow', description: 'Manage automated WhatsApp messaging flows', category: 'Communication Pages', route: '/whatsapp-flow' },
+    
+    // Administration Pages
+    { id: 'settings', name: 'Settings', description: 'Access system settings and configuration', category: 'Admin Pages', route: '/settings' },
+    { id: 'billing', name: 'Billing', description: 'View billing information and invoices', category: 'Admin Pages', route: '/billing' },
+    { id: 'users', name: 'User Management', description: 'Manage users and permissions', category: 'Admin Pages', route: '/users' },
+    
+    // Personal Pages
+    { id: 'profile', name: 'Profile', description: 'Manage personal profile and account settings', category: 'Personal Pages', route: '/profile' }
+  ]);
+
+  // User Management Dialog States
+  const [userDialog, setUserDialog] = useState({ open: false, user: null, mode: 'add' });
+  const [roleDialog, setRoleDialog] = useState({ open: false, role: null, mode: 'add' });
+  const [permissionDialog, setPermissionDialog] = useState({ open: false, user: null });
+  const [resetRoleDialog, setResetRoleDialog] = useState({ open: false, role: null });
+  
+  const [newUser, setNewUser] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    department: '',
+    jobTitle: '',
+    role: 'viewer',
+    status: 'active',
+    permissions: [],
+    sendWelcomeEmail: true,
+    requirePasswordChange: true
+  });
+
+  const [newRole, setNewRole] = useState({
+    name: '',
+    displayName: '',
+    description: '',
+    permissions: []
+  });
+
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [userSearchTerm, setUserSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+
+  // Default role permissions for reset functionality
+  const defaultRolePermissions = {
+    admin: [
+      // Core Pages
+      'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs', 'claims',
+      // Email Pages  
+      'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
+      // Marketing Pages
+      'campaigns', 'templates',
+      // Survey Pages
+      'feedback', 'survey-designer',
+      // WhatsApp Pages
+      'whatsapp-flow',
+      // Admin Pages
+      'settings', 'billing', 'users',
+      // Personal Pages
+      'profile'
+    ],
+    manager: [
+      // Core Pages
+      'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs', 'claims',
+      // Email Pages
+      'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
+      // Marketing Pages
+      'campaigns', 'templates',
+      // Survey Pages
+      'feedback', 'survey-designer',
+      // WhatsApp Pages
+      'whatsapp-flow',
+      // Personal Pages
+      'profile'
+    ],
+    agent: [
+      // Core Pages
+      'dashboard', 'cases', 'closed-cases', 'policy-timeline', 'logs',
+      // Email Pages
+      'emails', 'email-dashboard',
+      // WhatsApp Pages
+      'whatsapp-flow',
+      // Personal Pages
+      'profile'
+    ],
+    viewer: [
+      // Core Pages (read-only)
+      'dashboard', 'cases', 'closed-cases', 'policy-timeline',
+      // Personal Pages
+      'profile'
+    ]
+  };
+
   const tabsConfig = useMemo(() => [
     { label: 'General', icon: <SettingsIcon /> },
     { label: 'Renewals', icon: <AutorenewIcon /> },
     { label: 'Email', icon: <EmailIcon /> },
     { label: 'Campaigns', icon: <CampaignIcon /> },
+    { label: 'WhatsApp Flow', icon: <WhatsAppIcon /> },
     { label: 'Claims', icon: <GavelIcon /> },
     { label: 'Feedback', icon: <FeedbackIcon /> },
+    { label: 'User Management', icon: <GroupIcon /> },
     { label: 'System', icon: <StorageIcon /> }
   ], []);
 
@@ -226,6 +566,21 @@ const Settings = () => {
     setEmailSettings(prev => ({ ...prev, [key]: value }));
     // Also update the main settings context for backward compatibility
     handleSettingChange(key, value);
+  };
+
+  const handleWhatsappSettingChange = (key, value) => {
+    if (key.includes('.')) {
+      const [parentKey, childKey] = key.split('.');
+      setWhatsappSettings(prev => ({
+        ...prev,
+        [parentKey]: {
+          ...prev[parentKey],
+          [childKey]: value
+        }
+      }));
+    } else {
+      setWhatsappSettings(prev => ({ ...prev, [key]: value }));
+    }
   };
 
   const handleAddRule = () => {
@@ -331,6 +686,207 @@ const Settings = () => {
       case 'low': return 'success';
       default: return 'default';
     }
+  };
+
+  // User Management Handlers
+  const handleAddUser = () => {
+    setUserDialog({ open: true, user: null, mode: 'add' });
+    setNewUser({
+      name: '',
+      email: '',
+      phone: '',
+      department: '',
+      jobTitle: '',
+      role: 'viewer',
+      status: 'active',
+      permissions: [],
+      sendWelcomeEmail: true,
+      requirePasswordChange: true
+    });
+  };
+
+  const handleEditUser = (user) => {
+    setUserDialog({ open: true, user, mode: 'edit' });
+    setNewUser({ 
+      ...user,
+      phone: user.phone || '',
+      department: user.department || '',
+      jobTitle: user.jobTitle || '',
+      sendWelcomeEmail: user.sendWelcomeEmail || false,
+      requirePasswordChange: user.requirePasswordChange || false
+    });
+  };
+
+  const handleDeleteUser = (userId) => {
+    setUsers(prev => prev.filter(user => user.id !== userId));
+    setSuccessMessage('User deleted successfully!');
+    setTimeout(() => setSuccessMessage(''), 3000);
+  };
+
+  const handleSaveUser = () => {
+    if (userDialog.mode === 'add') {
+      const newUserWithId = { 
+        ...newUser, 
+        id: Math.max(...users.map(u => u.id), 0) + 1,
+        createdAt: new Date().toISOString(),
+        lastLogin: null
+      };
+      setUsers(prev => [...prev, newUserWithId]);
+      setSuccessMessage('User created successfully!');
+    } else {
+      setUsers(prev => prev.map(user => 
+        user.id === userDialog.user.id ? { ...newUser } : user
+      ));
+      setSuccessMessage('User updated successfully!');
+    }
+    setUserDialog({ open: false, user: null, mode: 'add' });
+    setTimeout(() => setSuccessMessage(''), 3000);
+  };
+
+  const handleToggleUserStatus = (userId) => {
+    setUsers(prev => prev.map(user => 
+      user.id === userId ? { ...user, status: user.status === 'active' ? 'inactive' : 'active' } : user
+    ));
+  };
+
+  const handleAddRole = () => {
+    setRoleDialog({ open: true, role: null, mode: 'add' });
+    setNewRole({
+      name: '',
+      displayName: '',
+      description: '',
+      permissions: []
+    });
+  };
+
+  const handleEditRole = (role) => {
+    setRoleDialog({ open: true, role, mode: 'edit' });
+    setNewRole({ ...role });
+  };
+
+  const handleDeleteRole = (roleId) => {
+    const role = roles.find(r => r.id === roleId);
+    if (role.isSystem) {
+      setSuccessMessage('System roles cannot be deleted');
+      setTimeout(() => setSuccessMessage(''), 3000);
+      return;
+    }
+    if (role.userCount > 0) {
+      setSuccessMessage('Cannot delete role with assigned users');
+      setTimeout(() => setSuccessMessage(''), 3000);
+      return;
+    }
+    setRoles(prev => prev.filter(role => role.id !== roleId));
+    setSuccessMessage('Role deleted successfully!');
+    setTimeout(() => setSuccessMessage(''), 3000);
+  };
+
+  const handleSaveRole = () => {
+    if (roleDialog.mode === 'add') {
+      const newRoleWithId = { 
+        ...newRole, 
+        id: Math.max(...roles.map(r => r.id), 0) + 1,
+        isSystem: false,
+        userCount: 0
+      };
+      setRoles(prev => [...prev, newRoleWithId]);
+      setSuccessMessage('Role created successfully!');
+    } else {
+      // When editing, preserve system properties and update the role
+      const updatedRole = {
+        ...newRole,
+        id: roleDialog.role.id,
+        isSystem: roleDialog.role.isSystem,
+        userCount: roleDialog.role.userCount
+      };
+      
+      setRoles(prev => prev.map(role => 
+        role.id === roleDialog.role.id ? updatedRole : role
+      ));
+      
+      // Update all users with this role to have the new permissions
+      setUsers(prev => prev.map(user => 
+        user.role === newRole.name ? { ...user, permissions: newRole.permissions } : user
+      ));
+      
+      setSuccessMessage('Role updated successfully!');
+    }
+    setRoleDialog({ open: false, role: null, mode: 'add' });
+    setTimeout(() => setSuccessMessage(''), 3000);
+  };
+
+  const handleResetRole = (role) => {
+    setResetRoleDialog({ open: true, role });
+  };
+
+  const handleConfirmResetRole = () => {
+    const role = resetRoleDialog.role;
+    if (role && defaultRolePermissions[role.name]) {
+      const defaultPermissions = defaultRolePermissions[role.name];
+      
+      // Update the role with default permissions
+      setRoles(prev => prev.map(r => 
+        r.id === role.id ? { ...r, permissions: defaultPermissions } : r
+      ));
+      
+      // Update all users with this role to have the default permissions
+      setUsers(prev => prev.map(user => 
+        user.role === role.name ? { ...user, permissions: defaultPermissions } : user
+      ));
+      
+      setResetRoleDialog({ open: false, role: null });
+      setSuccessMessage(`${role.displayName} role has been reset to default permissions.`);
+      setTimeout(() => setSuccessMessage(''), 3000);
+    }
+  };
+
+  const handleOpenPermissionDialog = (user) => {
+    setSelectedUser(user);
+    setPermissionDialog({ open: true, user });
+  };
+
+  const handleUpdateUserPermissions = (userId, permissions) => {
+    setUsers(prev => prev.map(user => 
+      user.id === userId ? { ...user, permissions } : user
+    ));
+    setPermissionDialog({ open: false, user: null });
+    setSuccessMessage('User permissions updated successfully!');
+    setTimeout(() => setSuccessMessage(''), 3000);
+  };
+
+  const handleRoleChange = (userId, newRole) => {
+    const roleData = roles.find(r => r.name === newRole);
+    setUsers(prev => prev.map(user => 
+      user.id === userId ? { ...user, role: newRole, permissions: roleData?.permissions || [] } : user
+    ));
+    setSuccessMessage('User role updated successfully!');
+    setTimeout(() => setSuccessMessage(''), 3000);
+  };
+
+  const getFilteredUsers = () => {
+    return users.filter(user => {
+      const matchesSearch = user.name.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+                           user.email.toLowerCase().includes(userSearchTerm.toLowerCase());
+      const matchesRole = roleFilter === 'all' || user.role === roleFilter;
+      const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
+      return matchesSearch && matchesRole && matchesStatus;
+    });
+  };
+
+  const getRoleDisplayName = (roleName) => {
+    const role = roles.find(r => r.name === roleName);
+    return role ? role.displayName : roleName;
+  };
+
+  const getPermissionsByCategory = () => {
+    const categories = {};
+    availablePermissions.forEach(permission => {
+      if (!categories[permission.category]) {
+        categories[permission.category] = [];
+      }
+      categories[permission.category].push(permission);
+    });
+    return categories;
   };
 
   // General Settings Tab Content
@@ -1879,6 +2435,415 @@ const Settings = () => {
     );
   };
 
+  // WhatsApp Flow Settings Tab
+  const WhatsAppFlowSettingsTab = () => (
+    <Box>
+      <Typography variant="h5" fontWeight="600" gutterBottom>
+        WhatsApp Flow Settings
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        Configure WhatsApp Business API, flow builder, templates, and automation settings
+      </Typography>
+
+      <Grid container spacing={3}>
+        {/* API Configuration */}
+        <Grid item xs={12}>
+          <Card sx={{ borderRadius: 3, boxShadow: '0 8px 24px rgba(0,0,0,0.05)' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <WhatsAppIcon sx={{ mr: 1, color: theme.palette.success.main }} />
+                <Typography variant="h6" fontWeight="600">WhatsApp Business API</Typography>
+              </Box>
+              <Divider sx={{ mb: 3 }} />
+              
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Phone Number ID"
+                    value={whatsappSettings.phoneNumberId}
+                    onChange={(e) => handleWhatsappSettingChange('phoneNumberId', e.target.value)}
+                    placeholder="Enter your WhatsApp Business Phone Number ID"
+                    sx={{ mb: 2 }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Access Token"
+                    type="password"
+                    value={whatsappSettings.accessToken}
+                    onChange={(e) => handleWhatsappSettingChange('accessToken', e.target.value)}
+                    placeholder="Enter your WhatsApp Business API Access Token"
+                    sx={{ mb: 2 }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Webhook URL"
+                    value={whatsappSettings.webhookUrl}
+                    onChange={(e) => handleWhatsappSettingChange('webhookUrl', e.target.value)}
+                    placeholder="https://your-domain.com/webhook"
+                    sx={{ mb: 2 }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Verify Token"
+                    value={whatsappSettings.verifyToken}
+                    onChange={(e) => handleWhatsappSettingChange('verifyToken', e.target.value)}
+                    placeholder="Enter webhook verify token"
+                    sx={{ mb: 2 }}
+                  />
+                </Grid>
+              </Grid>
+
+              <Box sx={{ mt: 2 }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={whatsappSettings.businessApiEnabled}
+                      onChange={(e) => handleWhatsappSettingChange('businessApiEnabled', e.target.checked)}
+                      color="success"
+                    />
+                  }
+                  label="Enable WhatsApp Business API"
+                />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Flow Builder Settings */}
+        <Grid item xs={12} md={6}>
+          <Card sx={{ borderRadius: 3, boxShadow: '0 8px 24px rgba(0,0,0,0.05)' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" gutterBottom>Flow Builder</Typography>
+              <Divider sx={{ mb: 2 }} />
+              
+              <List disablePadding>
+                <ListItem sx={{ borderRadius: 2, mb: 1 }}>
+                  <ListItemText 
+                    primary={<Typography fontWeight="500">Visual Flow Builder</Typography>}
+                    secondary="Enable drag-and-drop flow creation"
+                  />
+                  <ListItemSecondaryAction>
+                    <Switch
+                      checked={whatsappSettings.flowBuilderEnabled}
+                      onChange={(e) => handleWhatsappSettingChange('flowBuilderEnabled', e.target.checked)}
+                      color="primary"
+                    />
+                  </ListItemSecondaryAction>
+                </ListItem>
+                
+                <ListItem sx={{ borderRadius: 2, mb: 1 }}>
+                  <ListItemText 
+                    primary={<Typography fontWeight="500">Message Templates</Typography>}
+                    secondary="Enable WhatsApp message templates"
+                  />
+                  <ListItemSecondaryAction>
+                    <Switch
+                      checked={whatsappSettings.messageTemplatesEnabled}
+                      onChange={(e) => handleWhatsappSettingChange('messageTemplatesEnabled', e.target.checked)}
+                      color="primary"
+                    />
+                  </ListItemSecondaryAction>
+                </ListItem>
+
+                <ListItem sx={{ borderRadius: 2, mb: 1 }}>
+                  <ListItemText 
+                    primary={<Typography fontWeight="500">Auto Response</Typography>}
+                    secondary="Enable automatic responses"
+                  />
+                  <ListItemSecondaryAction>
+                    <Switch
+                      checked={whatsappSettings.autoResponseEnabled}
+                      onChange={(e) => handleWhatsappSettingChange('autoResponseEnabled', e.target.checked)}
+                      color="primary"
+                    />
+                  </ListItemSecondaryAction>
+                </ListItem>
+
+                <ListItem sx={{ borderRadius: 2 }}>
+                  <ListItemText 
+                    primary={<Typography fontWeight="500">Analytics & Reporting</Typography>}
+                    secondary="Track flow performance and metrics"
+                  />
+                  <ListItemSecondaryAction>
+                    <Switch
+                      checked={whatsappSettings.analyticsEnabled}
+                      onChange={(e) => handleWhatsappSettingChange('analyticsEnabled', e.target.checked)}
+                      color="primary"
+                    />
+                  </ListItemSecondaryAction>
+                </ListItem>
+              </List>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Business Hours */}
+        <Grid item xs={12} md={6}>
+          <Card sx={{ borderRadius: 3, boxShadow: '0 8px 24px rgba(0,0,0,0.05)' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" gutterBottom>Business Hours</Typography>
+              <Divider sx={{ mb: 2 }} />
+              
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={whatsappSettings.businessHours.enabled}
+                    onChange={(e) => handleWhatsappSettingChange('businessHours.enabled', e.target.checked)}
+                    color="primary"
+                  />
+                }
+                label="Enable Business Hours"
+                sx={{ mb: 2 }}
+              />
+
+              {whatsappSettings.businessHours.enabled && (
+                <Grid container spacing={2}>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      label="Start Time"
+                      type="time"
+                      value={whatsappSettings.businessHours.start}
+                      onChange={(e) => handleWhatsappSettingChange('businessHours.start', e.target.value)}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      label="End Time"
+                      type="time"
+                      value={whatsappSettings.businessHours.end}
+                      onChange={(e) => handleWhatsappSettingChange('businessHours.end', e.target.value)}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <FormControl fullWidth>
+                      <InputLabel>Timezone</InputLabel>
+                      <Select
+                        value={whatsappSettings.businessHours.timezone}
+                        label="Timezone"
+                        onChange={(e) => handleWhatsappSettingChange('businessHours.timezone', e.target.value)}
+                      >
+                        <MenuItem value="Asia/Kolkata">Asia/Kolkata (IST)</MenuItem>
+                        <MenuItem value="America/New_York">America/New_York (EST)</MenuItem>
+                        <MenuItem value="Europe/London">Europe/London (GMT)</MenuItem>
+                        <MenuItem value="Asia/Dubai">Asia/Dubai (GST)</MenuItem>
+                        <MenuItem value="Asia/Singapore">Asia/Singapore (SGT)</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                </Grid>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Message Settings */}
+        <Grid item xs={12}>
+          <Card sx={{ borderRadius: 3, boxShadow: '0 8px 24px rgba(0,0,0,0.05)' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" gutterBottom>Message Settings</Typography>
+              <Divider sx={{ mb: 3 }} />
+              
+              <Grid container spacing={3}>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={3}
+                    label="Fallback Message"
+                    value={whatsappSettings.fallbackMessage}
+                    onChange={(e) => handleWhatsappSettingChange('fallbackMessage', e.target.value)}
+                    placeholder="Message to send when flow fails or user input is invalid"
+                    helperText="This message will be sent when automated flows encounter errors"
+                  />
+                </Grid>
+                
+                <Grid item xs={12} sm={4}>
+                  <TextField
+                    fullWidth
+                    type="number"
+                    label="Max Retries"
+                    value={whatsappSettings.maxRetries}
+                    onChange={(e) => handleWhatsappSettingChange('maxRetries', parseInt(e.target.value))}
+                    inputProps={{ min: 1, max: 10 }}
+                    helperText="Maximum retry attempts for failed messages"
+                  />
+                </Grid>
+                
+                <Grid item xs={12} sm={4}>
+                  <TextField
+                    fullWidth
+                    type="number"
+                    label="Retry Delay (seconds)"
+                    value={whatsappSettings.retryDelay}
+                    onChange={(e) => handleWhatsappSettingChange('retryDelay', parseInt(e.target.value))}
+                    inputProps={{ min: 30, max: 3600 }}
+                    helperText="Delay between retry attempts"
+                  />
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Rate Limiting */}
+        <Grid item xs={12} md={6}>
+          <Card sx={{ borderRadius: 3, boxShadow: '0 8px 24px rgba(0,0,0,0.05)' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" gutterBottom>Rate Limiting</Typography>
+              <Divider sx={{ mb: 2 }} />
+              
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={whatsappSettings.rateLimiting.enabled}
+                    onChange={(e) => handleWhatsappSettingChange('rateLimiting.enabled', e.target.checked)}
+                    color="primary"
+                  />
+                }
+                label="Enable Rate Limiting"
+                sx={{ mb: 2 }}
+              />
+
+              {whatsappSettings.rateLimiting.enabled && (
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      type="number"
+                      label="Messages per Minute"
+                      value={whatsappSettings.rateLimiting.messagesPerMinute}
+                      onChange={(e) => handleWhatsappSettingChange('rateLimiting.messagesPerMinute', parseInt(e.target.value))}
+                      inputProps={{ min: 1, max: 100 }}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      type="number"
+                      label="Messages per Hour"
+                      value={whatsappSettings.rateLimiting.messagesPerHour}
+                      onChange={(e) => handleWhatsappSettingChange('rateLimiting.messagesPerHour', parseInt(e.target.value))}
+                      inputProps={{ min: 10, max: 10000 }}
+                    />
+                  </Grid>
+                </Grid>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Integration Status */}
+        <Grid item xs={12} md={6}>
+          <Card sx={{ borderRadius: 3, boxShadow: '0 8px 24px rgba(0,0,0,0.05)' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" gutterBottom>Integration Status</Typography>
+              <Divider sx={{ mb: 2 }} />
+              
+              <List disablePadding>
+                <ListItem sx={{ borderRadius: 2, mb: 1 }}>
+                  <ListItemIcon>
+                    <CheckCircleIcon color="success" />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary={<Typography fontWeight="500">WhatsApp Business API</Typography>}
+                    secondary="Connected and verified"
+                  />
+                </ListItem>
+                
+                <ListItem sx={{ borderRadius: 2, mb: 1 }}>
+                  <ListItemIcon>
+                    <CheckCircleIcon color="success" />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary={<Typography fontWeight="500">Webhook Configuration</Typography>}
+                    secondary="Active and receiving messages"
+                  />
+                </ListItem>
+
+                <ListItem sx={{ borderRadius: 2, mb: 1 }}>
+                  <ListItemIcon>
+                    <WarningIcon color="warning" />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary={<Typography fontWeight="500">Message Templates</Typography>}
+                    secondary="2 templates pending approval"
+                  />
+                </ListItem>
+
+                <ListItem sx={{ borderRadius: 2 }}>
+                  <ListItemIcon>
+                    <CheckCircleIcon color="success" />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary={<Typography fontWeight="500">Flow Builder</Typography>}
+                    secondary="Ready to create flows"
+                  />
+                </ListItem>
+              </List>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Save Button */}
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
+        <Button
+          variant="outlined"
+          onClick={() => setWhatsappSettings({
+            businessApiEnabled: true,
+            webhookUrl: 'https://api.intelipro.com/webhooks/whatsapp',
+            phoneNumberId: '',
+            accessToken: '',
+            verifyToken: 'whatsapp_verify_token_2024',
+            messageTemplatesEnabled: true,
+            flowBuilderEnabled: true,
+            analyticsEnabled: true,
+            autoResponseEnabled: true,
+            businessHours: {
+              enabled: true,
+              start: '09:00',
+              end: '18:00',
+              timezone: 'Asia/Kolkata'
+            },
+            fallbackMessage: 'Thank you for your message. We will get back to you soon.',
+            maxRetries: 3,
+            retryDelay: 300,
+            rateLimiting: {
+              enabled: true,
+              messagesPerMinute: 60,
+              messagesPerHour: 1000
+            }
+          })}
+          sx={{ borderRadius: 2 }}
+        >
+          Reset to Defaults
+        </Button>
+        <Button
+          variant="contained"
+          onClick={() => {
+            handleSaveSettings();
+            setSuccessMessage('WhatsApp Flow settings saved successfully!');
+          }}
+          startIcon={<SaveIcon />}
+          sx={{ borderRadius: 2 }}
+        >
+          Save WhatsApp Settings
+        </Button>
+      </Box>
+    </Box>
+  );
+
   const SystemSettingsTab = () => (
     <Box>
       <Typography variant="h5" fontWeight="600" gutterBottom>
@@ -2280,6 +3245,815 @@ const Settings = () => {
     </Box>
   );
 
+  // User Management Tab
+  const UserManagementTab = () => {
+    const filteredUsers = getFilteredUsers();
+    const permissionCategories = getPermissionsByCategory();
+
+    return (
+      <Box>
+        <Typography variant="h5" fontWeight="600" gutterBottom>
+          User Management
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          Manage users, roles, and permissions for your organization.
+        </Typography>
+
+        {/* Users Section */}
+        <Card sx={{ borderRadius: 3, boxShadow: '0 8px 24px rgba(0,0,0,0.05)', mb: 4 }}>
+          <CardContent sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Typography variant="h6" fontWeight="600">
+                Users ({filteredUsers.length})
+              </Typography>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={handleAddUser}
+                sx={{ borderRadius: 2 }}
+              >
+                Add User
+              </Button>
+            </Box>
+
+            {/* Filters */}
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+              <Grid item xs={12} md={4}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  placeholder="Search users..."
+                  value={userSearchTerm}
+                  onChange={(e) => setUserSearchTerm(e.target.value)}
+                  InputProps={{
+                    startAdornment: <PersonIcon sx={{ mr: 1, color: 'text.secondary' }} />
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Role</InputLabel>
+                  <Select
+                    value={roleFilter}
+                    onChange={(e) => setRoleFilter(e.target.value)}
+                    label="Role"
+                  >
+                    <MenuItem value="all">All Roles</MenuItem>
+                    {roles.map(role => (
+                      <MenuItem key={role.id} value={role.name}>{role.displayName}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Status</InputLabel>
+                  <Select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    label="Status"
+                  >
+                    <MenuItem value="all">All Status</MenuItem>
+                    <MenuItem value="active">Active</MenuItem>
+                    <MenuItem value="inactive">Inactive</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
+
+            {/* Users Table */}
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>User</TableCell>
+                    <TableCell>Department</TableCell>
+                    <TableCell>Role</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Permissions</TableCell>
+                    <TableCell align="right">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filteredUsers.map((user) => (
+                    <TableRow key={user.id} hover>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                          <Avatar sx={{ bgcolor: theme.palette.primary.main }}>
+                            {user.name.charAt(0)}
+                          </Avatar>
+                          <Box>
+                            <Typography variant="body2" fontWeight="500">
+                              {user.name}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {user.email}
+                            </Typography>
+                            {user.jobTitle && (
+                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                                {user.jobTitle}
+                              </Typography>
+                            )}
+                          </Box>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">
+                          {user.department ? user.department.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Not specified'}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <FormControl size="small" sx={{ minWidth: 120 }}>
+                          <Select
+                            value={user.role}
+                            onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                            variant="outlined"
+                          >
+                            {roles.map(role => (
+                              <MenuItem key={role.id} value={role.name}>
+                                {role.displayName}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={user.status}
+                          color={user.status === 'active' ? 'success' : 'default'}
+                          size="small"
+                          onClick={() => handleToggleUserStatus(user.id)}
+                          sx={{ cursor: 'pointer' }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={() => handleOpenPermissionDialog(user)}
+                          sx={{ borderRadius: 2 }}
+                        >
+                          {user.permissions.length} permissions
+                        </Button>
+                      </TableCell>
+                      <TableCell align="right">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleEditUser(user)}
+                          sx={{ mr: 1 }}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleDeleteUser(user.id)}
+                          color="error"
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
+
+        {/* Roles Section */}
+        <Card sx={{ borderRadius: 3, boxShadow: '0 8px 24px rgba(0,0,0,0.05)' }}>
+          <CardContent sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Typography variant="h6" fontWeight="600">
+                Roles & Permissions
+              </Typography>
+              <Button
+                variant="outlined"
+                startIcon={<AddIcon />}
+                onClick={handleAddRole}
+                sx={{ borderRadius: 2 }}
+              >
+                Create Role
+              </Button>
+            </Box>
+
+            <Grid container spacing={3}>
+              {roles.map((role) => (
+                <Grid item xs={12} md={6} key={role.id}>
+                  <Card 
+                    variant="outlined" 
+                    sx={{ 
+                      borderRadius: 2,
+                      transition: 'transform 0.2s, box-shadow 0.2s',
+                      '&:hover': {
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                      }
+                    }}
+                  >
+                    <CardContent>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
+                        <Box>
+                          <Typography variant="h6" fontWeight="600">
+                            {role.displayName}
+                            {role.isSystem && (
+                              <Chip 
+                                label="System" 
+                                size="small" 
+                                color="primary" 
+                                sx={{ ml: 1 }} 
+                              />
+                            )}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {role.description}
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleEditRole(role)}
+                            sx={{ mr: 1 }}
+                            title={role.isSystem ? "Edit system role" : "Edit role"}
+                          >
+                            <EditIcon />
+                          </IconButton>
+                          {!role.isSystem && (
+                            <IconButton
+                              size="small"
+                              onClick={() => handleDeleteRole(role.id)}
+                              color="error"
+                              title="Delete role"
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          )}
+                          {role.isSystem && (
+                            <IconButton
+                              size="small"
+                              onClick={() => handleResetRole(role)}
+                              color="warning"
+                              title="Reset to default permissions"
+                            >
+                              <RestoreIcon />
+                            </IconButton>
+                          )}
+                        </Box>
+                      </Box>
+                      
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                        {role.userCount} user(s) • {role.permissions.length} permissions
+                      </Typography>
+                      
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {role.permissions.slice(0, 5).map((permission) => {
+                          const permData = availablePermissions.find(p => p.id === permission);
+                          return (
+                            <Chip
+                              key={permission}
+                              label={permData?.name || permission}
+                              size="small"
+                              variant="outlined"
+                            />
+                          );
+                        })}
+                        {role.permissions.length > 5 && (
+                          <Chip
+                            label={`+${role.permissions.length - 5} more`}
+                            size="small"
+                            variant="outlined"
+                            color="primary"
+                          />
+                        )}
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          </CardContent>
+        </Card>
+
+        {/* User Dialog */}
+        <Dialog open={userDialog.open} onClose={() => setUserDialog({ open: false, user: null, mode: 'add' })} maxWidth="md" fullWidth>
+          <DialogTitle sx={{ pb: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <PersonIcon color="primary" />
+              <Typography variant="h6" fontWeight="600">
+                {userDialog.mode === 'add' ? 'Add New User' : 'Edit User'}
+              </Typography>
+            </Box>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              {userDialog.mode === 'add' 
+                ? 'Create a new user account with appropriate permissions and access levels.'
+                : 'Update user information and access permissions.'
+              }
+            </Typography>
+          </DialogTitle>
+          <DialogContent>
+            <Grid container spacing={3} sx={{ mt: 1 }}>
+              {/* Personal Information Section */}
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" fontWeight="600" color="primary" sx={{ mb: 2 }}>
+                  Personal Information
+                </Typography>
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Full Name"
+                  value={newUser.name}
+                  onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                  required
+                  helperText="Enter the user's full name"
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Email Address"
+                  type="email"
+                  value={newUser.email}
+                  onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                  required
+                  helperText="Primary email for login and notifications"
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Phone Number"
+                  value={newUser.phone}
+                  onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
+                  helperText="Contact phone number (optional)"
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Job Title"
+                  value={newUser.jobTitle}
+                  onChange={(e) => setNewUser({ ...newUser, jobTitle: e.target.value })}
+                  helperText="User's position or role title"
+                />
+              </Grid>
+              
+              <Grid item xs={12}>
+                <FormControl fullWidth>
+                  <InputLabel>Department</InputLabel>
+                  <Select
+                    value={newUser.department}
+                    onChange={(e) => setNewUser({ ...newUser, department: e.target.value })}
+                    label="Department"
+                  >
+                    <MenuItem value="">Select Department</MenuItem>
+                    <MenuItem value="claims">Claims Processing</MenuItem>
+                    <MenuItem value="underwriting">Underwriting</MenuItem>
+                    <MenuItem value="customer_service">Customer Service</MenuItem>
+                    <MenuItem value="sales">Sales & Marketing</MenuItem>
+                    <MenuItem value="it">Information Technology</MenuItem>
+                    <MenuItem value="finance">Finance & Accounting</MenuItem>
+                    <MenuItem value="legal">Legal & Compliance</MenuItem>
+                    <MenuItem value="management">Management</MenuItem>
+                    <MenuItem value="other">Other</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              {/* Access & Permissions Section */}
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" fontWeight="600" color="primary" sx={{ mb: 2, mt: 2 }}>
+                  Access & Permissions
+                </Typography>
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Role</InputLabel>
+                  <Select
+                    value={newUser.role}
+                    onChange={(e) => {
+                      const selectedRole = roles.find(r => r.name === e.target.value);
+                      setNewUser({ 
+                        ...newUser, 
+                        role: e.target.value,
+                        permissions: selectedRole?.permissions || []
+                      });
+                    }}
+                    label="Role"
+                  >
+                    {roles.map(role => (
+                      <MenuItem key={role.id} value={role.name}>
+                        <Box>
+                          <Typography variant="body2" fontWeight="500">
+                            {role.displayName}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {role.description}
+                          </Typography>
+                        </Box>
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Account Status</InputLabel>
+                  <Select
+                    value={newUser.status}
+                    onChange={(e) => setNewUser({ ...newUser, status: e.target.value })}
+                    label="Account Status"
+                  >
+                    <MenuItem value="active">
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'success.main' }} />
+                        Active
+                      </Box>
+                    </MenuItem>
+                    <MenuItem value="inactive">
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'grey.400' }} />
+                        Inactive
+                      </Box>
+                    </MenuItem>
+                    <MenuItem value="pending">
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'warning.main' }} />
+                        Pending Activation
+                      </Box>
+                    </MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              {/* Security Options Section */}
+              {userDialog.mode === 'add' && (
+                <>
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle1" fontWeight="600" color="primary" sx={{ mb: 2, mt: 2 }}>
+                      Security Options
+                    </Typography>
+                  </Grid>
+                  
+                  <Grid item xs={12}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={newUser.sendWelcomeEmail}
+                          onChange={(e) => setNewUser({ ...newUser, sendWelcomeEmail: e.target.checked })}
+                          color="primary"
+                        />
+                      }
+                      label={
+                        <Box>
+                          <Typography variant="body2" fontWeight="500">
+                            Send Welcome Email
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Send login credentials and welcome information to the user's email
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                  </Grid>
+                  
+                  <Grid item xs={12}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={newUser.requirePasswordChange}
+                          onChange={(e) => setNewUser({ ...newUser, requirePasswordChange: e.target.checked })}
+                          color="primary"
+                        />
+                      }
+                      label={
+                        <Box>
+                          <Typography variant="body2" fontWeight="500">
+                            Require Password Change on First Login
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Force user to change their password when they first log in
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                  </Grid>
+                </>
+              )}
+
+              {/* Permission Preview */}
+              {newUser.permissions.length > 0 && (
+                <>
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle1" fontWeight="600" color="primary" sx={{ mb: 2, mt: 2 }}>
+                      Permission Preview ({newUser.permissions.length} permissions)
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {newUser.permissions.slice(0, 8).map((permission) => {
+                        const permData = availablePermissions.find(p => p.id === permission);
+                        return (
+                          <Chip
+                            key={permission}
+                            label={permData?.name || permission}
+                            size="small"
+                            variant="outlined"
+                            color="primary"
+                          />
+                        );
+                      })}
+                      {newUser.permissions.length > 8 && (
+                        <Chip
+                          label={`+${newUser.permissions.length - 8} more`}
+                          size="small"
+                          variant="outlined"
+                          color="secondary"
+                        />
+                      )}
+                    </Box>
+                  </Grid>
+                </>
+              )}
+            </Grid>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+            <Button 
+              onClick={() => setUserDialog({ open: false, user: null, mode: 'add' })}
+              variant="outlined"
+              sx={{ borderRadius: 2 }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="contained" 
+              onClick={handleSaveUser}
+              disabled={!newUser.name || !newUser.email}
+              startIcon={userDialog.mode === 'add' ? <AddIcon /> : <EditIcon />}
+              sx={{ borderRadius: 2, minWidth: 140 }}
+            >
+              {userDialog.mode === 'add' ? 'Create User' : 'Update User'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Role Dialog */}
+        <Dialog open={roleDialog.open} onClose={() => setRoleDialog({ open: false, role: null, mode: 'add' })} maxWidth="md" fullWidth>
+          <DialogTitle>
+            {roleDialog.mode === 'add' ? 'Create New Role' : 'Edit Role'}
+          </DialogTitle>
+          <DialogContent>
+            {roleDialog.mode === 'edit' && roleDialog.role?.isSystem && (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                <Typography variant="body2">
+                  <strong>System Role:</strong> You are editing a predefined system role. 
+                  Changes will affect all users assigned to this role. You can use the "Reset" button 
+                  to restore default permissions if needed.
+                </Typography>
+              </Alert>
+            )}
+            <Grid container spacing={2} sx={{ mt: 1 }}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Role Name"
+                  value={newRole.displayName}
+                  onChange={(e) => setNewRole({ 
+                    ...newRole, 
+                    displayName: e.target.value,
+                    name: e.target.value.toLowerCase().replace(/\s+/g, '_')
+                  })}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Role ID"
+                  value={newRole.name}
+                  onChange={(e) => setNewRole({ ...newRole, name: e.target.value })}
+                  disabled={roleDialog.mode === 'edit'}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Description"
+                  multiline
+                  rows={2}
+                  value={newRole.description}
+                  onChange={(e) => setNewRole({ ...newRole, description: e.target.value })}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2 }}>
+                  Permissions
+                </Typography>
+                {Object.entries(getPermissionsByCategory()).map(([category, permissions]) => (
+                  <Box key={category} sx={{ mb: 3 }}>
+                    <Typography variant="subtitle2" color="primary" sx={{ mb: 1 }}>
+                      {category}
+                    </Typography>
+                    <Grid container spacing={1}>
+                      {permissions.map((permission) => (
+                        <Grid item xs={12} sm={6} md={4} key={permission.id}>
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                checked={newRole.permissions.includes(permission.id)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setNewRole({
+                                      ...newRole,
+                                      permissions: [...newRole.permissions, permission.id]
+                                    });
+                                  } else {
+                                    setNewRole({
+                                      ...newRole,
+                                      permissions: newRole.permissions.filter(p => p !== permission.id)
+                                    });
+                                  }
+                                }}
+                              />
+                            }
+                            label={
+                              <Box>
+                                <Typography variant="body2" fontWeight="500">
+                                  {permission.name}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {permission.description}
+                                </Typography>
+                              </Box>
+                            }
+                          />
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </Box>
+                ))}
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setRoleDialog({ open: false, role: null, mode: 'add' })}>
+              Cancel
+            </Button>
+            <Button 
+              variant="contained" 
+              onClick={handleSaveRole}
+              disabled={!newRole.displayName || !newRole.name}
+            >
+              {roleDialog.mode === 'add' ? 'Create Role' : 'Update Role'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Permission Dialog */}
+        <Dialog open={permissionDialog.open} onClose={() => setPermissionDialog({ open: false, user: null })} maxWidth="md" fullWidth>
+          <DialogTitle>
+            Manage Permissions - {selectedUser?.name}
+          </DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              Select the specific permissions for this user. These will override the default role permissions.
+            </Typography>
+            {Object.entries(getPermissionsByCategory()).map(([category, permissions]) => (
+              <Box key={category} sx={{ mb: 3 }}>
+                <Typography variant="subtitle2" color="primary" sx={{ mb: 1 }}>
+                  {category}
+                </Typography>
+                <Grid container spacing={1}>
+                  {permissions.map((permission) => (
+                    <Grid item xs={12} sm={6} md={4} key={permission.id}>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={selectedUser?.permissions.includes(permission.id) || false}
+                            onChange={(e) => {
+                              if (!selectedUser) return;
+                              const newPermissions = e.target.checked
+                                ? [...selectedUser.permissions, permission.id]
+                                : selectedUser.permissions.filter(p => p !== permission.id);
+                              setSelectedUser({ ...selectedUser, permissions: newPermissions });
+                            }}
+                          />
+                        }
+                        label={
+                          <Box>
+                            <Typography variant="body2" fontWeight="500">
+                              {permission.name}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {permission.description}
+                            </Typography>
+                          </Box>
+                        }
+                      />
+                    </Grid>
+                  ))}
+                </Grid>
+              </Box>
+            ))}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setPermissionDialog({ open: false, user: null })}>
+              Cancel
+            </Button>
+            <Button 
+              variant="contained" 
+              onClick={() => handleUpdateUserPermissions(selectedUser?.id, selectedUser?.permissions)}
+            >
+              Update Permissions
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Reset Role Confirmation Dialog */}
+        <Dialog 
+          open={resetRoleDialog.open} 
+          onClose={() => setResetRoleDialog({ open: false, role: null })}
+          maxWidth="sm" 
+          fullWidth
+        >
+          <DialogTitle sx={{ pb: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <WarningIcon color="warning" />
+              <Typography variant="h6" fontWeight="600">
+                Reset Role to Default
+              </Typography>
+            </Box>
+          </DialogTitle>
+          <DialogContent>
+            <Typography variant="body1" sx={{ mb: 2 }}>
+              Are you sure you want to reset the <strong>{resetRoleDialog.role?.displayName}</strong> role to its default permissions?
+            </Typography>
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              <Typography variant="body2">
+                This action will:
+              </Typography>
+              <Box component="ul" sx={{ mt: 1, mb: 0, pl: 2 }}>
+                <li>Reset all permissions for this role to system defaults</li>
+                <li>Update permissions for all users assigned to this role</li>
+                <li>Cannot be undone</li>
+              </Box>
+            </Alert>
+            {resetRoleDialog.role && defaultRolePermissions[resetRoleDialog.role.name] && (
+              <Box>
+                <Typography variant="subtitle2" fontWeight="600" sx={{ mb: 1 }}>
+                  Default permissions ({defaultRolePermissions[resetRoleDialog.role.name].length}):
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {defaultRolePermissions[resetRoleDialog.role.name].slice(0, 6).map((permission) => {
+                    const permData = availablePermissions.find(p => p.id === permission);
+                    return (
+                      <Chip
+                        key={permission}
+                        label={permData?.name || permission}
+                        size="small"
+                        variant="outlined"
+                        color="primary"
+                      />
+                    );
+                  })}
+                  {defaultRolePermissions[resetRoleDialog.role.name].length > 6 && (
+                    <Chip
+                      label={`+${defaultRolePermissions[resetRoleDialog.role.name].length - 6} more`}
+                      size="small"
+                      variant="outlined"
+                      color="secondary"
+                    />
+                  )}
+                </Box>
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+            <Button 
+              onClick={() => setResetRoleDialog({ open: false, role: null })}
+              variant="outlined"
+              sx={{ borderRadius: 2 }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="contained" 
+              color="warning"
+              onClick={handleConfirmResetRole}
+              startIcon={<RestoreIcon />}
+              sx={{ borderRadius: 2, minWidth: 140 }}
+            >
+              Reset Role
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
+    );
+  };
+
   // Module Settings Placeholder (for other modules)
   const ModuleSettingsTab = ({ moduleName, icon }) => (
     <Box>
@@ -2384,15 +4158,21 @@ const Settings = () => {
               <EmailSettingsTab />
             </TabPanel>
                     <TabPanel value={tabValue} index={3}>
-          <CampaignsSettingsTab />
-        </TabPanel>
+              <CampaignsSettingsTab />
+            </TabPanel>
             <TabPanel value={tabValue} index={4}>
-              <ModuleSettingsTab moduleName="Claims" icon={<GavelIcon sx={{ color: theme.palette.primary.main }} />} />
+              <WhatsAppFlowSettingsTab />
             </TabPanel>
             <TabPanel value={tabValue} index={5}>
-              <FeedbackSettingsTab />
+              <ModuleSettingsTab moduleName="Claims" icon={<GavelIcon sx={{ color: theme.palette.primary.main }} />} />
             </TabPanel>
             <TabPanel value={tabValue} index={6}>
+              <FeedbackSettingsTab />
+            </TabPanel>
+            <TabPanel value={tabValue} index={7}>
+              <UserManagementTab />
+            </TabPanel>
+            <TabPanel value={tabValue} index={8}>
               <SystemSettingsTab />
             </TabPanel>
           </Box>

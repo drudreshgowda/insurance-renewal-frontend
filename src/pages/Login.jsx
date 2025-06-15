@@ -70,16 +70,16 @@ const Login = () => {
     try {
       // First, authenticate with email and password
       const result = await login(email, password);
-      console.log('Login result:', result);
+      // Login successful
       
       if (result.success) {
         // If MFA is enabled, verify the OTP code
         if (mfaEnabled) {
           const otpResult = await verifyMfaOtp(otp);
-          console.log('OTP verification result:', otpResult);
+          // OTP verification completed
           
           if (otpResult.success) {
-            console.log('Navigating to dashboard after OTP verification');
+            // Navigating to dashboard after OTP verification
             // Add a small delay to ensure auth state is updated
             setTimeout(() => {
               try {
@@ -95,7 +95,7 @@ const Login = () => {
           }
         } else {
           // If MFA is not enabled, proceed to dashboard
-          console.log('Navigating to dashboard (no MFA)');
+          // Navigating to dashboard (no MFA)
           // Add a small delay to ensure auth state is updated
           setTimeout(() => {
             try {

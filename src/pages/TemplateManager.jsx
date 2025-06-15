@@ -652,6 +652,13 @@ Thank you for choosing us! 🙏`,
               {selectedTemplate.type === 'email' ? (
                 <div dangerouslySetInnerHTML={{ 
                   __html: processTemplate(selectedTemplate.content, previewData) 
+                }} 
+                style={{ 
+                  maxWidth: '100%', 
+                  wordWrap: 'break-word',
+                  /* Add basic security styling */
+                  '& script': { display: 'none' },
+                  '& iframe': { display: 'none' }
                 }} />
               ) : (
                 <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>

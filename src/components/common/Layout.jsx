@@ -4,14 +4,12 @@ import {
   AppBar, Box, Drawer, Toolbar, Typography, Divider, 
   List, ListItem, ListItemIcon, ListItemText, IconButton,
   Avatar, Menu, MenuItem, Tooltip, Badge, useTheme,
-  ListItemButton, Switch, styled, Button, Collapse
+  ListItemButton, styled, Button, Collapse
 } from '@mui/material';
 import { 
   Menu as MenuIcon, 
   Dashboard as DashboardIcon, 
-  CloudUpload as UploadIcon, 
-  ViewList as CasesIcon, 
-  History as LogsIcon,
+  CloudUpload as UploadIcon,
   ExitToApp as LogoutIcon,
   AccountCircle as ProfileIcon,
   Settings as SettingsIcon,
@@ -23,9 +21,7 @@ import {
   Assignment as AssignmentIcon,
   Update as UpdateIcon,
   Info as InfoIcon,
-  WhatsApp as WhatsAppIcon,
-  CreditCard as CreditCardIcon,
-  CheckCircle as CheckCircleIcon,
+
   Timeline as TimelineIcon,
   DoneAll as DoneAllIcon,
   Description as DocumentIcon,
@@ -42,11 +38,13 @@ import {
   Email as EmailIcon,
   Campaign as CampaignIcon,
   Feedback as FeedbackIcon,
-  Gavel as GavelIcon
+  Gavel as GavelIcon,
+  WhatsApp as WhatsAppIcon
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext.js';
 import { useThemeMode } from '../../context/ThemeModeContext.js';
 import { useNotifications } from '../../context/NotificationsContext.js';
+import { usePermissions } from '../../context/PermissionsContext.jsx';
 import NotificationsDialog from '../notifications/Notifications';
 import { alpha } from '@mui/material/styles';
 
@@ -94,7 +92,8 @@ const Layout = ({ children }) => {
   const { currentUser, logout } = useAuth();
   const theme = useTheme();
   const { mode, toggleMode } = useThemeMode();
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { notifications, unreadCount, markAsRead } = useNotifications();
+  const { hasPermission } = usePermissions();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -169,33 +168,34 @@ const Layout = ({ children }) => {
   };
 
   const menuItems = [
-    { text: 'Campaigns', icon: <CampaignIcon />, path: '/campaigns' },
-    { text: 'Feedback & Surveys', icon: <FeedbackIcon />, path: '/feedback' },
-    { text: 'Claims', icon: <GavelIcon />, path: '/claims' },
-  ];
+    { text: 'Campaigns', icon: <CampaignIcon />, path: '/campaigns', permission: 'campaigns' },
+    { text: 'Feedback & Surveys', icon: <FeedbackIcon />, path: '/feedback', permission: 'feedback' },
+    { text: 'Claims', icon: <GavelIcon />, path: '/claims', permission: 'claims' },
+    { text: 'Whatsapp flow', icon: <WhatsAppIcon />, path: '/whatsapp-flow', permission: 'whatsapp-flow' },
+  ].filter(item => hasPermission(item.permission));
 
   const renewalMenuItems = [
-    { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
-    { text: 'Upload', icon: <UploadIcon />, path: '/upload' },
-    { text: 'Case Tracking', icon: <AssignmentIcon />, path: '/cases' },
-    { text: 'Closed Cases', icon: <AssignmentTurnedInIcon />, path: '/closed-cases' },
-    { text: 'Policy Timeline', icon: <TimelineIcon />, path: '/policy-timeline' },
-    { text: 'Case Logs', icon: <ListIcon />, path: '/logs' },
-  ];
+    { text: 'Dashboard', icon: <DashboardIcon />, path: '/', permission: 'dashboard' },
+    { text: 'Upload', icon: <UploadIcon />, path: '/upload', permission: 'upload' },
+    { text: 'Case Tracking', icon: <AssignmentIcon />, path: '/cases', permission: 'cases' },
+    { text: 'Closed Cases', icon: <AssignmentTurnedInIcon />, path: '/closed-cases', permission: 'closed-cases' },
+    { text: 'Policy Timeline', icon: <TimelineIcon />, path: '/policy-timeline', permission: 'policy-timeline' },
+    { text: 'Case Logs', icon: <ListIcon />, path: '/logs', permission: 'logs' },
+  ].filter(item => hasPermission(item.permission));
 
   const emailMenuItems = [
-    { text: 'Email Dashboard', icon: <DashboardIcon />, path: '/emails/dashboard' },
-    { text: 'Email Inbox', icon: <EmailIcon />, path: '/emails' },
-    { text: 'Bulk Email', icon: <CampaignIcon />, path: '/emails/bulk' },
-    { text: 'Email Analytics', icon: <ReportIcon />, path: '/emails/analytics' },
-  ];
+    { text: 'Email Dashboard', icon: <DashboardIcon />, path: '/emails/dashboard', permission: 'email-dashboard' },
+    { text: 'Email Inbox', icon: <EmailIcon />, path: '/emails', permission: 'emails' },
+    { text: 'Bulk Email', icon: <CampaignIcon />, path: '/emails/bulk', permission: 'bulk-email' },
+    { text: 'Email Analytics', icon: <ReportIcon />, path: '/emails/analytics', permission: 'email-analytics' },
+  ].filter(item => hasPermission(item.permission));
 
   const secondaryMenuItems = [
-    { text: 'Profile', icon: <PersonIcon />, path: '/profile' },
-    { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
-    { text: 'Billing', icon: <ReceiptIcon />, path: '/billing' },
-    { text: 'Users', icon: <GroupIcon />, path: '/users' },
-  ];
+    { text: 'Profile', icon: <PersonIcon />, path: '/profile', permission: 'profile' },
+    { text: 'Settings', icon: <SettingsIcon />, path: '/settings', permission: 'settings' },
+    { text: 'Billing', icon: <ReceiptIcon />, path: '/billing', permission: 'billing' },
+    { text: 'Users', icon: <GroupIcon />, path: '/users', permission: 'users' },
+  ].filter(item => hasPermission(item.permission));
 
   const drawer = (
     <div>

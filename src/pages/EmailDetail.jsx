@@ -891,7 +891,18 @@ Phone: +1 (555) 123-4567`
                       lineHeight: 1.6
                     }
                   }}>
-                    <div dangerouslySetInnerHTML={{ __html: email.body }} />
+                    <div 
+                      dangerouslySetInnerHTML={{ __html: email.body }} 
+                      style={{ 
+                        maxWidth: '100%', 
+                        wordWrap: 'break-word',
+                        /* Basic security styling */
+                        '& script': { display: 'none !important' },
+                        '& iframe': { display: 'none !important' },
+                        '& object': { display: 'none !important' },
+                        '& embed': { display: 'none !important' }
+                      }}
+                    />
                   </Box>
                 </CardContent>
               </Card>

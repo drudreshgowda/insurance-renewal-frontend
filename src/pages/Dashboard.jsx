@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Grid, Paper, Typography, Box, Card, CardContent, 
   FormControl, InputLabel, Select, MenuItem, alpha, useTheme,
-  Fade, Grow, TextField
+  Fade, Grow
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -66,7 +66,7 @@ const Dashboard = () => {
         setBatchData(batchStatusData);
       }
     } catch (error) {
-      console.error("Failed to load dashboard data:", error);
+              // Failed to load dashboard data
     }
   }, [dateRange, policyType, caseStatus, startDate, endDate]);
 

@@ -445,7 +445,7 @@ const Feedback = () => {
 
   const handleResolveFeedback = (feedbackId) => {
     // Update feedback status to resolved
-    console.log('Resolving feedback:', feedbackId);
+    // Resolving feedback
     // In real app, this would call an API
   };
 
@@ -493,14 +493,14 @@ const Feedback = () => {
   };
 
   const handleSendReply = () => {
-    console.log('Sending reply:', replyText, 'to:', selectedFeedback?.customer);
+    // Sending reply to customer
     setReplyDialog(false);
     setReplyText('');
     setSelectedFeedback(null);
   };
 
   const handleAssignAgent = () => {
-    console.log('Assigning agent:', assignedAgent, 'to feedback:', selectedFeedback?.id);
+    // Assigning agent to feedback
     setAssignDialog(false);
     setAssignedAgent('');
     setSelectedFeedback(null);

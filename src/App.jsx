@@ -28,10 +28,13 @@ import TemplateManager from './pages/TemplateManager';
 import Feedback from './pages/Feedback';
 import SurveyDesigner from './pages/SurveyDesigner';
 import Claims from './pages/Claims';
+import WhatsappFlow from './pages/WhatsappFlow';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import ErrorBoundary from './components/common/ErrorBoundary';
 import { AuthProvider } from './context/AuthContext.js';
 import { ThemeModeProvider, useThemeMode } from './context/ThemeModeContext.js';
 import { NotificationsProvider } from './context/NotificationsContext.js';
+import { PermissionsProvider } from './context/PermissionsContext.jsx';
 import SettingsProvider from './context/SettingsContext';
 
 function AppWithTheme() {
@@ -243,9 +246,11 @@ function AppWithTheme() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AuthProvider>
-        <SettingsProvider>
-          <Router>
+      <ErrorBoundary>
+        <AuthProvider>
+          <PermissionsProvider>
+            <SettingsProvider>
+              <Router>
             <Routes>
             <Route path="/login" element={<Login />} />
             
@@ -432,12 +437,22 @@ function AppWithTheme() {
               </ProtectedRoute>
             } />
             
+            <Route path="/whatsapp-flow" element={
+              <ProtectedRoute>
+                <Layout>
+                  <WhatsappFlow />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
             <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
             <WelcomeModal open={welcomeModalOpen} onClose={handleCloseWelcomeModal} />
-          </Router>
-        </SettingsProvider>
-      </AuthProvider>
+                            </Router>
+              </SettingsProvider>
+            </PermissionsProvider>
+          </AuthProvider>
+        </ErrorBoundary>
     </ThemeProvider>
   );
 }

@@ -18,10 +18,10 @@ export const AuthProvider = ({ children }) => {
         if (token) {
           // Mock user data
           setCurrentUser({
-            id: '123',
+            id: '1',
             name: 'Rajesh Kumar',
             email: 'rajesh@client.com',
-            role: 'client_admin'
+            role: 'admin'
           });
         }
       } catch (error) {
@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }) => {
     checkAuthStatus();
   }, []);
 
-  const login = async (email, password) => {
+  const login = async (email, _password) => {
     // In a real app, this would call your authentication API
     // const response = await fetch('/api/auth/login', {
     //   method: 'POST',
@@ -52,10 +52,10 @@ export const AuthProvider = ({ children }) => {
         // For demo, we'll just consider any login attempt successful
         
         const userData = {
-          id: '123',
+          id: '1',
           name: 'Rajesh Kumar',
           email: email,
-          role: 'client_admin'
+          role: 'admin'
         };
         
         // For non-MFA logins, we need to set the token and user here
@@ -66,9 +66,9 @@ export const AuthProvider = ({ children }) => {
           try {
             const settings = JSON.parse(savedSettings);
             mfaEnabled = settings.mfaEnabled;
-          } catch (error) {
-            console.error('Failed to parse saved settings:', error);
-          }
+                  } catch (error) {
+          // Failed to parse saved settings, using defaults
+        }
         }
         
         // If MFA is not enabled, log the user in directly
@@ -97,10 +97,10 @@ export const AuthProvider = ({ children }) => {
           // Note: userData would come from your backend in a real app
           // Here we'll create it again with the same data as in login
           const userData = {
-            id: '123',
+            id: '1',
             name: 'Rajesh Kumar',
             email: 'rajesh@client.com',
-            role: 'client_admin'
+            role: 'admin'
           };
           
           setCurrentUser(userData);

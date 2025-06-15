@@ -351,7 +351,7 @@ const CaseTracking = () => {
       setCases(cases.map(c => c.id === currentCase.id ? currentCase : c));
       setEditDialogOpen(false);
     } catch (error) {
-      console.error("Failed to update case:", error);
+              setError("Failed to update case. Please try again.");
     }
   };
 

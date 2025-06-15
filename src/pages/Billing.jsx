@@ -122,10 +122,10 @@ const Billing = () => {
     
     // Just for demonstration, we'll log the filter criteria
     if (filterType === 'month') {
-      console.log(`Filtering for ${months[selectedMonth]} ${selectedYear}`);
-    } else {
-      console.log(`Filtering from ${startDate?.toLocaleDateString()} to ${endDate?.toLocaleDateString()}`);
-    }
+              // Filtering for specific month and year
+      } else {
+        // Filtering by date range
+      }
   }, [filterType, selectedMonth, selectedYear, startDate, endDate, settings.billing]);
 
   const handleTabChange = (event, newValue) => {
