@@ -4,7 +4,9 @@ import {
   AppBar, Box, Drawer, Toolbar, Typography, Divider, 
   List, ListItem, ListItemIcon, ListItemText, IconButton,
   Avatar, Menu, MenuItem, Tooltip, Badge, useTheme,
-  ListItemButton, styled, Button, Collapse
+  ListItemButton, styled, Button, Collapse, Fab, Dialog, 
+  DialogTitle, DialogContent, DialogActions, TextField, 
+  InputAdornment, CircularProgress, Paper, Chip
 } from '@mui/material';
 import { 
   Menu as MenuIcon, 
@@ -39,7 +41,10 @@ import {
   Campaign as CampaignIcon,
   Feedback as FeedbackIcon,
   Gavel as GavelIcon,
-  WhatsApp as WhatsAppIcon
+  WhatsApp as WhatsAppIcon,
+  SmartToy as AskAIIcon,
+  Send as SendIcon,
+  Close as CloseIcon
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext.js';
 import { useThemeMode } from '../../context/ThemeModeContext.js';
@@ -87,6 +92,17 @@ const Layout = ({ children }) => {
   const [notificationsDialogOpen, setNotificationsDialogOpen] = useState(false);
   const [renewalMenuOpen, setRenewalMenuOpen] = useState(true);
   const [emailMenuOpen, setEmailMenuOpen] = useState(true);
+  const [askAIOpen, setAskAIOpen] = useState(false);
+  const [aiQuery, setAiQuery] = useState('');
+  const [aiResponse, setAiResponse] = useState('');
+  const [isAILoading, setIsAILoading] = useState(false);
+  const [aiSuggestions] = useState([
+    "How can I improve renewal rates?",
+    "What are the common reasons for renewal failures?",
+    "Show me best practices for customer retention",
+    "How to optimize the renewal process?",
+    "What communication strategies work best?"
+  ]);
   const navigate = useNavigate();
   const location = useLocation();
   const { currentUser, logout } = useAuth();
@@ -149,6 +165,59 @@ const Layout = ({ children }) => {
 
   const handleEmailMenuClick = () => {
     setEmailMenuOpen(!emailMenuOpen);
+  };
+
+  const handleAskAI = () => {
+    setAskAIOpen(true);
+  };
+
+  const handleCloseAskAI = () => {
+    setAskAIOpen(false);
+    setAiQuery('');
+    setAiResponse('');
+    setIsAILoading(false);
+  };
+
+  const handleSendAIQuery = async () => {
+    if (!aiQuery.trim()) return;
+    
+    setIsAILoading(true);
+    
+    // Simulate AI response (in real implementation, this would call an AI service)
+    setTimeout(() => {
+      const mockResponses = {
+        "improve renewal rates": "To improve renewal rates, focus on: 1) Proactive communication 30-45 days before expiry, 2) Personalized offers based on customer history, 3) Simplified renewal process, 4) Multi-channel reminders (email, SMS, calls), 5) Incentives for early renewal.",
+        "renewal failures": "Common reasons for renewal failures include: 1) Lack of timely communication, 2) Complex renewal process, 3) Price increases without explanation, 4) Poor customer service experience, 5) Competitive offers, 6) Changed customer needs.",
+        "customer retention": "Best practices for customer retention: 1) Regular check-ins and relationship building, 2) Value-added services, 3) Loyalty programs, 4) Feedback collection and action, 5) Personalized communication, 6) Proactive issue resolution.",
+        "optimize renewal process": "To optimize the renewal process: 1) Automate reminders and notifications, 2) Simplify forms and paperwork, 3) Offer multiple payment options, 4) Provide online self-service options, 5) Use AI for predictive analytics, 6) Streamline approval workflows.",
+        "communication strategies": "Effective communication strategies: 1) Use multiple channels (email, SMS, calls), 2) Personalize messages based on customer data, 3) Time communications appropriately, 4) Use clear, simple language, 5) Include value propositions, 6) Follow up consistently."
+      };
+      
+      const queryLower = aiQuery.toLowerCase();
+      let response = "I can help you with renewal management strategies, process optimization, customer retention techniques, and communication best practices. Could you please provide more specific details about your question?";
+      
+      for (const [key, value] of Object.entries(mockResponses)) {
+        if (queryLower.includes(key)) {
+          response = value;
+          break;
+        }
+      }
+      
+      setAiResponse(response);
+      setIsAILoading(false);
+    }, 2000);
+  };
+
+  const handleSuggestionClick = (suggestion) => {
+    setAiQuery(suggestion);
+  };
+
+  // Check if current page is renewal-related
+  const isRenewalRelatedPage = () => {
+    const renewalPaths = ['/', '/upload', '/cases', '/closed-cases', '/policy-timeline', '/logs'];
+    return renewalPaths.some(path => 
+      path === '/' ? location.pathname === '/' : location.pathname.startsWith(path)
+    );
   };
 
   // Helper function to determine if an email menu item should be selected
@@ -894,6 +963,171 @@ const Layout = ({ children }) => {
         open={notificationsDialogOpen} 
         onClose={handleCloseNotificationsDialog} 
       />
+
+      {/* Ask AI Floating Action Button - Only show on renewal pages */}
+      {isRenewalRelatedPage() && (
+        <Fab
+          color="primary"
+          aria-label="ask ai"
+          onClick={handleAskAI}
+          sx={{
+            position: 'fixed',
+            bottom: 24,
+            right: 24,
+            zIndex: 1000,
+            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+            boxShadow: '0 8px 24px rgba(25, 118, 210, 0.3)',
+            '&:hover': {
+              background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
+              transform: 'scale(1.1)',
+              boxShadow: '0 12px 32px rgba(25, 118, 210, 0.4)',
+            },
+            transition: 'all 0.3s ease-in-out',
+          }}
+        >
+          <AskAIIcon sx={{ fontSize: '1.5rem' }} />
+        </Fab>
+      )}
+
+      {/* Ask AI Dialog */}
+      <Dialog
+        open={askAIOpen}
+        onClose={handleCloseAskAI}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            boxShadow: '0 24px 48px rgba(0,0,0,0.15)',
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 2,
+          pb: 1,
+          background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.primary.main, 0.05)} 100%)`
+        }}>
+          <AskAIIcon color="primary" sx={{ fontSize: '2rem' }} />
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="h5" fontWeight="600">
+              Ask AI Assistant
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Get intelligent insights about renewal management
+            </Typography>
+          </Box>
+          <IconButton onClick={handleCloseAskAI} size="small">
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent sx={{ p: 3 }}>
+          {/* Suggestions */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle2" fontWeight="600" gutterBottom>
+              Quick Suggestions:
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {aiSuggestions.map((suggestion, index) => (
+                <Chip
+                  key={index}
+                  label={suggestion}
+                  variant="outlined"
+                  clickable
+                  onClick={() => handleSuggestionClick(suggestion)}
+                  sx={{
+                    borderRadius: 2,
+                    '&:hover': {
+                      backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                      borderColor: theme.palette.primary.main,
+                    }
+                  }}
+                />
+              ))}
+            </Box>
+          </Box>
+
+          {/* Query Input */}
+          <TextField
+            fullWidth
+            multiline
+            rows={3}
+            value={aiQuery}
+            onChange={(e) => setAiQuery(e.target.value)}
+            placeholder="Ask me anything about renewal management, customer retention, process optimization, or best practices..."
+            variant="outlined"
+            sx={{
+              mb: 3,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+              }
+            }}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={handleSendAIQuery}
+                    disabled={!aiQuery.trim() || isAILoading}
+                    color="primary"
+                  >
+                    {isAILoading ? <CircularProgress size={20} /> : <SendIcon />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+
+          {/* AI Response */}
+          {(aiResponse || isAILoading) && (
+            <Paper
+              sx={{
+                p: 3,
+                borderRadius: 2,
+                bgcolor: alpha(theme.palette.primary.main, 0.04),
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                <AskAIIcon color="primary" />
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="subtitle2" fontWeight="600" color="primary" gutterBottom>
+                    AI Assistant Response:
+                  </Typography>
+                  {isAILoading ? (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <CircularProgress size={20} />
+                      <Typography variant="body2" color="text.secondary">
+                        Analyzing your query and generating insights...
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Typography variant="body1" sx={{ lineHeight: 1.6 }}>
+                      {aiResponse}
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
+            </Paper>
+          )}
+        </DialogContent>
+
+        <DialogActions sx={{ p: 3, pt: 0 }}>
+          <Button onClick={handleCloseAskAI} color="inherit">
+            Close
+          </Button>
+          <Button
+            onClick={handleSendAIQuery}
+            variant="contained"
+            disabled={!aiQuery.trim() || isAILoading}
+            startIcon={isAILoading ? <CircularProgress size={16} /> : <SendIcon />}
+            sx={{ borderRadius: 2 }}
+          >
+            {isAILoading ? 'Processing...' : 'Ask AI'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

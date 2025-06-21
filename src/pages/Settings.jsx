@@ -58,7 +58,8 @@ import {
   Analytics as AnalyticsIcon,
   Verified as VerifiedIcon,
   Timeline as TrackingIcon,
-  WhatsApp as WhatsAppIcon
+  WhatsApp as WhatsAppIcon,
+  SmartToy as SmartToyIcon
 } from '@mui/icons-material';
 import { useThemeMode } from '../context/ThemeModeContext';
 import { useSettings } from '../context/SettingsContext';
@@ -194,6 +195,38 @@ const Settings = () => {
       enabled: true,
       messagesPerMinute: 60,
       messagesPerHour: 1000
+    }
+  });
+
+  // AI Settings State
+  const [aiSettings, setAiSettings] = useState({
+    enabled: true,
+    provider: 'openai',
+    apiKey: '',
+    model: 'gpt-4',
+    temperature: 0.7,
+    maxTokens: 1000,
+    responseTimeout: 30,
+    fallbackEnabled: true,
+    fallbackMessage: 'I apologize, but I am currently unable to process your request. Please try again later or contact support.',
+    contextWindow: 4000,
+    rateLimiting: {
+      enabled: true,
+      requestsPerMinute: 60,
+      requestsPerHour: 1000
+    },
+    features: {
+      renewalInsights: true,
+      processOptimization: true,
+      customerRetention: true,
+      communicationStrategies: true,
+      predictiveAnalytics: false
+    },
+    knowledgeBase: {
+      enabled: true,
+      autoUpdate: true,
+      sources: ['internal_docs', 'best_practices', 'industry_standards'],
+      lastUpdated: '2024-12-28T10:30:00Z'
     }
   });
 
@@ -580,6 +613,31 @@ const Settings = () => {
       }));
     } else {
       setWhatsappSettings(prev => ({ ...prev, [key]: value }));
+    }
+  };
+
+  const handleAiSettingChange = (key, value) => {
+    if (key.includes('.')) {
+      const [parentKey, childKey] = key.split('.');
+      setAiSettings(prev => ({
+        ...prev,
+        [parentKey]: {
+          ...prev[parentKey],
+          [childKey]: value
+        }
+      }));
+    } else {
+      setAiSettings(prev => ({ ...prev, [key]: value }));
+    }
+  };
+
+  const handleTestAiConnection = async () => {
+    try {
+      // Simulate API test
+      setSuccessMessage('AI connection test successful!');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      console.error('AI connection test failed:', error);
     }
   };
 
@@ -3043,6 +3101,348 @@ const Settings = () => {
               />
             </ListItem>
           </List>
+        </CardContent>
+      </Card>
+
+      <Card sx={{ mb: 3, borderRadius: 3, boxShadow: '0 8px 24px rgba(0,0,0,0.05)' }}>
+        <CardContent sx={{ p: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, justifyContent: 'space-between' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <SmartToyIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
+              <Typography variant="h6" fontWeight="600">AI Assistant Configuration</Typography>
+            </Box>
+            <Button 
+              variant="outlined" 
+              color="primary"
+              onClick={handleTestAiConnection}
+              sx={{ borderRadius: 2, fontWeight: 500 }}
+            >
+              Test Connection
+            </Button>
+          </Box>
+          <Divider sx={{ mb: 2 }} />
+          
+          <Grid container spacing={3}>
+            {/* Basic Configuration */}
+            <Grid item xs={12} md={6}>
+              <Typography variant="subtitle1" fontWeight="600" gutterBottom>
+                Basic Configuration
+              </Typography>
+              <List disablePadding>
+                <ListItem sx={{ borderRadius: 2, mb: 1 }}>
+                  <ListItemText
+                    primary={<Typography fontWeight="500">Enable AI Assistant</Typography>}
+                    secondary="Enable AI-powered assistance across renewal pages"
+                  />
+                  <ListItemSecondaryAction>
+                    <Switch
+                      edge="end"
+                      checked={aiSettings.enabled}
+                      onChange={(e) => handleAiSettingChange('enabled', e.target.checked)}
+                      color="primary"
+                    />
+                  </ListItemSecondaryAction>
+                </ListItem>
+                
+                <ListItem sx={{ borderRadius: 2, mb: 1 }}>
+                  <ListItemText
+                    primary={<Typography fontWeight="500">AI Provider</Typography>}
+                    secondary="Select the AI service provider"
+                  />
+                  <ListItemSecondaryAction sx={{ width: '120px' }}>
+                    <FormControl fullWidth size="small">
+                      <Select
+                        value={aiSettings.provider}
+                        onChange={(e) => handleAiSettingChange('provider', e.target.value)}
+                        sx={{ borderRadius: 2 }}
+                      >
+                        <MenuItem value="openai">OpenAI</MenuItem>
+                        <MenuItem value="azure">Azure OpenAI</MenuItem>
+                        <MenuItem value="anthropic">Anthropic</MenuItem>
+                        <MenuItem value="google">Google AI</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </ListItemSecondaryAction>
+                </ListItem>
+
+                <ListItem sx={{ borderRadius: 2, mb: 1 }}>
+                  <ListItemText
+                    primary={<Typography fontWeight="500">AI Model</Typography>}
+                    secondary="Select the AI model to use"
+                  />
+                  <ListItemSecondaryAction sx={{ width: '120px' }}>
+                    <FormControl fullWidth size="small">
+                      <Select
+                        value={aiSettings.model}
+                        onChange={(e) => handleAiSettingChange('model', e.target.value)}
+                        sx={{ borderRadius: 2 }}
+                      >
+                        <MenuItem value="gpt-4">GPT-4</MenuItem>
+                        <MenuItem value="gpt-3.5-turbo">GPT-3.5 Turbo</MenuItem>
+                        <MenuItem value="claude-3">Claude 3</MenuItem>
+                        <MenuItem value="gemini-pro">Gemini Pro</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </ListItemSecondaryAction>
+                </ListItem>
+
+                <ListItem sx={{ borderRadius: 2 }}>
+                  <ListItemText
+                    primary={<Typography fontWeight="500">API Key</Typography>}
+                    secondary="Enter your AI provider API key"
+                  />
+                  <ListItemSecondaryAction sx={{ width: '200px' }}>
+                    <TextField
+                      size="small"
+                      type="password"
+                      value={aiSettings.apiKey}
+                      onChange={(e) => handleAiSettingChange('apiKey', e.target.value)}
+                      placeholder="sk-..."
+                      sx={{ borderRadius: 2 }}
+                    />
+                  </ListItemSecondaryAction>
+                </ListItem>
+              </List>
+            </Grid>
+
+            {/* Advanced Configuration */}
+            <Grid item xs={12} md={6}>
+              <Typography variant="subtitle1" fontWeight="600" gutterBottom>
+                Advanced Configuration
+              </Typography>
+              <List disablePadding>
+                <ListItem sx={{ borderRadius: 2, mb: 1 }}>
+                  <ListItemText
+                    primary={<Typography fontWeight="500">Temperature</Typography>}
+                    secondary="Controls response creativity (0.0 - 1.0)"
+                  />
+                  <ListItemSecondaryAction sx={{ width: '100px' }}>
+                    <Slider
+                      value={aiSettings.temperature}
+                      onChange={(e, value) => handleAiSettingChange('temperature', value)}
+                      min={0}
+                      max={1}
+                      step={0.1}
+                      size="small"
+                    />
+                  </ListItemSecondaryAction>
+                </ListItem>
+
+                <ListItem sx={{ borderRadius: 2, mb: 1 }}>
+                  <ListItemText
+                    primary={<Typography fontWeight="500">Max Tokens</Typography>}
+                    secondary="Maximum response length"
+                  />
+                  <ListItemSecondaryAction sx={{ width: '100px' }}>
+                    <TextField
+                      size="small"
+                      type="number"
+                      value={aiSettings.maxTokens}
+                      onChange={(e) => handleAiSettingChange('maxTokens', parseInt(e.target.value))}
+                      sx={{ borderRadius: 2 }}
+                    />
+                  </ListItemSecondaryAction>
+                </ListItem>
+
+                <ListItem sx={{ borderRadius: 2, mb: 1 }}>
+                  <ListItemText
+                    primary={<Typography fontWeight="500">Response Timeout</Typography>}
+                    secondary="Request timeout in seconds"
+                  />
+                  <ListItemSecondaryAction sx={{ width: '100px' }}>
+                    <TextField
+                      size="small"
+                      type="number"
+                      value={aiSettings.responseTimeout}
+                      onChange={(e) => handleAiSettingChange('responseTimeout', parseInt(e.target.value))}
+                      sx={{ borderRadius: 2 }}
+                    />
+                  </ListItemSecondaryAction>
+                </ListItem>
+
+                <ListItem sx={{ borderRadius: 2 }}>
+                  <ListItemText
+                    primary={<Typography fontWeight="500">Enable Fallback</Typography>}
+                    secondary="Show fallback message when AI is unavailable"
+                  />
+                  <ListItemSecondaryAction>
+                    <Switch
+                      edge="end"
+                      checked={aiSettings.fallbackEnabled}
+                      onChange={(e) => handleAiSettingChange('fallbackEnabled', e.target.checked)}
+                      color="primary"
+                    />
+                  </ListItemSecondaryAction>
+                </ListItem>
+              </List>
+            </Grid>
+
+            {/* Feature Toggles */}
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" fontWeight="600" gutterBottom>
+                AI Features
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6} md={3}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={aiSettings.features.renewalInsights}
+                        onChange={(e) => handleAiSettingChange('features.renewalInsights', e.target.checked)}
+                        color="primary"
+                      />
+                    }
+                    label="Renewal Insights"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={aiSettings.features.processOptimization}
+                        onChange={(e) => handleAiSettingChange('features.processOptimization', e.target.checked)}
+                        color="primary"
+                      />
+                    }
+                    label="Process Optimization"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={aiSettings.features.customerRetention}
+                        onChange={(e) => handleAiSettingChange('features.customerRetention', e.target.checked)}
+                        color="primary"
+                      />
+                    }
+                    label="Customer Retention"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={aiSettings.features.communicationStrategies}
+                        onChange={(e) => handleAiSettingChange('features.communicationStrategies', e.target.checked)}
+                        color="primary"
+                      />
+                    }
+                    label="Communication Strategies"
+                  />
+                </Grid>
+              </Grid>
+            </Grid>
+
+            {/* Rate Limiting */}
+            <Grid item xs={12} md={6}>
+              <Typography variant="subtitle1" fontWeight="600" gutterBottom>
+                Rate Limiting
+              </Typography>
+              <List disablePadding>
+                <ListItem sx={{ borderRadius: 2, mb: 1 }}>
+                  <ListItemText
+                    primary={<Typography fontWeight="500">Enable Rate Limiting</Typography>}
+                    secondary="Prevent API quota exhaustion"
+                  />
+                  <ListItemSecondaryAction>
+                    <Switch
+                      edge="end"
+                      checked={aiSettings.rateLimiting.enabled}
+                      onChange={(e) => handleAiSettingChange('rateLimiting.enabled', e.target.checked)}
+                      color="primary"
+                    />
+                  </ListItemSecondaryAction>
+                </ListItem>
+                
+                <ListItem sx={{ borderRadius: 2, mb: 1 }}>
+                  <ListItemText
+                    primary={<Typography fontWeight="500">Requests per Minute</Typography>}
+                    secondary="Maximum requests per minute"
+                  />
+                  <ListItemSecondaryAction sx={{ width: '100px' }}>
+                    <TextField
+                      size="small"
+                      type="number"
+                      value={aiSettings.rateLimiting.requestsPerMinute}
+                      onChange={(e) => handleAiSettingChange('rateLimiting.requestsPerMinute', parseInt(e.target.value))}
+                      sx={{ borderRadius: 2 }}
+                    />
+                  </ListItemSecondaryAction>
+                </ListItem>
+
+                <ListItem sx={{ borderRadius: 2 }}>
+                  <ListItemText
+                    primary={<Typography fontWeight="500">Requests per Hour</Typography>}
+                    secondary="Maximum requests per hour"
+                  />
+                  <ListItemSecondaryAction sx={{ width: '100px' }}>
+                    <TextField
+                      size="small"
+                      type="number"
+                      value={aiSettings.rateLimiting.requestsPerHour}
+                      onChange={(e) => handleAiSettingChange('rateLimiting.requestsPerHour', parseInt(e.target.value))}
+                      sx={{ borderRadius: 2 }}
+                    />
+                  </ListItemSecondaryAction>
+                </ListItem>
+              </List>
+            </Grid>
+
+            {/* Knowledge Base */}
+            <Grid item xs={12} md={6}>
+              <Typography variant="subtitle1" fontWeight="600" gutterBottom>
+                Knowledge Base
+              </Typography>
+              <List disablePadding>
+                <ListItem sx={{ borderRadius: 2, mb: 1 }}>
+                  <ListItemText
+                    primary={<Typography fontWeight="500">Enable Knowledge Base</Typography>}
+                    secondary="Use internal knowledge for better responses"
+                  />
+                  <ListItemSecondaryAction>
+                    <Switch
+                      edge="end"
+                      checked={aiSettings.knowledgeBase.enabled}
+                      onChange={(e) => handleAiSettingChange('knowledgeBase.enabled', e.target.checked)}
+                      color="primary"
+                    />
+                  </ListItemSecondaryAction>
+                </ListItem>
+                
+                <ListItem sx={{ borderRadius: 2, mb: 1 }}>
+                  <ListItemText
+                    primary={<Typography fontWeight="500">Auto Update</Typography>}
+                    secondary="Automatically update knowledge base"
+                  />
+                  <ListItemSecondaryAction>
+                    <Switch
+                      edge="end"
+                      checked={aiSettings.knowledgeBase.autoUpdate}
+                      onChange={(e) => handleAiSettingChange('knowledgeBase.autoUpdate', e.target.checked)}
+                      color="primary"
+                    />
+                  </ListItemSecondaryAction>
+                </ListItem>
+
+                <ListItem sx={{ borderRadius: 2 }}>
+                  <ListItemText
+                    primary={<Typography fontWeight="500">Last Updated</Typography>}
+                    secondary={new Date(aiSettings.knowledgeBase.lastUpdated).toLocaleDateString()}
+                  />
+                  <ListItemSecondaryAction>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      sx={{ borderRadius: 2 }}
+                    >
+                      Update Now
+                    </Button>
+                  </ListItemSecondaryAction>
+                </ListItem>
+              </List>
+            </Grid>
+          </Grid>
         </CardContent>
       </Card>
 

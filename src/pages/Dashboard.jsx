@@ -9,7 +9,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, 
-  Tooltip, Legend, ResponsiveContainer, AreaChart, Area, LineChart, Line
+  Tooltip, Legend, ResponsiveContainer, AreaChart, Area, LineChart, Line, PieChart, Pie, Cell
 } from 'recharts';
 import { fetchDashboardStats, fetchTrendData, fetchBatchStatus } from '../services/api';
 import { 
@@ -19,7 +19,13 @@ import {
   Watch as PendingIcon,
   ErrorOutline as ErrorIcon,
   Payments as PaymentsIcon,
-  AccountBalance as AccountBalanceIcon
+  AccountBalance as AccountBalanceIcon,
+  LocationOn as LocationIcon,
+  Person as PersonIcon,
+  Phone as PhoneIcon,
+  CreditCard as PaymentModeIcon,
+  TrendingUp as CostIcon,
+  Hub as ChannelIcon
 } from '@mui/icons-material';
 
 const Dashboard = () => {
@@ -43,6 +49,14 @@ const Dashboard = () => {
   const [selectedBatch, setSelectedBatch] = useState('all');
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
+
+  // New chart data states
+  const [channelData, setChannelData] = useState([]);
+  const [regionData, setRegionData] = useState([]);
+  const [managerData, setManagerData] = useState([]);
+  const [communicationData, setCommunicationData] = useState([]);
+  const [paymentModeData, setPaymentModeData] = useState([]);
+  const [costData, setCostData] = useState([]);
 
   // Memoize the loadDashboardData function to avoid recreating it on every render
   const loadDashboardData = useCallback(async () => {
@@ -112,6 +126,61 @@ const Dashboard = () => {
     
     setTrendData(mockTrendData);
     
+    // Mock data for new charts
+    const mockChannelData = [
+      { name: 'Online Portal', value: 45, color: '#8884d8' },
+      { name: 'Mobile App', value: 30, color: '#82ca9d' },
+      { name: 'Branch Office', value: 15, color: '#ffc658' },
+      { name: 'Agent Visit', value: 10, color: '#ff7300' }
+    ];
+
+    const mockRegionData = [
+      { region: 'North', state: 'Delhi', branch: 'CP Branch', cases: 120, renewed: 95 },
+      { region: 'North', state: 'Punjab', branch: 'Chandigarh', cases: 85, renewed: 70 },
+      { region: 'West', state: 'Maharashtra', branch: 'Mumbai Central', cases: 200, renewed: 165 },
+      { region: 'West', state: 'Gujarat', branch: 'Ahmedabad', cases: 90, renewed: 75 },
+      { region: 'South', state: 'Karnataka', branch: 'Bangalore', cases: 180, renewed: 150 },
+      { region: 'South', state: 'Tamil Nadu', branch: 'Chennai', cases: 150, renewed: 125 },
+      { region: 'East', state: 'West Bengal', branch: 'Kolkata', cases: 110, renewed: 90 }
+    ];
+
+    const mockManagerData = [
+      { name: 'Sales Manager', type: 'Sales', cases: 450, renewed: 380, efficiency: 84.4 },
+      { name: 'Regional Manager', type: 'Regional', cases: 320, renewed: 275, efficiency: 85.9 },
+      { name: 'Area Manager', type: 'Area', cases: 280, renewed: 245, efficiency: 87.5 },
+      { name: 'State Manager', type: 'State', cases: 200, renewed: 170, efficiency: 85.0 }
+    ];
+
+    const mockCommunicationData = [
+      { mode: 'AI Call', count: 520, success: 78, cost: 2.5 },
+      { mode: 'WhatsApp', count: 380, success: 85, cost: 0.5 },
+      { mode: 'Tele Caller', count: 250, success: 65, cost: 8.0 },
+      { mode: 'SMS', count: 150, success: 45, cost: 0.2 }
+    ];
+
+    const mockPaymentModeData = [
+      { mode: 'UPI/Digital', value: 40, amount: 5520000, color: '#00C49F' },
+      { mode: 'Net Banking', value: 25, amount: 3450000, color: '#0088FE' },
+      { mode: 'Credit Card', value: 20, amount: 2760000, color: '#FFBB28' },
+      { mode: 'Debit Card', value: 10, amount: 1380000, color: '#FF8042' },
+      { mode: 'Cash', value: 5, amount: 690000, color: '#8884D8' }
+    ];
+
+    const mockCostData = [
+      { channel: 'Online Portal', costPerRenewal: 45, volume: 450, totalCost: 20250 },
+      { channel: 'Mobile App', costPerRenewal: 35, volume: 300, totalCost: 10500 },
+      { channel: 'Branch Office', costPerRenewal: 120, volume: 150, totalCost: 18000 },
+      { channel: 'Agent Visit', costPerRenewal: 200, volume: 100, totalCost: 20000 },
+      { channel: 'Phone Call', costPerRenewal: 80, volume: 250, totalCost: 20000 }
+    ];
+
+    setChannelData(mockChannelData);
+    setRegionData(mockRegionData);
+    setManagerData(mockManagerData);
+    setCommunicationData(mockCommunicationData);
+    setPaymentModeData(mockPaymentModeData);
+    setCostData(mockCostData);
+
     // Set loaded state for animations
     const loadedTimer = setTimeout(() => {
       setLoaded(true);
@@ -649,6 +718,247 @@ const Dashboard = () => {
                     </LineChart>
                   </ResponsiveContainer>
                 </Box>
+              </Paper>
+            </Grow>
+          </Grid>
+        </Grid>
+
+        {/* New Charts Section */}
+        <Typography variant="h5" gutterBottom sx={{ mt: 4, mb: 3, fontWeight: 600 }}>
+          Advanced Analytics
+        </Typography>
+
+        <Grid container spacing={3}>
+          {/* Channel Wise Case Bifurcation */}
+          <Grid item xs={12} lg={6}>
+            <Grow in={loaded} style={{ transformOrigin: '0 0 0' }} timeout={1000}>
+              <Paper sx={{ p: 3, height: 400, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+                <Typography variant="h6" gutterBottom fontWeight="600" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <ChannelIcon color="primary" />
+                  Channel Wise Case Bifurcation
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Distribution of renewal cases across different channels
+                </Typography>
+                <ResponsiveContainer width="100%" height="85%">
+                  <PieChart>
+                    <Pie
+                      data={channelData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, value }) => `${name}: ${value}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {channelData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => `${value}%`} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </Paper>
+            </Grow>
+          </Grid>
+
+          {/* Region/State/Branch wise */}
+          <Grid item xs={12} lg={6}>
+            <Grow in={loaded} style={{ transformOrigin: '0 0 0' }} timeout={1100}>
+              <Paper sx={{ p: 3, height: 400, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+                <Typography variant="h6" gutterBottom fontWeight="600" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <LocationIcon color="primary" />
+                  Region/State/Branch Performance
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Renewal performance across different geographical locations
+                </Typography>
+                <ResponsiveContainer width="100%" height="85%">
+                  <BarChart data={regionData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                    <XAxis 
+                      dataKey="branch" 
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                      fontSize={10}
+                    />
+                    <YAxis />
+                    <Tooltip 
+                      formatter={(value, name) => [value, name]}
+                      labelFormatter={(label) => {
+                        const item = regionData.find(r => r.branch === label);
+                        return item ? `${item.state} - ${label}` : label;
+                      }}
+                      contentStyle={{ 
+                        backgroundColor: theme.palette.mode === 'dark' ? '#2a2a2a' : '#fff',
+                        borderRadius: 8,
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                      }}
+                    />
+                    <Legend />
+                    <Bar dataKey="cases" fill={alpha(theme.palette.info.main, 0.8)} name="Total Cases" />
+                    <Bar dataKey="renewed" fill={alpha(theme.palette.success.main, 0.8)} name="Renewed" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Paper>
+            </Grow>
+          </Grid>
+
+          {/* Sales/Regional/Area/State Manager Performance */}
+          <Grid item xs={12} lg={6}>
+            <Grow in={loaded} style={{ transformOrigin: '0 0 0' }} timeout={1200}>
+              <Paper sx={{ p: 3, height: 400, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+                <Typography variant="h6" gutterBottom fontWeight="600" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <PersonIcon color="primary" />
+                  Manager Performance Analysis
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Performance metrics across different management levels
+                </Typography>
+                <ResponsiveContainer width="100%" height="85%">
+                  <BarChart data={managerData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                    <XAxis dataKey="type" />
+                    <YAxis yAxisId="left" />
+                    <YAxis yAxisId="right" orientation="right" domain={[80, 90]} />
+                    <Tooltip 
+                      formatter={(value, name) => {
+                        if (name === 'Efficiency') return [`${value}%`, name];
+                        return [value, name];
+                      }}
+                      contentStyle={{ 
+                        backgroundColor: theme.palette.mode === 'dark' ? '#2a2a2a' : '#fff',
+                        borderRadius: 8,
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                      }}
+                    />
+                    <Legend />
+                    <Bar yAxisId="left" dataKey="cases" fill={alpha(theme.palette.primary.main, 0.8)} name="Total Cases" />
+                    <Bar yAxisId="left" dataKey="renewed" fill={alpha(theme.palette.success.main, 0.8)} name="Renewed" />
+                    <Bar yAxisId="right" dataKey="efficiency" fill={alpha(theme.palette.warning.main, 0.8)} name="Efficiency %" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Paper>
+            </Grow>
+          </Grid>
+
+          {/* Mode of Communication */}
+          <Grid item xs={12} lg={6}>
+            <Grow in={loaded} style={{ transformOrigin: '0 0 0' }} timeout={1300}>
+              <Paper sx={{ p: 3, height: 400, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+                <Typography variant="h6" gutterBottom fontWeight="600" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <PhoneIcon color="primary" />
+                  Communication Mode Analysis
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Success rate and cost analysis by communication method
+                </Typography>
+                <ResponsiveContainer width="100%" height="85%">
+                  <BarChart data={communicationData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                    <XAxis dataKey="mode" />
+                    <YAxis yAxisId="left" />
+                    <YAxis yAxisId="right" orientation="right" />
+                    <Tooltip 
+                      formatter={(value, name) => {
+                        if (name === 'Success Rate') return [`${value}%`, name];
+                        if (name === 'Cost per Contact') return [`₹${value}`, name];
+                        return [value, name];
+                      }}
+                      contentStyle={{ 
+                        backgroundColor: theme.palette.mode === 'dark' ? '#2a2a2a' : '#fff',
+                        borderRadius: 8,
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                      }}
+                    />
+                    <Legend />
+                    <Bar yAxisId="left" dataKey="count" fill={alpha(theme.palette.info.main, 0.8)} name="Contact Count" />
+                    <Bar yAxisId="left" dataKey="success" fill={alpha(theme.palette.success.main, 0.8)} name="Success Rate %" />
+                    <Bar yAxisId="right" dataKey="cost" fill={alpha(theme.palette.error.main, 0.8)} name="Cost per Contact (₹)" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Paper>
+            </Grow>
+          </Grid>
+
+          {/* Payment Mode Distribution */}
+          <Grid item xs={12} lg={6}>
+            <Grow in={loaded} style={{ transformOrigin: '0 0 0' }} timeout={1400}>
+              <Paper sx={{ p: 3, height: 400, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+                <Typography variant="h6" gutterBottom fontWeight="600" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <PaymentModeIcon color="primary" />
+                  Payment Mode Distribution
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Payment preferences and amounts by payment method
+                </Typography>
+                <ResponsiveContainer width="100%" height="85%">
+                  <PieChart>
+                    <Pie
+                      data={paymentModeData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ mode, value, amount }) => `${mode}: ${value}% (₹${(amount/100000).toFixed(1)}L)`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {paymentModeData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value, name, props) => [
+                        `${value}% (₹${new Intl.NumberFormat('en-IN').format(props.payload.amount)})`,
+                        'Share'
+                      ]}
+                    />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </Paper>
+            </Grow>
+          </Grid>
+
+          {/* Cost per Renewal */}
+          <Grid item xs={12} lg={6}>
+            <Grow in={loaded} style={{ transformOrigin: '0 0 0' }} timeout={1500}>
+              <Paper sx={{ p: 3, height: 400, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+                <Typography variant="h6" gutterBottom fontWeight="600" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CostIcon color="primary" />
+                  Cost per Renewal Analysis
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Cost efficiency analysis across different channels
+                </Typography>
+                <ResponsiveContainer width="100%" height="85%">
+                  <BarChart data={costData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                    <XAxis dataKey="channel" angle={-45} textAnchor="end" height={80} />
+                    <YAxis yAxisId="left" />
+                    <YAxis yAxisId="right" orientation="right" />
+                    <Tooltip 
+                      formatter={(value, name) => {
+                        if (name === 'Cost per Renewal') return [`₹${value}`, name];
+                        if (name === 'Total Cost') return [`₹${new Intl.NumberFormat('en-IN').format(value)}`, name];
+                        return [value, name];
+                      }}
+                      contentStyle={{ 
+                        backgroundColor: theme.palette.mode === 'dark' ? '#2a2a2a' : '#fff',
+                        borderRadius: 8,
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                      }}
+                    />
+                    <Legend />
+                    <Bar yAxisId="left" dataKey="volume" fill={alpha(theme.palette.info.main, 0.8)} name="Volume" />
+                    <Bar yAxisId="left" dataKey="costPerRenewal" fill={alpha(theme.palette.warning.main, 0.8)} name="Cost per Renewal (₹)" />
+                    <Bar yAxisId="right" dataKey="totalCost" fill={alpha(theme.palette.error.main, 0.8)} name="Total Cost (₹)" />
+                  </BarChart>
+                </ResponsiveContainer>
               </Paper>
             </Grow>
           </Grid>

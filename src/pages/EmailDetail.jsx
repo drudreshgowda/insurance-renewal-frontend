@@ -61,7 +61,8 @@ import {
   SmartToy as SmartToyIcon,
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
-  Remove as RemoveIcon
+  Remove as RemoveIcon,
+  SupervisorAccount as EscalateIcon
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -81,6 +82,9 @@ const EmailDetail = () => {
   const [notes, setNotes] = useState([]);
   const [threadExpanded, setThreadExpanded] = useState(false);
   const [viewingAgents, setViewingAgents] = useState([]);
+  const [escalateDialog, setEscalateDialog] = useState(false);
+  const [escalationReason, setEscalationReason] = useState('');
+  const [escalationPriority, setEscalationPriority] = useState('high');
 
   // Mock enhanced email data with AI features
   const mockEmail = {
@@ -283,9 +287,10 @@ Phone: +1 (555) 123-4567`
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'new': return 'primary';
+      case 'new': return 'info';
       case 'in_progress': return 'warning';
       case 'resolved': return 'success';
+      case 'escalated': return 'error';
       default: return 'default';
     }
   };
@@ -315,15 +320,47 @@ Phone: +1 (555) 123-4567`
   };
 
   const handleAddNote = () => {
-    const note = {
-      id: notes.length + 1,
-      author: 'Current User',
-      timestamp: new Date().toISOString(),
-      content: newNote
-    };
-    setNotes(prev => [...prev, note]);
-    setNewNote('');
-    setNoteDialog(false);
+    if (newNote.trim()) {
+      const note = {
+        id: notes.length + 1,
+        author: 'Current User',
+        content: newNote,
+        timestamp: new Date().toISOString()
+      };
+      setNotes([...notes, note]);
+      setNewNote('');
+      setNoteDialog(false);
+    }
+  };
+
+  const handleEscalate = () => {
+    if (escalationReason.trim()) {
+      // In a real app, this would send the escalation request to the supervisor
+      // For now, we'll just update the email status and add a note
+      setEmail(prev => ({
+        ...prev,
+        status: 'escalated',
+        priority: escalationPriority,
+        escalatedTo: 'Supervisor',
+        escalatedAt: new Date().toISOString(),
+        escalationReason: escalationReason
+      }));
+      
+      // Add an internal note about the escalation
+      const escalationNote = {
+        id: notes.length + 1,
+        author: 'System',
+        content: `Email escalated to supervisor. Reason: ${escalationReason}`,
+        timestamp: new Date().toISOString()
+      };
+      setNotes([...notes, escalationNote]);
+      
+      setEscalationReason('');
+      setEscalateDialog(false);
+      
+      // Show success message (in a real app, this might be a toast notification)
+      alert('Email successfully escalated to supervisor');
+    }
   };
 
   // AI Intent Tagging Component
@@ -695,6 +732,15 @@ Phone: +1 (555) 123-4567`
               Assign
             </Button>
             <Button
+              startIcon={<EscalateIcon />}
+              variant="outlined"
+              color="warning"
+              onClick={() => setEscalateDialog(true)}
+              sx={{ borderRadius: 2 }}
+            >
+              Escalate to Supervisor
+            </Button>
+            <Button
               startIcon={<ArchiveIcon />}
               variant="outlined"
               color="secondary"
@@ -808,6 +854,7 @@ Phone: +1 (555) 123-4567`
                                   <MenuItem value="new">New</MenuItem>
                                   <MenuItem value="in_progress">In Progress</MenuItem>
                                   <MenuItem value="resolved">Resolved</MenuItem>
+                                  <MenuItem value="escalated">Escalated</MenuItem>
                                 </Select>
                               </FormControl>
                               <IconButton size="small" onClick={handleSaveStatus}>
@@ -1039,6 +1086,58 @@ Phone: +1 (555) 123-4567`
             <Button onClick={() => setNoteDialog(false)}>Cancel</Button>
             <Button variant="contained" onClick={handleAddNote} disabled={!newNote.trim()}>
               Add Note
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Escalate Dialog */}
+        <Dialog open={escalateDialog} onClose={() => setEscalateDialog(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <EscalateIcon color="warning" />
+              Escalate to Supervisor
+            </Box>
+          </DialogTitle>
+          <DialogContent>
+            <Alert severity="info" sx={{ mb: 3 }}>
+              This email will be escalated to a supervisor for immediate attention. Please provide a reason for escalation.
+            </Alert>
+            
+            <TextField
+              fullWidth
+              multiline
+              rows={4}
+              label="Escalation Reason"
+              placeholder="Please describe why this email needs supervisor attention..."
+              value={escalationReason}
+              onChange={(e) => setEscalationReason(e.target.value)}
+              required
+              sx={{ mb: 3 }}
+            />
+            
+            <FormControl fullWidth>
+              <InputLabel>Escalation Priority</InputLabel>
+              <Select
+                value={escalationPriority}
+                label="Escalation Priority"
+                onChange={(e) => setEscalationPriority(e.target.value)}
+              >
+                <MenuItem value="high">High Priority</MenuItem>
+                <MenuItem value="urgent">Urgent Priority</MenuItem>
+                <MenuItem value="critical">Critical Priority</MenuItem>
+              </Select>
+            </FormControl>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setEscalateDialog(false)}>Cancel</Button>
+            <Button 
+              variant="contained" 
+              color="warning"
+              onClick={handleEscalate} 
+              disabled={!escalationReason.trim()}
+              startIcon={<EscalateIcon />}
+            >
+              Escalate Now
             </Button>
           </DialogActions>
         </Dialog>
