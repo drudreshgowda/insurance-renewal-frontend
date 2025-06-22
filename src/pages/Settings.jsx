@@ -215,6 +215,27 @@ const Settings = () => {
       requestsPerMinute: 60,
       requestsPerHour: 1000
     },
+    // Ollama-specific settings
+    ollama: {
+      baseUrl: 'http://localhost:11434',
+      model: 'llama2',
+      keepAlive: '5m',
+      stream: true,
+      availableModels: [],
+      lastModelRefresh: null,
+      pullInProgress: false,
+      pullProgress: 0,
+      systemPrompt: 'You are a helpful AI assistant for insurance renewal management.',
+      options: {
+        temperature: 0.7,
+        top_p: 0.9,
+        top_k: 40,
+        repeat_penalty: 1.1,
+        num_ctx: 4096,
+        num_predict: 1000,
+        stop: []
+      }
+    },
     features: {
       renewalInsights: true,
       processOptimization: true,
@@ -618,14 +639,24 @@ const Settings = () => {
 
   const handleAiSettingChange = (key, value) => {
     if (key.includes('.')) {
-      const [parentKey, childKey] = key.split('.');
-      setAiSettings(prev => ({
-        ...prev,
-        [parentKey]: {
-          ...prev[parentKey],
-          [childKey]: value
+      const keys = key.split('.');
+      setAiSettings(prev => {
+        const newSettings = { ...prev };
+        let current = newSettings;
+        
+        // Navigate to the parent object
+        for (let i = 0; i < keys.length - 1; i++) {
+          if (!current[keys[i]]) {
+            current[keys[i]] = {};
+          }
+          current[keys[i]] = { ...current[keys[i]] };
+          current = current[keys[i]];
         }
-      }));
+        
+        // Set the final value
+        current[keys[keys.length - 1]] = value;
+        return newSettings;
+      });
     } else {
       setAiSettings(prev => ({ ...prev, [key]: value }));
     }
@@ -633,11 +664,33 @@ const Settings = () => {
 
   const handleTestAiConnection = async () => {
     try {
-      // Simulate API test
-      setSuccessMessage('AI connection test successful!');
-      setTimeout(() => setSuccessMessage(''), 3000);
+      // Simulate API test based on provider
+      if (aiSettings.provider === 'ollama') {
+        // Mock Ollama connection test
+        const response = await fetch(`${aiSettings.ollama.baseUrl}/api/tags`);
+        if (response.ok) {
+          const data = await response.json();
+          setAiSettings(prev => ({
+            ...prev,
+            ollama: {
+              ...prev.ollama,
+              availableModels: data.models?.map(m => m.name) || ['llama2', 'codellama', 'mistral'],
+              lastModelRefresh: new Date().toISOString()
+            }
+          }));
+          setSuccessMessage('Ollama connection successful! Models refreshed.');
+        } else {
+          throw new Error('Failed to connect to Ollama server');
+        }
+      } else {
+        // Simulate other provider tests
+        setSuccessMessage(`${aiSettings.provider.toUpperCase()} connection test successful!`);
+      }
+      setTimeout(() => setSuccessMessage(''), 5000);
     } catch (error) {
       console.error('AI connection test failed:', error);
+      setSuccessMessage(`Connection failed: ${error.message || 'Unknown error'}`);
+      setTimeout(() => setSuccessMessage(''), 5000);
     }
   };
 
@@ -3160,6 +3213,7 @@ const Settings = () => {
                         <MenuItem value="azure">Azure OpenAI</MenuItem>
                         <MenuItem value="anthropic">Anthropic</MenuItem>
                         <MenuItem value="google">Google AI</MenuItem>
+                        <MenuItem value="ollama">Ollama (Local)</MenuItem>
                       </Select>
                     </FormControl>
                   </ListItemSecondaryAction>
@@ -3168,36 +3222,46 @@ const Settings = () => {
                 <ListItem sx={{ borderRadius: 2, mb: 1 }}>
                   <ListItemText
                     primary={<Typography fontWeight="500">AI Model</Typography>}
-                    secondary="Select the AI model to use"
+                    secondary={aiSettings.provider === 'ollama' ? "Select or enter Ollama model" : "Select the AI model to use"}
                   />
                   <ListItemSecondaryAction sx={{ width: '120px' }}>
                     <FormControl fullWidth size="small">
-                      <Select
-                        value={aiSettings.model}
-                        onChange={(e) => handleAiSettingChange('model', e.target.value)}
-                        sx={{ borderRadius: 2 }}
-                      >
-                        <MenuItem value="gpt-4">GPT-4</MenuItem>
-                        <MenuItem value="gpt-3.5-turbo">GPT-3.5 Turbo</MenuItem>
-                        <MenuItem value="claude-3">Claude 3</MenuItem>
-                        <MenuItem value="gemini-pro">Gemini Pro</MenuItem>
-                      </Select>
+                      {aiSettings.provider === 'ollama' ? (
+                        <TextField
+                          size="small"
+                          value={aiSettings.ollama.model}
+                          onChange={(e) => handleAiSettingChange('ollama.model', e.target.value)}
+                          placeholder="llama2, codellama, etc."
+                          sx={{ borderRadius: 2 }}
+                        />
+                      ) : (
+                        <Select
+                          value={aiSettings.model}
+                          onChange={(e) => handleAiSettingChange('model', e.target.value)}
+                          sx={{ borderRadius: 2 }}
+                        >
+                          <MenuItem value="gpt-4">GPT-4</MenuItem>
+                          <MenuItem value="gpt-3.5-turbo">GPT-3.5 Turbo</MenuItem>
+                          <MenuItem value="claude-3">Claude 3</MenuItem>
+                          <MenuItem value="gemini-pro">Gemini Pro</MenuItem>
+                        </Select>
+                      )}
                     </FormControl>
                   </ListItemSecondaryAction>
                 </ListItem>
 
                 <ListItem sx={{ borderRadius: 2 }}>
                   <ListItemText
-                    primary={<Typography fontWeight="500">API Key</Typography>}
-                    secondary="Enter your AI provider API key"
+                    primary={<Typography fontWeight="500">{aiSettings.provider === 'ollama' ? 'Base URL' : 'API Key'}</Typography>}
+                    secondary={aiSettings.provider === 'ollama' ? 'Ollama server URL (e.g., http://localhost:11434)' : 'Enter your AI provider API key'}
                   />
                   <ListItemSecondaryAction sx={{ width: '200px' }}>
                     <TextField
                       size="small"
-                      type="password"
-                      value={aiSettings.apiKey}
-                      onChange={(e) => handleAiSettingChange('apiKey', e.target.value)}
-                      placeholder="sk-..."
+                      type={aiSettings.provider === 'ollama' ? 'url' : 'password'}
+                      value={aiSettings.provider === 'ollama' ? aiSettings.ollama.baseUrl : aiSettings.apiKey}
+                      onChange={(e) => handleAiSettingChange(aiSettings.provider === 'ollama' ? 'ollama.baseUrl' : 'apiKey', e.target.value)}
+                      placeholder={aiSettings.provider === 'ollama' ? 'http://localhost:11434' : 'sk-...'}
                       sx={{ borderRadius: 2 }}
                     />
                   </ListItemSecondaryAction>
@@ -3445,6 +3509,279 @@ const Settings = () => {
           </Grid>
         </CardContent>
       </Card>
+
+      {/* Ollama-Specific Configuration */}
+      {aiSettings.provider === 'ollama' && (
+        <Card sx={{ mb: 3, borderRadius: 3, boxShadow: '0 8px 24px rgba(0,0,0,0.05)' }}>
+          <CardContent sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, justifyContent: 'space-between' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <SmartToyIcon sx={{ mr: 1, color: theme.palette.secondary.main }} />
+                <Typography variant="h6" fontWeight="600">Ollama Configuration</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Button 
+                  variant="outlined" 
+                  size="small"
+                  color="secondary"
+                  onClick={() => {
+                    // Mock function to refresh available models
+                    setAiSettings(prev => ({
+                      ...prev,
+                      ollama: {
+                        ...prev.ollama,
+                        lastModelRefresh: new Date().toISOString(),
+                        availableModels: ['llama2', 'codellama', 'mistral', 'neural-chat', 'starcode']
+                      }
+                    }));
+                  }}
+                  sx={{ borderRadius: 2, fontWeight: 500 }}
+                >
+                  <RefreshIcon sx={{ mr: 0.5, fontSize: 16 }} />
+                  Refresh Models
+                </Button>
+                <Button 
+                  variant="outlined" 
+                  size="small"
+                  color="primary"
+                  onClick={handleTestAiConnection}
+                  sx={{ borderRadius: 2, fontWeight: 500 }}
+                >
+                  Test Connection
+                </Button>
+              </Box>
+            </Box>
+            <Divider sx={{ mb: 2 }} />
+            
+            <Grid container spacing={3}>
+              {/* Connection Settings */}
+              <Grid item xs={12} md={6}>
+                <Typography variant="subtitle1" fontWeight="600" gutterBottom>
+                  Connection Settings
+                </Typography>
+                <List disablePadding>
+                  <ListItem sx={{ borderRadius: 2, mb: 1 }}>
+                    <ListItemText
+                      primary={<Typography fontWeight="500">Server URL</Typography>}
+                      secondary="Ollama server endpoint"
+                    />
+                    <ListItemSecondaryAction sx={{ width: '200px' }}>
+                      <TextField
+                        size="small"
+                        value={aiSettings.ollama.baseUrl}
+                        onChange={(e) => handleAiSettingChange('ollama.baseUrl', e.target.value)}
+                        placeholder="http://localhost:11434"
+                        sx={{ borderRadius: 2 }}
+                      />
+                    </ListItemSecondaryAction>
+                  </ListItem>
+
+                  <ListItem sx={{ borderRadius: 2, mb: 1 }}>
+                    <ListItemText
+                      primary={<Typography fontWeight="500">Keep Alive</Typography>}
+                      secondary="How long to keep model loaded in memory"
+                    />
+                    <ListItemSecondaryAction sx={{ width: '120px' }}>
+                      <FormControl fullWidth size="small">
+                        <Select
+                          value={aiSettings.ollama.keepAlive}
+                          onChange={(e) => handleAiSettingChange('ollama.keepAlive', e.target.value)}
+                          sx={{ borderRadius: 2 }}
+                        >
+                          <MenuItem value="1m">1 minute</MenuItem>
+                          <MenuItem value="5m">5 minutes</MenuItem>
+                          <MenuItem value="15m">15 minutes</MenuItem>
+                          <MenuItem value="30m">30 minutes</MenuItem>
+                          <MenuItem value="1h">1 hour</MenuItem>
+                          <MenuItem value="-1">Always</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </ListItemSecondaryAction>
+                  </ListItem>
+
+                  <ListItem sx={{ borderRadius: 2, mb: 1 }}>
+                    <ListItemText
+                      primary={<Typography fontWeight="500">Stream Responses</Typography>}
+                      secondary="Enable streaming for real-time responses"
+                    />
+                    <ListItemSecondaryAction>
+                      <Switch
+                        edge="end"
+                        checked={aiSettings.ollama.stream}
+                        onChange={(e) => handleAiSettingChange('ollama.stream', e.target.checked)}
+                        color="primary"
+                      />
+                    </ListItemSecondaryAction>
+                  </ListItem>
+
+                  <ListItem sx={{ borderRadius: 2 }}>
+                    <ListItemText
+                      primary={<Typography fontWeight="500">System Prompt</Typography>}
+                      secondary="Default system prompt for the model"
+                    />
+                  </ListItem>
+                  <Box sx={{ px: 2, pb: 1 }}>
+                    <TextField
+                      fullWidth
+                      multiline
+                      rows={3}
+                      value={aiSettings.ollama.systemPrompt}
+                      onChange={(e) => handleAiSettingChange('ollama.systemPrompt', e.target.value)}
+                      placeholder="You are a helpful AI assistant..."
+                      sx={{ borderRadius: 2 }}
+                    />
+                  </Box>
+                </List>
+              </Grid>
+
+              {/* Model Parameters */}
+              <Grid item xs={12} md={6}>
+                <Typography variant="subtitle1" fontWeight="600" gutterBottom>
+                  Model Parameters
+                </Typography>
+                <List disablePadding>
+                  <ListItem sx={{ borderRadius: 2, mb: 1 }}>
+                    <ListItemText
+                      primary={<Typography fontWeight="500">Temperature</Typography>}
+                      secondary="Controls randomness (0.0 - 2.0)"
+                    />
+                    <ListItemSecondaryAction sx={{ width: '120px' }}>
+                      <Slider
+                        value={aiSettings.ollama.options.temperature}
+                        onChange={(e, value) => handleAiSettingChange('ollama.options.temperature', value)}
+                        min={0}
+                        max={2}
+                        step={0.1}
+                        size="small"
+                        valueLabelDisplay="auto"
+                      />
+                    </ListItemSecondaryAction>
+                  </ListItem>
+
+                  <ListItem sx={{ borderRadius: 2, mb: 1 }}>
+                    <ListItemText
+                      primary={<Typography fontWeight="500">Top P</Typography>}
+                      secondary="Nucleus sampling (0.0 - 1.0)"
+                    />
+                    <ListItemSecondaryAction sx={{ width: '120px' }}>
+                      <Slider
+                        value={aiSettings.ollama.options.top_p}
+                        onChange={(e, value) => handleAiSettingChange('ollama.options.top_p', value)}
+                        min={0}
+                        max={1}
+                        step={0.05}
+                        size="small"
+                        valueLabelDisplay="auto"
+                      />
+                    </ListItemSecondaryAction>
+                  </ListItem>
+
+                  <ListItem sx={{ borderRadius: 2, mb: 1 }}>
+                    <ListItemText
+                      primary={<Typography fontWeight="500">Top K</Typography>}
+                      secondary="Limits token selection (1-100)"
+                    />
+                    <ListItemSecondaryAction sx={{ width: '100px' }}>
+                      <TextField
+                        size="small"
+                        type="number"
+                        value={aiSettings.ollama.options.top_k}
+                        onChange={(e) => handleAiSettingChange('ollama.options.top_k', parseInt(e.target.value))}
+                        inputProps={{ min: 1, max: 100 }}
+                        sx={{ borderRadius: 2 }}
+                      />
+                    </ListItemSecondaryAction>
+                  </ListItem>
+
+                  <ListItem sx={{ borderRadius: 2, mb: 1 }}>
+                    <ListItemText
+                      primary={<Typography fontWeight="500">Repeat Penalty</Typography>}
+                      secondary="Penalizes repetition (0.0 - 2.0)"
+                    />
+                    <ListItemSecondaryAction sx={{ width: '120px' }}>
+                      <Slider
+                        value={aiSettings.ollama.options.repeat_penalty}
+                        onChange={(e, value) => handleAiSettingChange('ollama.options.repeat_penalty', value)}
+                        min={0}
+                        max={2}
+                        step={0.1}
+                        size="small"
+                        valueLabelDisplay="auto"
+                      />
+                    </ListItemSecondaryAction>
+                  </ListItem>
+
+                  <ListItem sx={{ borderRadius: 2, mb: 1 }}>
+                    <ListItemText
+                      primary={<Typography fontWeight="500">Context Length</Typography>}
+                      secondary="Maximum context window size"
+                    />
+                    <ListItemSecondaryAction sx={{ width: '100px' }}>
+                      <TextField
+                        size="small"
+                        type="number"
+                        value={aiSettings.ollama.options.num_ctx}
+                        onChange={(e) => handleAiSettingChange('ollama.options.num_ctx', parseInt(e.target.value))}
+                        sx={{ borderRadius: 2 }}
+                      />
+                    </ListItemSecondaryAction>
+                  </ListItem>
+
+                  <ListItem sx={{ borderRadius: 2 }}>
+                    <ListItemText
+                      primary={<Typography fontWeight="500">Max Tokens</Typography>}
+                      secondary="Maximum tokens to generate"
+                    />
+                    <ListItemSecondaryAction sx={{ width: '100px' }}>
+                      <TextField
+                        size="small"
+                        type="number"
+                        value={aiSettings.ollama.options.num_predict}
+                        onChange={(e) => handleAiSettingChange('ollama.options.num_predict', parseInt(e.target.value))}
+                        sx={{ borderRadius: 2 }}
+                      />
+                    </ListItemSecondaryAction>
+                  </ListItem>
+                </List>
+              </Grid>
+
+              {/* Available Models */}
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" fontWeight="600" gutterBottom>
+                  Available Models
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                  {aiSettings.ollama.availableModels.length > 0 ? (
+                    aiSettings.ollama.availableModels.map((model) => (
+                      <Chip
+                        key={model}
+                        label={model}
+                        variant={aiSettings.ollama.model === model ? "filled" : "outlined"}
+                        color={aiSettings.ollama.model === model ? "primary" : "default"}
+                        onClick={() => handleAiSettingChange('ollama.model', model)}
+                        sx={{ cursor: 'pointer' }}
+                      />
+                    ))
+                  ) : (
+                    <Typography variant="body2" color="text.secondary">
+                      No models found. Click "Refresh Models" to scan for available models.
+                    </Typography>
+                  )}
+                </Box>
+                
+                <Alert severity="info" sx={{ mt: 2 }}>
+                  <Typography variant="body2">
+                    <strong>Tip:</strong> You can install new models using the Ollama CLI: 
+                    <code style={{ marginLeft: 8, padding: '2px 6px', backgroundColor: 'rgba(0,0,0,0.1)', borderRadius: 4 }}>
+                      ollama pull &lt;model-name&gt;
+                    </code>
+                  </Typography>
+                </Alert>
+              </Grid>
+            </Grid>
+          </CardContent>
+        </Card>
+      )}
 
       <Card sx={{ borderRadius: 3, boxShadow: '0 8px 24px rgba(0,0,0,0.05)' }}>
         <CardContent sx={{ p: 3 }}>

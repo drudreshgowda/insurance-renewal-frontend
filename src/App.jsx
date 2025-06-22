@@ -28,6 +28,9 @@ import TemplateManager from './pages/TemplateManager';
 import Feedback from './pages/Feedback';
 import SurveyDesigner from './pages/SurveyDesigner';
 import Claims from './pages/Claims';
+import PolicyServicing from './pages/PolicyServicing';
+import NewBusiness from './pages/NewBusiness';
+import MedicalManagement from './pages/MedicalManagement';
 import WhatsappFlow from './pages/WhatsappFlow';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import ErrorBoundary from './components/common/ErrorBoundary';
@@ -433,6 +436,30 @@ function AppWithTheme() {
               <ProtectedRoute>
                 <Layout>
                   <Claims />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/policy-servicing" element={
+              <ProtectedRoute>
+                <Layout>
+                  <PolicyServicing />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/new-business" element={
+              <ProtectedRoute>
+                <Layout>
+                  <NewBusiness />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/medical-management" element={
+              <ProtectedRoute>
+                <Layout>
+                  <MedicalManagement />
                 </Layout>
               </ProtectedRoute>
             } />

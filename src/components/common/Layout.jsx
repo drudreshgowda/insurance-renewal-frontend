@@ -44,7 +44,10 @@ import {
   WhatsApp as WhatsAppIcon,
   SmartToy as AskAIIcon,
   Send as SendIcon,
-  Close as CloseIcon
+  Close as CloseIcon,
+  Build as PolicyServicingIcon,
+  BusinessCenter as NewBusinessIcon,
+  LocalHospital as MedicalManagementIcon
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext.js';
 import { useThemeMode } from '../../context/ThemeModeContext.js';
@@ -240,6 +243,9 @@ const Layout = ({ children }) => {
     { text: 'Campaigns', icon: <CampaignIcon />, path: '/campaigns', permission: 'campaigns' },
     { text: 'Feedback & Surveys', icon: <FeedbackIcon />, path: '/feedback', permission: 'feedback' },
     { text: 'Claims', icon: <GavelIcon />, path: '/claims', permission: 'claims' },
+    { text: 'Policy Servicing', icon: <PolicyServicingIcon />, path: '/policy-servicing', permission: 'policy-servicing' },
+    { text: 'New Business', icon: <NewBusinessIcon />, path: '/new-business', permission: 'new-business' },
+    { text: 'Medical Mgmt', icon: <MedicalManagementIcon />, path: '/medical-management', permission: 'medical-management' },
     { text: 'Whatsapp flow', icon: <WhatsAppIcon />, path: '/whatsapp-flow', permission: 'whatsapp-flow' },
   ].filter(item => hasPermission(item.permission));
 

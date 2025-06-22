@@ -321,15 +321,15 @@ Phone: +1 (555) 123-4567`
 
   const handleAddNote = () => {
     if (newNote.trim()) {
-      const note = {
-        id: notes.length + 1,
-        author: 'Current User',
+    const note = {
+      id: notes.length + 1,
+      author: 'Current User',
         content: newNote,
         timestamp: new Date().toISOString()
-      };
+    };
       setNotes([...notes, note]);
-      setNewNote('');
-      setNoteDialog(false);
+    setNewNote('');
+    setNoteDialog(false);
     }
   };
 

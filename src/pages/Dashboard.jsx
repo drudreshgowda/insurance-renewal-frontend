@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Grid, Paper, Typography, Box, Card, CardContent, 
   FormControl, InputLabel, Select, MenuItem, alpha, useTheme,
-  Fade, Grow
+  Fade, Grow, Chip, IconButton
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -25,7 +25,14 @@ import {
   Phone as PhoneIcon,
   CreditCard as PaymentModeIcon,
   TrendingUp as CostIcon,
-  Hub as ChannelIcon
+  Hub as ChannelIcon,
+  Campaign as CampaignIcon,
+  Email as EmailIcon,
+  WhatsApp as WhatsAppIcon,
+  Sms as SmsIcon,
+  PlayArrow as PlayIcon,
+  Pause as PauseIcon,
+  Visibility as ViewIcon
 } from '@mui/icons-material';
 
 const Dashboard = () => {
@@ -57,6 +64,9 @@ const Dashboard = () => {
   const [communicationData, setCommunicationData] = useState([]);
   const [paymentModeData, setPaymentModeData] = useState([]);
   const [costData, setCostData] = useState([]);
+  
+  // Campaign data state
+  const [campaignData, setCampaignData] = useState([]);
 
   // Memoize the loadDashboardData function to avoid recreating it on every render
   const loadDashboardData = useCallback(async () => {
@@ -180,6 +190,82 @@ const Dashboard = () => {
     setCommunicationData(mockCommunicationData);
     setPaymentModeData(mockPaymentModeData);
     setCostData(mockCostData);
+
+    // Mock campaign data
+    const mockCampaignData = [
+      {
+        id: 'camp-1',
+        name: 'May Renewals Email Campaign',
+        type: 'email',
+        status: 'active',
+        uploadFilename: 'may_renewals_batch1.xlsx',
+        targetCount: 238,
+        sent: 156,
+        opened: 89,
+        clicked: 34,
+        converted: 12,
+        createdAt: '2025-05-15T11:00:00',
+        scheduledAt: '2025-05-15T14:00:00',
+        openRate: 57.1,
+        clickRate: 21.8,
+        conversionRate: 7.7
+      },
+      {
+        id: 'camp-2',
+        name: 'April Follow-up WhatsApp',
+        type: 'whatsapp',
+        status: 'active',
+        uploadFilename: 'april_end_policies.xlsx',
+        targetCount: 175,
+        sent: 98,
+        delivered: 94,
+        read: 67,
+        replied: 23,
+        converted: 18,
+        createdAt: '2025-04-30T16:30:00',
+        scheduledAt: '2025-05-01T09:00:00',
+        deliveryRate: 95.9,
+        readRate: 71.3,
+        replyRate: 34.3,
+        conversionRate: 18.4
+      },
+      {
+        id: 'camp-3',
+        name: 'Urgent Renewal SMS Blast',
+        type: 'sms',
+        status: 'completed',
+        uploadFilename: 'urgent_renewals.xlsx',
+        targetCount: 120,
+        sent: 120,
+        delivered: 118,
+        clicked: 45,
+        converted: 28,
+        createdAt: '2025-05-10T09:00:00',
+        scheduledAt: '2025-05-10T10:00:00',
+        deliveryRate: 98.3,
+        clickRate: 38.1,
+        conversionRate: 23.3
+      },
+      {
+        id: 'camp-4',
+        name: 'Premium Policy Email Series',
+        type: 'email',
+        status: 'paused',
+        uploadFilename: 'premium_customers.xlsx',
+        targetCount: 89,
+        sent: 45,
+        opened: 32,
+        clicked: 18,
+        converted: 8,
+        createdAt: '2025-05-08T15:30:00',
+        scheduledAt: '2025-05-09T11:00:00',
+        openRate: 71.1,
+        clickRate: 56.3,
+        conversionRate: 17.8
+      }
+    ];
+    
+    setCampaignData(mockCampaignData);
 
     // Set loaded state for animations
     const loadedTimer = setTimeout(() => {
@@ -959,6 +1045,238 @@ const Dashboard = () => {
                     <Bar yAxisId="right" dataKey="totalCost" fill={alpha(theme.palette.error.main, 0.8)} name="Total Cost (₹)" />
                   </BarChart>
                 </ResponsiveContainer>
+              </Paper>
+            </Grow>
+          </Grid>
+        </Grid>
+
+        {/* Renewals Campaign Tracking */}
+        <Typography variant="h5" gutterBottom sx={{ mt: 6, mb: 3, fontWeight: 600 }}>
+          Renewals Campaign Tracking
+        </Typography>
+        
+        <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <Grow in={loaded} style={{ transformOrigin: '0 0 0' }} timeout={1600}>
+              <Paper sx={{ p: 3, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                  <Box>
+                    <Typography variant="h6" gutterBottom fontWeight="600" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <CampaignIcon color="primary" />
+                      Active Renewal Campaigns
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Real-time tracking of all renewal marketing campaigns
+                    </Typography>
+                  </Box>
+                </Box>
+                
+                <Grid container spacing={3}>
+                  {campaignData.map((campaign, index) => (
+                    <Grid item xs={12} md={6} lg={3} key={campaign.id}>
+                      <Grow in={loaded} timeout={(index + 1) * 200}>
+                        <Card sx={{ 
+                          height: '100%',
+                          borderRadius: 3,
+                          boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                          border: `1px solid ${theme.palette.divider}`,
+                          position: 'relative',
+                          overflow: 'hidden'
+                        }}>
+                          <Box
+                            sx={{
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              height: 4,
+                              background: campaign.status === 'active' 
+                                ? 'linear-gradient(90deg, #4caf50, #66bb6a)'
+                                : campaign.status === 'paused'
+                                ? 'linear-gradient(90deg, #ff9800, #ffb74d)'
+                                : 'linear-gradient(90deg, #2196f3, #64b5f6)'
+                            }}
+                          />
+                          <CardContent sx={{ p: 3 }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
+                              <Box sx={{ flex: 1 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                  <Box sx={{ 
+                                    width: 32, 
+                                    height: 32, 
+                                    borderRadius: '50%', 
+                                    bgcolor: theme.palette.primary.main,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    mr: 1
+                                  }}>
+                                    {campaign.type === 'email' && <EmailIcon sx={{ fontSize: 16, color: 'white' }} />}
+                                    {campaign.type === 'whatsapp' && <WhatsAppIcon sx={{ fontSize: 16, color: 'white' }} />}
+                                    {campaign.type === 'sms' && <SmsIcon sx={{ fontSize: 16, color: 'white' }} />}
+                                  </Box>
+                                  <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1rem' }}>
+                                    {campaign.name}
+                                  </Typography>
+                                </Box>
+                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                                  {campaign.uploadFilename}
+                                </Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                  <Chip 
+                                    label={campaign.status} 
+                                    color={
+                                      campaign.status === 'active' ? 'success' :
+                                      campaign.status === 'paused' ? 'warning' : 'info'
+                                    }
+                                    size="small"
+                                    sx={{ 
+                                      fontWeight: 500,
+                                      textTransform: 'capitalize',
+                                      fontSize: '0.75rem'
+                                    }}
+                                  />
+                                </Box>
+                              </Box>
+                              <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                {campaign.status === 'active' && (
+                                  <IconButton size="small" sx={{ color: theme.palette.warning.main }}>
+                                    <PauseIcon fontSize="small" />
+                                  </IconButton>
+                                )}
+                                {campaign.status === 'paused' && (
+                                  <IconButton size="small" sx={{ color: theme.palette.success.main }}>
+                                    <PlayIcon fontSize="small" />
+                                  </IconButton>
+                                )}
+                                <IconButton size="small" sx={{ color: theme.palette.primary.main }}>
+                                  <ViewIcon fontSize="small" />
+                                </IconButton>
+                              </Box>
+                            </Box>
+                            
+                            <Box sx={{ 
+                              mt: 2, 
+                              p: 2, 
+                              borderRadius: 2, 
+                              backgroundColor: theme.palette.mode === 'dark' ? alpha(theme.palette.background.paper, 0.4) : alpha(theme.palette.background.default, 0.8),
+                              border: `1px solid ${theme.palette.divider}`
+                            }}>
+                              <Grid container spacing={2}>
+                                <Grid item xs={6}>
+                                  <Typography variant="body2" color="text.secondary">
+                                    Target
+                                  </Typography>
+                                  <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1.1rem' }}>
+                                    {campaign.targetCount}
+                                  </Typography>
+                                </Grid>
+                                <Grid item xs={6}>
+                                  <Typography variant="body2" color="primary.main">
+                                    Sent
+                                  </Typography>
+                                  <Typography variant="h6" sx={{ fontWeight: 600, color: 'primary.main', fontSize: '1.1rem' }}>
+                                    {campaign.sent}
+                                  </Typography>
+                                </Grid>
+                                
+                                {campaign.type === 'email' && (
+                                  <>
+                                    <Grid item xs={6}>
+                                      <Typography variant="body2" color="success.main">
+                                        Open Rate
+                                      </Typography>
+                                      <Typography variant="h6" sx={{ fontWeight: 600, color: 'success.main', fontSize: '1.1rem' }}>
+                                        {campaign.openRate}%
+                                      </Typography>
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                      <Typography variant="body2" color="warning.main">
+                                        Click Rate
+                                      </Typography>
+                                      <Typography variant="h6" sx={{ fontWeight: 600, color: 'warning.main', fontSize: '1.1rem' }}>
+                                        {campaign.clickRate}%
+                                      </Typography>
+                                    </Grid>
+                                  </>
+                                )}
+                                
+                                {campaign.type === 'whatsapp' && (
+                                  <>
+                                    <Grid item xs={6}>
+                                      <Typography variant="body2" color="success.main">
+                                        Delivery Rate
+                                      </Typography>
+                                      <Typography variant="h6" sx={{ fontWeight: 600, color: 'success.main', fontSize: '1.1rem' }}>
+                                        {campaign.deliveryRate}%
+                                      </Typography>
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                      <Typography variant="body2" color="info.main">
+                                        Read Rate
+                                      </Typography>
+                                      <Typography variant="h6" sx={{ fontWeight: 600, color: 'info.main', fontSize: '1.1rem' }}>
+                                        {campaign.readRate}%
+                                      </Typography>
+                                    </Grid>
+                                  </>
+                                )}
+                                
+                                {campaign.type === 'sms' && (
+                                  <>
+                                    <Grid item xs={6}>
+                                      <Typography variant="body2" color="success.main">
+                                        Delivery Rate
+                                      </Typography>
+                                      <Typography variant="h6" sx={{ fontWeight: 600, color: 'success.main', fontSize: '1.1rem' }}>
+                                        {campaign.deliveryRate}%
+                                      </Typography>
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                      <Typography variant="body2" color="warning.main">
+                                        Click Rate
+                                      </Typography>
+                                      <Typography variant="h6" sx={{ fontWeight: 600, color: 'warning.main', fontSize: '1.1rem' }}>
+                                        {campaign.clickRate}%
+                                      </Typography>
+                                    </Grid>
+                                  </>
+                                )}
+                                
+                                <Grid item xs={12}>
+                                  <Box sx={{ 
+                                    display: 'flex', 
+                                    justifyContent: 'space-between', 
+                                    alignItems: 'center',
+                                    mt: 1,
+                                    pt: 1,
+                                    borderTop: `1px solid ${theme.palette.divider}`
+                                  }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                      Conversions
+                                    </Typography>
+                                    <Box sx={{ textAlign: 'right' }}>
+                                      <Typography variant="h6" sx={{ fontWeight: 600, color: 'error.main', fontSize: '1.1rem' }}>
+                                        {campaign.converted}
+                                      </Typography>
+                                      <Typography variant="caption" color="error.main">
+                                        {campaign.conversionRate}%
+                                      </Typography>
+                                    </Box>
+                                  </Box>
+                                </Grid>
+                              </Grid>
+                            </Box>
+                            
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>
+                              Created: {new Date(campaign.createdAt).toLocaleDateString()}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grow>
+                    </Grid>
+                  ))}
+                </Grid>
               </Paper>
             </Grow>
           </Grid>

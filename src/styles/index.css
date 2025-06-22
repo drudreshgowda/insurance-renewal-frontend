@@ -30,3 +30,90 @@ code {
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+
+/* Prevent unwanted text cursor on UI elements */
+.MuiTypography-root:not(.selectable-text),
+.MuiListItemText-root,
+.MuiChip-root,
+.MuiCard-root,
+.MuiCardContent-root,
+.MuiButton-root,
+.MuiIconButton-root,
+.MuiTab-root,
+.MuiMenuItem-root,
+.MuiTableCell-root:not(.editable-cell),
+.MuiAccordionSummary-root,
+.MuiStepLabel-root,
+.MuiTimelineContent-root .MuiTypography-root:not(.selectable-text) {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  cursor: default;
+}
+
+/* Specific fixes for heading elements */
+.MuiTypography-h1,
+.MuiTypography-h2,
+.MuiTypography-h3,
+.MuiTypography-h4,
+.MuiTypography-h5,
+.MuiTypography-h6,
+.MuiTypography-subtitle1,
+.MuiTypography-subtitle2 {
+  user-select: none;
+  cursor: default;
+}
+
+/* Allow text selection for content areas */
+.selectable-text,
+.MuiTextField-root input,
+.MuiTextField-root textarea,
+.MuiInputBase-input,
+.content-area,
+.email-content,
+.message-content,
+.description-text {
+  user-select: text !important;
+  cursor: text !important;
+}
+
+/* Fix for clickable cards */
+.MuiCard-root[role="button"],
+.MuiCard-root.clickable,
+.MuiListItem-root.MuiListItem-button,
+.MuiListItemButton-root {
+  cursor: pointer !important;
+}
+
+/* Fix for interactive chips */
+.MuiChip-root.MuiChip-clickable {
+  cursor: pointer !important;
+}
+
+/* Prevent text selection on metric displays */
+.metric-display,
+.stat-number,
+.dashboard-metric,
+.chart-label {
+  user-select: none;
+  cursor: default;
+}
+
+/* Fix for navigation elements */
+.MuiDrawer-root .MuiTypography-root,
+.MuiAppBar-root .MuiTypography-root,
+.navigation-item {
+  user-select: none;
+  cursor: default;
+}
+
+/* Allow selection for specific content types */
+.policy-details,
+.case-description,
+.email-body,
+.note-content,
+.comment-text {
+  user-select: text;
+  cursor: text;
+}

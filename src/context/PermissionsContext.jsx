@@ -21,6 +21,7 @@ export const PermissionsProvider = ({ children }) => {
     'admin': [
       // Core Pages
       'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs', 'claims',
+      'policy-servicing', 'new-business', 'medical-management',
       // Email Pages  
       'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
       // Marketing Pages
@@ -37,6 +38,7 @@ export const PermissionsProvider = ({ children }) => {
     'client_admin': [
       // Core Pages
       'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs', 'claims',
+      'policy-servicing', 'new-business', 'medical-management',
       // Email Pages  
       'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
       // Marketing Pages
@@ -130,6 +132,9 @@ export const PermissionsProvider = ({ children }) => {
       '/feedback': 'feedback',
       '/survey-designer': 'survey-designer',
       '/claims': 'claims',
+      '/policy-servicing': 'policy-servicing',
+      '/new-business': 'new-business',
+      '/medical-management': 'medical-management',
       '/whatsapp-flow': 'whatsapp-flow'
     };
 
@@ -149,6 +154,9 @@ export const PermissionsProvider = ({ children }) => {
       { path: '/policy-timeline', permission: 'policy-timeline', name: 'Policy Timeline' },
       { path: '/logs', permission: 'logs', name: 'Case Logs' },
       { path: '/claims', permission: 'claims', name: 'Claims Management' },
+      { path: '/policy-servicing', permission: 'policy-servicing', name: 'Policy Servicing' },
+      { path: '/new-business', permission: 'new-business', name: 'New Business' },
+      { path: '/medical-management', permission: 'medical-management', name: 'Medical Management' },
       
       // Email Pages
       { path: '/emails', permission: 'emails', name: 'Email Inbox' },
