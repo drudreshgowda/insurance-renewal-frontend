@@ -765,10 +765,21 @@ const FlowBuilder = ({ open, onClose, flow, onSave }) => {
                 onChange={(e) => handleBlockUpdate(selectedBlock.id, { ...config, language: e.target.value })}
               >
                 <MenuItem value="en">English</MenuItem>
+                <MenuItem value="hi">हिन्दी (Hindi)</MenuItem>
+                <MenuItem value="bn">বাংলা (Bengali)</MenuItem>
+                <MenuItem value="te">తెలుగు (Telugu)</MenuItem>
+                <MenuItem value="mr">मराठी (Marathi)</MenuItem>
+                <MenuItem value="ta">தமிழ் (Tamil)</MenuItem>
+                <MenuItem value="gu">ગુજરાતી (Gujarati)</MenuItem>
+                <MenuItem value="ml">മലയാളം (Malayalam)</MenuItem>
+                <MenuItem value="kn">ಕನ್ನಡ (Kannada)</MenuItem>
+                <MenuItem value="pa">ਪੰਜਾਬੀ (Punjabi)</MenuItem>
+                <MenuItem value="as">অসমীয়া (Assamese)</MenuItem>
+                <MenuItem value="or">ଓଡ଼ିଆ (Odia)</MenuItem>
+                <MenuItem value="ur">اردو (Urdu)</MenuItem>
                 <MenuItem value="es">Spanish</MenuItem>
                 <MenuItem value="fr">French</MenuItem>
                 <MenuItem value="de">German</MenuItem>
-                <MenuItem value="hi">Hindi</MenuItem>
               </Select>
             </FormControl>
           </Box>

@@ -3,7 +3,7 @@ import {
   Box, Typography, Card, CardContent, Switch,
   List, ListItem, ListItemIcon, ListItemText,
   ListItemSecondaryAction, Alert, Tabs, Tab,
-  FormControl, Select, MenuItem, InputLabel,
+  FormControl, Select, MenuItem, InputLabel, FormHelperText,
   Button, Divider, TextField, Slider,
   useTheme, alpha, Fade, Grow, Zoom, Dialog, DialogTitle, DialogContent, DialogActions,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
@@ -65,6 +65,8 @@ import { useThemeMode } from '../context/ThemeModeContext';
 import { useSettings } from '../context/SettingsContext';
 import { Link, useSearchParams } from 'react-router-dom';
 import WelcomeModal from '../components/common/WelcomeModal';
+import LanguageTest from '../components/common/LanguageTest';
+import { supportedLanguages } from '../i18n';
 
 // Tab Panel Component
 function TabPanel({ children, value, index, ...other }) {
@@ -260,6 +262,7 @@ const Settings = () => {
       role: 'admin',
       status: 'active',
       lastLogin: new Date().toISOString(),
+      portalLanguage: 'hi', // Hindi preference
       permissions: [
         // Core Pages
         'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs', 'claims',
@@ -285,6 +288,7 @@ const Settings = () => {
       role: 'admin',
       status: 'active',
       lastLogin: '2024-07-14T10:30:00Z',
+      portalLanguage: 'en', // English preference
       permissions: [
         // Core Pages
         'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs', 'claims',
@@ -310,6 +314,7 @@ const Settings = () => {
       role: 'manager',
       status: 'active',
       lastLogin: '2024-07-14T09:15:00Z',
+      portalLanguage: 'te', // Telugu preference
       permissions: [
         // Core Pages
         'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs', 'claims',
@@ -359,6 +364,30 @@ const Settings = () => {
         'profile'
       ],
       createdAt: '2024-04-12T09:45:00Z'
+    },
+    {
+      id: 6,
+      name: 'Priya Sharma',
+      email: 'priya@client.com',
+      role: 'manager',
+      status: 'active',
+      lastLogin: '2024-07-14T12:30:00Z',
+      portalLanguage: 'bn', // Bengali preference
+      permissions: [
+        // Core Pages
+        'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs', 'claims',
+        // Email Pages
+        'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
+        // Marketing Pages
+        'campaigns', 'templates',
+        // Survey Pages
+        'feedback', 'survey-designer',
+        // WhatsApp Pages
+        'whatsapp-flow',
+        // Personal Pages
+        'profile'
+      ],
+      createdAt: '2024-05-20T11:15:00Z'
     }
   ]);
 
@@ -568,7 +597,8 @@ const Settings = () => {
     { label: 'Claims', icon: <GavelIcon /> },
     { label: 'Feedback', icon: <FeedbackIcon /> },
     { label: 'User Management', icon: <GroupIcon /> },
-    { label: 'System', icon: <StorageIcon /> }
+    { label: 'System', icon: <StorageIcon /> },
+    { label: 'Language Test', icon: <LanguageIcon /> }
   ], []);
 
   useEffect(() => {
@@ -812,7 +842,8 @@ const Settings = () => {
       status: 'active',
       permissions: [],
       sendWelcomeEmail: true,
-      requirePasswordChange: true
+      requirePasswordChange: true,
+      portalLanguage: 'en' // Default to English
     });
   };
 
@@ -824,7 +855,8 @@ const Settings = () => {
       department: user.department || '',
       jobTitle: user.jobTitle || '',
       sendWelcomeEmail: user.sendWelcomeEmail || false,
-      requirePasswordChange: user.requirePasswordChange || false
+      requirePasswordChange: user.requirePasswordChange || false,
+      portalLanguage: user.portalLanguage || 'en'
     });
   };
 
@@ -1065,6 +1097,18 @@ const Settings = () => {
                     sx={{ borderRadius: 2 }}
                   >
                     <MenuItem value="en">English</MenuItem>
+                    <MenuItem value="hi">हिन्दी (Hindi)</MenuItem>
+                    <MenuItem value="bn">বাংলা (Bengali)</MenuItem>
+                    <MenuItem value="te">తెలుగు (Telugu)</MenuItem>
+                    <MenuItem value="mr">मराठी (Marathi)</MenuItem>
+                    <MenuItem value="ta">தமிழ் (Tamil)</MenuItem>
+                    <MenuItem value="gu">ગુજરાતી (Gujarati)</MenuItem>
+                    <MenuItem value="ml">മലയാളം (Malayalam)</MenuItem>
+                    <MenuItem value="kn">ಕನ್ನಡ (Kannada)</MenuItem>
+                    <MenuItem value="pa">ਪੰਜਾਬੀ (Punjabi)</MenuItem>
+                    <MenuItem value="as">অসমীয়া (Assamese)</MenuItem>
+                    <MenuItem value="or">ଓଡ଼ିଆ (Odia)</MenuItem>
+                    <MenuItem value="ur">اردو (Urdu)</MenuItem>
                     <MenuItem value="es">Español</MenuItem>
                     <MenuItem value="fr">Français</MenuItem>
                   </Select>
@@ -3865,6 +3909,18 @@ const Settings = () => {
                       >
                         <MenuItem value="en-US">English (US)</MenuItem>
                         <MenuItem value="en-GB">English (UK)</MenuItem>
+                        <MenuItem value="hi">हिन्दी (Hindi)</MenuItem>
+                        <MenuItem value="bn">বাংলা (Bengali)</MenuItem>
+                        <MenuItem value="te">తెలుగు (Telugu)</MenuItem>
+                        <MenuItem value="mr">मराठी (Marathi)</MenuItem>
+                        <MenuItem value="ta">தமிழ் (Tamil)</MenuItem>
+                        <MenuItem value="gu">ગુજરાતી (Gujarati)</MenuItem>
+                        <MenuItem value="ml">മലയാളം (Malayalam)</MenuItem>
+                        <MenuItem value="kn">ಕನ್ನಡ (Kannada)</MenuItem>
+                        <MenuItem value="pa">ਪੰਜਾਬੀ (Punjabi)</MenuItem>
+                        <MenuItem value="as">অসমীয়া (Assamese)</MenuItem>
+                        <MenuItem value="or">ଓଡ଼ିଆ (Odia)</MenuItem>
+                        <MenuItem value="ur">اردو (Urdu)</MenuItem>
                         <MenuItem value="es">Spanish</MenuItem>
                         <MenuItem value="fr">French</MenuItem>
                         <MenuItem value="de">German</MenuItem>
@@ -4482,7 +4538,7 @@ const Settings = () => {
                 />
               </Grid>
               
-              <Grid item xs={12}>
+              <Grid item xs={12} sm={6}>
                 <FormControl fullWidth>
                   <InputLabel>Department</InputLabel>
                   <Select
@@ -4501,6 +4557,36 @@ const Settings = () => {
                     <MenuItem value="management">Management</MenuItem>
                     <MenuItem value="other">Other</MenuItem>
                   </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Portal Language</InputLabel>
+                  <Select
+                    value={newUser.portalLanguage}
+                    onChange={(e) => setNewUser({ ...newUser, portalLanguage: e.target.value })}
+                    label="Portal Language"
+                  >
+                    {supportedLanguages.map((lang) => (
+                      <MenuItem key={lang.code} value={lang.code}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <span>{lang.flag}</span>
+                          <Box>
+                            <Typography variant="body2" fontWeight="500">
+                              {lang.nativeName}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {lang.name}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  <FormHelperText>
+                    Language the user will see when they log into the portal
+                  </FormHelperText>
                 </FormControl>
               </Grid>
 
@@ -5054,6 +5140,9 @@ const Settings = () => {
             </TabPanel>
             <TabPanel value={tabValue} index={8}>
               <SystemSettingsTab />
+            </TabPanel>
+            <TabPanel value={tabValue} index={9}>
+              <LanguageTest />
             </TabPanel>
           </Box>
         </Card>

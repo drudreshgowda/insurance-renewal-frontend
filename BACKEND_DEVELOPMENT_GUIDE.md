@@ -1,4 +1,8 @@
-# Intelipro Renewal Management System - Backend Development Guide
+# Intelipro Insurance Policy Renewal Management System - Backend Development Guide
+
+**Version:** 2.0  
+**Last Updated:** January 2024  
+**Target Architecture:** Microservices with API Gateway
 
 ## Table of Contents
 1. [System Overview](#system-overview)
@@ -15,7 +19,18 @@
 ## System Overview
 
 ### Purpose
-The Intelipro Renewal Management System is a comprehensive platform for managing insurance policy renewals, customer communications, email management, campaigns, surveys, claims processing, and AI-powered assistance.
+The Intelipro Insurance Policy Renewal Management System is a comprehensive platform for managing insurance policy renewals, customer communications, multi-channel campaign management, email automation, surveys, claims processing, and real-time analytics. The system supports advanced upload workflows with integrated campaign creation, multi-channel communication (Email, WhatsApp, SMS), and sophisticated user management.
+
+### Current Frontend Implementation Status
+The frontend application is fully implemented with the following features:
+- **30+ Pages**: Complete UI implementation including Dashboard, Upload, Campaigns, Case Management, Email Management, Settings, and User Management
+- **React 18**: Modern React application with hooks, context, and Material-UI components
+- **Advanced Upload System**: Multi-file upload with progress tracking and campaign integration
+- **Multi-Channel Campaigns**: Email, WhatsApp, and SMS campaign management
+- **Role-Based Access Control**: Comprehensive RBAC system with 20+ configurable permissions
+- **Real-time Features**: WebSocket integration for live updates and notifications
+- **Responsive Design**: Mobile-optimized interface with dark/light theme support
+- **Security Features**: Input validation, XSS protection, and secure authentication
 
 ### Technology Stack Recommendations
 - **Backend Framework**: Node.js with Express.js / Python Django/FastAPI / Java Spring Boot
@@ -55,12 +70,13 @@ The Intelipro Renewal Management System is a comprehensive platform for managing
 - Session management
 - Password policies
 
-#### 2. Renewal Management Service
-- Policy renewal processing
-- Case tracking and status management
-- Batch upload processing
-- Timeline management
-- Payment integration
+#### 2. Upload & Data Management Service
+- Advanced file upload with validation (Excel, CSV)
+- Real-time progress tracking and status updates
+- Upload history and audit trail management
+- Batch data processing with error handling
+- Template generation and download
+- Integration with campaign creation workflow
 
 #### 3. Email Management Service
 - IMAP/SMTP integration
@@ -76,18 +92,23 @@ The Intelipro Renewal Management System is a comprehensive platform for managing
 - Knowledge base management
 - Response caching
 
-#### 5. Communication Service
-- WhatsApp Business API integration
-- SMS gateway integration
-- Multi-channel messaging
-- Template management
-- Flow builder support
+#### 5. Multi-Channel Communication Service
+- WhatsApp Business API integration with flow builder
+- SMS gateway integration (Twilio/AWS SNS)
+- Unified messaging across channels
+- Template management for all communication types
+- Message scheduling and automation
+- Delivery status tracking and analytics
 
-#### 6. Campaign Management Service
-- Campaign creation and management
-- Audience segmentation
-- Performance tracking
-- A/B testing support
+#### 6. Advanced Campaign Management Service
+- Multi-channel campaign creation (Email, WhatsApp, SMS)
+- Integrated campaign creation from uploaded data
+- Advanced audience segmentation and targeting
+- Campaign scheduling (immediate and future)
+- Real-time performance tracking and analytics
+- Campaign control (pause, resume, stop)
+- A/B testing and optimization
+- Template library management
 
 #### 7. Survey & Feedback Service
 - Survey builder
@@ -190,6 +211,91 @@ CREATE TABLE customers (
     kyc_status VARCHAR(20) DEFAULT 'pending',
     kyc_documents JSONB,
     communication_preferences JSONB,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### File Uploads Table
+```sql
+CREATE TABLE file_uploads (
+    id SERIAL PRIMARY KEY,
+    filename VARCHAR(255) NOT NULL,
+    original_filename VARCHAR(255) NOT NULL,
+    file_size BIGINT NOT NULL,
+    file_type VARCHAR(50) NOT NULL,
+    upload_status VARCHAR(20) DEFAULT 'processing',
+    total_records INTEGER,
+    successful_records INTEGER,
+    failed_records INTEGER,
+    uploaded_by INTEGER REFERENCES users(id),
+    upload_path VARCHAR(500),
+    download_url VARCHAR(500),
+    processing_started_at TIMESTAMP,
+    processing_completed_at TIMESTAMP,
+    error_details JSONB,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### Campaigns Table
+```sql
+CREATE TABLE campaigns (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    campaign_type VARCHAR(20) NOT NULL, -- 'email', 'whatsapp', 'sms'
+    status VARCHAR(20) DEFAULT 'draft', -- 'draft', 'scheduled', 'active', 'paused', 'completed', 'cancelled'
+    upload_id INTEGER REFERENCES file_uploads(id),
+    template_id INTEGER REFERENCES templates(id),
+    target_audience_filter JSONB,
+    target_count INTEGER,
+    sent_count INTEGER DEFAULT 0,
+    delivered_count INTEGER DEFAULT 0,
+    opened_count INTEGER DEFAULT 0,
+    clicked_count INTEGER DEFAULT 0,
+    replied_count INTEGER DEFAULT 0,
+    converted_count INTEGER DEFAULT 0,
+    schedule_type VARCHAR(20) DEFAULT 'immediate', -- 'immediate', 'scheduled'
+    scheduled_at TIMESTAMP,
+    started_at TIMESTAMP,
+    completed_at TIMESTAMP,
+    created_by INTEGER REFERENCES users(id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### Templates Table
+```sql
+CREATE TABLE templates (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    template_type VARCHAR(20) NOT NULL, -- 'email', 'whatsapp', 'sms'
+    subject VARCHAR(500), -- for email templates
+    content TEXT NOT NULL,
+    variables JSONB, -- available variables for template
+    is_active BOOLEAN DEFAULT TRUE,
+    created_by INTEGER REFERENCES users(id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### Campaign Recipients Table
+```sql
+CREATE TABLE campaign_recipients (
+    id SERIAL PRIMARY KEY,
+    campaign_id INTEGER REFERENCES campaigns(id),
+    customer_id INTEGER REFERENCES customers(id),
+    status VARCHAR(20) DEFAULT 'pending', -- 'pending', 'sent', 'delivered', 'opened', 'clicked', 'replied', 'failed'
+    sent_at TIMESTAMP,
+    delivered_at TIMESTAMP,
+    opened_at TIMESTAMP,
+    clicked_at TIMESTAMP,
+    replied_at TIMESTAMP,
+    error_message TEXT,
+    tracking_data JSONB,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -473,821 +579,753 @@ CREATE INDEX idx_notifications_user_read ON notifications(user_id, read_status);
 CREATE INDEX idx_notifications_created_at ON notifications(created_at);
 ```
 
-## API Specifications
+## Enhanced API Specifications
 
-### Base URL Structure
-```
-Production: https://api.intelipro.com/v1
-Staging: https://staging-api.intelipro.com/v1
-Development: http://localhost:3000/api/v1
-```
+### Frontend Integration Requirements
+The backend APIs must support the following frontend features:
+- **Real-time Updates**: WebSocket support for live notifications and status updates
+- **File Upload Progress**: Chunked upload with progress tracking
+- **Campaign Management**: Multi-channel campaign creation and monitoring
+- **Permission-based Access**: API endpoints must respect RBAC permissions
+- **Pagination Support**: All list endpoints must support pagination, filtering, and sorting
+- **Export Functionality**: Support for PDF, Excel, and CSV exports
+- **Search Capabilities**: Advanced search across all data entities
+- **Audit Logging**: Complete activity tracking for compliance
 
-### Authentication Endpoints
+### Upload & File Management APIs
 
-#### POST /auth/login
+#### POST /api/upload/file
+Upload policy data file with validation
 ```json
-{
-  "email": "user@company.com",
-  "password": "password123",
-  "remember_me": true
-}
-```
+Request:
+- Content-Type: multipart/form-data
+- file: Excel/CSV file
+- metadata: { "description": "Upload description" }
 
 Response:
-```json
 {
   "success": true,
   "data": {
-    "access_token": "eyJhbGciOiJIUzI1NiIs...",
-    "refresh_token": "eyJhbGciOiJIUzI1NiIs...",
-    "expires_in": 3600,
-    "user": {
-      "id": 1,
-      "email": "user@company.com",
-      "first_name": "John",
-      "last_name": "Doe",
-      "role": "admin",
-      "permissions": ["dashboard", "upload", "cases"]
-    }
+    "uploadId": "upload-123",
+    "filename": "policies.xlsx",
+    "status": "processing",
+    "totalRecords": 150,
+    "estimatedProcessingTime": "2-3 minutes"
   }
 }
 ```
 
-#### POST /auth/refresh
+#### GET /api/upload/status/{uploadId}
+Get upload processing status
 ```json
-{
-  "refresh_token": "eyJhbGciOiJIUzI1NiIs..."
-}
-```
-
-#### POST /auth/logout
-Headers: `Authorization: Bearer <token>`
-
-#### POST /auth/forgot-password
-```json
-{
-  "email": "user@company.com"
-}
-```
-
-#### POST /auth/reset-password
-```json
-{
-  "token": "reset_token_here",
-  "password": "new_password123"
-}
-```
-
-### Dashboard Endpoints
-
-#### GET /dashboard/stats
-Headers: `Authorization: Bearer <token>`
-Query Parameters:
-- `date_range`: week|month|custom
-- `start_date`: YYYY-MM-DD (required if date_range=custom)
-- `end_date`: YYYY-MM-DD (required if date_range=custom)
-- `policy_type`: all|auto|health|life
-- `case_status`: all|new|in_progress|resolved
-
 Response:
-```json
 {
   "success": true,
   "data": {
-    "totalCases": 1250,
-    "inProgress": 320,
-    "renewed": 780,
-    "pendingAction": 95,
-    "errors": 55,
-    "paymentCollected": 13850000,
-    "paymentPending": 3250000
-  }
-}
-```
-
-#### GET /dashboard/trends
-Query Parameters: Same as stats endpoint
-
-Response:
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "name": "Mon",
-      "newCases": 65,
-      "renewals": 42,
-      "successRate": 0.85
-    }
-  ]
-}
-```
-
-#### GET /dashboard/batch-status
-Response:
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "fileName": "renewal_batch_2024_01.xlsx",
-      "status": {
-        "renewed": 150,
-        "inProgress": 75,
-        "pending": 25,
-        "failed": 10
-      },
-      "payment": {
-        "received": 2500000,
-        "pending": 750000
-      }
-    }
-  ]
-}
-```
-
-### Upload Endpoints
-
-#### POST /upload/batch
-Headers: 
-- `Authorization: Bearer <token>`
-- `Content-Type: multipart/form-data`
-
-Body:
-```
-file: <Excel/CSV file>
-policy_type: "auto"
-```
-
-Response:
-```json
-{
-  "success": true,
-  "data": {
-    "batch_id": 123,
-    "file_name": "renewal_batch_2024_01.xlsx",
-    "total_records": 500,
-    "status": "processing"
-  }
-}
-```
-
-#### GET /upload/batches
-Query Parameters:
-- `page`: 1
-- `limit`: 10
-- `status`: all|processing|completed|failed
-
-#### GET /upload/batch/:id/status
-Response:
-```json
-{
-  "success": true,
-  "data": {
-    "id": 123,
+    "uploadId": "upload-123",
     "status": "completed",
-    "total_records": 500,
-    "processed_records": 500,
-    "successful_records": 485,
-    "failed_records": 15,
-    "errors": [
-      {
-        "row": 45,
-        "error": "Invalid policy number format"
-      }
-    ]
+    "totalRecords": 150,
+    "successfulRecords": 142,
+    "failedRecords": 8,
+    "processingTime": "2m 15s",
+    "downloadUrl": "/api/upload/download/upload-123"
   }
 }
 ```
 
-### Renewal Cases Endpoints
-
-#### GET /cases
-Query Parameters:
-- `page`: 1
-- `limit`: 10
-- `status`: all|new|in_progress|renewed|failed
-- `priority`: all|low|medium|high
-- `assigned_to`: user_id
-- `search`: search_term
-- `sort_by`: created_at|renewal_date|priority
-- `sort_order`: asc|desc
-
-Response:
+#### GET /api/upload/history
+Get upload history with pagination
 ```json
+Response:
 {
   "success": true,
   "data": {
-    "cases": [
-      {
-        "id": 1,
-        "case_number": "REN-2024-001",
-        "policy": {
-          "policy_number": "POL-123456",
-          "customer_name": "John Doe",
-          "policy_type": "Auto"
-        },
-        "status": "in_progress",
-        "priority": "high",
-        "renewal_amount": 25000,
-        "payment_status": "pending",
-        "assigned_to": {
-          "id": 5,
-          "name": "Agent Smith"
-        },
-        "created_at": "2024-01-15T10:30:00Z"
-      }
-    ],
+    "uploads": [...],
     "pagination": {
-      "current_page": 1,
-      "total_pages": 50,
-      "total_records": 500,
-      "per_page": 10
+      "page": 1,
+      "limit": 20,
+      "total": 45,
+      "totalPages": 3
     }
   }
 }
 ```
 
-#### GET /cases/:id
-Response:
+#### GET /api/upload/template
+Download template file
 ```json
+Response:
+- Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+- Content-Disposition: attachment; filename="policy_upload_template.xlsx"
+```
+
+### Campaign Management APIs
+
+#### POST /api/campaigns
+Create new campaign
+```json
+Request:
+{
+  "name": "May Renewals Campaign",
+  "type": ["email", "whatsapp"],
+  "uploadId": "upload-123",
+  "templates": {
+    "email": "template-1",
+    "whatsapp": "template-2"
+  },
+  "scheduleType": "scheduled",
+  "scheduledAt": "2024-05-15T14:00:00Z",
+  "targetAudience": "all"
+}
+
+Response:
 {
   "success": true,
   "data": {
-    "id": 1,
-    "case_number": "REN-2024-001",
-    "policy": {
-      "policy_number": "POL-123456",
-      "customer": {
-        "id": 100,
-        "name": "John Doe",
-        "email": "john.doe@email.com",
-        "phone": "+1-555-0123"
-      },
-      "policy_type": "Auto",
-      "premium_amount": 25000,
-      "start_date": "2023-01-15",
-      "end_date": "2024-01-15"
-    },
-    "status": "in_progress",
-    "priority": "high",
-    "renewal_amount": 25000,
-    "payment_status": "pending",
-    "assigned_to": {
-      "id": 5,
-      "name": "Agent Smith",
-      "email": "agent.smith@company.com"
-    },
-    "communication_attempts": 3,
-    "last_contact_date": "2024-01-10T14:30:00Z",
-    "notes": "Customer requested payment extension",
-    "timeline": [
+    "campaigns": [
       {
-        "date": "2024-01-15T10:30:00Z",
-        "action": "Case created",
-        "user": "System",
-        "details": "Automatic case creation from batch upload"
-      }
-    ],
-    "documents": [
-      {
-        "id": 1,
-        "name": "renewal_notice.pdf",
-        "url": "/files/download/1",
-        "uploaded_at": "2024-01-15T10:30:00Z"
+        "id": "campaign-456",
+        "name": "May Renewals Campaign (Email)",
+        "type": "email",
+        "status": "scheduled",
+        "targetCount": 142,
+        "scheduledAt": "2024-05-15T14:00:00Z"
       }
     ]
   }
 }
 ```
 
-#### PUT /cases/:id
+#### GET /api/campaigns
+Get all campaigns with filtering
 ```json
-{
-  "status": "renewed",
-  "payment_status": "completed",
-  "payment_method": "credit_card",
-  "payment_date": "2024-01-20T15:30:00Z",
-  "notes": "Payment completed successfully"
-}
-```
-
-#### POST /cases/:id/assign
-```json
-{
-  "assigned_to": 5,
-  "notes": "Assigning to senior agent for follow-up"
-}
-```
-
-#### POST /cases/:id/escalate
-```json
-{
-  "escalated_to": 10,
-  "reason": "Customer requesting immediate attention",
-  "priority": "urgent"
-}
-```
-
-### Email Management Endpoints
-
-#### GET /emails
 Query Parameters:
-- `page`: 1
-- `limit`: 10
-- `status`: all|new|in_progress|resolved
-- `category`: all|complaint|feedback|refund|appointment
-- `assigned_to`: user_id
-- `date_from`: YYYY-MM-DD
-- `date_to`: YYYY-MM-DD
-- `search`: search_term
+- status: active,paused,completed
+- type: email,whatsapp,sms
+- page: 1
+- limit: 20
 
 Response:
-```json
 {
   "success": true,
   "data": {
-    "emails": [
+    "campaigns": [...],
+    "pagination": {...}
+  }
+}
+```
+
+#### PUT /api/campaigns/{campaignId}/status
+Update campaign status
+```json
+Request:
+{
+  "status": "paused"
+}
+
+Response:
+{
+  "success": true,
+  "data": {
+    "campaignId": "campaign-456",
+    "status": "paused",
+    "updatedAt": "2024-05-15T10:30:00Z"
+  }
+}
+```
+
+#### GET /api/campaigns/{campaignId}/analytics
+Get campaign analytics
+```json
+Response:
+{
+  "success": true,
+  "data": {
+    "campaignId": "campaign-456",
+    "metrics": {
+      "sent": 142,
+      "delivered": 138,
+      "opened": 89,
+      "clicked": 34,
+      "converted": 12,
+      "openRate": 64.5,
+      "clickRate": 24.6,
+      "conversionRate": 8.7
+    },
+    "timeline": [...],
+    "topPerformingContent": [...]
+  }
+}
+```
+
+### Template Management APIs
+
+#### GET /api/templates
+Get all templates by type
+```json
+Query Parameters:
+- type: email,whatsapp,sms
+- active: true/false
+
+Response:
+{
+  "success": true,
+  "data": {
+    "templates": [
       {
-        "id": 1,
-        "message_id": "msg_123456",
-        "from_email": "customer@email.com",
-        "subject": "Policy renewal inquiry",
-        "category": "complaint",
-        "priority": "high",
-        "status": "new",
-        "sentiment": {
-          "score": -0.65,
-          "label": "negative"
-        },
-        "ai_intent": {
-          "category": "complaint",
-          "confidence": 94.5
-        },
-        "received_at": "2024-01-15T10:30:00Z",
-        "read_status": false
+        "id": "template-1",
+        "name": "Renewal Reminder - 30 Days",
+        "type": "email",
+        "subject": "Your Policy Renewal is Due Soon",
+        "content": "Dear {name}, your policy expires in 30 days...",
+        "variables": ["name", "policy_number", "expiry_date"]
       }
-    ],
-    "pagination": {
-      "current_page": 1,
-      "total_pages": 25,
-      "total_records": 250,
-      "per_page": 10
-    }
-  }
-}
-```
-
-#### GET /emails/:id
-Response includes full email details with body, attachments, thread history
-
-#### PUT /emails/:id
-```json
-{
-  "status": "in_progress",
-  "category": "complaint",
-  "assigned_to": 5,
-  "priority": "high"
-}
-```
-
-#### POST /emails/:id/reply
-```json
-{
-  "to": "customer@email.com",
-  "subject": "Re: Policy renewal inquiry",
-  "body": "Thank you for your inquiry...",
-  "template_id": 5
-}
-```
-
-#### POST /emails/:id/escalate
-```json
-{
-  "escalated_to": 10,
-  "reason": "Complex technical issue requiring supervisor attention"
-}
-```
-
-### AI Assistant Endpoints
-
-#### POST /ai/query
-```json
-{
-  "query": "How can I improve renewal rates?",
-  "context": {
-    "page": "dashboard",
-    "user_role": "manager"
-  }
-}
-```
-
-Response:
-```json
-{
-  "success": true,
-  "data": {
-    "response": "To improve renewal rates, focus on: 1) Proactive communication...",
-    "confidence": 0.95,
-    "sources": ["internal_docs", "best_practices"],
-    "suggestions": [
-      "How to optimize the renewal process?",
-      "What communication strategies work best?"
     ]
   }
 }
 ```
 
-#### GET /ai/settings
-Response:
+#### POST /api/templates
+Create new template
 ```json
+Request:
 {
-  "success": true,
-  "data": {
-    "enabled": true,
-    "provider": "openai",
-    "model": "gpt-4",
-    "temperature": 0.7,
-    "max_tokens": 1000,
-    "features": {
-      "renewalInsights": true,
-      "processOptimization": true,
-      "customerRetention": true
-    }
-  }
-}
-```
-
-#### PUT /ai/settings
-```json
-{
-  "provider": "openai",
-  "model": "gpt-4",
-  "temperature": 0.8,
-  "max_tokens": 1500,
-  "api_key": "sk-...",
-  "features": {
-    "renewalInsights": true,
-    "processOptimization": true,
-    "customerRetention": true,
-    "predictiveAnalytics": false
-  }
-}
-```
-
-### Campaign Management Endpoints
-
-#### GET /campaigns
-Query Parameters:
-- `page`: 1
-- `limit`: 10
-- `status`: all|draft|active|paused|completed
-- `type`: all|email|sms|whatsapp
-
-#### POST /campaigns
-```json
-{
-  "name": "Q1 Renewal Campaign",
-  "description": "Quarterly renewal reminder campaign",
+  "name": "Custom Renewal Template",
   "type": "email",
-  "target_audience": {
-    "policy_types": ["auto", "health"],
-    "renewal_window": "30_days",
-    "regions": ["north", "south"]
-  },
-  "content": {
-    "subject": "Your policy renewal is due",
-    "template_id": 5,
-    "personalization": true
-  },
-  "schedule_type": "scheduled",
-  "scheduled_at": "2024-02-01T09:00:00Z",
-  "channels": ["email", "sms"]
+  "subject": "Policy Renewal Notice",
+  "content": "Dear {name}, please renew your policy...",
+  "variables": ["name", "policy_number"]
 }
-```
 
-#### GET /campaigns/:id/analytics
 Response:
-```json
 {
   "success": true,
   "data": {
-    "sent": 1000,
-    "delivered": 980,
-    "opened": 650,
-    "clicked": 320,
-    "converted": 150,
-    "open_rate": 66.3,
-    "click_rate": 32.7,
-    "conversion_rate": 15.3
+    "templateId": "template-789",
+    "message": "Template created successfully"
   }
 }
 ```
 
-### File Management Endpoints
+### Multi-Channel Communication APIs
 
-#### POST /files/upload
-Headers: 
-- `Authorization: Bearer <token>`
-- `Content-Type: multipart/form-data`
-
-Body:
-```
-file: <file>
-entity_type: "case"
-entity_id: 123
-is_public: false
-```
-
-#### GET /files/:id/download
-Headers: `Authorization: Bearer <token>`
-
-#### DELETE /files/:id
-Headers: `Authorization: Bearer <token>`
-
-### Notification Endpoints
-
-#### GET /notifications
-Query Parameters:
-- `page`: 1
-- `limit`: 10
-- `read_status`: all|read|unread
-- `type`: all|assignment|update|system
-
-#### PUT /notifications/:id/read
-Headers: `Authorization: Bearer <token>`
-
-#### PUT /notifications/mark-all-read
-Headers: `Authorization: Bearer <token>`
-
-## Authentication & Authorization
-
-### JWT Token Structure
+#### POST /api/communication/whatsapp/send
+Send WhatsApp message
 ```json
+Request:
 {
-  "sub": "user_id",
-  "email": "user@company.com",
-  "role": "admin",
-  "permissions": ["dashboard", "upload", "cases"],
-  "iat": 1642680000,
-  "exp": 1642683600
+  "to": "+919876543210",
+  "templateId": "renewal_reminder",
+  "parameters": {
+    "name": "John Doe",
+    "policy_number": "POL123456",
+    "expiry_date": "2024-06-15"
+  }
+}
+
+Response:
+{
+  "success": true,
+  "data": {
+    "messageId": "wa-msg-123",
+    "status": "sent",
+    "timestamp": "2024-05-15T10:30:00Z"
+  }
 }
 ```
 
-### Role-Based Permissions
-
-#### Admin Role
-- Full system access
-- User management
-- System settings
-- All module permissions
-
-#### Manager Role
-- Dashboard access
-- Case management
-- Email management
-- Campaign management
-- Team oversight
-- Reports and analytics
-
-#### Agent Role
-- Assigned case access
-- Email handling
-- Customer communication
-- Basic reporting
-
-#### Viewer Role
-- Read-only dashboard access
-- View assigned cases
-- Basic reporting
-
-### Permission Matrix
+#### POST /api/communication/sms/send
+Send SMS message
 ```json
+Request:
 {
-  "dashboard": ["admin", "manager", "agent", "viewer"],
-  "upload": ["admin", "manager"],
-  "cases": ["admin", "manager", "agent"],
-  "emails": ["admin", "manager", "agent"],
-  "campaigns": ["admin", "manager"],
-  "settings": ["admin"],
-  "users": ["admin"],
-  "analytics": ["admin", "manager"]
+  "to": "+919876543210",
+  "message": "Dear John, your policy POL123456 expires on 2024-06-15. Renew now: https://example.com/renew"
+}
+
+Response:
+{
+  "success": true,
+  "data": {
+    "messageId": "sms-msg-456",
+    "status": "sent",
+    "cost": 0.05
+  }
 }
 ```
 
-## Security Specifications
+#### GET /api/communication/delivery-status/{messageId}
+Get message delivery status
+```json
+Response:
+{
+  "success": true,
+  "data": {
+    "messageId": "wa-msg-123",
+    "status": "delivered",
+    "deliveredAt": "2024-05-15T10:32:00Z",
+    "readAt": "2024-05-15T10:35:00Z"
+  }
+}
+```
 
-### Data Encryption
-- **At Rest**: AES-256 encryption for sensitive data
-- **In Transit**: TLS 1.3 for all API communications
-- **Database**: Column-level encryption for PII data
-- **File Storage**: Server-side encryption with customer-managed keys
+## Third-Party API Integration Requirements
 
-### Security Headers
+### Overview
+The Insurance Policy Renewal System requires integration with multiple third-party services to provide comprehensive functionality including multi-channel communication, file storage, payment processing, and analytics.
+
+### 1. Multi-Channel Communication Services
+
+#### WhatsApp Business API Integration
+**Service Provider**: Meta (Facebook)
+**Priority**: High (Essential for campaign functionality)
+
 ```javascript
-{
-  "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
-  "X-Content-Type-Options": "nosniff",
-  "X-Frame-Options": "DENY",
-  "X-XSS-Protection": "1; mode=block",
-  "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline'",
-  "Referrer-Policy": "strict-origin-when-cross-origin"
-}
+// Configuration
+const whatsappConfig = {
+  baseURL: 'https://graph.facebook.com/v17.0',
+  phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID,
+  accessToken: process.env.WHATSAPP_ACCESS_TOKEN,
+  webhookVerifyToken: process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN
+};
+
+// Required Environment Variables
+WHATSAPP_ACCESS_TOKEN=your_access_token
+WHATSAPP_PHONE_NUMBER_ID=your_phone_number_id
+WHATSAPP_WEBHOOK_VERIFY_TOKEN=your_webhook_token
+WHATSAPP_APP_SECRET=your_app_secret
 ```
 
-### Input Validation
-- Sanitize all user inputs
-- Validate file uploads (type, size, content)
-- SQL injection prevention
-- XSS protection
-- CSRF protection
+**Required Endpoints**:
+- Send Messages: `POST /{phone-number-id}/messages`
+- Get Message Status: `GET /{message-id}`
+- Webhook for Status Updates: `POST /webhook`
 
-### Rate Limiting
+**Features Needed**:
+- Template message sending
+- Message delivery status tracking
+- Media message support (images, documents)
+- Flow builder integration
+- Webhook handling for real-time updates
+
+**Cost**: ~$0.005-$0.009 per message (varies by country)
+**Documentation**: https://developers.facebook.com/docs/whatsapp
+
+#### SMS Gateway Integration
+**Service Provider Options**:
+
+**Option 1: Twilio (Recommended for Global)**
 ```javascript
-{
-  "login": "5 attempts per 15 minutes",
-  "api_general": "1000 requests per hour",
-  "upload": "10 uploads per hour",
-  "ai_queries": "100 requests per hour"
-}
+const twilioConfig = {
+  accountSid: process.env.TWILIO_ACCOUNT_SID,
+  authToken: process.env.TWILIO_AUTH_TOKEN,
+  messagingServiceSid: process.env.TWILIO_MESSAGING_SERVICE_SID
+};
+
+// Environment Variables
+TWILIO_ACCOUNT_SID=your_account_sid
+TWILIO_AUTH_TOKEN=your_auth_token
+TWILIO_MESSAGING_SERVICE_SID=your_messaging_service_sid
 ```
 
-### Audit Logging
-Track all critical operations:
-- User authentication events
-- Data modifications
-- File uploads/downloads
-- Permission changes
-- System configuration changes
-
-## Performance Requirements
-
-### Response Time Targets
-- API endpoints: < 200ms (95th percentile)
-- Database queries: < 100ms (average)
-- File uploads: < 5 seconds for 10MB files
-- Real-time notifications: < 100ms
-
-### Scalability Requirements
-- Support 1000+ concurrent users
-- Handle 10,000+ renewal cases per batch
-- Process 1M+ emails per month
-- Store 100GB+ of files
-
-### Caching Strategy
-- Redis for session storage
-- API response caching (5-60 minutes)
-- Database query result caching
-- File metadata caching
-- CDN for static assets
-
-## Deployment Guide
-
-### Environment Configuration
-
-#### Production Environment
-```yaml
-# docker-compose.prod.yml
-version: '3.8'
-services:
-  api:
-    image: intelipro/api:latest
-    environment:
-      NODE_ENV: production
-      DATABASE_URL: postgresql://user:pass@db:5432/intelipro
-      REDIS_URL: redis://redis:6379
-      JWT_SECRET: ${JWT_SECRET}
-      AI_API_KEY: ${AI_API_KEY}
-    ports:
-      - "3000:3000"
-    depends_on:
-      - db
-      - redis
-  
-  db:
-    image: postgres:15
-    environment:
-      POSTGRES_DB: intelipro
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-  
-  redis:
-    image: redis:7-alpine
-    volumes:
-      - redis_data:/data
-  
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
-      - ./ssl:/etc/nginx/ssl
+**Option 2: AWS SNS (Cost-effective)**
+```javascript
+const snsConfig = {
+  region: process.env.AWS_REGION,
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+};
 ```
 
-#### Environment Variables
-```bash
-# Database
-DATABASE_URL=postgresql://user:pass@localhost:5432/intelipro
-REDIS_URL=redis://localhost:6379
+**Option 3: TextLocal (India-specific)**
+```javascript
+const textlocalConfig = {
+  apiKey: process.env.TEXTLOCAL_API_KEY,
+  baseURL: 'https://api.textlocal.in'
+};
+```
 
-# Authentication
-JWT_SECRET=your-super-secret-jwt-key
-JWT_EXPIRY=1h
-REFRESH_TOKEN_EXPIRY=7d
+**Cost Comparison**:
+- Twilio: ~$0.0075 per SMS
+- AWS SNS: ~$0.00645 per SMS
+- TextLocal: ~₹0.15 per SMS (India)
 
-# AI Services
-OPENAI_API_KEY=sk-your-openai-key
-AI_PROVIDER=openai
-AI_MODEL=gpt-4
+### 2. Email Services Integration
 
-# Email Services
+#### Email Sending Service
+**Service Provider Options**:
+
+**Option 1: AWS SES (Recommended)**
+```javascript
+const sesConfig = {
+  region: process.env.AWS_REGION,
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  fromEmail: process.env.SES_FROM_EMAIL
+};
+
+// Environment Variables
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=your_access_key
+AWS_SECRET_ACCESS_KEY=your_secret_key
+SES_FROM_EMAIL=noreply@yourcompany.com
+```
+
+**Option 2: SendGrid**
+```javascript
+const sendgridConfig = {
+  apiKey: process.env.SENDGRID_API_KEY,
+  fromEmail: process.env.SENDGRID_FROM_EMAIL,
+  fromName: process.env.SENDGRID_FROM_NAME
+};
+```
+
+**Features Required**:
+- Bulk email sending
+- Email templates
+- Delivery tracking
+- Bounce and complaint handling
+- Analytics and reporting
+
+**Cost**:
+- AWS SES: $0.10 per 1,000 emails (after free tier)
+- SendGrid: $19.95/month for 100K emails
+
+#### Email Management (IMAP/SMTP)
+```javascript
+const imapConfig = {
+  host: process.env.IMAP_HOST,
+  port: process.env.IMAP_PORT,
+  secure: true,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
+};
+
+// Environment Variables
+IMAP_HOST=imap.gmail.com
+IMAP_PORT=993
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
-SMTP_USER=your-email@company.com
-SMTP_PASS=your-app-password
+EMAIL_USER=your_email@company.com
+EMAIL_PASS=your_app_password
+```
 
-# File Storage
-AWS_ACCESS_KEY_ID=your-access-key
-AWS_SECRET_ACCESS_KEY=your-secret-key
-AWS_BUCKET_NAME=intelipro-files
+### 3. File Storage & Management
+
+#### Cloud Storage Integration
+**Service Provider Options**:
+
+**Option 1: AWS S3 (Recommended)**
+```javascript
+const s3Config = {
+  region: process.env.AWS_REGION,
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  bucketName: process.env.S3_BUCKET_NAME
+};
+
+// Environment Variables
 AWS_REGION=us-east-1
-
-# WhatsApp
-WHATSAPP_ACCESS_TOKEN=your-whatsapp-token
-WHATSAPP_PHONE_NUMBER_ID=your-phone-number-id
-WHATSAPP_WEBHOOK_VERIFY_TOKEN=your-verify-token
-
-# Monitoring
-SENTRY_DSN=your-sentry-dsn
-LOG_LEVEL=info
+S3_BUCKET_NAME=your-bucket-name
+S3_UPLOAD_FOLDER=uploads/
+S3_PUBLIC_URL=https://your-bucket.s3.amazonaws.com/
 ```
 
-### Database Migration Scripts
-
-#### Initial Migration
-```sql
--- migrations/001_initial_schema.sql
--- Create all tables as defined in Database Schema section
-```
-
-#### Sample Data Migration
-```sql
--- migrations/002_sample_data.sql
-INSERT INTO roles (name, display_name, description, permissions) VALUES
-('admin', 'Administrator', 'Full system access', '["dashboard","upload","cases","emails","campaigns","settings","users","analytics"]'),
-('manager', 'Manager', 'Management access', '["dashboard","upload","cases","emails","campaigns","analytics"]'),
-('agent', 'Agent', 'Agent access', '["dashboard","cases","emails"]'),
-('viewer', 'Viewer', 'Read-only access', '["dashboard"]');
-
-INSERT INTO users (email, password_hash, first_name, last_name, role_id) VALUES
-('admin@company.com', '$2b$12$encrypted_password_hash', 'Admin', 'User', 1);
-```
-
-### Monitoring & Logging
-
-#### Application Monitoring
+**Option 2: Azure Blob Storage**
 ```javascript
-// monitoring/health-check.js
-app.get('/health', (req, res) => {
-  const health = {
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    services: {
-      database: 'connected',
-      redis: 'connected',
-      ai_service: 'connected'
-    },
-    version: process.env.APP_VERSION
-  };
-  res.json(health);
-});
+const azureConfig = {
+  connectionString: process.env.AZURE_STORAGE_CONNECTION_STRING,
+  containerName: process.env.AZURE_CONTAINER_NAME
+};
 ```
 
-#### Logging Configuration
+**Features Required**:
+- File upload with validation
+- Secure file storage
+- File download with authentication
+- Virus scanning integration
+- CDN integration for performance
+
+**Cost**:
+- AWS S3: $0.023 per GB/month (Standard)
+- Azure Blob: $0.018 per GB/month (Hot tier)
+
+### 4. Payment Gateway Integration
+
+#### Payment Processing
+**Service Provider Options**:
+
+**Option 1: Razorpay (India-focused)**
 ```javascript
-// config/logger.js
-const winston = require('winston');
+const razorpayConfig = {
+  keyId: process.env.RAZORPAY_KEY_ID,
+  keySecret: process.env.RAZORPAY_KEY_SECRET,
+  webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET
+};
 
-const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.errors({ stack: true }),
-    winston.format.json()
-  ),
-  transports: [
-    new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'logs/combined.log' }),
-    new winston.transports.Console({
-      format: winston.format.simple()
-    })
-  ]
-});
+// Environment Variables
+RAZORPAY_KEY_ID=your_key_id
+RAZORPAY_KEY_SECRET=your_key_secret
+RAZORPAY_WEBHOOK_SECRET=your_webhook_secret
 ```
 
-This comprehensive guide provides all the necessary specifications for building a robust backend system that perfectly supports the Intelipro Renewal Management frontend application. The backend should be built following these specifications to ensure seamless integration and optimal performance. 
+**Option 2: Stripe (Global)**
+```javascript
+const stripeConfig = {
+  secretKey: process.env.STRIPE_SECRET_KEY,
+  publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
+  webhookSecret: process.env.STRIPE_WEBHOOK_SECRET
+};
+```
+
+**Features Required**:
+- Policy renewal payments
+- Subscription management
+- Payment status tracking
+- Refund processing
+- Webhook handling for payment updates
+
+### 5. AI & Machine Learning Services
+
+#### AI Assistant Integration
+**Service Provider Options**:
+
+**Option 1: OpenAI API**
+```javascript
+const openaiConfig = {
+  apiKey: process.env.OPENAI_API_KEY,
+  organization: process.env.OPENAI_ORGANIZATION,
+  model: 'gpt-4',
+  maxTokens: 150
+};
+
+// Environment Variables
+OPENAI_API_KEY=your_api_key
+OPENAI_ORGANIZATION=your_org_id
+OPENAI_MODEL=gpt-4
+```
+
+**Option 2: Azure OpenAI**
+```javascript
+const azureOpenAIConfig = {
+  endpoint: process.env.AZURE_OPENAI_ENDPOINT,
+  apiKey: process.env.AZURE_OPENAI_API_KEY,
+  deploymentName: process.env.AZURE_OPENAI_DEPLOYMENT
+};
+```
+
+**Features Required**:
+- Customer query assistance
+- Email content generation
+- Sentiment analysis
+- Document summarization
+
+**Cost**:
+- OpenAI GPT-4: ~$0.03 per 1K tokens (input)
+- Azure OpenAI: Similar pricing with enterprise features
+
+### 6. Analytics & Monitoring Services
+
+#### Application Performance Monitoring
+**Service Provider Options**:
+
+**Option 1: New Relic**
+```javascript
+const newrelicConfig = {
+  licenseKey: process.env.NEW_RELIC_LICENSE_KEY,
+  appName: process.env.NEW_RELIC_APP_NAME
+};
+```
+
+**Option 2: DataDog**
+```javascript
+const datadogConfig = {
+  apiKey: process.env.DATADOG_API_KEY,
+  appKey: process.env.DATADOG_APP_KEY,
+  site: process.env.DATADOG_SITE
+};
+```
+
+#### Web Analytics
+**Google Analytics 4**
+```javascript
+const ga4Config = {
+  measurementId: process.env.GA4_MEASUREMENT_ID,
+  apiSecret: process.env.GA4_API_SECRET
+};
+
+// Environment Variables
+GA4_MEASUREMENT_ID=G-XXXXXXXXXX
+GA4_API_SECRET=your_api_secret
+```
+
+### 7. Authentication & Security Services
+
+#### Multi-Factor Authentication
+**Service Provider Options**:
+
+**Option 1: Auth0**
+```javascript
+const auth0Config = {
+  domain: process.env.AUTH0_DOMAIN,
+  clientId: process.env.AUTH0_CLIENT_ID,
+  clientSecret: process.env.AUTH0_CLIENT_SECRET,
+  audience: process.env.AUTH0_AUDIENCE
+};
+```
+
+**Option 2: AWS Cognito**
+```javascript
+const cognitoConfig = {
+  region: process.env.AWS_REGION,
+  userPoolId: process.env.COGNITO_USER_POOL_ID,
+  clientId: process.env.COGNITO_CLIENT_ID
+};
+```
+
+### 8. Search & Data Processing
+
+#### Search Engine Integration
+**Elasticsearch**
+```javascript
+const elasticsearchConfig = {
+  node: process.env.ELASTICSEARCH_URL,
+  auth: {
+    username: process.env.ELASTICSEARCH_USERNAME,
+    password: process.env.ELASTICSEARCH_PASSWORD
+  }
+};
+
+// Environment Variables
+ELASTICSEARCH_URL=https://your-cluster.es.region.aws.com
+ELASTICSEARCH_USERNAME=your_username
+ELASTICSEARCH_PASSWORD=your_password
+```
+
+### 9. Notification Services
+
+#### Push Notifications
+**Firebase Cloud Messaging (FCM)**
+```javascript
+const fcmConfig = {
+  projectId: process.env.FIREBASE_PROJECT_ID,
+  privateKey: process.env.FIREBASE_PRIVATE_KEY,
+  clientEmail: process.env.FIREBASE_CLIENT_EMAIL
+};
+
+// Environment Variables
+FIREBASE_PROJECT_ID=your_project_id
+FIREBASE_PRIVATE_KEY=your_private_key
+FIREBASE_CLIENT_EMAIL=your_client_email
+```
+
+## Implementation Strategy
+
+### Phase 1: Core Functionality (MVP)
+**Priority: High - Essential for basic operations**
+1. **File Storage** (AWS S3) - Upload functionality
+2. **Email Service** (AWS SES) - Email campaigns
+3. **SMS Gateway** (Twilio/AWS SNS) - SMS campaigns
+4. **Payment Gateway** (Razorpay/Stripe) - Policy renewals
+
+### Phase 2: Enhanced Communication
+**Priority: Medium - Enhanced user experience**
+5. **WhatsApp Business API** - WhatsApp campaigns
+6. **Push Notifications** (FCM) - Real-time notifications
+7. **AI Assistant** (OpenAI) - Customer support
+
+### Phase 3: Advanced Features
+**Priority: Low - Advanced analytics and optimization**
+8. **Analytics** (Google Analytics) - Performance tracking
+9. **APM** (New Relic/DataDog) - System monitoring
+10. **Search Engine** (Elasticsearch) - Advanced search
+
+## Security & Compliance Requirements
+
+### API Security Standards
+- **Encryption**: All API communications must use HTTPS/TLS 1.2+
+- **Authentication**: Implement proper API key management and rotation
+- **Rate Limiting**: Implement rate limiting for all external API calls
+- **Error Handling**: Secure error handling without exposing sensitive data
+- **Logging**: Log all API interactions for audit purposes
+
+### Compliance Requirements
+- **Data Protection**: GDPR, CCPA compliance for customer data
+- **Financial Regulations**: PCI DSS for payment processing
+- **Industry Standards**: Insurance industry-specific compliance
+- **Data Retention**: Implement proper data retention policies
+
+### Environment Configuration Template
+```bash
+# Core Application
+NODE_ENV=production
+PORT=3000
+DATABASE_URL=postgresql://user:pass@localhost:5432/renewal_db
+REDIS_URL=redis://localhost:6379
+
+# File Storage (AWS S3)
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=your_access_key
+AWS_SECRET_ACCESS_KEY=your_secret_key
+S3_BUCKET_NAME=renewal-system-uploads
+
+# Email Service (AWS SES)
+SES_FROM_EMAIL=noreply@yourcompany.com
+SES_REPLY_TO_EMAIL=support@yourcompany.com
+
+# SMS Service (Twilio)
+TWILIO_ACCOUNT_SID=your_account_sid
+TWILIO_AUTH_TOKEN=your_auth_token
+TWILIO_MESSAGING_SERVICE_SID=your_messaging_service_sid
+
+# WhatsApp Business API
+WHATSAPP_ACCESS_TOKEN=your_access_token
+WHATSAPP_PHONE_NUMBER_ID=your_phone_number_id
+WHATSAPP_WEBHOOK_VERIFY_TOKEN=your_webhook_token
+
+# Payment Gateway (Razorpay)
+RAZORPAY_KEY_ID=your_key_id
+RAZORPAY_KEY_SECRET=your_key_secret
+RAZORPAY_WEBHOOK_SECRET=your_webhook_secret
+
+# AI Service (OpenAI)
+OPENAI_API_KEY=your_api_key
+OPENAI_ORGANIZATION=your_org_id
+
+# Analytics
+GA4_MEASUREMENT_ID=G-XXXXXXXXXX
+GA4_API_SECRET=your_api_secret
+
+# Authentication (Auth0)
+AUTH0_DOMAIN=your-domain.auth0.com
+AUTH0_CLIENT_ID=your_client_id
+AUTH0_CLIENT_SECRET=your_client_secret
+
+# Monitoring (New Relic)
+NEW_RELIC_LICENSE_KEY=your_license_key
+NEW_RELIC_APP_NAME=Renewal Management System
+```
+
+## Cost Estimation
+
+### Monthly Cost Breakdown (Estimated for 10,000 active users)
+- **File Storage (AWS S3)**: ~$25/month (100GB storage)
+- **Email Service (AWS SES)**: ~$10/month (100K emails)
+- **SMS Service (Twilio)**: ~$75/month (10K SMS)
+- **WhatsApp Business API**: ~$50/month (10K messages)
+- **Payment Gateway**: ~2.5% transaction fee
+- **AI Service (OpenAI)**: ~$100/month (moderate usage)
+- **Monitoring (New Relic)**: ~$99/month
+- **Authentication (Auth0)**: ~$23/month (1K MAU)
+
+**Total Estimated Monthly Cost**: ~$382 + transaction fees
+
+### Free Tier Benefits
+- **AWS S3**: 5GB free for 12 months
+- **AWS SES**: 62,000 emails/month free
+- **Firebase FCM**: Unlimited free notifications
+- **Google Analytics**: Free tier available
+
+This comprehensive integration guide provides all the necessary information for implementing third-party API services required by the application. 

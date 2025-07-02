@@ -55,6 +55,7 @@ import { useNotifications } from '../../context/NotificationsContext.js';
 import { usePermissions } from '../../context/PermissionsContext.jsx';
 import NotificationsDialog from '../notifications/Notifications';
 import { alpha } from '@mui/material/styles';
+import { useTranslation } from 'react-i18next';
 
 const drawerWidth = 260;
 
@@ -113,6 +114,7 @@ const Layout = ({ children }) => {
   const { mode, toggleMode } = useThemeMode();
   const { notifications, unreadCount, markAsRead } = useNotifications();
   const { hasPermission } = usePermissions();
+  const { t } = useTranslation();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -240,17 +242,17 @@ const Layout = ({ children }) => {
   };
 
   const menuItems = [
-    { text: 'Campaigns', icon: <CampaignIcon />, path: '/campaigns', permission: 'campaigns' },
+    { text: t('navigation.campaigns'), icon: <CampaignIcon />, path: '/campaigns', permission: 'campaigns' },
     { text: 'Feedback & Surveys', icon: <FeedbackIcon />, path: '/feedback', permission: 'feedback' },
     { text: 'Claims', icon: <GavelIcon />, path: '/claims', permission: 'claims' },
     { text: 'Policy Servicing', icon: <PolicyServicingIcon />, path: '/policy-servicing', permission: 'policy-servicing' },
     { text: 'New Business', icon: <NewBusinessIcon />, path: '/new-business', permission: 'new-business' },
     { text: 'Medical Mgmt', icon: <MedicalManagementIcon />, path: '/medical-management', permission: 'medical-management' },
-    { text: 'Whatsapp flow', icon: <WhatsAppIcon />, path: '/whatsapp-flow', permission: 'whatsapp-flow' },
+    { text: t('navigation.whatsapp'), icon: <WhatsAppIcon />, path: '/whatsapp-flow', permission: 'whatsapp-flow' },
   ].filter(item => hasPermission(item.permission));
 
   const renewalMenuItems = [
-    { text: 'Dashboard', icon: <DashboardIcon />, path: '/', permission: 'dashboard' },
+    { text: t('navigation.dashboard'), icon: <DashboardIcon />, path: '/', permission: 'dashboard' },
     { text: 'Upload', icon: <UploadIcon />, path: '/upload', permission: 'upload' },
     { text: 'Case Tracking', icon: <AssignmentIcon />, path: '/cases', permission: 'cases' },
     { text: 'Closed Cases', icon: <AssignmentTurnedInIcon />, path: '/closed-cases', permission: 'closed-cases' },
@@ -259,17 +261,17 @@ const Layout = ({ children }) => {
   ].filter(item => hasPermission(item.permission));
 
   const emailMenuItems = [
-    { text: 'Email Dashboard', icon: <DashboardIcon />, path: '/emails/dashboard', permission: 'email-dashboard' },
-    { text: 'Email Inbox', icon: <EmailIcon />, path: '/emails', permission: 'emails' },
-    { text: 'Bulk Email', icon: <CampaignIcon />, path: '/emails/bulk', permission: 'bulk-email' },
-    { text: 'Email Analytics', icon: <ReportIcon />, path: '/emails/analytics', permission: 'email-analytics' },
+    { text: t('navigation.email') + ' Dashboard', icon: <DashboardIcon />, path: '/emails/dashboard', permission: 'email-dashboard' },
+    { text: t('navigation.email') + ' Inbox', icon: <EmailIcon />, path: '/emails', permission: 'emails' },
+    { text: 'Bulk ' + t('navigation.email'), icon: <CampaignIcon />, path: '/emails/bulk', permission: 'bulk-email' },
+    { text: t('navigation.email') + ' Analytics', icon: <ReportIcon />, path: '/emails/analytics', permission: 'email-analytics' },
   ].filter(item => hasPermission(item.permission));
 
   const secondaryMenuItems = [
-    { text: 'Profile', icon: <PersonIcon />, path: '/profile', permission: 'profile' },
-    { text: 'Settings', icon: <SettingsIcon />, path: '/settings', permission: 'settings' },
+    { text: t('navigation.profile'), icon: <PersonIcon />, path: '/profile', permission: 'profile' },
+    { text: t('navigation.settings'), icon: <SettingsIcon />, path: '/settings', permission: 'settings' },
     { text: 'Billing', icon: <ReceiptIcon />, path: '/billing', permission: 'billing' },
-    { text: 'Users', icon: <GroupIcon />, path: '/users', permission: 'users' },
+    { text: t('navigation.users'), icon: <GroupIcon />, path: '/users', permission: 'users' },
   ].filter(item => hasPermission(item.permission));
 
   const drawer = (
@@ -291,7 +293,7 @@ const Layout = ({ children }) => {
               <AutorenewIcon />
             </ListItemIcon>
             <ListItemText 
-              primary="Renewals" 
+              primary={t('navigation.renewals', 'Renewals')} 
               primaryTypographyProps={{ 
                 fontWeight: 500,
                 color: theme.palette.text.primary
@@ -341,7 +343,7 @@ const Layout = ({ children }) => {
               <EmailIcon />
             </ListItemIcon>
             <ListItemText 
-              primary="Emails" 
+              primary={t('navigation.email')} 
               primaryTypographyProps={{ 
                 fontWeight: 500,
                 color: theme.palette.text.primary

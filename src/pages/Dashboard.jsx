@@ -65,6 +65,14 @@ const Dashboard = () => {
   const [paymentModeData, setPaymentModeData] = useState([]);
   const [costData, setCostData] = useState([]);
   
+  // Payment analysis chart data states
+  const [paymentTypeData, setPaymentTypeData] = useState([]);
+  const [paymentTimelineData, setPaymentTimelineData] = useState([]);
+  const [dueDateAnalysisData, setDueDateAnalysisData] = useState([]);
+  const [policyRenewalData, setPolicyRenewalData] = useState([]);
+  const [channelCollectionData, setChannelCollectionData] = useState([]);
+  const [collectionModeData, setCollectionModeData] = useState([]);
+  
   // Campaign data state
   const [campaignData, setCampaignData] = useState([]);
 
@@ -190,6 +198,59 @@ const Dashboard = () => {
     setCommunicationData(mockCommunicationData);
     setPaymentModeData(mockPaymentModeData);
     setCostData(mockCostData);
+
+    // Mock data for new payment analysis charts
+    const mockPaymentTypeData = [
+      { type: 'Annual Premium', value: 45, amount: 6210000, color: '#8884d8' },
+      { type: 'Quarterly Premium', value: 30, amount: 4140000, color: '#82ca9d' },
+      { type: 'Monthly Premium', value: 15, amount: 2070000, color: '#ffc658' },
+      { type: 'One-time Payment', value: 10, amount: 1380000, color: '#ff7300' }
+    ];
+
+    const mockPaymentTimelineData = [
+      { month: 'Jan', avgDays: 12, totalPayments: 145, onTimePayments: 125 },
+      { month: 'Feb', avgDays: 8, totalPayments: 132, onTimePayments: 118 },
+      { month: 'Mar', avgDays: 15, totalPayments: 168, onTimePayments: 142 },
+      { month: 'Apr', avgDays: 10, totalPayments: 156, onTimePayments: 140 },
+      { month: 'May', avgDays: 7, totalPayments: 174, onTimePayments: 162 },
+      { month: 'Jun', avgDays: 11, totalPayments: 148, onTimePayments: 130 }
+    ];
+
+    const mockDueDateAnalysisData = [
+      { category: 'Before Due Date', count: 680, percentage: 68, amount: 9380000, color: '#4caf50' },
+      { category: 'On Due Date', count: 180, percentage: 18, amount: 2484000, color: '#ff9800' },
+      { category: 'After Due Date', count: 140, percentage: 14, amount: 1932000, color: '#f44336' }
+    ];
+
+    const mockPolicyRenewalData = [
+      { policyType: 'Auto Insurance', pending: 245, collected: 680, total: 925, collectionRate: 73.5, amount: 8520000 },
+      { policyType: 'Health Insurance', pending: 180, collected: 520, total: 700, collectionRate: 74.3, amount: 7240000 },
+      { policyType: 'Life Insurance', pending: 120, collected: 380, total: 500, collectionRate: 76.0, amount: 5700000 },
+      { policyType: 'Home Insurance', pending: 85, collected: 215, total: 300, collectionRate: 71.7, amount: 3180000 }
+    ];
+
+    const mockChannelCollectionData = [
+      { channel: 'Online Portal', collected: 4250000, target: 5000000, percentage: 85, policies: 425 },
+      { channel: 'Mobile App', collected: 3180000, target: 3500000, percentage: 90.9, policies: 318 },
+      { channel: 'Branch Office', collected: 2840000, target: 3200000, percentage: 88.8, policies: 284 },
+      { channel: 'Agent Network', collected: 2460000, target: 3000000, percentage: 82.0, policies: 246 },
+      { channel: 'Call Center', collected: 1870000, target: 2200000, percentage: 85.0, policies: 187 }
+    ];
+
+    const mockCollectionModeData = [
+      { mode: 'Credit Card', amount: 3850000, count: 385, percentage: 28, avgAmount: 10000, color: '#2196f3' },
+      { mode: 'UPI/Digital', amount: 3300000, count: 550, percentage: 24, avgAmount: 6000, color: '#4caf50' },
+      { mode: 'Net Banking', amount: 2750000, count: 275, percentage: 20, avgAmount: 10000, color: '#ff9800' },
+      { mode: 'Branch Cash', amount: 2200000, count: 220, percentage: 16, avgAmount: 10000, color: '#9c27b0' },
+      { mode: 'Agent Collection', amount: 1650000, count: 165, percentage: 12, avgAmount: 10000, color: '#f44336' }
+    ];
+
+    setPaymentTypeData(mockPaymentTypeData);
+    setPaymentTimelineData(mockPaymentTimelineData);
+    setDueDateAnalysisData(mockDueDateAnalysisData);
+    setPolicyRenewalData(mockPolicyRenewalData);
+    setChannelCollectionData(mockChannelCollectionData);
+    setCollectionModeData(mockCollectionModeData);
 
     // Mock campaign data
     const mockCampaignData = [
@@ -1044,6 +1105,250 @@ const Dashboard = () => {
                     <Bar yAxisId="left" dataKey="costPerRenewal" fill={alpha(theme.palette.warning.main, 0.8)} name="Cost per Renewal (₹)" />
                     <Bar yAxisId="right" dataKey="totalCost" fill={alpha(theme.palette.error.main, 0.8)} name="Total Cost (₹)" />
                   </BarChart>
+                </ResponsiveContainer>
+              </Paper>
+            </Grow>
+          </Grid>
+        </Grid>
+
+        {/* Payment Analysis Charts */}
+        <Typography variant="h5" gutterBottom sx={{ mt: 6, mb: 3, fontWeight: 600 }}>
+          Payment & Collection Analysis
+        </Typography>
+        
+        <Grid container spacing={3} sx={{ mb: 6 }}>
+          {/* Payment Type Breakdown */}
+          <Grid item xs={12} md={6}>
+            <Grow in={loaded} style={{ transformOrigin: '0 0 0' }} timeout={1200}>
+              <Paper sx={{ p: 3, height: 400, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+                <Typography variant="h6" gutterBottom fontWeight="600">
+                  Payment Type Breakdown
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Distribution of premium payment frequencies
+                </Typography>
+                <ResponsiveContainer width="100%" height="85%">
+                  <PieChart>
+                    <Pie
+                      data={paymentTypeData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ type, value }) => `${type}: ${value}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {paymentTypeData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value, name) => [`${value}%`, name]} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </Paper>
+            </Grow>
+          </Grid>
+
+          {/* Average Payment Timeline */}
+          <Grid item xs={12} md={6}>
+            <Grow in={loaded} style={{ transformOrigin: '0 0 0' }} timeout={1300}>
+              <Paper sx={{ p: 3, height: 400, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+                <Typography variant="h6" gutterBottom fontWeight="600">
+                  Average Payment Timeline
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Average days to receive payment from due date
+                </Typography>
+                <ResponsiveContainer width="100%" height="85%">
+                  <LineChart data={paymentTimelineData}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: theme.palette.mode === 'dark' ? '#2a2a2a' : '#fff',
+                        borderRadius: 8,
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                      }} 
+                    />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="avgDays" 
+                      stroke={theme.palette.primary.main} 
+                      strokeWidth={3}
+                      name="Avg Days to Payment"
+                      dot={{ fill: theme.palette.primary.main, strokeWidth: 2, r: 4 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </Paper>
+            </Grow>
+          </Grid>
+
+          {/* Due Date Analysis */}
+          <Grid item xs={12} md={6}>
+            <Grow in={loaded} style={{ transformOrigin: '0 0 0' }} timeout={1400}>
+              <Paper sx={{ p: 3, height: 400, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+                <Typography variant="h6" gutterBottom fontWeight="600">
+                  Payment Due Date Analysis
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Payment timing relative to due dates
+                </Typography>
+                <ResponsiveContainer width="100%" height="85%">
+                  <BarChart data={dueDateAnalysisData} layout="horizontal">
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                    <XAxis type="number" />
+                    <YAxis dataKey="category" type="category" width={120} />
+                    <Tooltip 
+                      formatter={(value, name) => [value, name]}
+                      contentStyle={{ 
+                        backgroundColor: theme.palette.mode === 'dark' ? '#2a2a2a' : '#fff',
+                        borderRadius: 8,
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                      }} 
+                    />
+                    <Legend />
+                    <Bar 
+                      dataKey="count" 
+                      fill={({ payload }) => payload?.color || '#8884d8'}
+                      name="Payment Count"
+                      radius={[0, 4, 4, 0]}
+                    >
+                      {dueDateAnalysisData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </Paper>
+            </Grow>
+          </Grid>
+
+          {/* Policy-wise Renewal & Collection */}
+          <Grid item xs={12} md={6}>
+            <Grow in={loaded} style={{ transformOrigin: '0 0 0' }} timeout={1500}>
+              <Paper sx={{ p: 3, height: 400, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+                <Typography variant="h6" gutterBottom fontWeight="600">
+                  Policy-wise Renewal & Collection
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Collection rates by insurance policy type
+                </Typography>
+                <ResponsiveContainer width="100%" height="85%">
+                  <BarChart data={policyRenewalData}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                    <XAxis dataKey="policyType" angle={-45} textAnchor="end" height={80} />
+                    <YAxis />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: theme.palette.mode === 'dark' ? '#2a2a2a' : '#fff',
+                        borderRadius: 8,
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                      }} 
+                    />
+                    <Legend />
+                    <Bar 
+                      dataKey="pending" 
+                      stackId="a"
+                      fill={alpha(theme.palette.warning.main, 0.8)} 
+                      name="Pending" 
+                      radius={[0, 0, 0, 0]} 
+                    />
+                    <Bar 
+                      dataKey="collected" 
+                      stackId="a"
+                      fill={alpha(theme.palette.success.main, 0.8)} 
+                      name="Collected" 
+                      radius={[4, 4, 0, 0]} 
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Paper>
+            </Grow>
+          </Grid>
+
+          {/* Channel-wise Collection */}
+          <Grid item xs={12} md={6}>
+            <Grow in={loaded} style={{ transformOrigin: '0 0 0' }} timeout={1600}>
+              <Paper sx={{ p: 3, height: 400, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+                <Typography variant="h6" gutterBottom fontWeight="600">
+                  Channel-wise Collection Performance
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Collection achievement vs targets by channel
+                </Typography>
+                <ResponsiveContainer width="100%" height="85%">
+                  <BarChart data={channelCollectionData}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                    <XAxis dataKey="channel" angle={-45} textAnchor="end" height={80} />
+                    <YAxis />
+                    <Tooltip 
+                      formatter={(value, name) => [`₹${(value/100000).toFixed(1)}L`, name]}
+                      contentStyle={{ 
+                        backgroundColor: theme.palette.mode === 'dark' ? '#2a2a2a' : '#fff',
+                        borderRadius: 8,
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                      }} 
+                    />
+                    <Legend />
+                    <Bar 
+                      dataKey="target" 
+                      fill={alpha(theme.palette.info.main, 0.3)} 
+                      name="Target (₹)" 
+                      radius={[4, 4, 0, 0]} 
+                    />
+                    <Bar 
+                      dataKey="collected" 
+                      fill={alpha(theme.palette.success.main, 0.8)} 
+                      name="Collected (₹)" 
+                      radius={[4, 4, 0, 0]} 
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Paper>
+            </Grow>
+          </Grid>
+
+          {/* Collection Mode Analysis */}
+          <Grid item xs={12} md={6}>
+            <Grow in={loaded} style={{ transformOrigin: '0 0 0' }} timeout={1700}>
+              <Paper sx={{ p: 3, height: 400, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+                <Typography variant="h6" gutterBottom fontWeight="600">
+                  Collection Mode Distribution
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Payment methods used by customers (CC, Branch, Bank, Agent)
+                </Typography>
+                <ResponsiveContainer width="100%" height="85%">
+                  <PieChart>
+                    <Pie
+                      data={collectionModeData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ mode, percentage }) => `${mode}: ${percentage}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="percentage"
+                    >
+                      {collectionModeData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value, name) => [`${value}%`, name]}
+                      contentStyle={{ 
+                        backgroundColor: theme.palette.mode === 'dark' ? '#2a2a2a' : '#fff',
+                        borderRadius: 8,
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                      }} 
+                    />
+                    <Legend />
+                  </PieChart>
                 </ResponsiveContainer>
               </Paper>
             </Grow>

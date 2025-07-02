@@ -10,6 +10,7 @@ import CaseTracking from './pages/CaseTracking';
 import ClosedCases from './pages/ClosedCases';
 import PolicyTimeline from './pages/PolicyTimeline';
 import CaseDetails from './pages/CaseDetails';
+import CommunicationDetails from './pages/CommunicationDetails';
 import Logs from './pages/Logs';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
@@ -28,6 +29,7 @@ import TemplateManager from './pages/TemplateManager';
 import Feedback from './pages/Feedback';
 import SurveyDesigner from './pages/SurveyDesigner';
 import Claims from './pages/Claims';
+import ClaimsHistory from './pages/ClaimsHistory';
 import PolicyServicing from './pages/PolicyServicing';
 import NewBusiness from './pages/NewBusiness';
 import MedicalManagement from './pages/MedicalManagement';
@@ -39,6 +41,7 @@ import { ThemeModeProvider, useThemeMode } from './context/ThemeModeContext.js';
 import { NotificationsProvider } from './context/NotificationsContext.js';
 import { PermissionsProvider } from './context/PermissionsContext.jsx';
 import SettingsProvider from './context/SettingsContext';
+import './i18n'; // Initialize i18n
 
 function AppWithTheme() {
   const { mode } = useThemeMode();
@@ -301,6 +304,22 @@ function AppWithTheme() {
               <ProtectedRoute>
                 <Layout>
                   <CaseDetails />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/communication-details/:caseId" element={
+              <ProtectedRoute>
+                <Layout>
+                  <CommunicationDetails />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/claims-history/:caseId" element={
+              <ProtectedRoute>
+                <Layout>
+                  <ClaimsHistory />
                 </Layout>
               </ProtectedRoute>
             } />

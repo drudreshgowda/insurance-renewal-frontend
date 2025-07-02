@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const AuthContext = createContext();
 
@@ -7,6 +8,52 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { i18n } = useTranslation();
+
+  // Function to apply user language preference
+  const applyUserLanguage = (user) => {
+    if (user && user.portalLanguage) {
+      i18n.changeLanguage(user.portalLanguage);
+      localStorage.setItem('userLanguagePreference', user.portalLanguage);
+    }
+  };
+
+  // Mock function to get user data from backend (including language preference)
+  const getUserData = (email) => {
+    // In a real app, this would fetch user data from your backend
+    // For demo purposes, we'll simulate different users with different language preferences
+    const mockUsers = {
+      'rajesh@client.com': {
+        id: '1',
+        name: 'Rajesh Kumar',
+        email: 'rajesh@client.com',
+        role: 'admin',
+        portalLanguage: 'hi' // Hindi preference
+      },
+      'priya@client.com': {
+        id: '2',
+        name: 'Priya Sharma',
+        email: 'priya@client.com',
+        role: 'user',
+        portalLanguage: 'bn' // Bengali preference
+      },
+      'admin@client.com': {
+        id: '3',
+        name: 'Admin User',
+        email: 'admin@client.com',
+        role: 'admin',
+        portalLanguage: 'en' // English preference
+      }
+    };
+    
+    return mockUsers[email] || {
+      id: '1',
+      name: 'Demo User',
+      email: email,
+      role: 'user',
+      portalLanguage: 'en' // Default to English
+    };
+  };
 
   useEffect(() => {
     // Check for existing session
@@ -16,13 +63,12 @@ export const AuthProvider = ({ children }) => {
         const token = localStorage.getItem('authToken');
         
         if (token) {
-          // Mock user data
-          setCurrentUser({
-            id: '1',
-            name: 'Rajesh Kumar',
-            email: 'rajesh@client.com',
-            role: 'admin'
-          });
+          // In a real app, you would decode the token to get user email/id
+          // For demo, we'll use a stored email or default
+          const storedEmail = localStorage.getItem('userEmail') || 'admin@client.com';
+          const userData = getUserData(storedEmail);
+          setCurrentUser(userData);
+          applyUserLanguage(userData);
         }
       } catch (error) {
         console.error('Auth check failed:', error);
@@ -51,12 +97,7 @@ export const AuthProvider = ({ children }) => {
         // In a real app, you would validate credentials here
         // For demo, we'll just consider any login attempt successful
         
-        const userData = {
-          id: '1',
-          name: 'Rajesh Kumar',
-          email: email,
-          role: 'admin'
-        };
+        const userData = getUserData(email);
         
         // For non-MFA logins, we need to set the token and user here
         const savedSettings = localStorage.getItem('userSettings');
@@ -75,7 +116,9 @@ export const AuthProvider = ({ children }) => {
         if (!mfaEnabled) {
           const mockToken = 'mock-jwt-token-' + Math.random().toString(36).substring(2);
           localStorage.setItem('authToken', mockToken);
+          localStorage.setItem('userEmail', email); // Store email for session persistence
           setCurrentUser(userData);
+          applyUserLanguage(userData);
         }
         
         resolve({ success: true, user: userData });
@@ -95,15 +138,12 @@ export const AuthProvider = ({ children }) => {
           localStorage.setItem('authToken', mockToken);
           
           // Note: userData would come from your backend in a real app
-          // Here we'll create it again with the same data as in login
-          const userData = {
-            id: '1',
-            name: 'Rajesh Kumar',
-            email: 'rajesh@client.com',
-            role: 'admin'
-          };
+          // Here we'll get it from the stored email
+          const storedEmail = localStorage.getItem('userEmail') || 'admin@client.com';
+          const userData = getUserData(storedEmail);
           
           setCurrentUser(userData);
+          applyUserLanguage(userData);
           resolve({ success: true, user: userData });
         } else {
           resolve({ success: false, message: 'Invalid OTP code. Please try again.' });
@@ -114,6 +154,8 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('authToken');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userLanguagePreference');
     setCurrentUser(null);
   };
 
