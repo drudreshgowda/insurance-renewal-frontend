@@ -63,7 +63,12 @@ import {
   AccountBalance as AccountBalanceIcon,
   MailOutline as MailOutlineIcon,
   WhatsApp as WhatsAppIcon,
-  ArrowCircleUp as ArrowCircleUpIcon
+  ArrowCircleUp as ArrowCircleUpIcon,
+  Sms as SmsIcon,
+  SmartToy as SmartToyIcon,
+  Language as LanguageIcon,
+  CalendarToday as CalendarTodayIcon,
+  Pending as PendingIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -753,7 +758,7 @@ const PolicyTimeline = () => {
                 
                 <Grid container spacing={3}>
                   {/* Communication Preferences */}
-                  <Grid item xs={12} md={4}>
+                  <Grid item xs={12} md={3}>
                     <Box sx={{ p: 3, bgcolor: alpha(theme.palette.primary.main, 0.04), borderRadius: 2, height: '100%' }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                         <ChatIcon color="primary" sx={{ mr: 1 }} />
@@ -804,6 +809,33 @@ const PolicyTimeline = () => {
                         
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <SmsIcon color="action" sx={{ mr: 1, fontSize: 20 }} />
+                            <Typography variant="body2">SMS</Typography>
+                          </Box>
+                          <Chip 
+                            label="Preferred" 
+                            size="small" 
+                            color="primary" 
+                            sx={{ fontWeight: 'medium', borderRadius: 5 }} 
+                          />
+                        </Box>
+                        
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <SmartToyIcon color="action" sx={{ mr: 1, fontSize: 20 }} />
+                            <Typography variant="body2">AI Call</Typography>
+                          </Box>
+                          <Chip 
+                            label="Accepted" 
+                            size="small" 
+                            variant="outlined"
+                            color="info" 
+                            sx={{ fontWeight: 'medium', borderRadius: 5 }} 
+                          />
+                        </Box>
+                        
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
                             <MailOutlineIcon color="action" sx={{ mr: 1, fontSize: 20 }} />
                             <Typography variant="body2">Postal Mail</Typography>
                           </Box>
@@ -820,7 +852,7 @@ const PolicyTimeline = () => {
                   </Grid>
                   
                   {/* Renewal Timeline Preferences */}
-                  <Grid item xs={12} md={4}>
+                  <Grid item xs={12} md={3}>
                     <Box sx={{ p: 3, bgcolor: alpha(theme.palette.primary.main, 0.04), borderRadius: 2, height: '100%' }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                         <AccessTimeIcon color="primary" sx={{ mr: 1 }} />
@@ -871,7 +903,7 @@ const PolicyTimeline = () => {
                   </Grid>
                   
                   {/* Payment Method Preferences */}
-                  <Grid item xs={12} md={4}>
+                  <Grid item xs={12} md={3}>
                     <Box sx={{ p: 3, bgcolor: alpha(theme.palette.primary.main, 0.04), borderRadius: 2, height: '100%' }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                         <PaymentsIcon color="primary" sx={{ mr: 1 }} />
@@ -911,6 +943,278 @@ const PolicyTimeline = () => {
                               size="small"
                               sx={{ borderRadius: 5 }}
                             />
+                          </Box>
+                        </Box>
+                      </Box>
+                    </Box>
+                  </Grid>
+                  
+                  {/* Language Preferences */}
+                  <Grid item xs={12} md={3}>
+                    <Box sx={{ p: 3, bgcolor: alpha(theme.palette.primary.main, 0.04), borderRadius: 2, height: '100%' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                        <LanguageIcon color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
+                          Language Preferences
+                        </Typography>
+                      </Box>
+                      
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                        <Box>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                            Preferred Language:
+                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <Box 
+                              sx={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: 1,
+                                p: 1.5, 
+                                bgcolor: alpha(theme.palette.primary.main, 0.1), 
+                                borderRadius: 2,
+                                border: '1px solid',
+                                borderColor: alpha(theme.palette.primary.main, 0.2)
+                              }}
+                            >
+                              <span style={{ fontSize: '20px' }}>🇮🇳</span>
+                              <Box>
+                                <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+                                  हिन्दी (Hindi)
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  Primary communication language
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </Box>
+                        </Box>
+                        
+                        <Box>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                            Alternative Languages:
+                          </Typography>
+                          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                            <Chip 
+                              label="🇬🇧 English"
+                              size="small"
+                              variant="outlined"
+                              sx={{ borderRadius: 5, fontWeight: 'medium' }}
+                            />
+                            <Chip 
+                              label="🇮🇳 मराठी"
+                              size="small"
+                              variant="outlined"
+                              sx={{ borderRadius: 5, fontWeight: 'medium' }}
+                            />
+                          </Box>
+                        </Box>
+                        
+                        <Box>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                            Document Language:
+                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Chip 
+                              label="Hindi & English"
+                              size="small"
+                              color="primary"
+                              sx={{ borderRadius: 5, fontWeight: 'medium' }}
+                            />
+                          </Box>
+                        </Box>
+                      </Box>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+          </Grow>
+        </Grid>
+
+        {/* Customer Payment Schedule */}
+        <Grid item xs={12} sx={{ mb: 4 }}>
+          <Grow in={loaded} timeout={850}>
+            <Card 
+              elevation={0}
+              sx={{ 
+                borderRadius: 3,
+                boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
+                overflow: 'visible',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 12px 32px rgba(0,0,0,0.1)'
+                }
+              }}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                  <CalendarTodayIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
+                  <Typography variant="h6" fontWeight="600">Customer Payment Schedule</Typography>
+                </Box>
+                <Divider sx={{ mb: 3 }} />
+                
+                <Grid container spacing={3}>
+                  {/* Upcoming Payments */}
+                  <Grid item xs={12} md={6}>
+                    <Box sx={{ p: 3, bgcolor: alpha(theme.palette.primary.main, 0.04), borderRadius: 2, height: '100%' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                        <EventIcon color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
+                          Upcoming Payments
+                        </Typography>
+                      </Box>
+                      
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        {/* Next Payment */}
+                        <Box 
+                          sx={{ 
+                            p: 2, 
+                            bgcolor: alpha(theme.palette.success.main, 0.1), 
+                            borderRadius: 2,
+                            border: '1px solid',
+                            borderColor: alpha(theme.palette.success.main, 0.2)
+                          }}
+                        >
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'success.main' }}>
+                              Next Payment Due
+                            </Typography>
+                            <Chip 
+                              label="7 days" 
+                              size="small" 
+                              color="success"
+                              sx={{ fontWeight: 'medium', borderRadius: 5 }} 
+                            />
+                          </Box>
+                          <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1 }}>
+                            ₹12,500
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Due Date: March 15, 2024
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Policy: Health Insurance Premium
+                          </Typography>
+                        </Box>
+                        
+                        {/* Subsequent Payments */}
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 1.5, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+                            <Box>
+                              <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+                                ₹8,750
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                Motor Insurance - Apr 20, 2024
+                              </Typography>
+                            </Box>
+                            <Chip 
+                              label="43 days" 
+                              size="small" 
+                              variant="outlined"
+                              sx={{ fontWeight: 'medium', borderRadius: 5 }} 
+                            />
+                          </Box>
+                          
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 1.5, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+                            <Box>
+                              <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+                                ₹15,200
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                Life Insurance - Jun 10, 2024
+                              </Typography>
+                            </Box>
+                            <Chip 
+                              label="94 days" 
+                              size="small" 
+                              variant="outlined"
+                              sx={{ fontWeight: 'medium', borderRadius: 5 }} 
+                            />
+                          </Box>
+                        </Box>
+                      </Box>
+                    </Box>
+                  </Grid>
+                  
+                  {/* Payment History & Patterns */}
+                  <Grid item xs={12} md={6}>
+                    <Box sx={{ p: 3, bgcolor: alpha(theme.palette.primary.main, 0.04), borderRadius: 2, height: '100%' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                        <PendingIcon color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
+                          Payment Patterns & History
+                        </Typography>
+                      </Box>
+                      
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                        {/* Payment Statistics */}
+                        <Box>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                            Payment Statistics (Last 12 Months):
+                          </Typography>
+                          <Grid container spacing={2}>
+                            <Grid item xs={6}>
+                              <Box sx={{ textAlign: 'center', p: 1.5, bgcolor: alpha(theme.palette.success.main, 0.1), borderRadius: 1 }}>
+                                <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'success.main' }}>
+                                  11/12
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  On-time Payments
+                                </Typography>
+                              </Box>
+                            </Grid>
+                            <Grid item xs={6}>
+                              <Box sx={{ textAlign: 'center', p: 1.5, bgcolor: alpha(theme.palette.info.main, 0.1), borderRadius: 1 }}>
+                                <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'info.main' }}>
+                                  ₹42,650
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  Total Paid
+                                </Typography>
+                              </Box>
+                            </Grid>
+                          </Grid>
+                        </Box>
+                        
+                        {/* Payment Behavior */}
+                        <Box>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                            Payment Behavior:
+                          </Typography>
+                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <Typography variant="body2">Average Payment Timing</Typography>
+                              <Chip 
+                                label="5 days early" 
+                                size="small" 
+                                color="success"
+                                variant="outlined"
+                                sx={{ fontWeight: 'medium', borderRadius: 5 }} 
+                              />
+                            </Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <Typography variant="body2">Preferred Payment Method</Typography>
+                              <Chip 
+                                label="Auto-debit" 
+                                size="small" 
+                                color="primary"
+                                variant="outlined"
+                                sx={{ fontWeight: 'medium', borderRadius: 5 }} 
+                              />
+                            </Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <Typography variant="body2">Late Payment History</Typography>
+                              <Chip 
+                                label="1 instance" 
+                                size="small" 
+                                color="warning"
+                                variant="outlined"
+                                sx={{ fontWeight: 'medium', borderRadius: 5 }} 
+                              />
+                            </Box>
                           </Box>
                         </Box>
                       </Box>
