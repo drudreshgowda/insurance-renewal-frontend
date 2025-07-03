@@ -775,3 +775,144 @@ export const fetchBatchStatus = async () => {
     }, 500);
   });
 };
+
+// Team and Team Member API calls
+export const fetchTeams = async () => {
+  // In a real app, this would call the API
+  // return apiRequest('/teams');
+  
+  // Mock implementation
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve([
+        {
+          id: 'team-1',
+          name: 'Sales Team',
+          description: 'Responsible for policy sales and renewals',
+          memberCount: 8
+        },
+        {
+          id: 'team-2',
+          name: 'Customer Service',
+          description: 'Handles customer inquiries and support',
+          memberCount: 12
+        },
+        {
+          id: 'team-3',
+          name: 'Claims Processing',
+          description: 'Processes insurance claims',
+          memberCount: 6
+        },
+        {
+          id: 'team-4',
+          name: 'Underwriting',
+          description: 'Risk assessment and policy underwriting',
+          memberCount: 5
+        },
+        {
+          id: 'team-5',
+          name: 'Regional North',
+          description: 'Northern region operations',
+          memberCount: 15
+        },
+        {
+          id: 'team-6',
+          name: 'Regional South',
+          description: 'Southern region operations',
+          memberCount: 18
+        }
+      ]);
+    }, 500);
+  });
+};
+
+export const fetchTeamMembers = async (teamId) => {
+  // In a real app, this would call the API
+  // return apiRequest(`/teams/${teamId}/members`);
+  
+  // Mock implementation
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const teamMembers = {
+        'team-1': [
+          { id: 'member-1', name: 'Alice Johnson', role: 'Senior Sales Executive', email: 'alice.johnson@company.com' },
+          { id: 'member-2', name: 'Bob Smith', role: 'Sales Manager', email: 'bob.smith@company.com' },
+          { id: 'member-3', name: 'Carol Davis', role: 'Sales Executive', email: 'carol.davis@company.com' },
+          { id: 'member-4', name: 'David Wilson', role: 'Sales Representative', email: 'david.wilson@company.com' },
+          { id: 'member-5', name: 'Emma Brown', role: 'Sales Executive', email: 'emma.brown@company.com' },
+          { id: 'member-6', name: 'Frank Miller', role: 'Sales Representative', email: 'frank.miller@company.com' },
+          { id: 'member-7', name: 'Grace Taylor', role: 'Senior Sales Executive', email: 'grace.taylor@company.com' },
+          { id: 'member-8', name: 'Henry Anderson', role: 'Sales Manager', email: 'henry.anderson@company.com' }
+        ],
+        'team-2': [
+          { id: 'member-9', name: 'Ivy Martinez', role: 'Customer Service Manager', email: 'ivy.martinez@company.com' },
+          { id: 'member-10', name: 'Jack Thompson', role: 'Senior Customer Service Rep', email: 'jack.thompson@company.com' },
+          { id: 'member-11', name: 'Karen White', role: 'Customer Service Representative', email: 'karen.white@company.com' },
+          { id: 'member-12', name: 'Leo Garcia', role: 'Customer Service Representative', email: 'leo.garcia@company.com' },
+          { id: 'member-13', name: 'Mia Rodriguez', role: 'Senior Customer Service Rep', email: 'mia.rodriguez@company.com' },
+          { id: 'member-14', name: 'Nathan Lee', role: 'Customer Service Representative', email: 'nathan.lee@company.com' },
+          { id: 'member-15', name: 'Olivia Clark', role: 'Customer Service Representative', email: 'olivia.clark@company.com' },
+          { id: 'member-16', name: 'Paul Lewis', role: 'Customer Service Representative', email: 'paul.lewis@company.com' },
+          { id: 'member-17', name: 'Quinn Walker', role: 'Customer Service Representative', email: 'quinn.walker@company.com' },
+          { id: 'member-18', name: 'Rachel Hall', role: 'Customer Service Representative', email: 'rachel.hall@company.com' },
+          { id: 'member-19', name: 'Sam Allen', role: 'Customer Service Representative', email: 'sam.allen@company.com' },
+          { id: 'member-20', name: 'Tina Young', role: 'Customer Service Representative', email: 'tina.young@company.com' }
+        ],
+        'team-3': [
+          { id: 'member-21', name: 'Uma Patel', role: 'Claims Manager', email: 'uma.patel@company.com' },
+          { id: 'member-22', name: 'Victor Kumar', role: 'Senior Claims Adjuster', email: 'victor.kumar@company.com' },
+          { id: 'member-23', name: 'Wendy Chen', role: 'Claims Adjuster', email: 'wendy.chen@company.com' },
+          { id: 'member-24', name: 'Xavier Singh', role: 'Claims Processor', email: 'xavier.singh@company.com' },
+          { id: 'member-25', name: 'Yara Sharma', role: 'Claims Specialist', email: 'yara.sharma@company.com' },
+          { id: 'member-26', name: 'Zoe Johnson', role: 'Claims Adjuster', email: 'zoe.johnson@company.com' }
+        ],
+        'team-4': [
+          { id: 'member-27', name: 'Adam Wilson', role: 'Underwriting Manager', email: 'adam.wilson@company.com' },
+          { id: 'member-28', name: 'Beth Cooper', role: 'Senior Underwriter', email: 'beth.cooper@company.com' },
+          { id: 'member-29', name: 'Chris Evans', role: 'Underwriter', email: 'chris.evans@company.com' },
+          { id: 'member-30', name: 'Diana Prince', role: 'Underwriter', email: 'diana.prince@company.com' },
+          { id: 'member-31', name: 'Ethan Hunt', role: 'Junior Underwriter', email: 'ethan.hunt@company.com' }
+        ],
+        'team-5': [
+          { id: 'member-32', name: 'Fiona Green', role: 'Regional Manager', email: 'fiona.green@company.com' },
+          { id: 'member-33', name: 'George Hill', role: 'Area Manager', email: 'george.hill@company.com' },
+          { id: 'member-34', name: 'Helen Stone', role: 'Branch Manager', email: 'helen.stone@company.com' },
+          { id: 'member-35', name: 'Ian Reed', role: 'Sales Representative', email: 'ian.reed@company.com' },
+          { id: 'member-36', name: 'Julia Fox', role: 'Sales Representative', email: 'julia.fox@company.com' },
+          { id: 'member-37', name: 'Kevin Moon', role: 'Sales Representative', email: 'kevin.moon@company.com' },
+          { id: 'member-38', name: 'Lisa Star', role: 'Sales Representative', email: 'lisa.star@company.com' },
+          { id: 'member-39', name: 'Mike Sun', role: 'Sales Representative', email: 'mike.sun@company.com' },
+          { id: 'member-40', name: 'Nina Sky', role: 'Sales Representative', email: 'nina.sky@company.com' },
+          { id: 'member-41', name: 'Oscar Rain', role: 'Sales Representative', email: 'oscar.rain@company.com' },
+          { id: 'member-42', name: 'Penny Cloud', role: 'Sales Representative', email: 'penny.cloud@company.com' },
+          { id: 'member-43', name: 'Quinn Storm', role: 'Sales Representative', email: 'quinn.storm@company.com' },
+          { id: 'member-44', name: 'Ruby Wind', role: 'Sales Representative', email: 'ruby.wind@company.com' },
+          { id: 'member-45', name: 'Steve Fire', role: 'Sales Representative', email: 'steve.fire@company.com' },
+          { id: 'member-46', name: 'Tara Ice', role: 'Sales Representative', email: 'tara.ice@company.com' }
+        ],
+        'team-6': [
+          { id: 'member-47', name: 'Uma Ocean', role: 'Regional Manager', email: 'uma.ocean@company.com' },
+          { id: 'member-48', name: 'Victor River', role: 'Area Manager', email: 'victor.river@company.com' },
+          { id: 'member-49', name: 'Wendy Lake', role: 'Branch Manager', email: 'wendy.lake@company.com' },
+          { id: 'member-50', name: 'Xavier Bay', role: 'Sales Representative', email: 'xavier.bay@company.com' },
+          { id: 'member-51', name: 'Yara Coast', role: 'Sales Representative', email: 'yara.coast@company.com' },
+          { id: 'member-52', name: 'Zoe Shore', role: 'Sales Representative', email: 'zoe.shore@company.com' },
+          { id: 'member-53', name: 'Alex Beach', role: 'Sales Representative', email: 'alex.beach@company.com' },
+          { id: 'member-54', name: 'Bella Wave', role: 'Sales Representative', email: 'bella.wave@company.com' },
+          { id: 'member-55', name: 'Carlos Tide', role: 'Sales Representative', email: 'carlos.tide@company.com' },
+          { id: 'member-56', name: 'Dora Surf', role: 'Sales Representative', email: 'dora.surf@company.com' },
+          { id: 'member-57', name: 'Eli Coral', role: 'Sales Representative', email: 'eli.coral@company.com' },
+          { id: 'member-58', name: 'Fay Pearl', role: 'Sales Representative', email: 'fay.pearl@company.com' },
+          { id: 'member-59', name: 'Gus Shell', role: 'Sales Representative', email: 'gus.shell@company.com' },
+          { id: 'member-60', name: 'Hana Reef', role: 'Sales Representative', email: 'hana.reef@company.com' },
+          { id: 'member-61', name: 'Ivan Deep', role: 'Sales Representative', email: 'ivan.deep@company.com' },
+          { id: 'member-62', name: 'Jade Blue', role: 'Sales Representative', email: 'jade.blue@company.com' },
+          { id: 'member-63', name: 'Kyle Azure', role: 'Sales Representative', email: 'kyle.azure@company.com' },
+          { id: 'member-64', name: 'Lara Aqua', role: 'Sales Representative', email: 'lara.aqua@company.com' }
+        ]
+      };
+      
+      resolve(teamMembers[teamId] || []);
+    }, 300);
+  });
+};

@@ -11,7 +11,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, 
   Tooltip, Legend, ResponsiveContainer, AreaChart, Area, LineChart, Line, PieChart, Pie, Cell
 } from 'recharts';
-import { fetchDashboardStats, fetchTrendData, fetchBatchStatus } from '../services/api';
+import { fetchDashboardStats, fetchTrendData, fetchBatchStatus, fetchTeams, fetchTeamMembers } from '../services/api';
 import { 
   Timeline as TimelineIcon,
   Policy as PolicyIcon, 
@@ -32,7 +32,9 @@ import {
   Sms as SmsIcon,
   PlayArrow as PlayIcon,
   Pause as PauseIcon,
-  Visibility as ViewIcon
+  Visibility as ViewIcon,
+  Group as TeamIcon,
+  Person as MemberIcon
 } from '@mui/icons-material';
 
 const Dashboard = () => {
@@ -56,6 +58,10 @@ const Dashboard = () => {
   const [selectedBatch, setSelectedBatch] = useState('all');
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
+  const [selectedTeam, setSelectedTeam] = useState('all');
+  const [selectedTeamMember, setSelectedTeamMember] = useState('all');
+  const [teams, setTeams] = useState([]);
+  const [teamMembers, setTeamMembers] = useState([]);
 
   // New chart data states
   const [channelData, setChannelData] = useState([]);
@@ -79,7 +85,7 @@ const Dashboard = () => {
   // Memoize the loadDashboardData function to avoid recreating it on every render
   const loadDashboardData = useCallback(async () => {
     try {
-      const statsData = await fetchDashboardStats(dateRange, policyType, caseStatus, startDate, endDate);
+      const statsData = await fetchDashboardStats(dateRange, policyType, caseStatus, startDate, endDate, selectedTeam, selectedTeamMember);
       if (statsData) {
         setStats(prev => ({
           ...prev,
@@ -87,7 +93,7 @@ const Dashboard = () => {
         }));
       }
       
-      const trends = await fetchTrendData(dateRange, policyType, caseStatus, startDate, endDate);
+      const trends = await fetchTrendData(dateRange, policyType, caseStatus, startDate, endDate, selectedTeam, selectedTeamMember);
       if (trends && Array.isArray(trends)) {
         setTrendData(trends);
       }
@@ -100,7 +106,44 @@ const Dashboard = () => {
     } catch (error) {
               // Failed to load dashboard data
     }
-  }, [dateRange, policyType, caseStatus, startDate, endDate]);
+  }, [dateRange, policyType, caseStatus, startDate, endDate, selectedTeam, selectedTeamMember]);
+
+  // Load teams on component mount
+  useEffect(() => {
+    const loadTeams = async () => {
+      try {
+        const teamsData = await fetchTeams();
+        if (teamsData && Array.isArray(teamsData)) {
+          setTeams(teamsData);
+        }
+      } catch (error) {
+        console.error('Failed to load teams:', error);
+      }
+    };
+    
+    loadTeams();
+  }, []);
+
+  // Load team members when team is selected
+  useEffect(() => {
+    const loadTeamMembers = async () => {
+      if (selectedTeam && selectedTeam !== 'all') {
+        try {
+          const membersData = await fetchTeamMembers(selectedTeam);
+          if (membersData && Array.isArray(membersData)) {
+            setTeamMembers(membersData);
+          }
+        } catch (error) {
+          console.error('Failed to load team members:', error);
+        }
+      } else {
+        setTeamMembers([]);
+        setSelectedTeamMember('all');
+      }
+    };
+    
+    loadTeamMembers();
+  }, [selectedTeam]);
 
   useEffect(() => {
     // Initialize with default values to prevent NaN issues
@@ -537,7 +580,112 @@ const Dashboard = () => {
                   <MenuItem value="failed">Failed</MenuItem>
                 </Select>
               </FormControl>
+              
+              <FormControl sx={{ minWidth: 160 }} size="small">
+                <InputLabel>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <TeamIcon fontSize="small" />
+                    Team
+                  </Box>
+                </InputLabel>
+                <Select
+                  value={selectedTeam}
+                  label="Team"
+                  onChange={(e) => {
+                    setSelectedTeam(e.target.value);
+                    setSelectedTeamMember('all'); // Reset team member when team changes
+                  }}
+                >
+                  <MenuItem value="all">
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <TeamIcon fontSize="small" color="action" />
+                      All Teams
+                    </Box>
+                  </MenuItem>
+                  {teams.map((team) => (
+                    <MenuItem key={team.id} value={team.id}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <TeamIcon fontSize="small" color="primary" />
+                        <Box>
+                          <Typography variant="body2">{team.name}</Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {team.memberCount} members
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              
+              {selectedTeam !== 'all' && teamMembers.length > 0 && (
+                <FormControl sx={{ minWidth: 180 }} size="small">
+                  <InputLabel>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <MemberIcon fontSize="small" />
+                      Team Member
+                    </Box>
+                  </InputLabel>
+                  <Select
+                    value={selectedTeamMember}
+                    label="Team Member"
+                    onChange={(e) => setSelectedTeamMember(e.target.value)}
+                  >
+                    <MenuItem value="all">
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <MemberIcon fontSize="small" color="action" />
+                        All Members
+                      </Box>
+                    </MenuItem>
+                    {teamMembers.map((member) => (
+                      <MenuItem key={member.id} value={member.id}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <MemberIcon fontSize="small" color="primary" />
+                          <Box>
+                            <Typography variant="body2">{member.name}</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {member.role}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
             </Box>
+            
+            {/* Active Filters Summary */}
+            {(selectedTeam !== 'all' || selectedTeamMember !== 'all') && (
+              <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                <Typography variant="body2" color="text.secondary">
+                  Active Filters:
+                </Typography>
+                {selectedTeam !== 'all' && (
+                  <Chip
+                    icon={<TeamIcon fontSize="small" />}
+                    label={`Team: ${teams.find(t => t.id === selectedTeam)?.name || 'Unknown'}`}
+                    variant="outlined"
+                    color="primary"
+                    size="small"
+                    onDelete={() => {
+                      setSelectedTeam('all');
+                      setSelectedTeamMember('all');
+                    }}
+                  />
+                )}
+                {selectedTeamMember !== 'all' && (
+                  <Chip
+                    icon={<MemberIcon fontSize="small" />}
+                    label={`Member: ${teamMembers.find(m => m.id === selectedTeamMember)?.name || 'Unknown'}`}
+                    variant="outlined"
+                    color="secondary"
+                    size="small"
+                    onDelete={() => setSelectedTeamMember('all')}
+                  />
+                )}
+              </Box>
+            )}
           </CardContent>
         </Card>
         
