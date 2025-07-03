@@ -144,7 +144,7 @@ const CaseDetails = () => {
 
   return (
     <Fade in={true} timeout={800}>
-      <Box sx={{ maxWidth: 1200, margin: '0 auto', p: 3 }}>
+      <Box sx={{ p: 3 }}>
         {/* Header */}
         <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
           <Zoom in={loaded} style={{ transitionDelay: '100ms' }}>
