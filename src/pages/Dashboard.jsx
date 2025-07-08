@@ -586,7 +586,7 @@ const Dashboard = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     <TeamIcon fontSize="small" />
                     Team
-                  </Box>
+            </Box>
                 </InputLabel>
                 <Select
                   value={selectedTeam}

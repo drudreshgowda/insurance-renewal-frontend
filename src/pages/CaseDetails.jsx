@@ -26,7 +26,20 @@ import {
   Grow,
   Fade,
   Zoom,
-  alpha
+  alpha,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormControlLabel,
+  Radio,
+  RadioGroup,
+  CircularProgress,
+  Snackbar
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -60,7 +73,12 @@ import {
   CalendarToday as CalendarTodayIcon,
   Event as EventIcon,
   Pending as PendingIcon,
-  ArrowForward as ArrowForwardIcon
+  ArrowForward as ArrowForwardIcon,
+  Send as SendIcon,
+  Notifications as NotificationsIcon,
+  Link as LinkIcon,
+  Close as CloseIcon,
+  Payment as PaymentIcon
 } from '@mui/icons-material';
 import { useSettings } from '../context/SettingsContext';
 import { useTheme } from '@mui/material/styles';
@@ -76,6 +94,11 @@ const CaseDetails = () => {
   const [comment, setComment] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [loaded, setLoaded] = useState(false);
+  const [renewalNoticeDialog, setRenewalNoticeDialog] = useState(false);
+  const [selectedChannel, setSelectedChannel] = useState('whatsapp');
+  const [customMessage, setCustomMessage] = useState('');
+  const [sendingNotice, setSendingNotice] = useState(false);
+  const [messageType, setMessageType] = useState('renewal_notice');
 
   useEffect(() => {
     const fetchCaseDetails = async () => {
@@ -140,6 +163,69 @@ const CaseDetails = () => {
       case 'pending': return 'warning';
       default: return 'default';
     }
+  };
+
+  const getDefaultMessage = (channel, type) => {
+    const customerName = caseData?.customerName || 'Customer';
+    const policyNumber = caseData?.policyNumber || 'Policy';
+    const expiryDate = caseData?.policyDetails?.expiryDate || 'Soon';
+    const premium = caseData?.policyDetails?.premium || 'N/A';
+    const policyType = caseData?.policyDetails?.type || 'Insurance';
+    
+    const renewalMessages = {
+      whatsapp: `🔔 *Renewal Reminder*\n\nDear ${customerName},\n\nYour ${policyType} policy (${policyNumber}) is expiring on ${expiryDate}.\n\n📋 *Policy Details:*\n• Premium: ₹${premium}\n• Coverage: ${policyType}\n• Expiry: ${expiryDate}\n\n📞 Need assistance? Call us at 1800-XXX-XXXX\n\nThanks,\nIntelipro Insurance Team`,
+      sms: `RENEWAL ALERT: Dear ${customerName}, your policy ${policyNumber} expires on ${expiryDate}. Premium: ₹${premium}. Call 1800-XXX-XXXX for renewal. -Intelipro Insurance`,
+      email: `Subject: Renewal Reminder - ${policyType} Policy ${policyNumber}\n\nDear ${customerName},\n\nThis is a friendly reminder that your ${policyType} policy (${policyNumber}) is due for renewal on ${expiryDate}.\n\nPolicy Details:\n- Policy Number: ${policyNumber}\n- Premium: ₹${premium}\n- Coverage: ${policyType}\n- Expiry Date: ${expiryDate}\n\nTo proceed with renewal, please contact us at 1800-XXX-XXXX or visit our nearest branch.\n\nWe appreciate your continued trust in our services.\n\nBest regards,\nIntelipro Insurance Team`
+    };
+
+    const paymentMessages = {
+      whatsapp: `💳 *Payment Link - Policy Renewal*\n\nDear ${customerName},\n\nYour ${policyType} policy (${policyNumber}) renewal payment is ready.\n\n💰 *Amount: ₹${premium}*\n\n🔗 *Secure Payment Link:*\n[Payment Link]\n\n✅ *Benefits:*\n• Instant policy activation\n• Secure payment gateway\n• 24/7 customer support\n\n⏰ Link expires in 48 hours\n\nThanks,\nIntelipro Insurance Team`,
+      sms: `PAYMENT LINK: Dear ${customerName}, renew policy ${policyNumber} (₹${premium}). Secure link: [Payment Link]. Expires in 48hrs. -Intelipro Insurance`,
+      email: `Subject: Secure Payment Link - Renew Policy ${policyNumber}\n\nDear ${customerName},\n\nYour ${policyType} policy renewal payment is now ready for processing.\n\nPayment Details:\n- Policy Number: ${policyNumber}\n- Premium Amount: ₹${premium}\n- Policy Type: ${policyType}\n- Expiry Date: ${expiryDate}\n\nSecure Payment Link:\n[Payment Link]\n\nImportant Notes:\n• This link is valid for 48 hours\n• Your policy will be activated immediately after payment\n• You will receive a confirmation email after successful payment\n• For any assistance, call us at 1800-XXX-XXXX\n\nThank you for choosing Intelipro Insurance.\n\nBest regards,\nIntelipro Insurance Team`
+    };
+    
+    const messages = type === 'payment_link' ? paymentMessages : renewalMessages;
+    return messages[channel] || messages.whatsapp;
+  };
+
+  const handleSendRenewalNotice = async () => {
+    setSendingNotice(true);
+    
+    try {
+      // Simulate API call for sending renewal notice or payment link
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // In a real app, this would call an API endpoint
+      // await sendRenewalNotice(caseData.id, selectedChannel, customMessage || getDefaultMessage(selectedChannel, messageType), messageType);
+      
+      const messageTypeText = messageType === 'payment_link' ? 'Payment link' : 'Renewal notice';
+      setSuccessMessage(`${messageTypeText} sent successfully via ${selectedChannel.toUpperCase()}!`);
+      setRenewalNoticeDialog(false);
+      setCustomMessage('');
+      
+      // Add to case history
+      const newHistoryEntry = {
+        date: new Date().toISOString(),
+        action: `${messageTypeText} Sent`,
+        details: `${messageTypeText} sent via ${selectedChannel.toUpperCase()} to ${caseData.contactInfo.email || caseData.contactInfo.phone}`,
+        user: 'Current User'
+      };
+      
+      setCaseData(prev => ({
+        ...prev,
+        history: [newHistoryEntry, ...prev.history]
+      }));
+      
+    } catch (error) {
+      setError(`Failed to send ${messageType === 'payment_link' ? 'payment link' : 'renewal notice'}. Please try again.`);
+    } finally {
+      setSendingNotice(false);
+    }
+  };
+
+  const handleOpenRenewalDialog = () => {
+    setCustomMessage(getDefaultMessage(selectedChannel, messageType));
+    setRenewalNoticeDialog(true);
   };
 
   return (
@@ -213,29 +299,54 @@ const CaseDetails = () => {
               </Typography>
             </Stack>
           </Box>
-          {settings?.showEditCaseButton !== false && (
+          <Stack direction="row" spacing={2}>
             <Zoom in={loaded} style={{ transitionDelay: '200ms' }}>
-              <Button
-                variant="contained"
-                startIcon={<EditIcon />}
-                onClick={() => {}}
-                sx={{
-                  borderRadius: 2,
-                  py: 1.2,
-                  px: 3,
-                  fontWeight: 600,
-                  boxShadow: '0 4px 14px rgba(0,118,255,0.25)',
-                  transition: 'transform 0.2s, box-shadow 0.2s',
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 6px 20px rgba(0,118,255,0.35)',
-                  }
-                }}
-              >
-                Edit Case
-              </Button>
+              <Tooltip title="Send Renewal Notice or Payment Link">
+                <Button
+                  variant="contained"
+                  startIcon={<NotificationsIcon />}
+                  onClick={handleOpenRenewalDialog}
+                  sx={{
+                    borderRadius: 3,
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                    background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                    '&:hover': {
+                      background: 'linear-gradient(45deg, #1976D2 30%, #1CB5E0 90%)',
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 6px 16px rgba(0,0,0,0.2)'
+                    }
+                  }}
+                >
+                  Send Communication
+                </Button>
+              </Tooltip>
             </Zoom>
-          )}
+            {settings?.showEditCaseButton !== false && (
+              <Zoom in={loaded} style={{ transitionDelay: '300ms' }}>
+                <Button
+                  variant="contained"
+                  startIcon={<EditIcon />}
+                  onClick={() => {}}
+                  sx={{
+                    borderRadius: 2,
+                    py: 1.2,
+                    px: 3,
+                    fontWeight: 600,
+                    boxShadow: '0 4px 14px rgba(0,118,255,0.25)',
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 6px 20px rgba(0,118,255,0.35)',
+                    }
+                  }}
+                >
+                  Edit Case
+                </Button>
+              </Zoom>
+            )}
+          </Stack>
         </Box>
 
         {successMessage && (
@@ -319,17 +430,17 @@ const CaseDetails = () => {
                     <Typography variant="h6" fontWeight="600">Policy Information</Typography>
                   </Box>
                   <Divider sx={{ mb: 3 }} />
-                  <Grid container spacing={3}>
+                  <Grid container spacing={4}>
                     <Grid item xs={12} sm={6} md={3}>
-                      <Stack spacing={3}>
+                      <Stack spacing={2.5}>
                         <Box>
-                          <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                          <Typography variant="subtitle2" color="text.secondary" gutterBottom sx={{ mb: 0.5 }}>
                             Policy Number
                           </Typography>
                           <Typography variant="body1" fontWeight="500">{caseData.policyNumber}</Typography>
                         </Box>
                         <Box>
-                          <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                          <Typography variant="subtitle2" color="text.secondary" gutterBottom sx={{ mb: 0.5 }}>
                             Policy Type
                           </Typography>
                           <Typography variant="body1" fontWeight="500">{caseData.policyDetails.type}</Typography>
@@ -337,9 +448,9 @@ const CaseDetails = () => {
                       </Stack>
                     </Grid>
                     <Grid item xs={12} sm={6} md={3}>
-                      <Stack spacing={3}>
+                      <Stack spacing={2.5}>
                         <Box>
-                          <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                          <Typography variant="subtitle2" color="text.secondary" gutterBottom sx={{ mb: 0.5 }}>
                             Premium
                           </Typography>
                           <Typography variant="body1" fontWeight="500">
@@ -347,7 +458,7 @@ const CaseDetails = () => {
                           </Typography>
                         </Box>
                         <Box>
-                          <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                          <Typography variant="subtitle2" color="text.secondary" gutterBottom sx={{ mb: 0.5 }}>
                             Expiry Date
                           </Typography>
                           <Typography variant="body1" fontWeight="500">
@@ -357,9 +468,9 @@ const CaseDetails = () => {
                       </Stack>
                     </Grid>
                     <Grid item xs={12} sm={6} md={3}>
-                      <Stack spacing={3}>
+                      <Stack spacing={2.5}>
                         <Box>
-                          <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                          <Typography variant="subtitle2" color="text.secondary" gutterBottom sx={{ mb: 0.5 }}>
                             Annual Income
                           </Typography>
                           <Typography variant="body1" fontWeight="500">
@@ -367,7 +478,7 @@ const CaseDetails = () => {
                           </Typography>
                         </Box>
                         <Box>
-                          <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                          <Typography variant="subtitle2" color="text.secondary" gutterBottom sx={{ mb: 0.5 }}>
                             Channel Partner
                           </Typography>
                           <Typography variant="body1" fontWeight="500">
@@ -377,6 +488,30 @@ const CaseDetails = () => {
                              'Online Portal - Direct Sales'}
                           </Typography>
                         </Box>
+                      </Stack>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Stack spacing={2.5}>
+                        {caseData.policyProposer && (
+                          <Box>
+                            <Typography variant="subtitle2" color="text.secondary" gutterBottom sx={{ mb: 0.5 }}>
+                              Policy Proposer
+                            </Typography>
+                            <Typography variant="body1" fontWeight="500">
+                              {caseData.policyProposer.name}
+                            </Typography>
+                          </Box>
+                        )}
+                        {caseData.lifeAssured && (
+                          <Box>
+                            <Typography variant="subtitle2" color="text.secondary" gutterBottom sx={{ mb: 0.5 }}>
+                              Life Assured
+                            </Typography>
+                            <Typography variant="body1" fontWeight="500">
+                              {caseData.lifeAssured.name}
+                            </Typography>
+                          </Box>
+                        )}
                       </Stack>
                     </Grid>
                   </Grid>
@@ -579,6 +714,262 @@ const CaseDetails = () => {
               </Card>
             </Grow>
           </Grid>
+
+          {/* Policy Members Details - Only for Health Insurance */}
+          {caseData.policyDetails.type === 'Health' && caseData.policyMembers && (
+            <Grid item xs={12}>
+              <Grow in={loaded} timeout={575}>
+                <Card 
+                  elevation={0}
+                  sx={{ 
+                    borderRadius: 3,
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
+                    overflow: 'visible',
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: '0 12px 32px rgba(0,0,0,0.1)'
+                    }
+                  }}
+                >
+                  <CardContent sx={{ p: 3 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                      <PersonIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
+                      <Typography variant="h6" fontWeight="600">Policy Members Details</Typography>
+                      <Chip 
+                        label={`${caseData.policyMembers.length} Members`} 
+                        size="small" 
+                        color="primary" 
+                        sx={{ ml: 2 }}
+                      />
+                    </Box>
+                    <Divider sx={{ mb: 3 }} />
+                    
+                    <Grid container spacing={3}>
+                      {caseData.policyMembers.map((member, index) => (
+                        <Grid item xs={12} md={6} lg={4} key={member.id}>
+                          <Zoom in={loaded} timeout={600 + (index * 100)}>
+                            <Card 
+                              variant="outlined" 
+                              sx={{ 
+                                height: '100%',
+                                borderRadius: 2,
+                                border: '2px solid',
+                                borderColor: member.relationship === 'Self' ? 'primary.main' : 'divider',
+                                transition: 'all 0.3s ease',
+                                '&:hover': {
+                                  borderColor: 'primary.main',
+                                  transform: 'translateY(-2px)',
+                                  boxShadow: '0 8px 24px rgba(0,0,0,0.1)'
+                                }
+                              }}
+                            >
+                              <CardContent sx={{ p: 2.5 }}>
+                                {/* Member Header */}
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                  <Avatar 
+                                    sx={{ 
+                                      bgcolor: member.relationship === 'Self' ? 'primary.main' : 'secondary.main',
+                                      width: 48,
+                                      height: 48,
+                                      mr: 2,
+                                      fontSize: '1.2rem',
+                                      fontWeight: 'bold'
+                                    }}
+                                  >
+                                    {member.name.split(' ').map(n => n[0]).join('')}
+                                  </Avatar>
+                                  <Box sx={{ flex: 1 }}>
+                                    <Typography variant="h6" fontWeight="600" sx={{ fontSize: '1.1rem' }}>
+                                      {member.name}
+                                    </Typography>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                      <Chip 
+                                        label={member.relationship} 
+                                        size="small" 
+                                        color={member.relationship === 'Self' ? 'primary' : 'default'}
+                                        sx={{ fontSize: '0.75rem' }}
+                                      />
+                                      <Typography variant="caption" color="text.secondary">
+                                        {member.age} years
+                                      </Typography>
+                                    </Box>
+                                  </Box>
+                                </Box>
+
+                                {/* Member Details */}
+                                <Stack spacing={1.5}>
+                                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                      Date of Birth:
+                                    </Typography>
+                                    <Typography variant="body2" fontWeight="500">
+                                      {new Date(member.dateOfBirth).toLocaleDateString('en-IN')}
+                                    </Typography>
+                                  </Box>
+                                  
+                                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                      Gender:
+                                    </Typography>
+                                    <Typography variant="body2" fontWeight="500">
+                                      {member.gender}
+                                    </Typography>
+                                  </Box>
+                                  
+                                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                      Sum Insured:
+                                    </Typography>
+                                    <Typography variant="body2" fontWeight="600" color="primary.main">
+                                      {member.sumInsured}
+                                    </Typography>
+                                  </Box>
+                                  
+                                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                      Premium Share:
+                                    </Typography>
+                                    <Typography variant="body2" fontWeight="500" color="success.main">
+                                      {member.premiumContribution}
+                                    </Typography>
+                                  </Box>
+                                  
+                                  <Divider sx={{ my: 1 }} />
+                                  
+                                  {/* Medical History */}
+                                  <Box>
+                                    <Typography variant="subtitle2" fontWeight="600" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
+                                      <HealthAndSafetyIcon fontSize="small" sx={{ mr: 0.5 }} />
+                                      Medical History
+                                    </Typography>
+                                    {member.medicalHistory && member.medicalHistory.length > 0 ? (
+                                      <Stack spacing={0.5}>
+                                        {member.medicalHistory.map((condition, idx) => (
+                                          <Typography key={idx} variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                                            • {condition}
+                                          </Typography>
+                                        ))}
+                                      </Stack>
+                                    ) : (
+                                      <Typography variant="caption" color="text.secondary">
+                                        No medical history recorded
+                                      </Typography>
+                                    )}
+                                  </Box>
+                                  
+                                  <Divider sx={{ my: 1 }} />
+                                  
+                                  {/* Last Claim Info */}
+                                  <Box>
+                                    <Typography variant="subtitle2" fontWeight="600" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
+                                      <PaymentsIcon fontSize="small" sx={{ mr: 0.5 }} />
+                                      Recent Claim
+                                    </Typography>
+                                    {member.lastClaimDate ? (
+                                      <Stack spacing={0.5}>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                          <Typography variant="caption" color="text.secondary">
+                                            Date:
+                                          </Typography>
+                                          <Typography variant="caption" fontWeight="500">
+                                            {new Date(member.lastClaimDate).toLocaleDateString('en-IN')}
+                                          </Typography>
+                                        </Box>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                          <Typography variant="caption" color="text.secondary">
+                                            Amount:
+                                          </Typography>
+                                          <Typography variant="caption" fontWeight="600" color="error.main">
+                                            {member.lastClaimAmount}
+                                          </Typography>
+                                        </Box>
+                                      </Stack>
+                                    ) : (
+                                      <Typography variant="caption" color="text.secondary">
+                                        No claims made
+                                      </Typography>
+                                    )}
+                                  </Box>
+                                  
+                                  {/* Claim History Count */}
+                                  {member.claimHistory && member.claimHistory.length > 0 && (
+                                    <Box sx={{ 
+                                      mt: 1, 
+                                      p: 1, 
+                                      bgcolor: alpha(theme.palette.info.main, 0.1),
+                                      borderRadius: 1,
+                                      textAlign: 'center'
+                                    }}>
+                                      <Typography variant="caption" color="info.main" fontWeight="500">
+                                        Total Claims: {member.claimHistory.length}
+                                      </Typography>
+                                    </Box>
+                                  )}
+                                </Stack>
+                              </CardContent>
+                            </Card>
+                          </Zoom>
+                        </Grid>
+                      ))}
+                    </Grid>
+                    
+                    {/* Family Summary */}
+                    <Box sx={{ mt: 3, p: 2, bgcolor: alpha(theme.palette.primary.main, 0.05), borderRadius: 2 }}>
+                      <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, color: 'primary.main' }}>
+                        Family Policy Summary
+                      </Typography>
+                      <Grid container spacing={3}>
+                        <Grid item xs={12} md={3}>
+                          <Box sx={{ textAlign: 'center' }}>
+                            <Typography variant="h5" fontWeight="bold" color="primary.main">
+                              {caseData.policyMembers.length}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              Total Members
+                            </Typography>
+                          </Box>
+                        </Grid>
+                        <Grid item xs={12} md={3}>
+                          <Box sx={{ textAlign: 'center' }}>
+                            <Typography variant="h5" fontWeight="bold" color="success.main">
+                              ₹{caseData.policyDetails.premium.toLocaleString()}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              Annual Premium
+                            </Typography>
+                          </Box>
+                        </Grid>
+                        <Grid item xs={12} md={3}>
+                          <Box sx={{ textAlign: 'center' }}>
+                            <Typography variant="h5" fontWeight="bold" color="info.main">
+                              {caseData.policyMembers.reduce((total, member) => total + (member.claimHistory?.length || 0), 0)}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              Total Claims
+                            </Typography>
+                          </Box>
+                        </Grid>
+                        <Grid item xs={12} md={3}>
+                          <Box sx={{ textAlign: 'center' }}>
+                            <Typography variant="h5" fontWeight="bold" color="warning.main">
+                              ₹{caseData.policyMembers.reduce((total, member) => {
+                                const lastClaim = member.lastClaimAmount;
+                                return total + (lastClaim ? parseInt(lastClaim.replace(/[₹,]/g, '')) : 0);
+                              }, 0).toLocaleString()}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              Recent Claims Value
+                            </Typography>
+                          </Box>
+                        </Grid>
+                      </Grid>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grow>
+            </Grid>
+          )}
 
           {/* Coverage Details */}
           <Grid item xs={12}>
@@ -2516,6 +2907,365 @@ const CaseDetails = () => {
             </Grow>
           </Grid>
         </Grid>
+        
+        {/* Renewal Notice Dialog */}
+        <Dialog 
+          open={renewalNoticeDialog} 
+          onClose={() => setRenewalNoticeDialog(false)}
+          maxWidth="md"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 3,
+              boxShadow: '0 12px 40px rgba(0,0,0,0.15)'
+            }
+          }}
+        >
+          <DialogTitle sx={{ 
+            pb: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {messageType === 'payment_link' ? (
+                <PaymentIcon color="primary" />
+              ) : (
+                <NotificationsIcon color="primary" />
+              )}
+              <Typography variant="h6" fontWeight="600">
+                {messageType === 'payment_link' ? 'Send Payment Link' : 'Send Renewal Notice'}
+              </Typography>
+            </Box>
+            <IconButton 
+              onClick={() => setRenewalNoticeDialog(false)}
+              sx={{ color: 'text.secondary' }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          
+          <DialogContent sx={{ pt: 2 }}>
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="body2" color="text.secondary">
+                {messageType === 'payment_link' 
+                  ? `Send secure payment link to ${caseData?.customerName} for policy ${caseData?.policyNumber} renewal`
+                  : `Send renewal notice to ${caseData?.customerName} for policy ${caseData?.policyNumber}`
+                }
+              </Typography>
+            </Box>
+            
+            {/* Customer Contact Info */}
+            <Box sx={{ 
+              mb: 3, 
+              p: 2, 
+              bgcolor: alpha(theme.palette.info.main, 0.05),
+              borderRadius: 2,
+              border: `1px solid ${alpha(theme.palette.info.main, 0.1)}`
+            }}>
+              <Typography variant="subtitle2" fontWeight="600" sx={{ mb: 1, color: 'info.main' }}>
+                Customer Contact Information
+              </Typography>
+              <Stack spacing={1}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <EmailIcon fontSize="small" color="action" />
+                  <Typography variant="body2">
+                    Email: {caseData?.contactInfo?.email || 'Not available'}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <PhoneIcon fontSize="small" color="action" />
+                  <Typography variant="body2">
+                    Phone: {caseData?.contactInfo?.phone || 'Not available'}
+                  </Typography>
+                </Box>
+              </Stack>
+            </Box>
+
+            {/* Message Type Selection */}
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2 }}>
+                Select Message Type
+              </Typography>
+              <RadioGroup
+                value={messageType}
+                onChange={(e) => {
+                  setMessageType(e.target.value);
+                  setCustomMessage(getDefaultMessage(selectedChannel, e.target.value));
+                }}
+                sx={{ gap: 1 }}
+              >
+                <FormControlLabel
+                  value="renewal_notice"
+                  control={<Radio />}
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <NotificationsIcon sx={{ color: '#2196F3' }} />
+                      <Box>
+                        <Typography variant="body2" fontWeight="500">Renewal Notice</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Remind customer about policy renewal
+                        </Typography>
+                      </Box>
+                    </Box>
+                  }
+                  sx={{ 
+                    m: 0,
+                    p: 1.5,
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: messageType === 'renewal_notice' ? 'primary.main' : 'divider',
+                    bgcolor: messageType === 'renewal_notice' ? alpha(theme.palette.primary.main, 0.05) : 'transparent'
+                  }}
+                />
+                <FormControlLabel
+                  value="payment_link"
+                  control={<Radio />}
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <PaymentIcon sx={{ color: '#4CAF50' }} />
+                      <Box>
+                        <Typography variant="body2" fontWeight="500">Payment Link</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Send secure payment link for renewal
+                        </Typography>
+                      </Box>
+                    </Box>
+                  }
+                  sx={{ 
+                    m: 0,
+                    p: 1.5,
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: messageType === 'payment_link' ? 'primary.main' : 'divider',
+                    bgcolor: messageType === 'payment_link' ? alpha(theme.palette.primary.main, 0.05) : 'transparent'
+                  }}
+                />
+              </RadioGroup>
+            </Box>
+
+            {/* Channel Selection */}
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2 }}>
+                Select Communication Channel
+              </Typography>
+              <RadioGroup
+                value={selectedChannel}
+                onChange={(e) => {
+                  setSelectedChannel(e.target.value);
+                  setCustomMessage(getDefaultMessage(e.target.value, messageType));
+                }}
+                sx={{ gap: 1 }}
+              >
+                <FormControlLabel
+                  value="whatsapp"
+                  control={<Radio />}
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <WhatsAppIcon sx={{ color: '#25D366' }} />
+                      <Box>
+                        <Typography variant="body2" fontWeight="500">WhatsApp</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Rich formatting, instant delivery
+                        </Typography>
+                      </Box>
+                    </Box>
+                  }
+                  sx={{ 
+                    m: 0,
+                    p: 1.5,
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: selectedChannel === 'whatsapp' ? 'primary.main' : 'divider',
+                    bgcolor: selectedChannel === 'whatsapp' ? alpha(theme.palette.primary.main, 0.05) : 'transparent'
+                  }}
+                />
+                <FormControlLabel
+                  value="sms"
+                  control={<Radio />}
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <SmsIcon sx={{ color: '#FF6B35' }} />
+                      <Box>
+                        <Typography variant="body2" fontWeight="500">SMS</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Universal reach, character limit applies
+                        </Typography>
+                      </Box>
+                    </Box>
+                  }
+                  sx={{ 
+                    m: 0,
+                    p: 1.5,
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: selectedChannel === 'sms' ? 'primary.main' : 'divider',
+                    bgcolor: selectedChannel === 'sms' ? alpha(theme.palette.primary.main, 0.05) : 'transparent'
+                  }}
+                />
+                <FormControlLabel
+                  value="email"
+                  control={<Radio />}
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <MailOutlineIcon sx={{ color: '#1976D2' }} />
+                      <Box>
+                        <Typography variant="body2" fontWeight="500">Email</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Detailed content, attachments support
+                        </Typography>
+                      </Box>
+                    </Box>
+                  }
+                  sx={{ 
+                    m: 0,
+                    p: 1.5,
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: selectedChannel === 'email' ? 'primary.main' : 'divider',
+                    bgcolor: selectedChannel === 'email' ? alpha(theme.palette.primary.main, 0.05) : 'transparent'
+                  }}
+                />
+              </RadioGroup>
+            </Box>
+
+            {/* Message Preview/Editor */}
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2 }}>
+                Message Content
+              </Typography>
+              <TextField
+                fullWidth
+                multiline
+                rows={selectedChannel === 'email' ? 12 : 8}
+                value={customMessage}
+                onChange={(e) => setCustomMessage(e.target.value)}
+                placeholder={`Enter your ${selectedChannel} message...`}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    fontFamily: 'monospace',
+                    fontSize: '0.9rem'
+                  }
+                }}
+              />
+              <Box sx={{ 
+                mt: 1, 
+                display: 'flex', 
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <Typography variant="caption" color="text.secondary">
+                  {selectedChannel === 'sms' && `${customMessage.length}/160 characters`}
+                  {selectedChannel === 'whatsapp' && `${customMessage.length} characters`}
+                  {selectedChannel === 'email' && `${customMessage.split('\n').length} lines`}
+                </Typography>
+                <Button
+                  size="small"
+                  onClick={() => setCustomMessage(getDefaultMessage(selectedChannel, messageType))}
+                  sx={{ textTransform: 'none' }}
+                >
+                  Reset to Default
+                </Button>
+              </Box>
+            </Box>
+
+            {/* Payment Link Info - Only show for payment link messages */}
+            {messageType === 'payment_link' && (
+              <Box sx={{ 
+                p: 2, 
+                bgcolor: alpha(theme.palette.success.main, 0.05),
+                borderRadius: 2,
+                border: `1px solid ${alpha(theme.palette.success.main, 0.1)}`
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                  <LinkIcon fontSize="small" color="success" />
+                  <Typography variant="subtitle2" fontWeight="600" color="success.main">
+                    Payment Link Information
+                  </Typography>
+                </Box>
+                <Typography variant="body2" color="text.secondary">
+                  The [Payment Link] placeholder will be automatically replaced with a secure payment link 
+                  when the message is sent. This link will be valid for 48 hours and will redirect to our 
+                  secure payment gateway.
+                </Typography>
+              </Box>
+            )}
+
+            {/* Renewal Notice Info - Only show for renewal notice messages */}
+            {messageType === 'renewal_notice' && (
+              <Box sx={{ 
+                p: 2, 
+                bgcolor: alpha(theme.palette.info.main, 0.05),
+                borderRadius: 2,
+                border: `1px solid ${alpha(theme.palette.info.main, 0.1)}`
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                  <NotificationsIcon fontSize="small" color="info" />
+                  <Typography variant="subtitle2" fontWeight="600" color="info.main">
+                    Renewal Notice Information
+                  </Typography>
+                </Box>
+                <Typography variant="body2" color="text.secondary">
+                  This renewal notice will remind the customer about their upcoming policy expiration 
+                  and provide them with contact information to proceed with the renewal process.
+                </Typography>
+              </Box>
+            )}
+          </DialogContent>
+          
+          <DialogActions sx={{ p: 3, pt: 1 }}>
+            <Button
+              onClick={() => setRenewalNoticeDialog(false)}
+              sx={{ borderRadius: 2, textTransform: 'none' }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleSendRenewalNotice}
+              disabled={sendingNotice || !customMessage.trim()}
+              startIcon={sendingNotice ? <CircularProgress size={16} /> : <SendIcon />}
+              sx={{
+                borderRadius: 2,
+                textTransform: 'none',
+                fontWeight: 600,
+                minWidth: 120,
+                background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #1976D2 30%, #1CB5E0 90%)',
+                },
+                '&:disabled': {
+                  background: 'rgba(0,0,0,0.12)'
+                }
+              }}
+            >
+              {sendingNotice 
+                ? 'Sending...' 
+                : `Send ${messageType === 'payment_link' ? 'Payment Link' : 'Notice'} via ${selectedChannel.toUpperCase()}`
+              }
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Success/Error Snackbar */}
+        <Snackbar
+          open={!!successMessage}
+          autoHideDuration={6000}
+          onClose={() => setSuccessMessage('')}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        >
+          <Alert 
+            onClose={() => setSuccessMessage('')} 
+            severity="success"
+            sx={{ 
+              borderRadius: 2,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+            }}
+          >
+            {successMessage}
+          </Alert>
+        </Snackbar>
       </Box>
     </Fade>
   );

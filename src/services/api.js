@@ -122,6 +122,24 @@ export const getCaseById = async (caseId) => {
             email: 'john.smith@example.com',
             phone: '555-123-4567'
           },
+          policyProposer: {
+            name: 'John Smith',
+            relationship: 'Self',
+            age: 42,
+            dateOfBirth: '1982-08-20',
+            gender: 'Male',
+            occupation: 'Business Owner',
+            annualIncome: '₹8,50,000'
+          },
+          lifeAssured: {
+            name: 'John Smith',
+            relationship: 'Self',
+            age: 42,
+            dateOfBirth: '1982-08-20',
+            gender: 'Male',
+            sumAssured: '₹25,00,000',
+            nomineeDetails: 'Jane Smith (Spouse)'
+          },
           policyDetails: {
             type: 'Auto',
             expiryDate: '2025-05-15',
@@ -165,6 +183,24 @@ export const getCaseById = async (caseId) => {
           contactInfo: {
             email: 'sarah.w@example.com',
             phone: '555-234-5678'
+          },
+          policyProposer: {
+            name: 'Sarah Williams',
+            relationship: 'Self',
+            age: 38,
+            dateOfBirth: '1986-12-05',
+            gender: 'Female',
+            occupation: 'Marketing Manager',
+            annualIncome: '₹9,75,000'
+          },
+          lifeAssured: {
+            name: 'Sarah Williams',
+            relationship: 'Self',
+            age: 38,
+            dateOfBirth: '1986-12-05',
+            gender: 'Female',
+            sumAssured: '₹30,00,000',
+            nomineeDetails: 'Michael Williams (Spouse)'
           },
           policyDetails: {
             type: 'Home',
@@ -228,6 +264,24 @@ export const getCaseById = async (caseId) => {
             email: 'michael.j@example.com',
             phone: '555-345-6789'
           },
+          policyProposer: {
+            name: 'Michael Johnson',
+            relationship: 'Self',
+            age: 45,
+            dateOfBirth: '1979-11-12',
+            gender: 'Male',
+            occupation: 'Senior Manager',
+            annualIncome: '₹15,00,000'
+          },
+          lifeAssured: {
+            name: 'Michael Johnson',
+            relationship: 'Self',
+            age: 45,
+            dateOfBirth: '1979-11-12',
+            gender: 'Male',
+            sumAssured: '₹50,00,000',
+            nomineeDetails: 'Emily Johnson (Spouse)'
+          },
           policyDetails: {
             type: 'Life',
             expiryDate: '2025-05-05',
@@ -269,6 +323,191 @@ export const getCaseById = async (caseId) => {
               action: 'Failed',
               details: 'Customer declined renewal due to premium increase',
               user: 'Carol Davis'
+            }
+          ]
+        },
+        {
+          id: 'CASE-004',
+          customerName: 'Rajesh Kumar',
+          policyNumber: 'POL-45678',
+          status: 'In Progress',
+          agent: 'Priya Sharma',
+          uploadDate: '2025-04-09',
+          isPriority: true,
+          contactInfo: {
+            email: 'rajesh.kumar@example.com',
+            phone: '9876543210'
+          },
+          policyProposer: {
+            name: 'Rajesh Kumar',
+            relationship: 'Self',
+            age: 35,
+            dateOfBirth: '1989-03-15',
+            gender: 'Male',
+            occupation: 'Software Engineer',
+            annualIncome: '₹12,00,000'
+          },
+          lifeAssured: {
+            name: 'Rajesh Kumar',
+            relationship: 'Self',
+            age: 35,
+            dateOfBirth: '1989-03-15',
+            gender: 'Male',
+            sumAssured: '₹50,00,000',
+            nomineeDetails: 'Sunita Kumar (Spouse)'
+          },
+          policyDetails: {
+            type: 'Health',
+            expiryDate: '2025-05-20',
+            premium: 18500.00,
+            coverage: {
+              sumInsured: '₹10,00,000',
+              roomRent: '₹8,000/day',
+              maternityBenefit: '₹1,50,000',
+              ambulanceCover: '₹2,000'
+            }
+          },
+          policyMembers: [
+            {
+              id: 'member-1',
+              name: 'Rajesh Kumar',
+              relationship: 'Self',
+              age: 35,
+              dateOfBirth: '1989-03-15',
+              gender: 'Male',
+              sumInsured: '₹10,00,000',
+              premiumContribution: '₹8,500',
+              medicalHistory: [
+                'Diabetes Type 2 (2018)',
+                'Hypertension (2020)'
+              ],
+              lastClaimDate: '2024-08-15',
+              lastClaimAmount: '₹45,000',
+              claimHistory: [
+                {
+                  date: '2024-08-15',
+                  amount: '₹45,000',
+                  description: 'Hospitalization for diabetes complications',
+                  status: 'Approved'
+                },
+                {
+                  date: '2024-02-10',
+                  amount: '₹12,000',
+                  description: 'Regular health checkup',
+                  status: 'Approved'
+                }
+              ]
+            },
+            {
+              id: 'member-2',
+              name: 'Sunita Kumar',
+              relationship: 'Spouse',
+              age: 32,
+              dateOfBirth: '1992-07-22',
+              gender: 'Female',
+              sumInsured: '₹10,00,000',
+              premiumContribution: '₹7,500',
+              medicalHistory: [
+                'Pregnancy (2021)',
+                'Thyroid (2019)'
+              ],
+              lastClaimDate: '2024-11-20',
+              lastClaimAmount: '₹85,000',
+              claimHistory: [
+                {
+                  date: '2024-11-20',
+                  amount: '₹85,000',
+                  description: 'Maternity expenses - Normal delivery',
+                  status: 'Approved'
+                },
+                {
+                  date: '2024-05-15',
+                  amount: '₹8,500',
+                  description: 'Thyroid treatment',
+                  status: 'Approved'
+                }
+              ]
+            },
+            {
+              id: 'member-3',
+              name: 'Aarav Kumar',
+              relationship: 'Son',
+              age: 8,
+              dateOfBirth: '2016-09-10',
+              gender: 'Male',
+              sumInsured: '₹5,00,000',
+              premiumContribution: '₹2,500',
+              medicalHistory: [
+                'Asthma (2022)',
+                'Allergic Rhinitis (2023)'
+              ],
+              lastClaimDate: '2024-09-05',
+              lastClaimAmount: '₹15,000',
+              claimHistory: [
+                {
+                  date: '2024-09-05',
+                  amount: '₹15,000',
+                  description: 'Asthma treatment and nebulization',
+                  status: 'Approved'
+                },
+                {
+                  date: '2024-03-20',
+                  amount: '₹5,500',
+                  description: 'Allergy testing',
+                  status: 'Approved'
+                }
+              ]
+            },
+            {
+              id: 'member-4',
+              name: 'Ananya Kumar',
+              relationship: 'Daughter',
+              age: 5,
+              dateOfBirth: '2019-12-03',
+              gender: 'Female',
+              sumInsured: '₹5,00,000',
+              premiumContribution: '₹2,000',
+              medicalHistory: [
+                'Vaccination completed',
+                'No major illnesses'
+              ],
+              lastClaimDate: '2024-06-12',
+              lastClaimAmount: '₹3,500',
+              claimHistory: [
+                {
+                  date: '2024-06-12',
+                  amount: '₹3,500',
+                  description: 'Routine pediatric checkup and vaccinations',
+                  status: 'Approved'
+                }
+              ]
+            }
+          ],
+          flowSteps: ['Uploaded', 'Validated', 'Assigned', 'In Progress'],
+          history: [
+            {
+              date: '2025-04-09T08:30:15',
+              action: 'Case Created',
+              details: 'Health insurance family policy uploaded',
+              user: 'System'
+            },
+            {
+              date: '2025-04-09T08:30:45',
+              action: 'Validation',
+              details: 'All family members verified and valid',
+              user: 'System'
+            },
+            {
+              date: '2025-04-09T09:15:30',
+              action: 'Assignment',
+              details: 'Case assigned to agent Priya Sharma',
+              user: 'System'
+            },
+            {
+              date: '2025-04-09T10:30:22',
+              action: 'Processing',
+              details: 'Agent reviewing family medical history',
+              user: 'Priya Sharma'
             }
           ]
         }
