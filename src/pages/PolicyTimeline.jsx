@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Box, 
   Typography,
@@ -7,24 +7,13 @@ import {
   TextField,
   Grid,
   Paper,
-  Stepper,
-  Step,
-  StepLabel,
-  StepContent,
   Button,
   Chip,
   Divider,
-  IconButton,
   InputAdornment,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
-  Menu,
   Avatar,
   Tab,
   Tabs,
-  Tooltip,
   useTheme,
   alpha,
   Fade,
@@ -42,10 +31,8 @@ import {
 } from '@mui/lab';
 import { 
   Search as SearchIcon,
-  FilterList as FilterIcon,
   Event as EventIcon,
   Payment as PaymentIcon,
-  ReceiptLong as ReceiptIcon,
   Autorenew as AutorenewIcon,
   Create as CreateIcon,
   Policy as PolicyIcon,
@@ -70,17 +57,15 @@ import {
   CalendarToday as CalendarTodayIcon,
   Pending as PendingIcon
 } from '@mui/icons-material';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 const PolicyTimeline = () => {
-  const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
   const [searchTerm, setSearchTerm] = useState('');
   const [policyData, setPolicyData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filterAnchorEl, setFilterAnchorEl] = useState(null);
   const [filterType, setFilterType] = useState('all');
   const [tabValue, setTabValue] = useState(0);
   const [loaded, setLoaded] = useState(false);
@@ -92,8 +77,8 @@ const PolicyTimeline = () => {
   const customerNameFromUrl = queryParams.get('customerName');
   const customerIdFromUrl = queryParams.get('customerId');
 
-  // Sample policy timeline data
-  const mockPolicyData = {
+  // Sample policy timeline data - wrapped in useMemo to prevent re-creation on every render
+  const mockPolicyData = useMemo(() => ({
     customerId: customerIdFromUrl || "CUST-12345",
     customerName: customerNameFromUrl || "Arjun Sharma",
     policies: [
@@ -311,7 +296,7 @@ const PolicyTimeline = () => {
         ]
       }
     ]
-  };
+  }), [customerIdFromUrl, customerNameFromUrl]);
 
   useEffect(() => {
     // This would be replaced with actual API call in a real app
@@ -343,7 +328,7 @@ const PolicyTimeline = () => {
     };
     
     fetchPolicyData();
-  }, [customerIdFromUrl, customerNameFromUrl]);
+  }, [customerIdFromUrl, customerNameFromUrl, mockPolicyData]);
 
   useEffect(() => {
     if (policyData) {
@@ -390,7 +375,7 @@ const PolicyTimeline = () => {
         customerProfile = "Average";
       }
 
-      let observations = [
+      const observations = [
         `Customer has been with us for ${customerTenureYears} years across ${totalPolicies} policies.`,
       ];
       if (numClaims > 0) {
@@ -418,17 +403,10 @@ const PolicyTimeline = () => {
     setSearchTerm(event.target.value);
   };
   
-  const handleFilterClick = (event) => {
-    setFilterAnchorEl(event.currentTarget);
-  };
-  
-  const handleFilterClose = () => {
-    setFilterAnchorEl(null);
-  };
+
   
   const handleFilterTypeChange = (type) => {
     setFilterType(type);
-    handleFilterClose();
   };
   
   const handleTabChange = (event, newValue) => {
@@ -547,20 +525,7 @@ const PolicyTimeline = () => {
             Policy Timeline
           </Typography>
           
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <Button
-              variant="contained"
-              startIcon={<FilterIcon />}
-              onClick={handleFilterClick}
-              color="primary"
-              sx={{
-                borderRadius: 2,
-                boxShadow: 2,
-              }}
-            >
-              Filter Events
-            </Button>
-          </Box>
+
         </Box>
         
         {/* Customer Information */}
@@ -604,20 +569,31 @@ const PolicyTimeline = () => {
                       borderRadius: '8px 8px 0 0',
                       minHeight: 48,
                       transition: 'all 0.2s',
+                      textAlign: 'center',
                       '&:hover': {
                         bgcolor: alpha(theme.palette.primary.main, 0.04),
                       },
                     },
                     '& .Mui-selected': {
                       fontWeight: 600,
+                    },
+                    '& .MuiTabs-indicator': {
+                      height: 3,
+                      borderRadius: '3px 3px 0 0',
                     }
                   }}
                 >
-                  {policyData?.policies.map((policy, index) => (
+                  {policyData?.policies.map((policy, _index) => (
                     <Tab 
                       key={policy.policyId} 
                       label={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          gap: 1,
+                          width: '100%'
+                        }}>
                           <PolicyIcon fontSize="small" />
                           <Typography component="span" sx={{ display: { xs: 'none', sm: 'inline' }}}>
                             {policy.policyType}
