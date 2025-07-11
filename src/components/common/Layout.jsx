@@ -255,14 +255,12 @@ const Layout = ({ children }) => {
     marketing: {
       items: [
         { text: t('navigation.campaigns'), icon: <CampaignIcon />, path: '/campaigns', permission: 'campaigns' },
-        { text: 'Templates', icon: <TemplateIcon />, path: '/templates', permission: 'templates' },
       ],
       permissions: ['campaigns', 'templates']
     },
     survey: {
       items: [
         { text: 'Feedback & Surveys', icon: <FeedbackIcon />, path: '/feedback', permission: 'feedback' },
-        { text: 'Survey Designer', icon: <SurveyIcon />, path: '/survey-designer', permission: 'survey-designer' },
       ],
       permissions: ['feedback', 'survey-designer']
     },
