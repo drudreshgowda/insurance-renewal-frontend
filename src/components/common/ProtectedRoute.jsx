@@ -41,7 +41,9 @@ const ProtectedRoute = ({ children, requiredPermission, fallbackPath = '/' }) =>
   if (!canAccessRoute(location.pathname)) {
     // Find a route the user can access as fallback
     const accessibleRoutes = [
-      '/', '/profile', '/dashboard'
+      '/emails/dashboard', // Email dashboard for non-renewals users
+      '/', // Main dashboard for renewals users
+      '/profile' // Profile as last resort
     ].filter(route => canAccessRoute(route));
     
     const redirectTo = accessibleRoutes.length > 0 ? accessibleRoutes[0] : fallbackPath;

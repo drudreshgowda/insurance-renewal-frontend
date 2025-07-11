@@ -35,6 +35,7 @@ import NewBusiness from './pages/NewBusiness';
 import MedicalManagement from './pages/MedicalManagement';
 import WhatsappFlow from './pages/WhatsappFlow';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import DashboardRedirect from './components/common/DashboardRedirect';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import { AuthProvider } from './context/AuthContext.js';
 import { ThemeModeProvider, useThemeMode } from './context/ThemeModeContext.js';
@@ -262,6 +263,12 @@ function AppWithTheme() {
             
             <Route path="/" element={
               <ProtectedRoute>
+                <DashboardRedirect />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/dashboard/renewals" element={
+              <ProtectedRoute requiredPermission="dashboard">
                 <Layout>
                   <Dashboard />
                 </Layout>

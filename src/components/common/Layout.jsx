@@ -115,7 +115,7 @@ const Layout = ({ children }) => {
   const theme = useTheme();
   const { mode, toggleMode } = useThemeMode();
   const { notifications, unreadCount, markAsRead } = useNotifications();
-  const { hasPermission, hasAnyPermission, hasModuleAccess } = usePermissions();
+  const { hasPermission, hasModuleAccess } = usePermissions();
   const { t } = useTranslation();
 
   const handleDrawerToggle = () => {
@@ -221,10 +221,8 @@ const Layout = ({ children }) => {
 
   // Check if current page is renewal-related
   const isRenewalRelatedPage = () => {
-    const renewalPaths = ['/', '/upload', '/cases', '/closed-cases', '/policy-timeline', '/logs'];
-    return renewalPaths.some(path => 
-      path === '/' ? location.pathname === '/' : location.pathname.startsWith(path)
-    );
+    const renewalPaths = ['/dashboard/renewals', '/upload', '/cases', '/closed-cases', '/policy-timeline', '/logs'];
+    return renewalPaths.some(path => location.pathname.startsWith(path));
   };
 
   // Helper function to determine if an email menu item should be selected
@@ -282,7 +280,7 @@ const Layout = ({ children }) => {
     .filter(item => hasPermission(item.permission));
 
   const renewalMenuItems = [
-    { text: t('navigation.dashboard'), icon: <DashboardIcon />, path: '/', permission: 'dashboard' },
+    { text: t('navigation.dashboard'), icon: <DashboardIcon />, path: '/dashboard/renewals', permission: 'dashboard' },
     { text: 'Upload', icon: <UploadIcon />, path: '/upload', permission: 'upload' },
     { text: 'Case Tracking', icon: <AssignmentIcon />, path: '/cases', permission: 'cases' },
     { text: 'Closed Cases', icon: <AssignmentTurnedInIcon />, path: '/closed-cases', permission: 'closed-cases' },

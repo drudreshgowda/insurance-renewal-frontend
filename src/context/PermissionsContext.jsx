@@ -11,101 +11,101 @@ export const usePermissions = () => {
   return context;
 };
 
+// Mock user permissions - in a real app, this would come from your backend
+const mockUserPermissions = {
+  'admin': [
+    // Core Pages
+    'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs', 'claims',
+    'policy-servicing', 'new-business', 'medical-management',
+    // Email Pages  
+    'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
+    // Marketing Pages
+    'campaigns', 'templates',
+    // Survey Pages
+    'feedback', 'survey-designer',
+    // WhatsApp Pages
+    'whatsapp-flow',
+    // Admin Pages
+    'settings', 'billing', 'users',
+    // Personal Pages
+    'profile'
+  ],
+  'client_admin': [
+    // Core Pages
+    'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs', 'claims',
+    'policy-servicing', 'new-business', 'medical-management',
+    // Email Pages  
+    'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
+    // Marketing Pages
+    'campaigns', 'templates',
+    // Survey Pages
+    'feedback', 'survey-designer',
+    // WhatsApp Pages
+    'whatsapp-flow',
+    // Admin Pages
+    'settings', 'billing', 'users',
+    // Personal Pages
+    'profile'
+  ],
+  'renewals_specialist': [
+    // Renewals Module Only
+    'dashboard', 'cases', 'closed-cases', 'policy-timeline', 'logs',
+    // Personal Pages
+    'profile'
+  ],
+  'all_modules_manager': [
+    // Core Pages (excluding Renewals module - no cases, closed-cases, policy-timeline, logs)
+    'dashboard', 'upload', 'claims',
+    'policy-servicing', 'new-business', 'medical-management',
+    // Email Pages
+    'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
+    // Marketing Pages
+    'campaigns', 'templates',
+    // Survey Pages
+    'feedback', 'survey-designer',
+    // WhatsApp Pages
+    'whatsapp-flow',
+    // Admin Pages
+    'settings', 'billing', 'users',
+    // Personal Pages
+    'profile'
+  ],
+  'manager': [
+    // Core Pages
+    'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs', 'claims',
+    // Email Pages
+    'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
+    // Marketing Pages
+    'campaigns', 'templates',
+    // Survey Pages
+    'feedback', 'survey-designer',
+    // WhatsApp Pages
+    'whatsapp-flow',
+    // Personal Pages
+    'profile'
+  ],
+  'agent': [
+    // Core Pages
+    'dashboard', 'cases', 'closed-cases', 'policy-timeline', 'logs',
+    // Email Pages
+    'emails', 'email-dashboard',
+    // WhatsApp Pages
+    'whatsapp-flow',
+    // Personal Pages
+    'profile'
+  ],
+  'viewer': [
+    // Core Pages (read-only)
+    'dashboard', 'cases', 'closed-cases', 'policy-timeline',
+    // Personal Pages
+    'profile'
+  ]
+};
+
 export const PermissionsProvider = ({ children }) => {
   const { currentUser } = useAuth();
   const [userPermissions, setUserPermissions] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // Mock user permissions - in a real app, this would come from your backend
-  const mockUserPermissions = {
-    'admin': [
-      // Core Pages
-      'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs', 'claims',
-      'policy-servicing', 'new-business', 'medical-management',
-      // Email Pages  
-      'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
-      // Marketing Pages
-      'campaigns', 'templates',
-      // Survey Pages
-      'feedback', 'survey-designer',
-      // WhatsApp Pages
-      'whatsapp-flow',
-      // Admin Pages
-      'settings', 'billing', 'users',
-      // Personal Pages
-      'profile'
-    ],
-    'client_admin': [
-      // Core Pages
-      'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs', 'claims',
-      'policy-servicing', 'new-business', 'medical-management',
-      // Email Pages  
-      'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
-      // Marketing Pages
-      'campaigns', 'templates',
-      // Survey Pages
-      'feedback', 'survey-designer',
-      // WhatsApp Pages
-      'whatsapp-flow',
-      // Admin Pages
-      'settings', 'billing', 'users',
-      // Personal Pages
-      'profile'
-    ],
-    'renewals_specialist': [
-      // Renewals Module Only
-      'dashboard', 'cases', 'closed-cases', 'policy-timeline', 'logs',
-      // Personal Pages
-      'profile'
-    ],
-    'all_modules_manager': [
-      // Core Pages (excluding Renewals module - no cases, closed-cases, policy-timeline, logs)
-      'dashboard', 'upload', 'claims',
-      'policy-servicing', 'new-business', 'medical-management',
-      // Email Pages
-      'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
-      // Marketing Pages
-      'campaigns', 'templates',
-      // Survey Pages
-      'feedback', 'survey-designer',
-      // WhatsApp Pages
-      'whatsapp-flow',
-      // Admin Pages
-      'settings', 'billing', 'users',
-      // Personal Pages
-      'profile'
-    ],
-    'manager': [
-      // Core Pages
-      'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs', 'claims',
-      // Email Pages
-      'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
-      // Marketing Pages
-      'campaigns', 'templates',
-      // Survey Pages
-      'feedback', 'survey-designer',
-      // WhatsApp Pages
-      'whatsapp-flow',
-      // Personal Pages
-      'profile'
-    ],
-    'agent': [
-      // Core Pages
-      'dashboard', 'cases', 'closed-cases', 'policy-timeline', 'logs',
-      // Email Pages
-      'emails', 'email-dashboard',
-      // WhatsApp Pages
-      'whatsapp-flow',
-      // Personal Pages
-      'profile'
-    ],
-    'viewer': [
-      // Core Pages (read-only)
-      'dashboard', 'cases', 'closed-cases', 'policy-timeline',
-      // Personal Pages
-      'profile'
-    ]
-  };
 
   useEffect(() => {
     if (currentUser) {
@@ -137,7 +137,8 @@ export const PermissionsProvider = ({ children }) => {
   const canAccessRoute = (routePath) => {
     // Map routes to required permissions
     const routePermissions = {
-      '/': 'dashboard',
+      '/': 'dashboard', // This will be handled by DashboardRedirect
+      '/dashboard/renewals': 'dashboard',
       '/upload': 'upload',
       '/cases': 'cases',
       '/closed-cases': 'closed-cases',
