@@ -52,6 +52,29 @@ export const PermissionsProvider = ({ children }) => {
       // Personal Pages
       'profile'
     ],
+    'renewals_specialist': [
+      // Renewals Module Only
+      'dashboard', 'cases', 'closed-cases', 'policy-timeline', 'logs',
+      // Personal Pages
+      'profile'
+    ],
+    'all_modules_manager': [
+      // Core Pages (excluding Renewals module - no cases, closed-cases, policy-timeline, logs)
+      'dashboard', 'upload', 'claims',
+      'policy-servicing', 'new-business', 'medical-management',
+      // Email Pages
+      'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
+      // Marketing Pages
+      'campaigns', 'templates',
+      // Survey Pages
+      'feedback', 'survey-designer',
+      // WhatsApp Pages
+      'whatsapp-flow',
+      // Admin Pages
+      'settings', 'billing', 'users',
+      // Personal Pages
+      'profile'
+    ],
     'manager': [
       // Core Pages
       'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs', 'claims',
@@ -86,8 +109,9 @@ export const PermissionsProvider = ({ children }) => {
 
   useEffect(() => {
     if (currentUser) {
-      // In a real app, you would fetch user permissions from your backend
-      const permissions = mockUserPermissions[currentUser.role] || [];
+      // Check if user has explicit permissions in their profile (from AuthContext)
+      // Otherwise fall back to role-based permissions
+      const permissions = currentUser.permissions || mockUserPermissions[currentUser.role] || [];
       setUserPermissions(permissions);
     } else {
       setUserPermissions([]);
@@ -192,7 +216,36 @@ export const PermissionsProvider = ({ children }) => {
   };
 
   const isManager = () => {
-    return currentUser?.role === 'manager' || isAdmin();
+    return currentUser?.role === 'manager' || currentUser?.role === 'all_modules_manager' || isAdmin();
+  };
+
+  const isRenewalsSpecialist = () => {
+    return currentUser?.role === 'renewals_specialist';
+  };
+
+  const isAllModulesManager = () => {
+    return currentUser?.role === 'all_modules_manager';
+  };
+
+  // Permission grouping for module-based access control
+  const permissionGroups = {
+    renewals: ['cases', 'closed-cases', 'policy-timeline', 'logs'],
+    email: ['emails', 'email-dashboard', 'email-analytics', 'bulk-email'],
+    business: ['claims', 'policy-servicing', 'new-business', 'medical-management'],
+    marketing: ['campaigns', 'templates'],
+    survey: ['feedback', 'survey-designer'],
+    whatsapp: ['whatsapp-flow'],
+    admin: ['settings', 'billing', 'users'],
+    core: ['dashboard', 'upload', 'profile']
+  };
+
+  const hasModuleAccess = (moduleName) => {
+    const modulePermissions = permissionGroups[moduleName] || [];
+    return hasAnyPermission(modulePermissions);
+  };
+
+  const getAccessibleModules = () => {
+    return Object.keys(permissionGroups).filter(module => hasModuleAccess(module));
   };
 
   const value = {
@@ -204,7 +257,12 @@ export const PermissionsProvider = ({ children }) => {
     canAccessRoute,
     getAccessibleRoutes,
     isAdmin,
-    isManager
+    isManager,
+    isRenewalsSpecialist,
+    isAllModulesManager,
+    hasModuleAccess,
+    getAccessibleModules,
+    permissionGroups
   };
 
   return (

@@ -259,23 +259,13 @@ const Settings = () => {
       id: 1,
       name: 'Rajesh Kumar',
       email: 'rajesh@client.com',
-      role: 'admin',
+      role: 'renewals_specialist',
       status: 'active',
       lastLogin: new Date().toISOString(),
-      portalLanguage: 'hi', // Hindi preference
+      portalLanguage: 'en', // English preference
       permissions: [
-        // Core Pages
-        'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs', 'claims',
-        // Email Pages  
-        'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
-        // Marketing Pages
-        'campaigns', 'templates',
-        // Survey Pages
-        'feedback', 'survey-designer',
-        // WhatsApp Pages
-        'whatsapp-flow',
-        // Admin Pages
-        'settings', 'billing', 'users',
+        // Renewals Module Only
+        'dashboard', 'cases', 'closed-cases', 'policy-timeline', 'logs',
         // Personal Pages
         'profile'
       ],
@@ -369,24 +359,28 @@ const Settings = () => {
       id: 6,
       name: 'Priya Sharma',
       email: 'priya@client.com',
-      role: 'manager',
+      role: 'all_modules_manager',
       status: 'active',
       lastLogin: '2024-07-14T12:30:00Z',
-      portalLanguage: 'bn', // Bengali preference
-      permissions: [
-        // Core Pages
-        'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs', 'claims',
-        // Email Pages
-        'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
-        // Marketing Pages
-        'campaigns', 'templates',
-        // Survey Pages
-        'feedback', 'survey-designer',
-        // WhatsApp Pages
-        'whatsapp-flow',
-        // Personal Pages
-        'profile'
-      ],
+      portalLanguage: 'en', // English preference
+              permissions: [
+          // Core Pages (excluding Renewals module - no cases, closed-cases, policy-timeline, logs)
+          'dashboard', 'upload', 'claims',
+          'policy-servicing', 'new-business', 'medical-management',
+          // Email Pages
+          'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
+          // Marketing Pages
+          'campaigns', 'templates',
+          // Survey Pages
+          'feedback', 'survey-designer',
+          // WhatsApp Pages
+          'whatsapp-flow',
+          // Admin Pages
+          'settings', 'billing', 'users',
+          // Personal Pages
+          'profile'
+          // Note: Excludes Renewals module (cases, closed-cases, policy-timeline, logs related to renewals)
+        ],
       createdAt: '2024-05-20T11:15:00Z'
     }
   ]);
@@ -467,6 +461,44 @@ const Settings = () => {
         'profile'
       ],
       isSystem: true,
+      userCount: 1
+    },
+    {
+      id: 4,
+      name: 'renewals_specialist',
+      displayName: 'Renewals Specialist',
+      description: 'Access only to Renewals module and related features',
+      permissions: [
+        // Renewals Module Only
+        'dashboard', 'cases', 'closed-cases', 'policy-timeline', 'logs',
+        // Personal Pages
+        'profile'
+      ],
+      isSystem: false,
+      userCount: 1
+    },
+    {
+      id: 5,
+      name: 'all_modules_manager',
+      displayName: 'All Modules Manager',
+      description: 'Access to all modules except Renewals',
+      permissions: [
+        // Core Pages (excluding Renewals module)
+        'dashboard', 'upload', 'claims',
+        // Email Pages
+        'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
+        // Marketing Pages
+        'campaigns', 'templates',
+        // Survey Pages
+        'feedback', 'survey-designer',
+        // WhatsApp Pages
+        'whatsapp-flow',
+        // Admin Pages
+        'settings', 'billing', 'users',
+        // Personal Pages
+        'profile'
+      ],
+      isSystem: false,
       userCount: 1
     }
   ]);
@@ -1231,7 +1263,7 @@ const Settings = () => {
         Renewals Module Settings
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Configure settings for renewal management, case tracking, and policy processing.
+        Configure settings for renewal management, case tracking, policy processing, calling, and messaging integrations.
       </Typography>
 
       <Card sx={{ mb: 3, borderRadius: 3, boxShadow: '0 8px 24px rgba(0,0,0,0.05)' }}>
@@ -1277,7 +1309,7 @@ const Settings = () => {
         </CardContent>
       </Card>
 
-      <Card sx={{ borderRadius: 3, boxShadow: '0 8px 24px rgba(0,0,0,0.05)' }}>
+      <Card sx={{ mb: 3, borderRadius: 3, boxShadow: '0 8px 24px rgba(0,0,0,0.05)' }}>
         <CardContent sx={{ p: 3 }}>
           <Typography variant="h6" fontWeight="600" gutterBottom>Policy Processing</Typography>
           <Divider sx={{ mb: 2 }} />
@@ -1311,6 +1343,465 @@ const Settings = () => {
             }
             label="Auto-assign cases to available agents"
           />
+        </CardContent>
+      </Card>
+
+      {/* Calling Integration Settings */}
+      <Card sx={{ mb: 3, borderRadius: 3, boxShadow: '0 8px 24px rgba(0,0,0,0.05)' }}>
+        <CardContent sx={{ p: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <SmartToyIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
+            <Typography variant="h6" fontWeight="600">Calling Integration Settings</Typography>
+          </Box>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Configure calling service providers for customer outreach and support calls
+          </Typography>
+          <Divider sx={{ mb: 3 }} />
+
+          {/* Enable Calling Integration */}
+          <FormControlLabel
+            control={
+              <Switch
+                checked={settings.callingEnabled || false}
+                onChange={(e) => handleSettingChange('callingEnabled', e.target.checked)}
+                color="primary"
+              />
+            }
+            label="Enable Calling Integration"
+            sx={{ mb: 3 }}
+          />
+
+          {settings.callingEnabled && (
+            <Box>
+              {/* Calling Provider Selection */}
+              <FormControl fullWidth sx={{ mb: 3 }}>
+                <InputLabel>Calling Provider</InputLabel>
+                <Select
+                  value={settings.callingProvider || 'ubona'}
+                  onChange={(e) => handleSettingChange('callingProvider', e.target.value)}
+                  label="Calling Provider"
+                >
+                  <MenuItem value="ubona">Ubona</MenuItem>
+                  <MenuItem value="twilio">Twilio Voice</MenuItem>
+                  <MenuItem value="nexmo">Vonage (Nexmo)</MenuItem>
+                  <MenuItem value="exotel">Exotel</MenuItem>
+                  <MenuItem value="kaleyra">Kaleyra</MenuItem>
+                  <MenuItem value="plivo">Plivo</MenuItem>
+                  <MenuItem value="custom">Custom Provider</MenuItem>
+                </Select>
+              </FormControl>
+
+              {/* Ubona Specific Settings */}
+              {settings.callingProvider === 'ubona' && (
+                <Box sx={{ p: 2, bgcolor: alpha(theme.palette.info.main, 0.1), borderRadius: 2, mb: 3 }}>
+                  <Typography variant="subtitle2" fontWeight="600" gutterBottom>
+                    Ubona Configuration
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="API Base URL"
+                        value={settings.ubonaApiUrl || 'https://api.ubona.com/v1'}
+                        onChange={(e) => handleSettingChange('ubonaApiUrl', e.target.value)}
+                        placeholder="https://api.ubona.com/v1"
+                        size="small"
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="API Key"
+                        type="password"
+                        value={settings.ubonaApiKey || ''}
+                        onChange={(e) => handleSettingChange('ubonaApiKey', e.target.value)}
+                        placeholder="Enter your Ubona API key"
+                        size="small"
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Account SID"
+                        value={settings.ubonaAccountSid || ''}
+                        onChange={(e) => handleSettingChange('ubonaAccountSid', e.target.value)}
+                        placeholder="Enter your Ubona Account SID"
+                        size="small"
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="From Number"
+                        value={settings.ubonaFromNumber || ''}
+                        onChange={(e) => handleSettingChange('ubonaFromNumber', e.target.value)}
+                        placeholder="+1234567890"
+                        size="small"
+                      />
+                    </Grid>
+                  </Grid>
+                </Box>
+              )}
+
+              {/* General Calling Settings */}
+              <Box>
+                <Typography variant="subtitle2" fontWeight="600" gutterBottom>
+                  Call Settings
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Default Call Duration (minutes)"
+                      type="number"
+                      value={settings.defaultCallDuration || 30}
+                      onChange={(e) => handleSettingChange('defaultCallDuration', parseInt(e.target.value))}
+                      size="small"
+                      inputProps={{ min: 1, max: 120 }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Max Concurrent Calls"
+                      type="number"
+                      value={settings.maxConcurrentCalls || 10}
+                      onChange={(e) => handleSettingChange('maxConcurrentCalls', parseInt(e.target.value))}
+                      size="small"
+                      inputProps={{ min: 1, max: 100 }}
+                    />
+                  </Grid>
+                </Grid>
+
+                <Box sx={{ display: 'flex', gap: 3, mt: 2, flexWrap: 'wrap' }}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={settings.recordCalls || false}
+                        onChange={(e) => handleSettingChange('recordCalls', e.target.checked)}
+                        color="primary"
+                      />
+                    }
+                    label="Enable Call Recording"
+                  />
+
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={settings.callAnalytics || false}
+                        onChange={(e) => handleSettingChange('callAnalytics', e.target.checked)}
+                        color="primary"
+                      />
+                    }
+                    label="Enable Call Analytics"
+                  />
+                </Box>
+              </Box>
+            </Box>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Quick Message Integration Settings */}
+      <Card sx={{ mb: 3, borderRadius: 3, boxShadow: '0 8px 24px rgba(0,0,0,0.05)' }}>
+        <CardContent sx={{ p: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <WhatsAppIcon sx={{ mr: 1, color: theme.palette.success.main }} />
+            <Typography variant="h6" fontWeight="600">Quick Message Integration Settings</Typography>
+          </Box>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Configure messaging service providers for WhatsApp, SMS, and Email communications
+          </Typography>
+          <Divider sx={{ mb: 3 }} />
+
+          {/* Enable Quick Messaging */}
+          <FormControlLabel
+            control={
+              <Switch
+                checked={settings.quickMessagingEnabled || false}
+                onChange={(e) => handleSettingChange('quickMessagingEnabled', e.target.checked)}
+                color="primary"
+              />
+            }
+            label="Enable Quick Messaging Integration"
+            sx={{ mb: 3 }}
+          />
+
+          {settings.quickMessagingEnabled && (
+            <Box>
+              {/* WhatsApp Settings */}
+              <Box sx={{ mb: 4 }}>
+                <Typography variant="subtitle1" fontWeight="600" gutterBottom>
+                  WhatsApp Configuration
+                </Typography>
+                
+                <FormControl fullWidth sx={{ mb: 2 }}>
+                  <InputLabel>WhatsApp Provider</InputLabel>
+                  <Select
+                    value={settings.whatsappProvider || 'gupshup'}
+                    onChange={(e) => handleSettingChange('whatsappProvider', e.target.value)}
+                    label="WhatsApp Provider"
+                  >
+                    <MenuItem value="gupshup">Gupshup</MenuItem>
+                    <MenuItem value="360dialog">360Dialog</MenuItem>
+                    <MenuItem value="infobip">Infobip</MenuItem>
+                    <MenuItem value="kaleyra">Kaleyra</MenuItem>
+                    <MenuItem value="exotel">Exotel</MenuItem>
+                    <MenuItem value="msg91">MSG91</MenuItem>
+                    <MenuItem value="interakt">Interakt</MenuItem>
+                    <MenuItem value="custom">Custom Provider</MenuItem>
+                  </Select>
+                </FormControl>
+
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="WhatsApp API URL"
+                      value={settings.whatsappApiUrl || ''}
+                      onChange={(e) => handleSettingChange('whatsappApiUrl', e.target.value)}
+                      placeholder="https://api.gupshup.io/sm/api/v1"
+                      size="small"
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="API Key / Auth Token"
+                      type="password"
+                      value={settings.whatsappApiKey || ''}
+                      onChange={(e) => handleSettingChange('whatsappApiKey', e.target.value)}
+                      placeholder="Enter your WhatsApp API key"
+                      size="small"
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Source Number"
+                      value={settings.whatsappSourceNumber || ''}
+                      onChange={(e) => handleSettingChange('whatsappSourceNumber', e.target.value)}
+                      placeholder="+1234567890"
+                      size="small"
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Business Account ID"
+                      value={settings.whatsappBusinessId || ''}
+                      onChange={(e) => handleSettingChange('whatsappBusinessId', e.target.value)}
+                      placeholder="Your WhatsApp Business Account ID"
+                      size="small"
+                    />
+                  </Grid>
+                </Grid>
+              </Box>
+
+              {/* SMS Settings */}
+              <Box sx={{ mb: 4 }}>
+                <Typography variant="subtitle1" fontWeight="600" gutterBottom>
+                  SMS Configuration
+                </Typography>
+                
+                <FormControl fullWidth sx={{ mb: 2 }}>
+                  <InputLabel>SMS Provider</InputLabel>
+                  <Select
+                    value={settings.smsProvider || 'twilio'}
+                    onChange={(e) => handleSettingChange('smsProvider', e.target.value)}
+                    label="SMS Provider"
+                  >
+                    <MenuItem value="twilio">Twilio</MenuItem>
+                    <MenuItem value="nexmo">Vonage (Nexmo)</MenuItem>
+                    <MenuItem value="msg91">MSG91</MenuItem>
+                    <MenuItem value="textlocal">TextLocal</MenuItem>
+                    <MenuItem value="kaleyra">Kaleyra</MenuItem>
+                    <MenuItem value="exotel">Exotel</MenuItem>
+                    <MenuItem value="custom">Custom Provider</MenuItem>
+                  </Select>
+                </FormControl>
+
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="SMS API URL"
+                      value={settings.smsApiUrl || ''}
+                      onChange={(e) => handleSettingChange('smsApiUrl', e.target.value)}
+                      placeholder="https://api.twilio.com/2010-04-01"
+                      size="small"
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="API Key / SID"
+                      type="password"
+                      value={settings.smsApiKey || ''}
+                      onChange={(e) => handleSettingChange('smsApiKey', e.target.value)}
+                      placeholder="Enter your SMS API key"
+                      size="small"
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Auth Token"
+                      type="password"
+                      value={settings.smsAuthToken || ''}
+                      onChange={(e) => handleSettingChange('smsAuthToken', e.target.value)}
+                      placeholder="Enter your SMS auth token"
+                      size="small"
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="From Number"
+                      value={settings.smsFromNumber || ''}
+                      onChange={(e) => handleSettingChange('smsFromNumber', e.target.value)}
+                      placeholder="+1234567890"
+                      size="small"
+                    />
+                  </Grid>
+                </Grid>
+              </Box>
+
+              {/* Message Templates */}
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle1" fontWeight="600" gutterBottom>
+                  Default Message Templates
+                </Typography>
+                
+                <TextField
+                  fullWidth
+                  label="Policy Renewal Reminder"
+                  multiline
+                  rows={3}
+                  value={settings.renewalReminderTemplate || 'Hi {{customerName}}, your {{policyType}} policy {{policyNumber}} is due for renewal on {{renewalDate}}. Please contact us to renew.'}
+                  onChange={(e) => handleSettingChange('renewalReminderTemplate', e.target.value)}
+                  sx={{ mb: 2 }}
+                  size="small"
+                />
+
+                <TextField
+                  fullWidth
+                  label="Claim Status Update"
+                  multiline
+                  rows={3}
+                  value={settings.claimStatusTemplate || 'Hello {{customerName}}, your claim {{claimNumber}} status has been updated to {{status}}. For queries, call us.'}
+                  onChange={(e) => handleSettingChange('claimStatusTemplate', e.target.value)}
+                  sx={{ mb: 2 }}
+                  size="small"
+                />
+
+                <TextField
+                  fullWidth
+                  label="Payment Confirmation"
+                  multiline
+                  rows={3}
+                  value={settings.paymentConfirmationTemplate || 'Thank you {{customerName}}! We have received your payment of {{amount}} for policy {{policyNumber}}. Receipt: {{receiptNumber}}'}
+                  onChange={(e) => handleSettingChange('paymentConfirmationTemplate', e.target.value)}
+                  size="small"
+                />
+              </Box>
+
+              {/* Message Settings */}
+              <Box>
+                <Typography variant="subtitle1" fontWeight="600" gutterBottom>
+                  Message Settings
+                </Typography>
+                
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Daily Message Limit"
+                      type="number"
+                      value={settings.dailyMessageLimit || 1000}
+                      onChange={(e) => handleSettingChange('dailyMessageLimit', parseInt(e.target.value))}
+                      size="small"
+                      inputProps={{ min: 1, max: 10000 }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Rate Limit (messages/minute)"
+                      type="number"
+                      value={settings.messageRateLimit || 60}
+                      onChange={(e) => handleSettingChange('messageRateLimit', parseInt(e.target.value))}
+                      size="small"
+                      inputProps={{ min: 1, max: 1000 }}
+                    />
+                  </Grid>
+                </Grid>
+
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={settings.enableMessageDeliveryReports || false}
+                      onChange={(e) => handleSettingChange('enableMessageDeliveryReports', e.target.checked)}
+                      color="primary"
+                    />
+                  }
+                  label="Enable Delivery Reports"
+                  sx={{ mt: 2 }}
+                />
+
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={settings.enableMessageAnalytics || false}
+                      onChange={(e) => handleSettingChange('enableMessageAnalytics', e.target.checked)}
+                      color="primary"
+                    />
+                  }
+                  label="Enable Message Analytics"
+                />
+              </Box>
+            </Box>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Integration Test */}
+      <Card sx={{ borderRadius: 3, boxShadow: '0 8px 24px rgba(0,0,0,0.05)' }}>
+        <CardContent sx={{ p: 3 }}>
+          <Typography variant="h6" fontWeight="600" gutterBottom>Integration Testing</Typography>
+          <Divider sx={{ mb: 2 }} />
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Test your calling and messaging integrations to ensure they're working correctly
+          </Typography>
+          
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            <Button
+              variant="outlined"
+              startIcon={<SmartToyIcon />}
+              disabled={!settings.callingEnabled}
+              sx={{ borderRadius: 2 }}
+            >
+              Test Calling Integration
+            </Button>
+            
+            <Button
+              variant="outlined"
+              startIcon={<WhatsAppIcon />}
+              disabled={!settings.quickMessagingEnabled}
+              sx={{ borderRadius: 2 }}
+            >
+              Test WhatsApp Integration
+            </Button>
+            
+            <Button
+              variant="outlined"
+              startIcon={<SmsIcon />}
+              disabled={!settings.quickMessagingEnabled}
+              sx={{ borderRadius: 2 }}
+            >
+              Test SMS Integration
+            </Button>
+          </Box>
         </CardContent>
       </Card>
     </Box>

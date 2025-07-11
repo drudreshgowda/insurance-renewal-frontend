@@ -81,8 +81,9 @@ import {
   ViewModule as ViewModuleIcon,
   Info as InfoIcon,
   Group as GroupIcon,
-  TrendingUp as TrendingUpIcon,
-  StarRate as StarRateIcon
+  StarRate as StarRateIcon,
+  Assessment as AssessmentIcon,
+  Lightbulb as LightbulbIcon
 } from '@mui/icons-material';
 import { useSettings } from '../context/SettingsContext';
 import { useTheme } from '@mui/material/styles';
@@ -455,9 +456,10 @@ const CaseDetails = () => {
               <Tab icon={<InfoIcon />} label="Overview & Policy" {...a11yProps(0)} />
               <Tab icon={<GroupIcon />} label="Policy Members" {...a11yProps(1)} />
               <Tab icon={<SettingsIcon />} label="Preferences" {...a11yProps(2)} />
-              <Tab icon={<TrendingUpIcon />} label="Analytics" {...a11yProps(3)} />
-              <Tab icon={<StarRateIcon />} label="Offers" {...a11yProps(4)} />
-              <Tab icon={<HistoryIcon />} label="History & Timeline" {...a11yProps(5)} />
+              <Tab icon={<LightbulbIcon />} label="Insights" {...a11yProps(3)} />
+              <Tab icon={<AssessmentIcon />} label="Analytics" {...a11yProps(4)} />
+              <Tab icon={<StarRateIcon />} label="Offers" {...a11yProps(5)} />
+              <Tab icon={<HistoryIcon />} label="History & Timeline" {...a11yProps(6)} />
             </Tabs>
           </Box>
         )}
@@ -2836,7 +2838,7 @@ const CaseDetails = () => {
 
 
           {/* Case History */}
-          <Grid item xs={12}>
+          <Grid item xs={12} md={6}>
             <Grow in={loaded} timeout={1200}>
               <Card 
                 elevation={0}
@@ -2845,6 +2847,7 @@ const CaseDetails = () => {
                   boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
                   overflow: 'visible',
                   transition: 'transform 0.2s, box-shadow 0.2s',
+                  height: '520px',
                   '&:hover': {
                     transform: 'translateY(-4px)',
                     boxShadow: '0 12px 32px rgba(0,0,0,0.1)'
@@ -2857,42 +2860,63 @@ const CaseDetails = () => {
                     <Typography variant="h6" fontWeight="600">Case History</Typography>
                   </Box>
                   <Divider sx={{ mb: 3 }} />
-                  <List>
-                    {caseData.history.map((event, index) => (
-                      <React.Fragment key={event.date}>
-                        {index > 0 && <Divider />}
-                        <ListItem>
-                          <ListItemText
-                            primary={
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Typography variant="subtitle2">{event.action}</Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                  {new Date(event.date).toLocaleString()}
-                                </Typography>
-                              </Box>
-                            }
-                            secondary={
-                              <Box sx={{ mt: 1 }}>
-                                <Typography variant="body2" color="text.secondary">
-                                  {event.details}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                                  By: {event.user}
-                                </Typography>
-                              </Box>
-                            }
-                          />
-                        </ListItem>
-                      </React.Fragment>
-                    ))}
-                  </List>
+                  <Box 
+                    sx={{ 
+                      maxHeight: '400px', 
+                      overflowY: 'auto',
+                      '&::-webkit-scrollbar': {
+                        width: '8px',
+                      },
+                      '&::-webkit-scrollbar-track': {
+                        background: '#f1f1f1',
+                        borderRadius: '4px',
+                      },
+                      '&::-webkit-scrollbar-thumb': {
+                        background: '#c1c1c1',
+                        borderRadius: '4px',
+                        '&:hover': {
+                          background: '#a1a1a1',
+                        },
+                      },
+                    }}
+                  >
+                    <List>
+                      {caseData.history.map((event, index) => (
+                        <React.Fragment key={event.date}>
+                          {index > 0 && <Divider />}
+                          <ListItem>
+                            <ListItemText
+                              primary={
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <Typography variant="subtitle2">{event.action}</Typography>
+                                  <Typography variant="caption" color="text.secondary">
+                                    {new Date(event.date).toLocaleString()}
+                                  </Typography>
+                                </Box>
+                              }
+                              secondary={
+                                <Box sx={{ mt: 1 }}>
+                                  <Typography variant="body2" color="text.secondary">
+                                    {event.details}
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                                    By: {event.user}
+                                  </Typography>
+                                </Box>
+                              }
+                            />
+                          </ListItem>
+                        </React.Fragment>
+                      ))}
+                    </List>
+                  </Box>
                 </CardContent>
               </Card>
             </Grow>
           </Grid>
           
           {/* Journey Summary */}
-          <Grid item xs={12}>
+          <Grid item xs={12} md={6}>
             <Grow in={loaded} timeout={1300}>
               <Card 
                 elevation={0}
@@ -2901,6 +2925,7 @@ const CaseDetails = () => {
                   boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
                   overflow: 'visible',
                   transition: 'transform 0.2s, box-shadow 0.2s',
+                  height: '520px',
                   '&:hover': {
                     transform: 'translateY(-4px)',
                     boxShadow: '0 12px 32px rgba(0,0,0,0.1)'
@@ -4442,9 +4467,9 @@ const CaseDetails = () => {
               </Grid>
             </TabPanel>
 
-            {/* Tab 4: Analytics */}
+            {/* Tab 3: Insights */}
             <TabPanel value={currentTab} index={3}>
-              <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>Analytics & Insights</Typography>
+              <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>Customer Insights</Typography>
               <Grid container spacing={3}>
                 {/* Customer Payment Schedule */}
                 <Grid item xs={12}>
@@ -4891,8 +4916,294 @@ const CaseDetails = () => {
               </Grid>
             </TabPanel>
 
-            {/* Tab 5: Offers */}
+            {/* Tab 4: Analytics */}
             <TabPanel value={currentTab} index={4}>
+              <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>Analytics</Typography>
+              <Grid container spacing={3}>
+                <Grid item xs={12}>
+                  <Grow in={loaded} timeout={900}>
+                    <Card 
+                      elevation={0}
+                      sx={{ 
+                        borderRadius: 3,
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
+                        overflow: 'visible',
+                        transition: 'transform 0.2s, box-shadow 0.2s',
+                        minHeight: '500px',
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        color: 'white',
+                        position: 'relative',
+                        '&:hover': {
+                          transform: 'translateY(-4px)',
+                          boxShadow: '0 12px 32px rgba(0,0,0,0.2)'
+                        }
+                      }}
+                    >
+                      <CardContent sx={{ p: 4, textAlign: 'center', position: 'relative', zIndex: 2 }}>
+                        {/* Animated Background Elements */}
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: 20,
+                            right: 20,
+                            width: 60,
+                            height: 60,
+                            borderRadius: '50%',
+                            background: 'rgba(255,255,255,0.1)',
+                            animation: 'float 3s ease-in-out infinite',
+                            '@keyframes float': {
+                              '0%, 100%': { transform: 'translateY(0px)' },
+                              '50%': { transform: 'translateY(-20px)' }
+                            }
+                          }}
+                        />
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            bottom: 30,
+                            left: 30,
+                            width: 40,
+                            height: 40,
+                            borderRadius: '50%',
+                            background: 'rgba(255,255,255,0.1)',
+                            animation: 'float 4s ease-in-out infinite reverse',
+                            '@keyframes float': {
+                              '0%, 100%': { transform: 'translateY(0px)' },
+                              '50%': { transform: 'translateY(-20px)' }
+                            }
+                          }}
+                        />
+                        
+                        {/* Main Content */}
+                        <Box sx={{ mt: 4, mb: 3 }}>
+                          {/* Animated People Building */}
+                          <Box sx={{ mb: 3, display: 'flex', justifyContent: 'center', alignItems: 'flex-end', gap: 2 }}>
+                            {/* Person 1 - Architect/Designer */}
+                            <Box
+                              sx={{
+                                fontSize: '50px',
+                                animation: 'work1 3s ease-in-out infinite',
+                                '@keyframes work1': {
+                                  '0%, 100%': { transform: 'translateY(0) rotate(0deg)' },
+                                  '25%': { transform: 'translateY(-5px) rotate(-5deg)' },
+                                  '50%': { transform: 'translateY(0) rotate(0deg)' },
+                                  '75%': { transform: 'translateY(-3px) rotate(3deg)' }
+                                }
+                              }}
+                            >
+                              👷‍♂️
+                            </Box>
+                            
+                            {/* Building/Construction */}
+                            <Box
+                              sx={{
+                                fontSize: '60px',
+                                animation: 'building 4s ease-in-out infinite',
+                                '@keyframes building': {
+                                  '0%': { transform: 'scale(0.8)' },
+                                  '25%': { transform: 'scale(0.9)' },
+                                  '50%': { transform: 'scale(1)' },
+                                  '75%': { transform: 'scale(1.05)' },
+                                  '100%': { transform: 'scale(0.8)' }
+                                }
+                              }}
+                            >
+                              🏗️
+                            </Box>
+                            
+                            {/* Person 2 - Developer */}
+                            <Box
+                              sx={{
+                                fontSize: '50px',
+                                animation: 'work2 2.5s ease-in-out infinite 0.5s',
+                                '@keyframes work2': {
+                                  '0%, 100%': { transform: 'translateY(0) rotate(0deg)' },
+                                  '30%': { transform: 'translateY(-8px) rotate(5deg)' },
+                                  '60%': { transform: 'translateY(-2px) rotate(-3deg)' }
+                                }
+                              }}
+                            >
+                              👨‍💻
+                            </Box>
+                            
+                            {/* Person 3 - Engineer */}
+                            <Box
+                              sx={{
+                                fontSize: '50px',
+                                animation: 'work3 3.5s ease-in-out infinite 1s',
+                                '@keyframes work3': {
+                                  '0%, 100%': { transform: 'translateY(0) rotate(0deg)' },
+                                  '20%': { transform: 'translateY(-6px) rotate(-8deg)' },
+                                  '40%': { transform: 'translateY(-2px) rotate(2deg)' },
+                                  '80%': { transform: 'translateY(-4px) rotate(-2deg)' }
+                                }
+                              }}
+                            >
+                              👩‍🔧
+                            </Box>
+                          </Box>
+                          
+
+                          
+                          {/* Animated Title */}
+                          <Typography 
+                            variant="h3" 
+                            sx={{ 
+                              fontWeight: 'bold', 
+                              mb: 2,
+                              background: 'linear-gradient(45deg, #FFE066, #FF6B6B)',
+                              backgroundClip: 'text',
+                              WebkitBackgroundClip: 'text',
+                              WebkitTextFillColor: 'transparent',
+                              animation: 'glow 2s ease-in-out infinite alternate',
+                              '@keyframes glow': {
+                                '0%': { textShadow: '0 0 5px rgba(255,255,255,0.5)' },
+                                '100%': { textShadow: '0 0 20px rgba(255,255,255,0.8)' }
+                              }
+                            }}
+                          >
+                            Something Exciting is Coming!
+                          </Typography>
+                          
+                          {/* Animated Subtitle */}
+                          <Typography 
+                            variant="h5" 
+                            sx={{ 
+                              mb: 4, 
+                              opacity: 0.9,
+                              animation: 'fadeInOut 3s ease-in-out infinite',
+                              '@keyframes fadeInOut': {
+                                '0%, 100%': { opacity: 0.7 },
+                                '50%': { opacity: 1 }
+                              }
+                            }}
+                          >
+                            Stay Tuned!
+                          </Typography>
+                          
+                          {/* Progress Indicators */}
+                          <Box sx={{ mb: 4 }}>
+                            <Typography variant="body1" sx={{ mb: 2, opacity: 0.9 }}>
+                              Our team is building amazing analytics features:
+                            </Typography>
+                            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3, flexWrap: 'wrap' }}>
+                              <Box sx={{ textAlign: 'center' }}>
+                                <Box
+                                  sx={{
+                                    fontSize: '24px',
+                                    mb: 1,
+                                    animation: 'buildPulse 1.5s ease-in-out infinite',
+                                    '@keyframes buildPulse': {
+                                      '0%, 100%': { transform: 'scale(1) rotate(0deg)' },
+                                      '50%': { transform: 'scale(1.1) rotate(5deg)' }
+                                    }
+                                  }}
+                                >
+                                  🔧
+                                </Box>
+                                <Typography variant="caption">Building Tools</Typography>
+                              </Box>
+                              <Box sx={{ textAlign: 'center' }}>
+                                <Box
+                                  sx={{
+                                    fontSize: '24px',
+                                    mb: 1,
+                                    animation: 'buildPulse 1.5s ease-in-out infinite 0.3s',
+                                    '@keyframes buildPulse': {
+                                      '0%, 100%': { transform: 'scale(1) rotate(0deg)' },
+                                      '50%': { transform: 'scale(1.1) rotate(5deg)' }
+                                    }
+                                  }}
+                                >
+                                  📋
+                                </Box>
+                                <Typography variant="caption">Project Planning</Typography>
+                              </Box>
+                              <Box sx={{ textAlign: 'center' }}>
+                                <Box
+                                  sx={{
+                                    fontSize: '24px',
+                                    mb: 1,
+                                    animation: 'buildPulse 1.5s ease-in-out infinite 0.6s',
+                                    '@keyframes buildPulse': {
+                                      '0%, 100%': { transform: 'scale(1) rotate(0deg)' },
+                                      '50%': { transform: 'scale(1.1) rotate(5deg)' }
+                                    }
+                                  }}
+                                >
+                                  ⚙️
+                                </Box>
+                                <Typography variant="caption">System Integration</Typography>
+                              </Box>
+                              <Box sx={{ textAlign: 'center' }}>
+                                <Box
+                                  sx={{
+                                    fontSize: '24px',
+                                    mb: 1,
+                                    animation: 'buildPulse 1.5s ease-in-out infinite 0.9s',
+                                    '@keyframes buildPulse': {
+                                      '0%, 100%': { transform: 'scale(1) rotate(0deg)' },
+                                      '50%': { transform: 'scale(1.1) rotate(5deg)' }
+                                    }
+                                  }}
+                                >
+                                  🚀
+                                </Box>
+                                <Typography variant="caption">Launch Ready</Typography>
+                              </Box>
+                            </Box>
+                          </Box>
+                          
+                          {/* Loading Animation */}
+                          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, mb: 3 }}>
+                            <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                              Construction in progress
+                            </Typography>
+                            <Box sx={{ display: 'flex', gap: 0.5 }}>
+                              {[0, 1, 2].map((index) => (
+                                <Box
+                                  key={index}
+                                  sx={{
+                                    width: 8,
+                                    height: 8,
+                                    borderRadius: '50%',
+                                    bgcolor: 'rgba(255,255,255,0.8)',
+                                    animation: `loading 1.4s ease-in-out infinite ${index * 0.2}s`,
+                                    '@keyframes loading': {
+                                      '0%, 80%, 100%': { transform: 'scale(0.8)', opacity: 0.5 },
+                                      '40%': { transform: 'scale(1.2)', opacity: 1 }
+                                    }
+                                  }}
+                                />
+                              ))}
+                            </Box>
+                          </Box>
+                          
+                          {/* Call to Action */}
+                          <Box
+                            sx={{
+                              p: 2,
+                              borderRadius: 2,
+                              background: 'rgba(255,255,255,0.1)',
+                              backdropFilter: 'blur(10px)',
+                              border: '1px solid rgba(255,255,255,0.2)'
+                            }}
+                          >
+                            <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                              🏗️ <strong>Under Construction:</strong> Our team is building an advanced analytics dashboard 
+                              with real-time insights, interactive visualizations, and AI-powered recommendations!
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grow>
+                </Grid>
+              </Grid>
+            </TabPanel>
+
+            {/* Tab 5: Offers */}
+            <TabPanel value={currentTab} index={5}>
               <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>Available Offers</Typography>
               <Grid container spacing={3}>
                 <Grid item xs={12}>
@@ -5162,7 +5473,7 @@ const CaseDetails = () => {
             </TabPanel>
 
             {/* Tab 6: History & Timeline */}
-            <TabPanel value={currentTab} index={5}>
+            <TabPanel value={currentTab} index={6}>
               <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>History & Timeline</Typography>
               <Grid container spacing={3}>
                 {/* Case Flow */}
@@ -5217,6 +5528,7 @@ const CaseDetails = () => {
                         boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
                         overflow: 'visible',
                         transition: 'transform 0.2s, box-shadow 0.2s',
+                        height: '520px',
                         '&:hover': {
                           transform: 'translateY(-4px)',
                           boxShadow: '0 12px 32px rgba(0,0,0,0.1)'
@@ -5229,25 +5541,46 @@ const CaseDetails = () => {
                           <Typography variant="h6" fontWeight="600">Case History</Typography>
                         </Box>
                         <Divider sx={{ mb: 3 }} />
-                        <List>
-                          {caseData.history.map((item, index) => (
-                            <ListItem key={index} sx={{ px: 0 }}>
-                              <ListItemText
-                                primary={item.action}
-                                secondary={
-                                  <Box>
-                                    <Typography variant="body2" color="text.secondary">
-                                      {item.details}
-                                    </Typography>
-                                    <Typography variant="caption" color="text.secondary">
-                                      {new Date(item.date).toLocaleString()} • {item.user}
-                                    </Typography>
-                                  </Box>
-                                }
-                              />
-                            </ListItem>
-                          ))}
-                        </List>
+                        <Box 
+                          sx={{ 
+                            maxHeight: '400px', 
+                            overflowY: 'auto',
+                            '&::-webkit-scrollbar': {
+                              width: '8px',
+                            },
+                            '&::-webkit-scrollbar-track': {
+                              background: '#f1f1f1',
+                              borderRadius: '4px',
+                            },
+                            '&::-webkit-scrollbar-thumb': {
+                              background: '#c1c1c1',
+                              borderRadius: '4px',
+                              '&:hover': {
+                                background: '#a1a1a1',
+                              },
+                            },
+                          }}
+                        >
+                          <List>
+                            {caseData.history.map((item, index) => (
+                              <ListItem key={index} sx={{ px: 0 }}>
+                                <ListItemText
+                                  primary={item.action}
+                                  secondary={
+                                    <Box>
+                                      <Typography variant="body2" color="text.secondary">
+                                        {item.details}
+                                      </Typography>
+                                      <Typography variant="caption" color="text.secondary">
+                                        {new Date(item.date).toLocaleString()} • {item.user}
+                                      </Typography>
+                                    </Box>
+                                  }
+                                />
+                              </ListItem>
+                            ))}
+                          </List>
+                        </Box>
                       </CardContent>
                     </Card>
                   </Grow>
@@ -5261,6 +5594,7 @@ const CaseDetails = () => {
                         boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
                         overflow: 'visible',
                         transition: 'transform 0.2s, box-shadow 0.2s',
+                        height: '520px',
                         '&:hover': {
                           transform: 'translateY(-4px)',
                           boxShadow: '0 12px 32px rgba(0,0,0,0.1)'

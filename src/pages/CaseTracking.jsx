@@ -7,7 +7,8 @@ import {
   DialogTitle, DialogContent, DialogActions, FormControl,
   InputLabel, Select, Stepper, Step, StepLabel,
   List, ListItem, ListItemText, Divider, Alert,
-  ListItemIcon, Card, CardContent, Grow, Zoom, Fade, alpha
+  ListItemIcon, Card, CardContent, Grow, Zoom, Fade, alpha,
+  RadioGroup, FormControlLabel, Radio
 } from '@mui/material';
 import { 
   Search as SearchIcon, 
@@ -22,7 +23,12 @@ import {
   PriorityHigh as PriorityHighIcon,
   Refresh as RefreshIcon,
   AssignmentInd as AssignmentIndIcon,
-  ManageAccounts as ManageAccountsIcon
+  ManageAccounts as ManageAccountsIcon,
+  Message as MessageIcon,
+  Phone as PhoneIcon,
+  WhatsApp as WhatsAppIcon,
+  Sms as SmsIcon,
+  Email as EmailIcon
 } from '@mui/icons-material';
 import { fetchCases, updateCase } from '../services/api';
 import { useNavigate } from 'react-router-dom';
@@ -159,6 +165,10 @@ const CaseTracking = () => {
   const [currentCase, setCurrentCase] = useState(null);
   const [commentDialogOpen, setCommentDialogOpen] = useState(false);
   const [commentText, setCommentText] = useState('');
+  const [quickMessageDialog, setQuickMessageDialog] = useState(false);
+  const [selectedCase, setSelectedCase] = useState(null);
+  const [messageType, setMessageType] = useState('whatsapp');
+  const [quickMessage, setQuickMessage] = useState('');
 
   // Mock data for demonstration
   useEffect(() => {
@@ -415,6 +425,52 @@ const CaseTracking = () => {
   const handleActionMenuClose = () => {
     setActionMenuAnchorEl(null);
     setSelectedCaseId(null);
+  };
+
+  // Quick message handlers
+  const handleQuickMessageOpen = (caseData) => {
+    setSelectedCase(caseData);
+    setQuickMessage(getDefaultQuickMessage(caseData));
+    setQuickMessageDialog(true);
+  };
+
+  const handleQuickMessageClose = () => {
+    setQuickMessageDialog(false);
+    setSelectedCase(null);
+    setQuickMessage('');
+  };
+
+  const getDefaultQuickMessage = (caseData) => {
+    return `Hi ${caseData.customerName}, this is regarding your ${caseData.policyDetails.type} insurance policy ${caseData.policyNumber}. Please let us know if you need any assistance with your renewal process.`;
+  };
+
+  const handleSendQuickMessage = () => {
+    // Here you would integrate with your messaging API
+    console.log('Sending message:', {
+      case: selectedCase,
+      type: messageType,
+      message: quickMessage
+    });
+    
+    setSuccessMessage(`Quick message sent to ${selectedCase.customerName} via ${messageType.toUpperCase()}`);
+    handleQuickMessageClose();
+    
+    setTimeout(() => {
+      setSuccessMessage('');
+    }, 3000);
+  };
+
+  // Call handler
+  const handleCall = (caseData) => {
+    // Here you would integrate with your calling system
+    console.log('Initiating call to:', caseData.contactInfo.phone);
+    
+    // For demo purposes, we'll just show a success message
+    setSuccessMessage(`Call initiated to ${caseData.customerName} at ${caseData.contactInfo.phone}`);
+    
+    setTimeout(() => {
+      setSuccessMessage('');
+    }, 3000);
   };
 
   return (
@@ -699,7 +755,7 @@ const CaseTracking = () => {
                       </TableCell>
                       <TableCell>{new Date(caseItem.uploadDate).toLocaleDateString()}</TableCell>
                       <TableCell>
-                        <Box sx={{ display: 'flex' }}>
+                        <Box sx={{ display: 'flex', gap: 0.5 }}>
                           <Tooltip title="View Details" arrow placement="top">
                             <IconButton
                               size="small"
@@ -716,6 +772,41 @@ const CaseTracking = () => {
                               <ViewIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
+                          
+                          <Tooltip title="Quick Message" arrow placement="top">
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleQuickMessageOpen(caseItem);
+                              }}
+                              sx={{ 
+                                color: 'success.main',
+                                transition: 'transform 0.2s',
+                                '&:hover': { transform: 'scale(1.15)' }
+                              }}
+                            >
+                              <MessageIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          
+                          <Tooltip title="Call Customer" arrow placement="top">
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCall(caseItem);
+                              }}
+                              sx={{ 
+                                color: 'warning.main',
+                                transition: 'transform 0.2s',
+                                '&:hover': { transform: 'scale(1.15)' }
+                              }}
+                            >
+                              <PhoneIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          
                           {settings?.showEditCaseButton !== false && (
                             <Tooltip title="Edit Case" arrow placement="top">
                               <IconButton
@@ -735,6 +826,7 @@ const CaseTracking = () => {
                               </IconButton>
                             </Tooltip>
                           )}
+                          
                           <Tooltip title="View History" arrow placement="top">
                             <IconButton
                               size="small"
@@ -1169,6 +1261,151 @@ const CaseTracking = () => {
             <Button onClick={handleCommentDialogClose}>Cancel</Button>
             <Button onClick={handleCommentSubmit} variant="contained" disabled={!commentText.trim()}>
               Add Comment
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Quick Message Dialog */}
+        <Dialog open={quickMessageDialog} onClose={handleQuickMessageClose} maxWidth="md" fullWidth>
+          <DialogTitle sx={{ pb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <MessageIcon color="primary" />
+              <Typography variant="h6" component="span">
+                Quick Message
+              </Typography>
+            </Box>
+          </DialogTitle>
+          
+          <DialogContent sx={{ pb: 0 }}>
+            {selectedCase && (
+              <Box>
+                <Typography variant="subtitle2" gutterBottom sx={{ mb: 2 }}>
+                  Sending message to: <strong>{selectedCase.customerName}</strong> ({selectedCase.id})
+                </Typography>
+                
+                {/* Message Type Selection */}
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2 }}>
+                    Message Channel
+                  </Typography>
+                  <FormControl fullWidth>
+                    <InputLabel>Channel</InputLabel>
+                    <Select
+                      value={messageType}
+                      label="Channel"
+                      onChange={(e) => setMessageType(e.target.value)}
+                      sx={{ borderRadius: 2 }}
+                    >
+                      <MenuItem value="whatsapp">
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <WhatsAppIcon fontSize="small" color="success" />
+                          WhatsApp - {selectedCase.contactInfo.phone}
+                        </Box>
+                      </MenuItem>
+                      <MenuItem value="sms">
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <SmsIcon fontSize="small" color="info" />
+                          SMS - {selectedCase.contactInfo.phone}
+                        </Box>
+                      </MenuItem>
+                      <MenuItem value="email">
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <EmailIcon fontSize="small" color="primary" />
+                          Email - {selectedCase.contactInfo.email}
+                        </Box>
+                      </MenuItem>
+                    </Select>
+                  </FormControl>
+                </Box>
+
+                {/* Message Content */}
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2 }}>
+                    Message Content
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={messageType === 'email' ? 8 : 6}
+                    value={quickMessage}
+                    onChange={(e) => setQuickMessage(e.target.value)}
+                    placeholder={`Enter your ${messageType} message...`}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        fontFamily: 'monospace',
+                        fontSize: '0.9rem'
+                      }
+                    }}
+                  />
+                  <Box sx={{ 
+                    mt: 1, 
+                    display: 'flex', 
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <Typography variant="caption" color="text.secondary">
+                      {messageType === 'sms' && `${quickMessage.length}/160 characters`}
+                      {messageType === 'whatsapp' && `${quickMessage.length} characters`}
+                      {messageType === 'email' && `${quickMessage.split('\n').length} lines`}
+                    </Typography>
+                    <Button
+                      size="small"
+                      onClick={() => setQuickMessage(getDefaultQuickMessage(selectedCase))}
+                      sx={{ textTransform: 'none' }}
+                    >
+                      Reset to Default
+                    </Button>
+                  </Box>
+                </Box>
+
+                {/* Policy Information Preview */}
+                <Box sx={{ 
+                  p: 2, 
+                  bgcolor: alpha(theme.palette.info.main, 0.05),
+                  borderRadius: 2,
+                  border: `1px solid ${alpha(theme.palette.info.main, 0.1)}`
+                }}>
+                  <Typography variant="subtitle2" fontWeight="600" color="info.main" sx={{ mb: 1 }}>
+                    Policy Information
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Policy: {selectedCase.policyNumber} | Type: {selectedCase.policyDetails.type} | 
+                    Premium: ${selectedCase.policyDetails.premium} | 
+                    Expiry: {new Date(selectedCase.policyDetails.expiryDate).toLocaleDateString()}
+                  </Typography>
+                </Box>
+              </Box>
+            )}
+          </DialogContent>
+          
+          <DialogActions sx={{ p: 3, pt: 1 }}>
+            <Button
+              onClick={handleQuickMessageClose}
+              sx={{ borderRadius: 2, textTransform: 'none' }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleSendQuickMessage}
+              disabled={!quickMessage.trim()}
+              startIcon={<MessageIcon />}
+              sx={{
+                borderRadius: 2,
+                textTransform: 'none',
+                fontWeight: 600,
+                minWidth: 140,
+                background: 'linear-gradient(45deg, #25D366 30%, #128C7E 90%)',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #20BA5A 30%, #0F7A6B 90%)',
+                },
+                '&:disabled': {
+                  background: 'rgba(0,0,0,0.12)'
+                }
+              }}
+            >
+              Send Message
             </Button>
           </DialogActions>
         </Dialog>

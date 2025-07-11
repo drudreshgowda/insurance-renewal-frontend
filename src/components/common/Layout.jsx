@@ -47,7 +47,9 @@ import {
   Close as CloseIcon,
   Build as PolicyServicingIcon,
   BusinessCenter as NewBusinessIcon,
-  LocalHospital as MedicalManagementIcon
+  LocalHospital as MedicalManagementIcon,
+  Description as TemplateIcon,
+  Poll as SurveyIcon
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext.js';
 import { useThemeMode } from '../../context/ThemeModeContext.js';
@@ -113,7 +115,7 @@ const Layout = ({ children }) => {
   const theme = useTheme();
   const { mode, toggleMode } = useThemeMode();
   const { notifications, unreadCount, markAsRead } = useNotifications();
-  const { hasPermission } = usePermissions();
+  const { hasPermission, hasAnyPermission, hasModuleAccess } = usePermissions();
   const { t } = useTranslation();
 
   const handleDrawerToggle = () => {
@@ -241,15 +243,43 @@ const Layout = ({ children }) => {
     return location.pathname === itemPath;
   };
 
-  const menuItems = [
-    { text: t('navigation.campaigns'), icon: <CampaignIcon />, path: '/campaigns', permission: 'campaigns' },
-    { text: 'Feedback & Surveys', icon: <FeedbackIcon />, path: '/feedback', permission: 'feedback' },
-    { text: 'Claims', icon: <GavelIcon />, path: '/claims', permission: 'claims' },
-    { text: 'Policy Servicing', icon: <PolicyServicingIcon />, path: '/policy-servicing', permission: 'policy-servicing' },
-    { text: 'New Business', icon: <NewBusinessIcon />, path: '/new-business', permission: 'new-business' },
-    { text: 'Medical Mgmt', icon: <MedicalManagementIcon />, path: '/medical-management', permission: 'medical-management' },
-    { text: t('navigation.whatsapp'), icon: <WhatsAppIcon />, path: '/whatsapp-flow', permission: 'whatsapp-flow' },
-  ].filter(item => hasPermission(item.permission));
+  // Define all menu modules with strict permission checking
+  const menuModules = {
+    business: {
+      items: [
+        { text: 'Claims', icon: <GavelIcon />, path: '/claims', permission: 'claims' },
+        { text: 'Policy Servicing', icon: <PolicyServicingIcon />, path: '/policy-servicing', permission: 'policy-servicing' },
+        { text: 'New Business', icon: <NewBusinessIcon />, path: '/new-business', permission: 'new-business' },
+        { text: 'Medical Mgmt', icon: <MedicalManagementIcon />, path: '/medical-management', permission: 'medical-management' },
+      ],
+      permissions: ['claims', 'policy-servicing', 'new-business', 'medical-management']
+    },
+    marketing: {
+      items: [
+        { text: t('navigation.campaigns'), icon: <CampaignIcon />, path: '/campaigns', permission: 'campaigns' },
+        { text: 'Templates', icon: <TemplateIcon />, path: '/templates', permission: 'templates' },
+      ],
+      permissions: ['campaigns', 'templates']
+    },
+    survey: {
+      items: [
+        { text: 'Feedback & Surveys', icon: <FeedbackIcon />, path: '/feedback', permission: 'feedback' },
+        { text: 'Survey Designer', icon: <SurveyIcon />, path: '/survey-designer', permission: 'survey-designer' },
+      ],
+      permissions: ['feedback', 'survey-designer']
+    },
+    whatsapp: {
+      items: [
+        { text: t('navigation.whatsapp'), icon: <WhatsAppIcon />, path: '/whatsapp-flow', permission: 'whatsapp-flow' },
+      ],
+      permissions: ['whatsapp-flow']
+    }
+  };
+
+  // Filter menu items based on strict permission checking
+  const menuItems = Object.values(menuModules)
+    .flatMap(module => module.items)
+    .filter(item => hasPermission(item.permission));
 
   const renewalMenuItems = [
     { text: t('navigation.dashboard'), icon: <DashboardIcon />, path: '/', permission: 'dashboard' },
@@ -286,105 +316,113 @@ const Layout = ({ children }) => {
       </DrawerHeader>
       <Divider />
       <List sx={{ px: 1 }}>
-        {/* Renewal Management Menu */}
-        <ListItem disablePadding>
-          <StyledListItemButton onClick={handleRenewalMenuClick}>
-            <ListItemIcon sx={{ minWidth: 40, color: theme.palette.text.secondary }}>
-              <AutorenewIcon />
-            </ListItemIcon>
-            <ListItemText 
-              primary={t('navigation.renewals', 'Renewals')} 
-              primaryTypographyProps={{ 
-                fontWeight: 500,
-                color: theme.palette.text.primary
-              }}
-            />
-            {renewalMenuOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-          </StyledListItemButton>
-        </ListItem>
+        {/* Renewal Management Menu - Only show if user has renewals module access */}
+        {hasModuleAccess('renewals') && (
+          <>
+            <ListItem disablePadding>
+              <StyledListItemButton onClick={handleRenewalMenuClick}>
+                <ListItemIcon sx={{ minWidth: 40, color: theme.palette.text.secondary }}>
+                  <AutorenewIcon />
+                </ListItemIcon>
+                <ListItemText 
+                  primary={t('navigation.renewals', 'Renewals')} 
+                  primaryTypographyProps={{ 
+                    fontWeight: 500,
+                    color: theme.palette.text.primary
+                  }}
+                />
+                {renewalMenuOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+              </StyledListItemButton>
+            </ListItem>
 
-        {/* Renewal Management Submenu */}
-        <Collapse in={renewalMenuOpen} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            {renewalMenuItems.map((item) => (
-              <ListItem key={item.text} disablePadding>
-                <StyledListItemButton
-                  onClick={() => handleNavigate(item.path)}
-                  selected={location.pathname === item.path}
-                  sx={{ pl: 4 }}
-                >
-                  <ListItemIcon sx={{ 
-                    minWidth: 40,
-                    color: location.pathname === item.path 
-                      ? theme.palette.primary.main 
-                      : theme.palette.text.secondary
-                  }}>
-                    {item.icon}
-                  </ListItemIcon>
-                  <ListItemText 
-                    primary={item.text} 
-                    primaryTypographyProps={{ 
-                      fontWeight: location.pathname === item.path ? 600 : 400,
-                      color: location.pathname === item.path 
-                        ? theme.palette.primary.main 
-                        : theme.palette.text.primary
-                    }}
-                  />
-                </StyledListItemButton>
-              </ListItem>
-            ))}
-          </List>
-        </Collapse>
+            {/* Renewal Management Submenu */}
+            <Collapse in={renewalMenuOpen} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                {renewalMenuItems.map((item) => (
+                  <ListItem key={item.text} disablePadding>
+                    <StyledListItemButton
+                      onClick={() => handleNavigate(item.path)}
+                      selected={location.pathname === item.path}
+                      sx={{ pl: 4 }}
+                    >
+                      <ListItemIcon sx={{ 
+                        minWidth: 40,
+                        color: location.pathname === item.path 
+                          ? theme.palette.primary.main 
+                          : theme.palette.text.secondary
+                      }}>
+                        {item.icon}
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary={item.text} 
+                        primaryTypographyProps={{ 
+                          fontWeight: location.pathname === item.path ? 600 : 400,
+                          color: location.pathname === item.path 
+                            ? theme.palette.primary.main 
+                            : theme.palette.text.primary
+                        }}
+                      />
+                    </StyledListItemButton>
+                  </ListItem>
+                ))}
+              </List>
+            </Collapse>
+          </>
+        )}
 
-        {/* Email Management Menu */}
-        <ListItem disablePadding>
-          <StyledListItemButton onClick={handleEmailMenuClick}>
-            <ListItemIcon sx={{ minWidth: 40, color: theme.palette.text.secondary }}>
-              <EmailIcon />
-            </ListItemIcon>
-            <ListItemText 
-              primary={t('navigation.email')} 
-              primaryTypographyProps={{ 
-                fontWeight: 500,
-                color: theme.palette.text.primary
-              }}
-            />
-            {emailMenuOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-          </StyledListItemButton>
-        </ListItem>
+        {/* Email Management Menu - Only show if user has email module access */}
+        {hasModuleAccess('email') && (
+          <>
+            <ListItem disablePadding>
+              <StyledListItemButton onClick={handleEmailMenuClick}>
+                <ListItemIcon sx={{ minWidth: 40, color: theme.palette.text.secondary }}>
+                  <EmailIcon />
+                </ListItemIcon>
+                <ListItemText 
+                  primary={t('navigation.email')} 
+                  primaryTypographyProps={{ 
+                    fontWeight: 500,
+                    color: theme.palette.text.primary
+                  }}
+                />
+                {emailMenuOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+              </StyledListItemButton>
+            </ListItem>
 
-        {/* Email Management Submenu */}
-        <Collapse in={emailMenuOpen} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            {emailMenuItems.map((item) => (
-              <ListItem key={item.text} disablePadding>
-                <StyledListItemButton
-                  onClick={() => handleNavigate(item.path)}
-                  selected={isEmailMenuItemSelected(item.path)}
-                  sx={{ pl: 4 }}
-                >
-                  <ListItemIcon sx={{ 
-                    minWidth: 40,
-                    color: isEmailMenuItemSelected(item.path)
-                      ? theme.palette.primary.main 
-                      : theme.palette.text.secondary
-                  }}>
-                    {item.icon}
-                  </ListItemIcon>
-                  <ListItemText 
-                    primary={item.text} 
-                    primaryTypographyProps={{ 
-                      fontWeight: isEmailMenuItemSelected(item.path) ? 600 : 400,
-                      color: isEmailMenuItemSelected(item.path)
-                        ? theme.palette.primary.main 
-                        : theme.palette.text.primary
-                    }}
-                  />
-                </StyledListItemButton>
-              </ListItem>
-            ))}
-          </List>
-        </Collapse>
+            {/* Email Management Submenu */}
+            <Collapse in={emailMenuOpen} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                {emailMenuItems.map((item) => (
+                  <ListItem key={item.text} disablePadding>
+                    <StyledListItemButton
+                      onClick={() => handleNavigate(item.path)}
+                      selected={isEmailMenuItemSelected(item.path)}
+                      sx={{ pl: 4 }}
+                    >
+                      <ListItemIcon sx={{ 
+                        minWidth: 40,
+                        color: isEmailMenuItemSelected(item.path)
+                          ? theme.palette.primary.main 
+                          : theme.palette.text.secondary
+                      }}>
+                        {item.icon}
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary={item.text} 
+                        primaryTypographyProps={{ 
+                          fontWeight: isEmailMenuItemSelected(item.path) ? 600 : 400,
+                          color: isEmailMenuItemSelected(item.path)
+                            ? theme.palette.primary.main 
+                            : theme.palette.text.primary
+                        }}
+                      />
+                    </StyledListItemButton>
+                  </ListItem>
+                ))}
+              </List>
+            </Collapse>
+          </>
+        )}
 
         {/* Main Menu Items */}
         {menuItems.map((item) => (
@@ -455,119 +493,127 @@ const Layout = ({ children }) => {
       </DrawerHeader>
       <Divider />
       <List>
-        {/* Renewals Section - Show main renewal items */}
-        <ListItem disablePadding sx={{ display: 'block' }}>
-          <Tooltip title="Renewals" placement="right">
-            <StyledListItemButton
-              onClick={handleRenewalMenuClick}
-              sx={{
-                minHeight: 48,
-                justifyContent: 'center',
-                px: 2.5,
-              }}
-            >
-              <ListItemIcon
-                sx={{
-                  minWidth: 0,
-                  mr: 'auto',
-                  justifyContent: 'center',
-                  color: theme.palette.text.secondary
-                }}
-              >
-                <AutorenewIcon />
-              </ListItemIcon>
-            </StyledListItemButton>
-          </Tooltip>
-        </ListItem>
-
-        {/* Show renewal items when expanded or show main dashboard */}
-        {renewalMenuItems.slice(0, 3).map((item) => (
-          <ListItem key={item.text} disablePadding sx={{ display: 'block' }}>
-            <StyledListItemButton
-              onClick={() => handleNavigate(item.path)}
-              selected={location.pathname === item.path}
-              sx={{
-                minHeight: 40,
-                justifyContent: 'center',
-                px: 2.5,
-                ml: 1,
-              }}
-            >
-              <Tooltip title={item.text} placement="right">
-                <ListItemIcon
+        {/* Renewals Section - Only show if user has renewals module access */}
+        {hasModuleAccess('renewals') && (
+          <>
+            <ListItem disablePadding sx={{ display: 'block' }}>
+              <Tooltip title="Renewals" placement="right">
+                <StyledListItemButton
+                  onClick={handleRenewalMenuClick}
                   sx={{
-                    minWidth: 0,
-                    mr: 'auto',
+                    minHeight: 48,
                     justifyContent: 'center',
-                    color: location.pathname === item.path 
-                      ? theme.palette.primary.main 
-                      : theme.palette.text.secondary,
-                    fontSize: '1.2rem'
+                    px: 2.5,
                   }}
                 >
-                  {item.icon}
-                </ListItemIcon>
+                  <ListItemIcon
+                    sx={{
+                      minWidth: 0,
+                      mr: 'auto',
+                      justifyContent: 'center',
+                      color: theme.palette.text.secondary
+                    }}
+                  >
+                    <AutorenewIcon />
+                  </ListItemIcon>
+                </StyledListItemButton>
               </Tooltip>
-            </StyledListItemButton>
-          </ListItem>
-        ))}
+            </ListItem>
 
-        {/* Emails Section */}
-        <ListItem disablePadding sx={{ display: 'block', mt: 1 }}>
-          <Tooltip title="Emails" placement="right">
-            <StyledListItemButton
-              onClick={handleEmailMenuClick}
-              sx={{
-                minHeight: 48,
-                justifyContent: 'center',
-                px: 2.5,
-              }}
-            >
-              <ListItemIcon
-                sx={{
-                  minWidth: 0,
-                  mr: 'auto',
-                  justifyContent: 'center',
-                  color: theme.palette.text.secondary
-                }}
-              >
-                <EmailIcon />
-              </ListItemIcon>
-            </StyledListItemButton>
-          </Tooltip>
-        </ListItem>
-
-        {/* Show email items */}
-        {emailMenuItems.map((item) => (
-          <ListItem key={item.text} disablePadding sx={{ display: 'block' }}>
-            <StyledListItemButton
-              onClick={() => handleNavigate(item.path)}
-              selected={isEmailMenuItemSelected(item.path)}
-              sx={{
-                minHeight: 40,
-                justifyContent: 'center',
-                px: 2.5,
-                ml: 1,
-              }}
-            >
-              <Tooltip title={item.text} placement="right">
-                <ListItemIcon
+            {/* Show renewal items when expanded or show main dashboard */}
+            {renewalMenuItems.slice(0, 3).map((item) => (
+              <ListItem key={item.text} disablePadding sx={{ display: 'block' }}>
+                <StyledListItemButton
+                  onClick={() => handleNavigate(item.path)}
+                  selected={location.pathname === item.path}
                   sx={{
-                    minWidth: 0,
-                    mr: 'auto',
+                    minHeight: 40,
                     justifyContent: 'center',
-                    color: isEmailMenuItemSelected(item.path)
-                      ? theme.palette.primary.main 
-                      : theme.palette.text.secondary,
-                    fontSize: '1.2rem'
+                    px: 2.5,
+                    ml: 1,
                   }}
                 >
-                  {item.icon}
-                </ListItemIcon>
+                  <Tooltip title={item.text} placement="right">
+                    <ListItemIcon
+                      sx={{
+                        minWidth: 0,
+                        mr: 'auto',
+                        justifyContent: 'center',
+                        color: location.pathname === item.path 
+                          ? theme.palette.primary.main 
+                          : theme.palette.text.secondary,
+                        fontSize: '1.2rem'
+                      }}
+                    >
+                      {item.icon}
+                    </ListItemIcon>
+                  </Tooltip>
+                </StyledListItemButton>
+              </ListItem>
+            ))}
+          </>
+        )}
+
+        {/* Emails Section - Only show if user has email module access */}
+        {hasModuleAccess('email') && (
+          <>
+            <ListItem disablePadding sx={{ display: 'block', mt: 1 }}>
+              <Tooltip title="Emails" placement="right">
+                <StyledListItemButton
+                  onClick={handleEmailMenuClick}
+                  sx={{
+                    minHeight: 48,
+                    justifyContent: 'center',
+                    px: 2.5,
+                  }}
+                >
+                  <ListItemIcon
+                    sx={{
+                      minWidth: 0,
+                      mr: 'auto',
+                      justifyContent: 'center',
+                      color: theme.palette.text.secondary
+                    }}
+                  >
+                    <EmailIcon />
+                  </ListItemIcon>
+                </StyledListItemButton>
               </Tooltip>
-            </StyledListItemButton>
-          </ListItem>
-        ))}
+            </ListItem>
+
+            {/* Show email items */}
+            {emailMenuItems.map((item) => (
+              <ListItem key={item.text} disablePadding sx={{ display: 'block' }}>
+                <StyledListItemButton
+                  onClick={() => handleNavigate(item.path)}
+                  selected={isEmailMenuItemSelected(item.path)}
+                  sx={{
+                    minHeight: 40,
+                    justifyContent: 'center',
+                    px: 2.5,
+                    ml: 1,
+                  }}
+                >
+                  <Tooltip title={item.text} placement="right">
+                    <ListItemIcon
+                      sx={{
+                        minWidth: 0,
+                        mr: 'auto',
+                        justifyContent: 'center',
+                        color: isEmailMenuItemSelected(item.path)
+                          ? theme.palette.primary.main 
+                          : theme.palette.text.secondary,
+                        fontSize: '1.2rem'
+                      }}
+                    >
+                      {item.icon}
+                    </ListItemIcon>
+                  </Tooltip>
+                </StyledListItemButton>
+              </ListItem>
+            ))}
+          </>
+        )}
 
         {/* Main Menu Items */}
         {menuItems.map((item) => (

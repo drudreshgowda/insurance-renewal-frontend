@@ -27,22 +27,52 @@ export const AuthProvider = ({ children }) => {
         id: '1',
         name: 'Rajesh Kumar',
         email: 'rajesh@client.com',
-        role: 'admin',
-        portalLanguage: 'hi' // Hindi preference
+        role: 'renewals_specialist',
+        portalLanguage: 'en', // English preference
+        permissions: [
+          // Renewals Module Only
+          'dashboard', 'cases', 'closed-cases', 'policy-timeline', 'logs',
+          // Personal Pages
+          'profile'
+        ]
       },
       'priya@client.com': {
         id: '2',
         name: 'Priya Sharma',
         email: 'priya@client.com',
-        role: 'user',
-        portalLanguage: 'bn' // Bengali preference
+        role: 'all_modules_manager',
+        portalLanguage: 'en', // English preference
+        permissions: [
+          // Core Pages (excluding Renewals module - no cases, closed-cases, policy-timeline, logs)
+          'dashboard', 'upload', 'claims',
+          'policy-servicing', 'new-business', 'medical-management',
+          // Email Pages
+          'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
+          // Marketing Pages
+          'campaigns', 'templates',
+          // Survey Pages
+          'feedback', 'survey-designer',
+          // WhatsApp Pages
+          'whatsapp-flow',
+          // Admin Pages
+          'settings', 'billing', 'users',
+          // Personal Pages
+          'profile'
+        ]
       },
       'admin@client.com': {
         id: '3',
         name: 'Admin User',
         email: 'admin@client.com',
         role: 'admin',
-        portalLanguage: 'en' // English preference
+        portalLanguage: 'en', // English preference
+        permissions: [
+          // Full access to all modules
+          'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs', 'claims',
+          'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
+          'campaigns', 'templates', 'feedback', 'survey-designer', 'whatsapp-flow',
+          'settings', 'billing', 'users', 'profile'
+        ]
       }
     };
     
