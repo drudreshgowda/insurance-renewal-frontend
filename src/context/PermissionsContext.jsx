@@ -49,7 +49,7 @@ const mockUserPermissions = {
   ],
   'renewals_specialist': [
     // Renewals Module Only
-    'dashboard', 'cases', 'closed-cases', 'policy-timeline', 'logs',
+    'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs',
     // Personal Pages
     'profile'
   ],
