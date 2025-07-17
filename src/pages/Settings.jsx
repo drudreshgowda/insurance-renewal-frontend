@@ -282,6 +282,7 @@ const Settings = () => {
       permissions: [
         // Core Pages
         'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs', 'claims',
+        'policy-servicing', 'new-business', 'medical-management',
         // Email Pages  
         'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
         // Marketing Pages
@@ -394,6 +395,7 @@ const Settings = () => {
       permissions: [
         // Core Pages
         'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs', 'claims',
+        'policy-servicing', 'new-business', 'medical-management',
         // Email Pages  
         'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
         // Marketing Pages
@@ -512,6 +514,9 @@ const Settings = () => {
     { id: 'policy-timeline', name: 'Policy Timeline', description: 'View policy timeline and history', category: 'Core Pages', route: '/policy-timeline' },
     { id: 'logs', name: 'Case Logs', description: 'View system and case logs', category: 'Core Pages', route: '/logs' },
     { id: 'claims', name: 'Claims Management', description: 'Manage insurance claims processing', category: 'Core Pages', route: '/claims' },
+    { id: 'policy-servicing', name: 'Policy Servicing', description: 'Manage policy servicing and maintenance', category: 'Core Pages', route: '/policy-servicing' },
+    { id: 'new-business', name: 'New Business', description: 'Handle new business applications and processing', category: 'Core Pages', route: '/new-business' },
+    { id: 'medical-management', name: 'Medical Management', description: 'Manage medical underwriting and assessments', category: 'Core Pages', route: '/medical-management' },
     
     // Email Management Pages
     { id: 'emails', name: 'Email Inbox', description: 'Access email inbox and management', category: 'Email Pages', route: '/emails' },
@@ -575,6 +580,7 @@ const Settings = () => {
     admin: [
       // Core Pages
       'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs', 'claims',
+      'policy-servicing', 'new-business', 'medical-management',
       // Email Pages  
       'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
       // Marketing Pages
