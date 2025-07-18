@@ -4,6 +4,32 @@
 // Base URL for API calls
 const API_BASE_URL = 'https://api.example.com/v1';
 
+// Provider configuration endpoints
+const PROVIDER_ENDPOINTS = {
+  email: {
+    sendgrid: 'https://api.sendgrid.com/v3',
+    'aws-ses': 'https://email.{region}.amazonaws.com',
+    mailgun: 'https://api.mailgun.net/v3',
+    smtp: 'custom-smtp-endpoint'
+  },
+  sms: {
+    twilio: 'https://api.twilio.com/2010-04-01',
+    msg91: 'https://api.msg91.com/api/v5',
+    'aws-sns': 'https://sns.{region}.amazonaws.com',
+    textlocal: 'https://api.textlocal.in'
+  },
+  whatsapp: {
+    meta: 'https://graph.facebook.com/v17.0',
+    gupshup: 'https://api.gupshup.io/sm/api/v1',
+    '360dialog': 'https://waba.360dialog.io/v1'
+  },
+  call: {
+    'twilio-voice': 'https://api.twilio.com/2010-04-01',
+    exotel: 'https://api.exotel.com/v1',
+    ubona: 'https://api.ubona.com/v1'
+  }
+};
+
 // Helper function for API requests
 const apiRequest = async (endpoint, options = {}) => {
   try {
@@ -1154,4 +1180,255 @@ export const fetchTeamMembers = async (teamId) => {
       resolve(teamMembers[teamId] || []);
     }, 300);
   });
+};
+
+// =====================================================================================
+// PROVIDER MANAGEMENT API FUNCTIONS
+// =====================================================================================
+
+// Test provider connection
+export const testProviderConnection = async (channel, providerId, config) => {
+  try {
+    // In a real app, this would make actual API calls to test the provider
+    // return apiRequest(`/providers/test`, {
+    //   method: 'POST',
+    //   body: JSON.stringify({ channel, providerId, config })
+    // });
+    
+    // Mock implementation with simulated delay
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Simulate random success/failure for testing
+    const success = Math.random() > 0.3;
+    return { success, message: success ? 'Connection successful' : 'Connection failed' };
+  } catch (error) {
+    console.error('Provider test error:', error);
+    return { success: false, message: 'Test failed' };
+  }
+};
+
+// Send campaign via specific provider
+export const sendCampaignViaProvider = async (campaignData, providerConfig) => {
+  try {
+    const { channel, provider, recipients, content } = campaignData;
+    
+    // In a real app, this would route to the appropriate provider API
+    switch (channel) {
+      case 'email':
+        return await sendEmailViaProvider(provider, recipients, content);
+      case 'sms':
+        return await sendSMSViaProvider(provider, recipients, content);
+      case 'whatsapp':
+        return await sendWhatsAppViaProvider(provider, recipients, content);
+      case 'call':
+        return await makeCallViaProvider(provider, recipients, content);
+      default:
+        throw new Error(`Unsupported channel: ${channel}`);
+    }
+  } catch (error) {
+    console.error('Campaign send error:', error);
+    throw error;
+  }
+};
+
+// Email provider implementations
+const sendEmailViaProvider = async (provider, recipients, content) => {
+  const endpoint = PROVIDER_ENDPOINTS.email[provider.type];
+  
+  switch (provider.type) {
+    case 'sendgrid':
+      // return apiRequest(`${endpoint}/mail/send`, {
+      //   method: 'POST',
+      //   headers: { 'Authorization': `Bearer ${provider.config.apiKey}` },
+      //   body: JSON.stringify({
+      //     personalizations: recipients.map(r => ({ to: [{ email: r.email }] })),
+      //     from: { email: provider.config.fromEmail, name: provider.config.fromName },
+      //     subject: content.subject,
+      //     content: [{ type: 'text/html', value: content.body }]
+      //   })
+      // });
+      
+      // Mock implementation
+      return { success: true, messageId: `sg-${Date.now()}` };
+      
+    case 'aws-ses':
+      // AWS SES implementation would go here
+      return { success: true, messageId: `ses-${Date.now()}` };
+      
+    case 'mailgun':
+      // Mailgun implementation would go here
+      return { success: true, messageId: `mg-${Date.now()}` };
+      
+    case 'smtp':
+      // Custom SMTP implementation would go here
+      return { success: true, messageId: `smtp-${Date.now()}` };
+      
+    default:
+      throw new Error(`Unsupported email provider: ${provider.type}`);
+  }
+};
+
+// SMS provider implementations
+const sendSMSViaProvider = async (provider, recipients, content) => {
+  const endpoint = PROVIDER_ENDPOINTS.sms[provider.type];
+  
+  switch (provider.type) {
+    case 'twilio':
+      // return apiRequest(`${endpoint}/Accounts/${provider.config.accountSid}/Messages.json`, {
+      //   method: 'POST',
+      //   headers: { 'Authorization': `Basic ${btoa(`${provider.config.accountSid}:${provider.config.authToken}`)}` },
+      //   body: JSON.stringify({
+      //     From: provider.config.fromNumber,
+      //     To: recipients[0].phone,
+      //     Body: content.message
+      //   })
+      // });
+      
+      // Mock implementation
+      return { success: true, messageId: `tw-${Date.now()}` };
+      
+    case 'msg91':
+      // MSG91 implementation would go here
+      return { success: true, messageId: `msg91-${Date.now()}` };
+      
+    case 'aws-sns':
+      // AWS SNS implementation would go here
+      return { success: true, messageId: `sns-${Date.now()}` };
+      
+    case 'textlocal':
+      // TextLocal implementation would go here
+      return { success: true, messageId: `tl-${Date.now()}` };
+      
+    default:
+      throw new Error(`Unsupported SMS provider: ${provider.type}`);
+  }
+};
+
+// WhatsApp provider implementations
+const sendWhatsAppViaProvider = async (provider, recipients, content) => {
+  const endpoint = PROVIDER_ENDPOINTS.whatsapp[provider.type];
+  
+  switch (provider.type) {
+    case 'meta':
+      // return apiRequest(`${endpoint}/${provider.config.phoneNumberId}/messages`, {
+      //   method: 'POST',
+      //   headers: { 'Authorization': `Bearer ${provider.config.accessToken}` },
+      //   body: JSON.stringify({
+      //     messaging_product: 'whatsapp',
+      //     to: recipients[0].phone,
+      //     type: 'text',
+      //     text: { body: content.message }
+      //   })
+      // });
+      
+      // Mock implementation
+      return { success: true, messageId: `wa-${Date.now()}` };
+      
+    case 'gupshup':
+      // Gupshup implementation would go here
+      return { success: true, messageId: `gs-${Date.now()}` };
+      
+    case '360dialog':
+      // 360Dialog implementation would go here
+      return { success: true, messageId: `360-${Date.now()}` };
+      
+    default:
+      throw new Error(`Unsupported WhatsApp provider: ${provider.type}`);
+  }
+};
+
+// Call provider implementations
+const makeCallViaProvider = async (provider, recipients, content) => {
+  const endpoint = PROVIDER_ENDPOINTS.call[provider.type];
+  
+  switch (provider.type) {
+    case 'twilio-voice':
+      // return apiRequest(`${endpoint}/Accounts/${provider.config.accountSid}/Calls.json`, {
+      //   method: 'POST',
+      //   headers: { 'Authorization': `Basic ${btoa(`${provider.config.accountSid}:${provider.config.authToken}`)}` },
+      //   body: JSON.stringify({
+      //     From: provider.config.fromNumber,
+      //     To: recipients[0].phone,
+      //     Url: provider.config.voiceUrl,
+      //     Method: 'POST'
+      //   })
+      // });
+      
+      // Mock implementation
+      return { success: true, callId: `call-${Date.now()}` };
+      
+    case 'exotel':
+      // Exotel implementation would go here
+      return { success: true, callId: `exo-${Date.now()}` };
+      
+    case 'ubona':
+      // Ubona implementation would go here
+      return { success: true, callId: `ubona-${Date.now()}` };
+      
+    default:
+      throw new Error(`Unsupported call provider: ${provider.type}`);
+  }
+};
+
+// Get provider statistics
+export const getProviderStats = async (channel, providerId) => {
+  try {
+    // In a real app, this would fetch actual stats from the provider
+    // return apiRequest(`/providers/${channel}/${providerId}/stats`);
+    
+    // Mock implementation
+    return {
+      sent: Math.floor(Math.random() * 10000),
+      delivered: Math.floor(Math.random() * 9500),
+      failed: Math.floor(Math.random() * 500),
+      pending: Math.floor(Math.random() * 100),
+      lastActivity: new Date(Date.now() - Math.random() * 86400000).toISOString()
+    };
+  } catch (error) {
+    console.error('Provider stats error:', error);
+    throw error;
+  }
+};
+
+// Validate provider configuration
+export const validateProviderConfig = (channel, providerType, config) => {
+  const errors = [];
+  
+  // Basic validation based on provider type
+  switch (channel) {
+    case 'email':
+      if (providerType === 'sendgrid' && !config.apiKey) {
+        errors.push('SendGrid API key is required');
+      }
+      if (!config.fromEmail) {
+        errors.push('From email is required');
+      }
+      break;
+      
+    case 'sms':
+      if (providerType === 'twilio' && (!config.accountSid || !config.authToken)) {
+        errors.push('Twilio Account SID and Auth Token are required');
+      }
+      if (!config.fromNumber) {
+        errors.push('From number is required');
+      }
+      break;
+      
+    case 'whatsapp':
+      if (providerType === 'meta' && (!config.accessToken || !config.phoneNumberId)) {
+        errors.push('Meta WhatsApp Access Token and Phone Number ID are required');
+      }
+      break;
+      
+    case 'call':
+      if (providerType === 'twilio-voice' && (!config.accountSid || !config.authToken)) {
+        errors.push('Twilio Account SID and Auth Token are required');
+      }
+      if (!config.fromNumber) {
+        errors.push('From number is required');
+      }
+      break;
+  }
+  
+  return { isValid: errors.length === 0, errors };
 };

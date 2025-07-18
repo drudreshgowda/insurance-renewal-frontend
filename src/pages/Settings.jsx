@@ -6,8 +6,8 @@ import {
   FormControl, Select, MenuItem, InputLabel, FormHelperText,
   Button, Divider, TextField, Slider,
   useTheme, alpha, Fade, Grow, Zoom, Dialog, DialogTitle, DialogContent, DialogActions,
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
-  FormControlLabel, Checkbox, RadioGroup, Radio, FormLabel,
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  FormControlLabel, Checkbox,
   Chip, IconButton, Grid, Avatar
 } from '@mui/material';
 import {
@@ -31,12 +31,10 @@ import {
   Gavel as GavelIcon,
   Feedback as FeedbackIcon,
   Storage as StorageIcon,
-  VolumeUp as VolumeUpIcon,
   Person as PersonIcon,
   Group as GroupIcon,
   Shield as ShieldIcon,
   AccessTime as AccessTimeIcon,
-  Monitor as MonitorIcon,
   Cloud as CloudIcon,
   DataUsage as DataUsageIcon,
   Wifi as WifiIcon,
@@ -51,7 +49,6 @@ import {
   Error as ErrorIcon,
   Warning as WarningIcon,
   Sync as SyncIcon,
-  SyncDisabled as SyncDisabledIcon,
   Merge as MergeIcon,
   Speed as SpeedIcon,
   Description as DescriptionIcon,
@@ -59,10 +56,16 @@ import {
   Verified as VerifiedIcon,
   Timeline as TrackingIcon,
   WhatsApp as WhatsAppIcon,
-  SmartToy as SmartToyIcon
+  SmartToy as SmartToyIcon,
+  ConnectedTv as ProvidersIcon,
+  PlayArrow as TestIcon,
+  Star as StarIcon,
+  StarBorder as StarBorderIcon,
+  Phone as PhoneIcon
 } from '@mui/icons-material';
 import { useThemeMode } from '../context/ThemeModeContext';
 import { useSettings } from '../context/SettingsContext';
+import { useProviders } from '../context/ProvidersContext';
 import { Link, useSearchParams } from 'react-router-dom';
 import WelcomeModal from '../components/common/WelcomeModal';
 import LanguageTest from '../components/common/LanguageTest';
@@ -404,6 +407,8 @@ const Settings = () => {
         'feedback', 'survey-designer',
         // WhatsApp Pages
         'whatsapp-flow',
+        // Renewal Communication Pages
+        'renewal-email-manager', 'renewal-whatsapp-manager',
         // Admin Pages
         'settings', 'billing', 'users',
         // Personal Pages
@@ -428,6 +433,8 @@ const Settings = () => {
         'feedback', 'survey-designer',
         // WhatsApp Pages
         'whatsapp-flow',
+        // Renewal Communication Pages
+        'renewal-email-manager', 'renewal-whatsapp-manager',
         // Personal Pages
         'profile'
         // Note: Excludes admin pages (settings, billing, users)
@@ -445,6 +452,8 @@ const Settings = () => {
         'dashboard', 'cases', 'closed-cases', 'policy-timeline', 'logs',
         // Email Pages
         'emails', 'email-dashboard',
+        // Renewal Communication Pages
+        'renewal-email-manager', 'renewal-whatsapp-manager',
         // Personal Pages
         'profile'
       ],
@@ -535,6 +544,10 @@ const Settings = () => {
     // WhatsApp Pages
     { id: 'whatsapp-flow', name: 'WhatsApp Flow', description: 'Manage automated WhatsApp messaging flows', category: 'Communication Pages', route: '/whatsapp-flow' },
     
+    // Renewal Communication Pages
+    { id: 'renewal-email-manager', name: 'Renewal Email Manager', description: 'Manage email communications for policy renewals', category: 'Renewal Pages', route: '/renewals/email-manager' },
+    { id: 'renewal-whatsapp-manager', name: 'Renewal WhatsApp Manager', description: 'Manage WhatsApp communications for policy renewals', category: 'Renewal Pages', route: '/renewals/whatsapp-manager' },
+    
     // Administration Pages
     { id: 'settings', name: 'Settings', description: 'Access system settings and configuration', category: 'Admin Pages', route: '/settings' },
     { id: 'billing', name: 'Billing', description: 'View billing information and invoices', category: 'Admin Pages', route: '/billing' },
@@ -589,6 +602,8 @@ const Settings = () => {
       'feedback', 'survey-designer',
       // WhatsApp Pages
       'whatsapp-flow',
+      // Renewal Communication Pages
+      'renewal-email-manager', 'renewal-whatsapp-manager',
       // Admin Pages
       'settings', 'billing', 'users',
       // Personal Pages
@@ -605,6 +620,8 @@ const Settings = () => {
       'feedback', 'survey-designer',
       // WhatsApp Pages
       'whatsapp-flow',
+      // Renewal Communication Pages
+      'renewal-email-manager', 'renewal-whatsapp-manager',
       // Personal Pages
       'profile'
     ],
@@ -615,6 +632,8 @@ const Settings = () => {
       'emails', 'email-dashboard',
       // WhatsApp Pages
       'whatsapp-flow',
+      // Renewal Communication Pages
+      'renewal-email-manager', 'renewal-whatsapp-manager',
       // Personal Pages
       'profile'
     ],
@@ -630,6 +649,7 @@ const Settings = () => {
     { label: 'General', icon: <SettingsIcon /> },
     { label: 'Renewals', icon: <AutorenewIcon /> },
     { label: 'Email', icon: <EmailIcon /> },
+    { label: 'Providers', icon: <ProvidersIcon /> },
     { label: 'Campaigns', icon: <CampaignIcon /> },
     { label: 'WhatsApp Flow', icon: <WhatsAppIcon /> },
     { label: 'Claims', icon: <GavelIcon /> },
@@ -1054,10 +1074,10 @@ const Settings = () => {
     });
   };
 
-  const getRoleDisplayName = (roleName) => {
-    const role = roles.find(r => r.name === roleName);
-    return role ? role.displayName : roleName;
-  };
+  // const getRoleDisplayName = (roleName) => {
+  //   const role = roles.find(r => r.name === roleName);
+  //   return role ? role.displayName : roleName;
+  // };
 
   const getPermissionsByCategory = () => {
     const categories = {};
@@ -4681,7 +4701,7 @@ const Settings = () => {
   // User Management Tab
   const UserManagementTab = () => {
     const filteredUsers = getFilteredUsers();
-    const permissionCategories = getPermissionsByCategory();
+    // const permissionCategories = getPermissionsByCategory();
 
     return (
       <Box>
@@ -5550,6 +5570,415 @@ const Settings = () => {
     </Box>
   );
 
+  // Providers Settings Tab Content
+  const ProvidersSettingsTab = () => {
+    const { providers, providerTemplates, addProvider, updateProvider, deleteProvider, setDefaultProvider, testProvider } = useProviders();
+    const [selectedChannel, setSelectedChannel] = useState('email');
+    const [providerDialog, setProviderDialog] = useState({ open: false, provider: null, mode: 'add', channel: 'email' });
+    const [testingProvider, setTestingProvider] = useState(null);
+    const [newProvider, setNewProvider] = useState({
+      name: '',
+      type: '',
+      isActive: false,
+      isDefault: false,
+      config: {},
+      limits: {
+        dailyLimit: 1000,
+        monthlyLimit: 10000,
+        rateLimit: 10
+      }
+    });
+
+    const channelTabs = [
+      { id: 'email', label: 'Email', icon: <EmailIcon />, color: '#1976d2' },
+      { id: 'sms', label: 'SMS', icon: <SmsIcon />, color: '#388e3c' },
+      { id: 'whatsapp', label: 'WhatsApp', icon: <WhatsAppIcon />, color: '#25d366' },
+      { id: 'call', label: 'Call', icon: <PhoneIcon />, color: '#ff9800' }
+    ];
+
+    const getStatusColor = (status) => {
+      switch (status) {
+        case 'connected': return 'success';
+        case 'testing': return 'info';
+        case 'error': return 'error';
+        case 'disconnected': return 'default';
+        default: return 'default';
+      }
+    };
+
+    const getStatusIcon = (status) => {
+      switch (status) {
+        case 'connected': return <CheckCircleIcon />;
+        case 'testing': return <SyncIcon />;
+        case 'error': return <ErrorIcon />;
+        case 'disconnected': return <WifiOffIcon />;
+        default: return <WifiOffIcon />;
+      }
+    };
+
+    const handleAddProvider = (channel) => {
+      setProviderDialog({ open: true, provider: null, mode: 'add', channel });
+      setNewProvider({
+        name: '',
+        type: '',
+        isActive: false,
+        isDefault: false,
+        config: {},
+        limits: {
+          dailyLimit: 1000,
+          monthlyLimit: 10000,
+          rateLimit: 10
+        }
+      });
+    };
+
+    const handleEditProvider = (provider, channel) => {
+      setProviderDialog({ open: true, provider, mode: 'edit', channel });
+      setNewProvider({ ...provider });
+    };
+
+    const handleDeleteProvider = (providerId, channel) => {
+      deleteProvider(channel, providerId);
+    };
+
+    const handleSaveProvider = () => {
+      if (providerDialog.mode === 'add') {
+        addProvider(providerDialog.channel, newProvider);
+      } else {
+        updateProvider(providerDialog.channel, providerDialog.provider.id, newProvider);
+      }
+      setProviderDialog({ open: false, provider: null, mode: 'add', channel: 'email' });
+    };
+
+    const handleTestProvider = async (provider, channel) => {
+      setTestingProvider(provider.id);
+      const success = await testProvider(channel, provider.id);
+      setTestingProvider(null);
+      
+      // Show result notification
+      if (success) {
+        setSuccessMessage(`${provider.name} connection test successful!`);
+      } else {
+        setSuccessMessage(`${provider.name} connection test failed. Please check your configuration.`);
+      }
+    };
+
+    const handleToggleActive = (provider, channel) => {
+      updateProvider(channel, provider.id, { isActive: !provider.isActive });
+    };
+
+    const handleSetDefault = (provider, channel) => {
+      setDefaultProvider(channel, provider.id);
+    };
+
+    const renderProviderCard = (provider, channel) => (
+      <Card key={provider.id} sx={{ mb: 2, borderRadius: 2 }}>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Avatar sx={{ bgcolor: channelTabs.find(t => t.id === channel)?.color }}>
+                {channelTabs.find(t => t.id === channel)?.icon}
+              </Avatar>
+              <Box>
+                <Typography variant="h6" fontWeight="600">
+                  {provider.name}
+                  {provider.isDefault && (
+                    <Chip label="Default" size="small" color="primary" sx={{ ml: 1 }} />
+                  )}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {providerTemplates[channel][provider.type]?.name || provider.type}
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Chip
+                label={provider.status}
+                color={getStatusColor(provider.status)}
+                size="small"
+                icon={getStatusIcon(provider.status)}
+              />
+              <Switch
+                checked={provider.isActive}
+                onChange={() => handleToggleActive(provider, channel)}
+                size="small"
+              />
+            </Box>
+          </Box>
+
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Typography variant="body2" color="text.secondary">
+                Daily: {provider.limits.dailyLimit} | Monthly: {provider.limits.monthlyLimit}
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <IconButton
+                size="small"
+                onClick={() => handleTestProvider(provider, channel)}
+                disabled={testingProvider === provider.id}
+              >
+                {testingProvider === provider.id ? <SyncIcon /> : <TestIcon />}
+              </IconButton>
+              <IconButton
+                size="small"
+                onClick={() => handleSetDefault(provider, channel)}
+                disabled={provider.isDefault}
+              >
+                {provider.isDefault ? <StarIcon color="primary" /> : <StarBorderIcon />}
+              </IconButton>
+              <IconButton
+                size="small"
+                onClick={() => handleEditProvider(provider, channel)}
+              >
+                <EditIcon />
+              </IconButton>
+              <IconButton
+                size="small"
+                onClick={() => handleDeleteProvider(provider.id, channel)}
+                color="error"
+              >
+                <DeleteIcon />
+              </IconButton>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+    );
+
+    const renderProviderTypeFields = () => {
+      if (!newProvider.type || !providerTemplates[providerDialog.channel][newProvider.type]) {
+        return null;
+      }
+
+      const template = providerTemplates[providerDialog.channel][newProvider.type];
+      return template.fields.map((field) => (
+        <Grid item xs={12} md={6} key={field.key}>
+          <TextField
+            fullWidth
+            label={field.label}
+            type={field.type}
+            required={field.required}
+            value={newProvider.config[field.key] || ''}
+            onChange={(e) => setNewProvider(prev => ({
+              ...prev,
+              config: { ...prev.config, [field.key]: e.target.value }
+            }))}
+            placeholder={field.placeholder}
+            size="small"
+          />
+        </Grid>
+      ));
+    };
+
+    return (
+      <Box>
+        <Typography variant="h5" fontWeight="600" gutterBottom>
+          Communication Providers
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
+          Configure multiple providers for each communication channel. You can add, test, and manage providers for Email, SMS, WhatsApp, and Call campaigns.
+        </Typography>
+
+        {/* Channel Tabs */}
+        <Box sx={{ mb: 3 }}>
+          <Tabs
+            value={selectedChannel}
+            onChange={(e, value) => setSelectedChannel(value)}
+            variant="scrollable"
+            scrollButtons="auto"
+          >
+            {channelTabs.map((tab) => (
+              <Tab
+                key={tab.id}
+                value={tab.id}
+                label={tab.label}
+                icon={tab.icon}
+                iconPosition="start"
+                sx={{ minHeight: 48 }}
+              />
+            ))}
+          </Tabs>
+        </Box>
+
+        {/* Provider Management */}
+        <Card sx={{ borderRadius: 3 }}>
+          <CardContent sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Typography variant="h6" fontWeight="600">
+                {channelTabs.find(t => t.id === selectedChannel)?.label} Providers
+              </Typography>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => handleAddProvider(selectedChannel)}
+              >
+                Add Provider
+              </Button>
+            </Box>
+
+            {/* Provider List */}
+            <Box>
+              {providers[selectedChannel]?.length > 0 ? (
+                providers[selectedChannel].map((provider) => 
+                  renderProviderCard(provider, selectedChannel)
+                )
+              ) : (
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <ProvidersIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+                  <Typography variant="h6" color="text.secondary" gutterBottom>
+                    No {selectedChannel} providers configured
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                    Add your first {selectedChannel} provider to start sending campaigns
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={() => handleAddProvider(selectedChannel)}
+                  >
+                    Add {selectedChannel.charAt(0).toUpperCase() + selectedChannel.slice(1)} Provider
+                  </Button>
+                </Box>
+              )}
+            </Box>
+          </CardContent>
+        </Card>
+
+        {/* Provider Dialog */}
+        <Dialog
+          open={providerDialog.open}
+          onClose={() => setProviderDialog({ open: false, provider: null, mode: 'add', channel: 'email' })}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle>
+            {providerDialog.mode === 'add' ? 'Add' : 'Edit'} {providerDialog.channel.charAt(0).toUpperCase() + providerDialog.channel.slice(1)} Provider
+          </DialogTitle>
+          <DialogContent dividers>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Provider Name"
+                  value={newProvider.name}
+                  onChange={(e) => setNewProvider(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="e.g., SendGrid Primary"
+                  size="small"
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Provider Type</InputLabel>
+                  <Select
+                    value={newProvider.type}
+                    label="Provider Type"
+                    onChange={(e) => setNewProvider(prev => ({ 
+                      ...prev, 
+                      type: e.target.value,
+                      config: {}
+                    }))}
+                  >
+                    {Object.entries(providerTemplates[providerDialog.channel] || {}).map(([key, template]) => (
+                      <MenuItem key={key} value={key}>
+                        {template.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              {/* Provider Configuration Fields */}
+              {renderProviderTypeFields()}
+
+              {/* Limits Configuration */}
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" fontWeight="600" gutterBottom sx={{ mt: 2 }}>
+                  Rate Limits
+                </Typography>
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <TextField
+                  fullWidth
+                  label="Daily Limit"
+                  type="number"
+                  value={newProvider.limits.dailyLimit}
+                  onChange={(e) => setNewProvider(prev => ({
+                    ...prev,
+                    limits: { ...prev.limits, dailyLimit: parseInt(e.target.value) }
+                  }))}
+                  size="small"
+                />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <TextField
+                  fullWidth
+                  label="Monthly Limit"
+                  type="number"
+                  value={newProvider.limits.monthlyLimit}
+                  onChange={(e) => setNewProvider(prev => ({
+                    ...prev,
+                    limits: { ...prev.limits, monthlyLimit: parseInt(e.target.value) }
+                  }))}
+                  size="small"
+                />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <TextField
+                  fullWidth
+                  label="Rate Limit (per minute)"
+                  type="number"
+                  value={newProvider.limits.rateLimit}
+                  onChange={(e) => setNewProvider(prev => ({
+                    ...prev,
+                    limits: { ...prev.limits, rateLimit: parseInt(e.target.value) }
+                  }))}
+                  size="small"
+                />
+              </Grid>
+
+              {/* Provider Options */}
+              <Grid item xs={12}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={newProvider.isActive}
+                      onChange={(e) => setNewProvider(prev => ({ ...prev, isActive: e.target.checked }))}
+                    />
+                  }
+                  label="Activate this provider"
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={newProvider.isDefault}
+                      onChange={(e) => setNewProvider(prev => ({ ...prev, isDefault: e.target.checked }))}
+                    />
+                  }
+                  label="Set as default provider"
+                />
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setProviderDialog({ open: false, provider: null, mode: 'add', channel: 'email' })}>
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleSaveProvider}
+              disabled={!newProvider.name.trim() || !newProvider.type}
+            >
+              {providerDialog.mode === 'add' ? 'Add Provider' : 'Save Changes'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
+    );
+  };
+
   return (
     <Fade in={true} timeout={800}>
       <Box sx={{ px: 1 }}>
@@ -5620,25 +6049,28 @@ const Settings = () => {
             <TabPanel value={tabValue} index={2}>
               <EmailSettingsTab />
             </TabPanel>
-                    <TabPanel value={tabValue} index={3}>
-              <CampaignsSettingsTab />
+            <TabPanel value={tabValue} index={3}>
+              <ProvidersSettingsTab />
             </TabPanel>
             <TabPanel value={tabValue} index={4}>
-              <WhatsAppFlowSettingsTab />
+              <CampaignsSettingsTab />
             </TabPanel>
             <TabPanel value={tabValue} index={5}>
-              <ModuleSettingsTab moduleName="Claims" icon={<GavelIcon sx={{ color: theme.palette.primary.main }} />} />
+              <WhatsAppFlowSettingsTab />
             </TabPanel>
             <TabPanel value={tabValue} index={6}>
-              <FeedbackSettingsTab />
+              <ModuleSettingsTab moduleName="Claims" icon={<GavelIcon sx={{ color: theme.palette.primary.main }} />} />
             </TabPanel>
             <TabPanel value={tabValue} index={7}>
-              <UserManagementTab />
+              <FeedbackSettingsTab />
             </TabPanel>
             <TabPanel value={tabValue} index={8}>
-              <SystemSettingsTab />
+              <UserManagementTab />
             </TabPanel>
             <TabPanel value={tabValue} index={9}>
+              <SystemSettingsTab />
+            </TabPanel>
+            <TabPanel value={tabValue} index={10}>
               <LanguageTest />
             </TabPanel>
           </Box>

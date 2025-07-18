@@ -69,8 +69,10 @@ export const AuthProvider = ({ children }) => {
         permissions: [
           // Full access to all modules
           'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs', 'claims',
+          'policy-servicing', 'new-business', 'medical-management',
           'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
           'campaigns', 'templates', 'feedback', 'survey-designer', 'whatsapp-flow',
+          'renewal-email-manager', 'renewal-whatsapp-manager',
           'settings', 'billing', 'users', 'profile'
         ]
       }

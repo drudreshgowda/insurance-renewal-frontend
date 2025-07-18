@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
+import { useProviders } from '../context/ProvidersContext';
 import { 
   Box, Typography, Paper, Button, Grid, 
   LinearProgress, Alert, AlertTitle, List, 
   ListItem, ListItemText, Divider, Chip,
   Card, CardContent, alpha, useTheme,
   Fade, Grow, Zoom, IconButton, Tooltip,
-  Dialog, DialogTitle, DialogContent, DialogActions,
+  Dialog, DialogTitle, DialogContent,
   TextField, FormControl, InputLabel, Select, MenuItem,
-  Switch, FormControlLabel, Tab, Tabs, Avatar,
-  Stepper, Step, StepLabel, StepContent
+  Switch, FormControlLabel, Avatar,
+  Stepper, Step, StepLabel, StepContent, Accordion,
+  AccordionSummary, AccordionDetails, FormGroup, Checkbox
 } from '@mui/material';
 import { 
   CloudUpload as UploadIcon, 
@@ -26,16 +28,18 @@ import {
   Pause as PauseIcon,
   Visibility as ViewIcon,
   Add as AddIcon,
-  Edit as EditIcon,
   Delete as DeleteIcon,
-  AccessTime as TimeIcon,
-  People as PeopleIcon,
-  TrendingUp as TrendingUpIcon
+  Phone as PhoneIcon,
+  ExpandMore as ExpandMoreIcon,
+  Notifications as NotificationsIcon,
+  Timeline as TimelineIcon,
+  Close as CloseIcon
 } from '@mui/icons-material';
-import { uploadPolicyData } from '../services/api';
+// import { uploadPolicyData } from '../services/api';
 
 const Upload = () => {
   const theme = useTheme();
+  const { getProviders, getActiveProvider } = useProviders();
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -49,10 +53,15 @@ const Upload = () => {
     name: '',
     type: ['email'], // Changed to array to support multiple selections
     template: {}, // Changed to object to store templates for each type
+    providers: {}, // Store selected providers for each channel
     scheduleType: 'immediate',
     scheduleDate: '',
     scheduleTime: '',
-    targetAudience: 'all'
+    targetAudience: 'all',
+    advancedScheduling: {
+      enabled: false,
+      intervals: []
+    }
   });
   
   // Predefined templates
@@ -69,6 +78,10 @@ const Upload = () => {
     sms: [
       { id: 'sms-1', name: 'Renewal Alert', content: 'Dear {name}, your policy expires on {expiry_date}. Renew at {link} or call {phone}' },
       { id: 'sms-2', name: 'Payment Due', content: 'Payment of ₹{amount} due for policy {policy_number}. Pay now: {payment_link}' }
+    ],
+    call: [
+      { id: 'call-1', name: 'Renewal Follow-up Call', script: 'Hello {name}, this is regarding your policy {policy_number} renewal. We wanted to discuss your renewal options...' },
+      { id: 'call-2', name: 'Payment Reminder Call', script: 'Hi {name}, we wanted to remind you about your pending payment of ₹{amount} for policy {policy_number}...' }
     ]
   });
   
@@ -316,7 +329,7 @@ const Upload = () => {
     document.body.removeChild(link);
     
     // Show success message
-    console.log(`Downloading ${upload.filename}...`);
+    // console.log(`Downloading ${upload.filename}...`);
   };
 
   // Campaign handlers
@@ -326,10 +339,15 @@ const Upload = () => {
       name: `${upload.filename.split('.')[0]} Campaign`,
       type: ['email'], // Initialize as array
       template: {}, // Initialize as empty object
+      providers: {}, // Initialize as empty object
       scheduleType: 'immediate',
       scheduleDate: '',
       scheduleTime: '',
-      targetAudience: 'all'
+      targetAudience: 'all',
+      advancedScheduling: {
+        enabled: false,
+        intervals: []
+      }
     });
     setActiveStep(0);
     setCampaignDialog(true);
@@ -337,12 +355,20 @@ const Upload = () => {
 
   const handleCampaignSubmit = () => {
     // Create separate campaigns for each selected type
-    const newCampaigns = campaignData.type.map((type, index) => ({
+    const newCampaigns = campaignData.type.map((type, index) => {
+      const selectedProvider = getProviders(type).find(p => p.id === campaignData.providers[type]) || getActiveProvider(type);
+      
+      return {
       id: `camp-${Date.now()}-${index}`,
       name: campaignData.type.length > 1 
         ? `${campaignData.name} (${type.charAt(0).toUpperCase() + type.slice(1)})`
         : campaignData.name,
       type: type,
+        provider: selectedProvider ? {
+          id: selectedProvider.id,
+          name: selectedProvider.name,
+          type: selectedProvider.type
+        } : null,
       status: campaignData.scheduleType === 'immediate' ? 'active' : 'scheduled',
       uploadId: selectedUpload.id,
       uploadFilename: selectedUpload.filename,
@@ -354,8 +380,16 @@ const Upload = () => {
       createdAt: new Date().toISOString(),
       scheduledAt: campaignData.scheduleType === 'scheduled' 
         ? `${campaignData.scheduleDate}T${campaignData.scheduleTime}:00`
-        : new Date().toISOString()
-    }));
+          : new Date().toISOString(),
+        advancedScheduling: campaignData.advancedScheduling.enabled ? {
+          enabled: true,
+          intervals: campaignData.advancedScheduling.intervals.filter(interval => interval.enabled)
+        } : {
+          enabled: false,
+          intervals: []
+        }
+      };
+    });
     
     setActiveCampaigns([...newCampaigns, ...activeCampaigns]);
     setCampaignDialog(false);
@@ -363,9 +397,13 @@ const Upload = () => {
     // Show success message
     const campaignCount = newCampaigns.length;
     const campaignText = campaignCount > 1 ? `${campaignCount} campaigns` : 'campaign';
+    const scheduleText = campaignData.advancedScheduling.enabled 
+      ? ` with ${campaignData.advancedScheduling.intervals.filter(i => i.enabled).length} scheduled intervals`
+      : '';
+    
     setUploadStatus({
       type: 'success',
-      message: `${campaignText} created successfully! (${campaignData.type.join(', ').toUpperCase()})`
+      message: `${campaignText} created successfully! (${campaignData.type.join(', ').toUpperCase()})${scheduleText}`
     });
     
     // Clear the success message after 5 seconds
@@ -389,6 +427,7 @@ const Upload = () => {
       case 'email': return <EmailIcon />;
       case 'whatsapp': return <WhatsAppIcon />;
       case 'sms': return <SmsIcon />;
+      case 'call': return <PhoneIcon />;
       default: return <CampaignIcon />;
     }
   };
@@ -996,7 +1035,7 @@ const Upload = () => {
               <Avatar sx={{ bgcolor: theme.palette.primary.main }}>
                 <CampaignIcon />
               </Avatar>
-              <Box>
+              <Box sx={{ flex: 1 }}>
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
                   Create New Campaign
                 </Typography>
@@ -1004,6 +1043,17 @@ const Upload = () => {
                   {selectedUpload?.filename} • {selectedUpload?.successful} customers
                 </Typography>
               </Box>
+              <IconButton
+                onClick={() => setCampaignDialog(false)}
+                sx={{
+                  color: 'text.secondary',
+                  '&:hover': {
+                    bgcolor: 'action.hover'
+                  }
+                }}
+              >
+                <CloseIcon />
+              </IconButton>
             </Box>
           </DialogTitle>
           
@@ -1040,7 +1090,8 @@ const Upload = () => {
                                    icon={
                                      value === 'email' ? <EmailIcon fontSize="small" /> :
                                      value === 'whatsapp' ? <WhatsAppIcon fontSize="small" /> :
-                                     <SmsIcon fontSize="small" />
+                                     value === 'sms' ? <SmsIcon fontSize="small" /> :
+                                     <PhoneIcon fontSize="small" />
                                    }
                                    sx={{ 
                                      height: 24,
@@ -1069,6 +1120,12 @@ const Upload = () => {
                                SMS Campaign
                              </Box>
                            </MenuItem>
+                           <MenuItem value="call">
+                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                               <PhoneIcon fontSize="small" />
+                               Call Campaign
+                             </Box>
+                           </MenuItem>
                          </Select>
                        </FormControl>
                      </Grid>
@@ -1087,7 +1144,75 @@ const Upload = () => {
                       </FormControl>
                     </Grid>
                   </Grid>
+
+                  {/* Provider Selection */}
+                  {campaignData.type.length > 0 && (
+                    <Box sx={{ mt: 3 }}>
+                      <Typography variant="subtitle1" fontWeight="600" gutterBottom>
+                        Select Communication Providers
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        Choose specific providers for each communication channel
+                      </Typography>
+                      
+                      <Grid container spacing={2} sx={{ mt: 1 }}>
+                        {campaignData.type.map((channel) => {
+                          const availableProviders = getProviders(channel).filter(p => p.isActive);
+                          const defaultProvider = getActiveProvider(channel);
+                          
+                          return (
+                            <Grid item xs={12} md={6} key={channel}>
+                              <FormControl fullWidth>
+                                <InputLabel>
+                                  {channel.charAt(0).toUpperCase() + channel.slice(1)} Provider
+                                </InputLabel>
+                                <Select
+                                  value={campaignData.providers[channel] || defaultProvider?.id || ''}
+                                  label={`${channel.charAt(0).toUpperCase() + channel.slice(1)} Provider`}
+                                  onChange={(e) => setCampaignData(prev => ({
+                                    ...prev,
+                                    providers: { ...prev.providers, [channel]: e.target.value }
+                                  }))}
+                                  disabled={availableProviders.length === 0}
+                                >
+                                  {availableProviders.map((provider) => (
+                                    <MenuItem key={provider.id} value={provider.id}>
+                                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <Box sx={{ 
+                                          width: 8, 
+                                          height: 8, 
+                                          borderRadius: '50%', 
+                                          bgcolor: provider.status === 'connected' ? 'success.main' : 'error.main' 
+                                        }} />
+                                        {provider.name}
+                                        {provider.isDefault && (
+                                          <Chip label="Default" size="small" sx={{ ml: 1 }} />
+                                        )}
+                                      </Box>
+                                    </MenuItem>
+                                  ))}
+                                  {availableProviders.length === 0 && (
+                                    <MenuItem disabled>
+                                      No active {channel} providers configured
+                                    </MenuItem>
+                                  )}
+                                </Select>
+                              </FormControl>
+                              {availableProviders.length === 0 && (
+                                <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+                                  Configure {channel} providers in Settings → Providers
+                                </Typography>
+                              )}
+                            </Grid>
+                          );
+                        })}
+                      </Grid>
+                    </Box>
+                  )}
                   <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+                    <Button onClick={() => setCampaignDialog(false)}>
+                      Cancel
+                    </Button>
                     <Button
                       variant="contained"
                       onClick={() => setActiveStep(1)}
@@ -1115,6 +1240,7 @@ const Upload = () => {
                          {type === 'email' && <EmailIcon fontSize="small" />}
                          {type === 'whatsapp' && <WhatsAppIcon fontSize="small" />}
                          {type === 'sms' && <SmsIcon fontSize="small" />}
+                         {type === 'call' && <PhoneIcon fontSize="small" />}
                          {type.charAt(0).toUpperCase() + type.slice(1)} Template
                        </Typography>
                        
@@ -1133,7 +1259,7 @@ const Upload = () => {
                                <Box>
                                  <Typography variant="body1">{template.name}</Typography>
                                  <Typography variant="caption" color="text.secondary">
-                                   {template.subject || template.content.substring(0, 50) + '...'}
+                                   {template.subject || template.script || template.content.substring(0, 50) + '...'}
                                  </Typography>
                                </Box>
                              </MenuItem>
@@ -1181,14 +1307,14 @@ const Upload = () => {
                        onClick={() => setActiveStep(2)}
                        disabled={!campaignData.type.every(type => campaignData.template[type])}
                      >
-                       Next: Schedule
+                       Next: Basic Schedule
                      </Button>
                   </Box>
                 </StepContent>
               </Step>
               
               <Step>
-                <StepLabel>Schedule Campaign</StepLabel>
+                <StepLabel>Basic Schedule</StepLabel>
                 <StepContent>
                   <FormControl fullWidth sx={{ mb: 2 }}>
                     <InputLabel>Schedule Type</InputLabel>
@@ -1213,7 +1339,7 @@ const Upload = () => {
                   </FormControl>
                   
                   {campaignData.scheduleType === 'scheduled' && (
-                    <Grid container spacing={2}>
+                    <Grid container spacing={2} sx={{ mb: 2 }}>
                       <Grid item xs={6}>
                         <TextField
                           fullWidth
@@ -1237,11 +1363,50 @@ const Upload = () => {
                       </Grid>
                     </Grid>
                   )}
+
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={campaignData.advancedScheduling.enabled}
+                        onChange={(e) => setCampaignData(prev => ({ 
+                          ...prev, 
+                          advancedScheduling: { ...prev.advancedScheduling, enabled: e.target.checked }
+                        }))}
+                      />
+                    }
+                    label={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <TimelineIcon fontSize="small" />
+                        <Typography variant="body2">
+                          Enable Advanced Scheduling (Multi-channel intervals)
+                        </Typography>
+                      </Box>
+                    }
+                    sx={{ mb: 2 }}
+                  />
+
+                  {campaignData.advancedScheduling.enabled && (
+                    <Alert severity="info" sx={{ mb: 2 }}>
+                      <Typography variant="body2">
+                        Advanced scheduling allows you to set up multiple communications at different intervals across various channels.
+                        This will be configured in the next step.
+                      </Typography>
+                    </Alert>
+                  )}
                   
                   <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
                     <Button onClick={() => setActiveStep(1)}>
                       Back
                     </Button>
+                    {campaignData.advancedScheduling.enabled ? (
+                      <Button
+                        variant="contained"
+                        onClick={() => setActiveStep(3)}
+                        disabled={campaignData.scheduleType === 'scheduled' && (!campaignData.scheduleDate || !campaignData.scheduleTime)}
+                      >
+                        Next: Advanced Schedule
+                      </Button>
+                    ) : (
                     <Button
                       variant="contained"
                       onClick={handleCampaignSubmit}
@@ -1249,17 +1414,332 @@ const Upload = () => {
                     >
                       Create Campaign
                     </Button>
+                    )}
+                  </Box>
+                </StepContent>
+              </Step>
+
+              <Step>
+                <StepLabel>Advanced Scheduling</StepLabel>
+                <StepContent>
+                  <Typography variant="body1" sx={{ mb: 2, fontWeight: 600 }}>
+                    Configure Multi-Channel Communication Intervals
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                    Set up automated follow-up communications across different channels at specific intervals to maximize customer engagement.
+                  </Typography>
+
+                  {/* Interval Configuration */}
+                  <Box sx={{ mb: 3 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                      <Typography variant="h6">Communication Intervals</Typography>
+                      <Button
+                        startIcon={<AddIcon />}
+                        variant="outlined"
+                        size="small"
+                        onClick={() => {
+                          const newInterval = {
+                            id: Date.now(),
+                            channel: 'email',
+                            delay: 1,
+                            delayUnit: 'days',
+                            template: '',
+                            enabled: true,
+                            conditions: {
+                              sendIfNoResponse: true,
+                              sendIfNoAction: false
+                            }
+                          };
+                          setCampaignData(prev => ({
+                            ...prev,
+                            advancedScheduling: {
+                              ...prev.advancedScheduling,
+                              intervals: [...prev.advancedScheduling.intervals, newInterval]
+                            }
+                          }));
+                        }}
+                      >
+                        Add Interval
+            </Button>
+                    </Box>
+
+                    {campaignData.advancedScheduling.intervals.length === 0 ? (
+                      <Paper sx={{ p: 3, textAlign: 'center', bgcolor: 'grey.50' }}>
+                        <NotificationsIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }} />
+                        <Typography variant="body2" color="text.secondary">
+                          No intervals configured yet. Add your first communication interval above.
+                        </Typography>
+                      </Paper>
+                    ) : (
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        {campaignData.advancedScheduling.intervals.map((interval, index) => (
+                          <Accordion key={interval.id} defaultExpanded={index === 0}>
+                            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+                                <Avatar sx={{ 
+                                  width: 32, 
+                                  height: 32, 
+                                  bgcolor: interval.channel === 'email' ? '#1976d2' : 
+                                           interval.channel === 'whatsapp' ? '#25d366' : 
+                                           interval.channel === 'sms' ? '#ff9800' : '#9c27b0'
+                                }}>
+                                  {interval.channel === 'email' && <EmailIcon fontSize="small" />}
+                                  {interval.channel === 'whatsapp' && <WhatsAppIcon fontSize="small" />}
+                                  {interval.channel === 'sms' && <SmsIcon fontSize="small" />}
+                                  {interval.channel === 'call' && <PhoneIcon fontSize="small" />}
+                                </Avatar>
+                                <Box sx={{ flex: 1 }}>
+                                  <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                                    {interval.channel.charAt(0).toUpperCase() + interval.channel.slice(1)} - 
+                                    After {interval.delay} {interval.delayUnit}
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary">
+                                    {interval.template ? templates[interval.channel]?.find(t => t.id === interval.template)?.name : 'No template selected'}
+                                  </Typography>
+                                </Box>
+                                <FormControlLabel
+                                  control={
+                                    <Switch
+                                      checked={interval.enabled}
+                                      onChange={(e) => {
+                                        const updatedIntervals = campaignData.advancedScheduling.intervals.map(int => 
+                                          int.id === interval.id ? { ...int, enabled: e.target.checked } : int
+                                        );
+                                        setCampaignData(prev => ({
+                                          ...prev,
+                                          advancedScheduling: {
+                                            ...prev.advancedScheduling,
+                                            intervals: updatedIntervals
+                                          }
+                                        }));
+                                      }}
+                                      onClick={(e) => e.stopPropagation()}
+                                    />
+                                  }
+                                  label=""
+                                  sx={{ mr: 1 }}
+                                />
+                              </Box>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                              <Grid container spacing={2}>
+                                <Grid item xs={12} md={4}>
+                                  <FormControl fullWidth>
+                                    <InputLabel>Channel</InputLabel>
+                                    <Select
+                                      value={interval.channel}
+                                      label="Channel"
+                                      onChange={(e) => {
+                                        const updatedIntervals = campaignData.advancedScheduling.intervals.map(int => 
+                                          int.id === interval.id ? { ...int, channel: e.target.value, template: '' } : int
+                                        );
+                                        setCampaignData(prev => ({
+                                          ...prev,
+                                          advancedScheduling: {
+                                            ...prev.advancedScheduling,
+                                            intervals: updatedIntervals
+                                          }
+                                        }));
+                                      }}
+                                    >
+                                      <MenuItem value="email">
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                          <EmailIcon fontSize="small" />
+                                          Email
+                                        </Box>
+                                      </MenuItem>
+                                      <MenuItem value="whatsapp">
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                          <WhatsAppIcon fontSize="small" />
+                                          WhatsApp
+                                        </Box>
+                                      </MenuItem>
+                                      <MenuItem value="sms">
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                          <SmsIcon fontSize="small" />
+                                          SMS
+                                        </Box>
+                                      </MenuItem>
+                                      <MenuItem value="call">
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                          <PhoneIcon fontSize="small" />
+                                          Call
+                                        </Box>
+                                      </MenuItem>
+                                    </Select>
+                                  </FormControl>
+                                </Grid>
+                                <Grid item xs={12} md={4}>
+                                  <Box sx={{ display: 'flex', gap: 1 }}>
+                                    <TextField
+                                      label="Delay"
+                                      type="number"
+                                      value={interval.delay}
+                                      onChange={(e) => {
+                                        const updatedIntervals = campaignData.advancedScheduling.intervals.map(int => 
+                                          int.id === interval.id ? { ...int, delay: parseInt(e.target.value) || 1 } : int
+                                        );
+                                        setCampaignData(prev => ({
+                                          ...prev,
+                                          advancedScheduling: {
+                                            ...prev.advancedScheduling,
+                                            intervals: updatedIntervals
+                                          }
+                                        }));
+                                      }}
+                                      inputProps={{ min: 1 }}
+                                      sx={{ width: '70px' }}
+                                    />
+                                    <FormControl sx={{ minWidth: 100 }}>
+                                      <InputLabel>Unit</InputLabel>
+                                      <Select
+                                        value={interval.delayUnit}
+                                        label="Unit"
+                                        onChange={(e) => {
+                                          const updatedIntervals = campaignData.advancedScheduling.intervals.map(int => 
+                                            int.id === interval.id ? { ...int, delayUnit: e.target.value } : int
+                                          );
+                                          setCampaignData(prev => ({
+                                            ...prev,
+                                            advancedScheduling: {
+                                              ...prev.advancedScheduling,
+                                              intervals: updatedIntervals
+                                            }
+                                          }));
+                                        }}
+                                      >
+                                        <MenuItem value="minutes">Minutes</MenuItem>
+                                        <MenuItem value="hours">Hours</MenuItem>
+                                        <MenuItem value="days">Days</MenuItem>
+                                        <MenuItem value="weeks">Weeks</MenuItem>
+                                      </Select>
+                                    </FormControl>
+                                  </Box>
+                                </Grid>
+                                <Grid item xs={12} md={4}>
+                                  <FormControl fullWidth>
+                                    <InputLabel>Template</InputLabel>
+                                    <Select
+                                      value={interval.template}
+                                      label="Template"
+                                      onChange={(e) => {
+                                        const updatedIntervals = campaignData.advancedScheduling.intervals.map(int => 
+                                          int.id === interval.id ? { ...int, template: e.target.value } : int
+                                        );
+                                        setCampaignData(prev => ({
+                                          ...prev,
+                                          advancedScheduling: {
+                                            ...prev.advancedScheduling,
+                                            intervals: updatedIntervals
+                                          }
+                                        }));
+                                      }}
+                                    >
+                                      {templates[interval.channel]?.map((template) => (
+                                        <MenuItem key={template.id} value={template.id}>
+                                          {template.name}
+                                        </MenuItem>
+                                      ))}
+                                    </Select>
+                                  </FormControl>
+                                </Grid>
+                                <Grid item xs={12}>
+                                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                                    Trigger Conditions
+                                  </Typography>
+                                  <FormGroup row>
+                                    <FormControlLabel
+                                      control={
+                                        <Checkbox
+                                          checked={interval.conditions.sendIfNoResponse}
+                                          onChange={(e) => {
+                                            const updatedIntervals = campaignData.advancedScheduling.intervals.map(int => 
+                                              int.id === interval.id ? { 
+                                                ...int, 
+                                                conditions: { ...int.conditions, sendIfNoResponse: e.target.checked }
+                                              } : int
+                                            );
+                                            setCampaignData(prev => ({
+                                              ...prev,
+                                              advancedScheduling: {
+                                                ...prev.advancedScheduling,
+                                                intervals: updatedIntervals
+                                              }
+                                            }));
+                                          }}
+                                        />
+                                      }
+                                      label="Send if no response to previous message"
+                                    />
+                                    <FormControlLabel
+                                      control={
+                                        <Checkbox
+                                          checked={interval.conditions.sendIfNoAction}
+                                          onChange={(e) => {
+                                            const updatedIntervals = campaignData.advancedScheduling.intervals.map(int => 
+                                              int.id === interval.id ? { 
+                                                ...int, 
+                                                conditions: { ...int.conditions, sendIfNoAction: e.target.checked }
+                                              } : int
+                                            );
+                                            setCampaignData(prev => ({
+                                              ...prev,
+                                              advancedScheduling: {
+                                                ...prev.advancedScheduling,
+                                                intervals: updatedIntervals
+                                              }
+                                            }));
+                                          }}
+                                        />
+                                      }
+                                      label="Send if no action taken (click/conversion)"
+                                    />
+                                  </FormGroup>
+                                </Grid>
+                                <Grid item xs={12}>
+                                  <Button
+                                    startIcon={<DeleteIcon />}
+                                    color="error"
+                                    size="small"
+                                    onClick={() => {
+                                      const updatedIntervals = campaignData.advancedScheduling.intervals.filter(int => int.id !== interval.id);
+                                      setCampaignData(prev => ({
+                                        ...prev,
+                                        advancedScheduling: {
+                                          ...prev.advancedScheduling,
+                                          intervals: updatedIntervals
+                                        }
+                                      }));
+                                    }}
+                                  >
+                                    Remove Interval
+                                  </Button>
+                                </Grid>
+                              </Grid>
+                            </AccordionDetails>
+                          </Accordion>
+                        ))}
+                      </Box>
+                    )}
+                  </Box>
+
+                  <Box sx={{ mt: 3, display: 'flex', gap: 1 }}>
+                    <Button onClick={() => setActiveStep(2)}>
+                      Back
+                    </Button>
+                    <Button
+                      variant="contained"
+                      onClick={handleCampaignSubmit}
+                      disabled={campaignData.advancedScheduling.intervals.length === 0 || 
+                               campaignData.advancedScheduling.intervals.some(int => int.enabled && !int.template)}
+                    >
+                      Create Advanced Campaign
+                    </Button>
                   </Box>
                 </StepContent>
               </Step>
             </Stepper>
           </DialogContent>
-          
-          <DialogActions>
-            <Button onClick={() => setCampaignDialog(false)}>
-              Cancel
-            </Button>
-          </DialogActions>
         </Dialog>
       </Box>
     </Fade>

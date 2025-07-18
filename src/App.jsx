@@ -34,6 +34,8 @@ import PolicyServicing from './pages/PolicyServicing';
 import NewBusiness from './pages/NewBusiness';
 import MedicalManagement from './pages/MedicalManagement';
 import WhatsappFlow from './pages/WhatsappFlow';
+import RenewalEmailManager from './pages/RenewalEmailManager';
+import RenewalWhatsAppManager from './pages/RenewalWhatsAppManager';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import DashboardRedirect from './components/common/DashboardRedirect';
 import ErrorBoundary from './components/common/ErrorBoundary';
@@ -42,6 +44,7 @@ import { ThemeModeProvider, useThemeMode } from './context/ThemeModeContext.js';
 import { NotificationsProvider } from './context/NotificationsContext.js';
 import { PermissionsProvider } from './context/PermissionsContext.jsx';
 import SettingsProvider from './context/SettingsContext';
+import { ProvidersProvider } from './context/ProvidersContext.jsx';
 import './i18n'; // Initialize i18n
 
 function AppWithTheme() {
@@ -256,8 +259,9 @@ function AppWithTheme() {
       <ErrorBoundary>
         <AuthProvider>
           <PermissionsProvider>
-            <SettingsProvider>
-              <Router>
+            <ProvidersProvider>
+              <SettingsProvider>
+                <Router>
             <Routes>
             <Route path="/login" element={<Login />} />
             
@@ -498,11 +502,28 @@ function AppWithTheme() {
               </ProtectedRoute>
             } />
             
+            <Route path="/renewals/email-manager" element={
+              <ProtectedRoute requiredPermission="renewal-email-manager">
+                <Layout>
+                  <RenewalEmailManager />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/renewals/whatsapp-manager" element={
+              <ProtectedRoute requiredPermission="renewal-whatsapp-manager">
+                <Layout>
+                  <RenewalWhatsAppManager />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
             <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
             <WelcomeModal open={welcomeModalOpen} onClose={handleCloseWelcomeModal} />
                             </Router>
-              </SettingsProvider>
+                </SettingsProvider>
+              </ProvidersProvider>
             </PermissionsProvider>
           </AuthProvider>
         </ErrorBoundary>

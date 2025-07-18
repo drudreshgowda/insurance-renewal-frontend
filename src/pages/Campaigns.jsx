@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useProviders } from '../context/ProvidersContext';
 import {
   Box, Typography, Grid, Card, CardContent, Button, Chip, Dialog, DialogTitle,
   DialogContent, DialogActions, TextField, FormControl, InputLabel, Select,
-  MenuItem, Tabs, Tab, List, ListItem, ListItemText, ListItemIcon, Divider,
-  Alert, useTheme, alpha, Fade, Grow, IconButton, Tooltip, Avatar, Badge,
-  Paper, Switch, FormControlLabel, Autocomplete, Table, TableBody, TableCell,
+  MenuItem, Alert, useTheme, alpha, Fade, Grow, IconButton, Tooltip, Avatar,
+  Paper, Switch, FormControlLabel, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Stepper, Step, StepLabel, StepContent,
-  LinearProgress, AvatarGroup, Menu, Checkbox, FormGroup, DatePicker
+  LinearProgress, Checkbox, FormGroup
 } from '@mui/material';
 import {
   Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Launch as LaunchIcon,
@@ -16,10 +16,9 @@ import {
   WhatsApp as WhatsAppIcon, Campaign as CampaignIcon, People as PeopleIcon,
   Assignment as AssignmentIcon, Schedule as ScheduleIcon, FilterList as FilterIcon,
   Search as SearchIcon, Refresh as RefreshIcon, GetApp as GetAppIcon,
-  TrendingUp as TrendingUpIcon, CheckCircle as CheckCircleIcon,
-  Error as ErrorIcon, Warning as WarningIcon, Close as CloseIcon,
-  Save as SaveIcon, Send as SendIcon, MoreVert as MoreVertIcon,
-  ContentCopy as ContentCopyIcon, ContentCopy as CopyIcon, Preview as PreviewIcon
+  TrendingUp as TrendingUpIcon, CheckCircle as CheckCircleIcon, Close as CloseIcon,
+  Save as SaveIcon, MoreVert as MoreVertIcon,
+  ContentCopy as CopyIcon
 } from '@mui/icons-material';
 
 // Dialog Components (defined before main component to avoid hoisting issues)
@@ -120,6 +119,7 @@ const TemplateDialog = ({
 const CampaignManager = () => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const { getProviders, getActiveProvider } = useProviders();
   const [loaded, setLoaded] = useState(false);
 
   // StatCard component matching Renewal Dashboard styling
@@ -204,10 +204,15 @@ const CampaignManager = () => {
     description: '',
     type: 'promotional',
     channels: [],
+    providers: {},
     audience: '',
     template: '',
     scheduledDate: '',
-    status: 'draft'
+    status: 'draft',
+    advancedScheduling: {
+      enabled: false,
+      intervals: []
+    }
   });
   
   // Filter states
@@ -301,6 +306,68 @@ const CampaignManager = () => {
     }
   ]);
 
+  const filterCampaigns = useCallback(() => {
+    let filtered = campaigns;
+
+    // Basic filters
+    if (searchTerm) {
+      filtered = filtered.filter(campaign =>
+        campaign.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        campaign.description.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(campaign => campaign.status === statusFilter);
+    }
+
+    if (channelFilter !== 'all') {
+      filtered = filtered.filter(campaign => 
+        campaign.channels.includes(channelFilter)
+      );
+    }
+
+    // Advanced filters
+    if (advancedFilters.campaignType !== 'all') {
+      filtered = filtered.filter(campaign => campaign.type === advancedFilters.campaignType);
+    }
+
+    if (advancedFilters.audienceSize.min) {
+      filtered = filtered.filter(campaign => 
+        campaign.audienceSize >= parseInt(advancedFilters.audienceSize.min)
+      );
+    }
+
+    if (advancedFilters.audienceSize.max) {
+      filtered = filtered.filter(campaign => 
+        campaign.audienceSize <= parseInt(advancedFilters.audienceSize.max)
+      );
+    }
+
+    if (advancedFilters.performance !== 'all') {
+      filtered = filtered.filter(campaign => {
+        const openRate = campaign.metrics.delivered > 0 
+          ? (campaign.metrics.opened / campaign.metrics.delivered) * 100 
+          : 0;
+        
+        switch (advancedFilters.performance) {
+          case 'high': return openRate >= 70;
+          case 'medium': return openRate >= 40 && openRate < 70;
+          case 'low': return openRate < 40;
+          default: return true;
+        }
+      });
+    }
+
+    if (advancedFilters.tags.length > 0) {
+      filtered = filtered.filter(campaign => 
+        campaign.tags?.some(tag => advancedFilters.tags.includes(tag))
+      );
+    }
+
+    setFilteredCampaigns(filtered);
+  }, [campaigns, searchTerm, statusFilter, channelFilter, advancedFilters]);
+
   useEffect(() => {
     loadCampaigns();
     setTimeout(() => setLoaded(true), 100);
@@ -308,7 +375,7 @@ const CampaignManager = () => {
 
   useEffect(() => {
     filterCampaigns();
-  }, [campaigns, searchTerm, statusFilter, channelFilter, advancedFilters]);
+  }, [filterCampaigns]);
 
   const loadCampaigns = () => {
     const mockCampaigns = [
@@ -379,68 +446,6 @@ const CampaignManager = () => {
     setCampaigns(mockCampaigns);
   };
 
-  const filterCampaigns = () => {
-    let filtered = campaigns;
-
-    // Basic filters
-    if (searchTerm) {
-      filtered = filtered.filter(campaign =>
-        campaign.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        campaign.description.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(campaign => campaign.status === statusFilter);
-    }
-
-    if (channelFilter !== 'all') {
-      filtered = filtered.filter(campaign => 
-        campaign.channels.includes(channelFilter)
-      );
-    }
-
-    // Advanced filters
-    if (advancedFilters.campaignType !== 'all') {
-      filtered = filtered.filter(campaign => campaign.type === advancedFilters.campaignType);
-    }
-
-    if (advancedFilters.audienceSize.min) {
-      filtered = filtered.filter(campaign => 
-        campaign.audienceSize >= parseInt(advancedFilters.audienceSize.min)
-      );
-    }
-
-    if (advancedFilters.audienceSize.max) {
-      filtered = filtered.filter(campaign => 
-        campaign.audienceSize <= parseInt(advancedFilters.audienceSize.max)
-      );
-    }
-
-    if (advancedFilters.performance !== 'all') {
-      filtered = filtered.filter(campaign => {
-        const openRate = campaign.metrics.delivered > 0 
-          ? (campaign.metrics.opened / campaign.metrics.delivered) * 100 
-          : 0;
-        
-        switch (advancedFilters.performance) {
-          case 'high': return openRate >= 70;
-          case 'medium': return openRate >= 40 && openRate < 70;
-          case 'low': return openRate < 40;
-          default: return true;
-        }
-      });
-    }
-
-    if (advancedFilters.tags.length > 0) {
-      filtered = filtered.filter(campaign => 
-        campaign.tags?.some(tag => advancedFilters.tags.includes(tag))
-      );
-    }
-
-    setFilteredCampaigns(filtered);
-  };
-
   const getChannelIcon = (channel) => {
     switch (channel) {
       case 'email': return <EmailIcon />;
@@ -478,10 +483,15 @@ const CampaignManager = () => {
       description: '',
       type: 'promotional',
       channels: [],
+      providers: {},
       audience: '',
       template: '',
       scheduledDate: '',
-      status: 'draft'
+      status: 'draft',
+      advancedScheduling: {
+        enabled: false,
+        intervals: []
+      }
     });
     setCampaignStep(0);
     setCreateCampaignDialog(true);
@@ -494,12 +504,26 @@ const CampaignManager = () => {
       audienceSize: audiences.find(a => a.name === newCampaign.audience)?.size || 0,
       progress: 0,
       createdDate: new Date().toISOString().split('T')[0],
-      tags: [],
-      metrics: { sent: 0, delivered: 0, opened: 0, clicked: 0, bounced: 0 }
+      tags: newCampaign.advancedScheduling.enabled ? ['advanced-scheduling'] : [],
+      metrics: { sent: 0, delivered: 0, opened: 0, clicked: 0, bounced: 0 },
+      advancedScheduling: newCampaign.advancedScheduling.enabled ? {
+        enabled: true,
+        intervals: newCampaign.advancedScheduling.intervals.filter(interval => interval.enabled)
+      } : {
+        enabled: false,
+        intervals: []
+      }
     };
     
     setCampaigns(prev => [...prev, campaign]);
     setCreateCampaignDialog(false);
+    
+    // Show success message based on configuration
+    // const scheduleText = newCampaign.advancedScheduling.enabled 
+    //   ? ` with ${newCampaign.advancedScheduling.intervals.filter(i => i.enabled).length} scheduled intervals`
+    //   : '';
+    
+    // console.log(`Campaign "${campaign.name}" created successfully!${scheduleText}`);
   };
 
   const handleLaunchCampaign = (campaignId) => {
@@ -518,7 +542,7 @@ const CampaignManager = () => {
     navigate(`/campaigns/${campaignId}`);
   };
 
-  const handleAnalytics = (campaignId) => {
+  const handleAnalytics = (_campaignId) => {
     setAnalyticsDialog(true);
   };
 
@@ -532,11 +556,11 @@ const CampaignManager = () => {
 
   const handleExportConfirm = () => {
     // Mock export functionality
-    const dataToExport = exportData === 'filtered' ? filteredCampaigns : campaigns;
-    const filename = `campaigns_export_${new Date().toISOString().split('T')[0]}.${exportFormat}`;
+    // const dataToExport = exportData === 'filtered' ? filteredCampaigns : campaigns;
+    // const filename = `campaigns_export_${new Date().toISOString().split('T')[0]}.${exportFormat}`;
     
     // In a real app, this would generate and download the file
-    console.log(`Exporting ${dataToExport.length} campaigns as ${exportFormat} to ${filename}`);
+    // console.log(`Exporting ${dataToExport.length} campaigns as ${exportFormat} to ${filename}`);
     
     setExportDialog(false);
     // Show success message (you could add a snackbar here)
@@ -563,32 +587,32 @@ const CampaignManager = () => {
         navigate('/templates', { state: { editTemplate: template } });
         break;
       case 'duplicate':
-        console.log('Duplicating template:', template.name);
+        // console.log('Duplicating template:', template.name);
         break;
       case 'delete':
-        console.log('Deleting template:', template.name);
+        // console.log('Deleting template:', template.name);
         break;
       case 'preview':
-        console.log('Previewing template:', template.name);
+        // console.log('Previewing template:', template.name);
         break;
       default:
         break;
     }
   };
 
-  const handleAudienceAction = (action, audience) => {
+  const handleAudienceAction = (action, _audience) => {
     switch (action) {
       case 'edit':
-        console.log('Editing audience:', audience.name);
+        // console.log('Editing audience:', _audience.name);
         break;
       case 'duplicate':
-        console.log('Duplicating audience:', audience.name);
+        // console.log('Duplicating audience:', _audience.name);
         break;
       case 'delete':
-        console.log('Deleting audience:', audience.name);
+        // console.log('Deleting audience:', _audience.name);
         break;
       case 'view':
-        console.log('Viewing audience details:', audience.name);
+        // console.log('Viewing audience details:', _audience.name);
         break;
       default:
         break;
@@ -610,11 +634,11 @@ const CampaignManager = () => {
     ));
   };
 
-  const handleStopCampaign = (campaignId) => {
-    setCampaigns(prev => prev.map(campaign => 
-      campaign.id === campaignId ? { ...campaign, status: 'completed' } : campaign
-    ));
-  };
+  // const handleStopCampaign = (campaignId) => {
+  //   setCampaigns(prev => prev.map(campaign => 
+  //     campaign.id === campaignId ? { ...campaign, status: 'completed' } : campaign
+  //   ));
+  // };
 
   const CampaignCard = ({ campaign }) => (
     <Grow in={loaded} timeout={300}>
@@ -948,6 +972,72 @@ const CampaignManager = () => {
                   ))}
                 </Box>
               </FormControl>
+              
+              {/* Provider Selection */}
+              {newCampaign.channels.length > 0 && (
+                <Box sx={{ mt: 3 }}>
+                  <Typography variant="subtitle1" fontWeight="600" gutterBottom>
+                    Select Providers
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Choose specific providers for each selected channel
+                  </Typography>
+                  
+                  <Grid container spacing={2} sx={{ mt: 1 }}>
+                    {newCampaign.channels.map((channel) => {
+                      const availableProviders = getProviders(channel).filter(p => p.isActive);
+                      const defaultProvider = getActiveProvider(channel);
+                      
+                      return (
+                        <Grid item xs={12} md={6} key={channel}>
+                          <FormControl fullWidth>
+                            <InputLabel>
+                              {channel.charAt(0).toUpperCase() + channel.slice(1)} Provider
+                            </InputLabel>
+                            <Select
+                              value={newCampaign.providers[channel] || defaultProvider?.id || ''}
+                              label={`${channel.charAt(0).toUpperCase() + channel.slice(1)} Provider`}
+                              onChange={(e) => setNewCampaign(prev => ({
+                                ...prev,
+                                providers: { ...prev.providers, [channel]: e.target.value }
+                              }))}
+                              disabled={availableProviders.length === 0}
+                            >
+                              {availableProviders.map((provider) => (
+                                <MenuItem key={provider.id} value={provider.id}>
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <Box sx={{ 
+                                      width: 8, 
+                                      height: 8, 
+                                      borderRadius: '50%', 
+                                      bgcolor: provider.status === 'connected' ? 'success.main' : 'error.main' 
+                                    }} />
+                                    {provider.name}
+                                    {provider.isDefault && (
+                                      <Chip label="Default" size="small" sx={{ ml: 1 }} />
+                                    )}
+                                  </Box>
+                                </MenuItem>
+                              ))}
+                              {availableProviders.length === 0 && (
+                                <MenuItem disabled>
+                                  No active {channel} providers configured
+                                </MenuItem>
+                              )}
+                            </Select>
+                          </FormControl>
+                          {availableProviders.length === 0 && (
+                            <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+                              Configure {channel} providers in Settings → Providers
+                            </Typography>
+                          )}
+                        </Grid>
+                      );
+                    })}
+                  </Grid>
+                </Box>
+              )}
+              
               <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
                 <Button 
                   onClick={(e) => {
@@ -992,11 +1082,379 @@ const CampaignManager = () => {
                   ))}
                 </Select>
               </FormControl>
+              
+              {/* Advanced Scheduling Toggle */}
+              <Box sx={{ mt: 3 }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={newCampaign.advancedScheduling.enabled}
+                      onChange={(e) => setNewCampaign(prev => ({
+                        ...prev,
+                        advancedScheduling: {
+                          ...prev.advancedScheduling,
+                          enabled: e.target.checked
+                        }
+                      }))}
+                    />
+                  }
+                  label="Enable Advanced Scheduling"
+                />
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  Set up automated follow-up communications across multiple channels at specific intervals
+                </Typography>
+              </Box>
+              
               <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
                 <Button 
                   onClick={(e) => {
                     e.preventDefault();
                     setCampaignStep(1);
+                  }}
+                  type="button"
+                >
+                  Back
+                </Button>
+                {newCampaign.advancedScheduling.enabled ? (
+                  <Button
+                    variant="contained"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setCampaignStep(3);
+                    }}
+                    disabled={!newCampaign.audience}
+                    type="button"
+                  >
+                    Next: Advanced Scheduling
+                  </Button>
+                ) : (
+                  <Button
+                    variant="contained"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleSaveCampaign();
+                    }}
+                    disabled={!newCampaign.audience}
+                    startIcon={<SaveIcon />}
+                    type="button"
+                  >
+                    Create Campaign
+                  </Button>
+                )}
+              </Box>
+            </StepContent>
+          </Step>
+          
+          <Step>
+            <StepLabel>Advanced Scheduling</StepLabel>
+            <StepContent>
+              <Typography variant="body1" sx={{ mb: 2, fontWeight: 600 }}>
+                Configure Multi-Channel Communication Intervals
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Set up automated follow-up communications across different channels at specific intervals to maximize customer engagement.
+              </Typography>
+
+              {/* Interval Configuration */}
+              <Box sx={{ mb: 3 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="h6">Communication Intervals</Typography>
+                  <Button
+                    startIcon={<AddIcon />}
+                    variant="outlined"
+                    size="small"
+                    onClick={() => {
+                      const newInterval = {
+                        id: Date.now(),
+                        channel: newCampaign.channels[0] || 'email',
+                        delay: 1,
+                        delayUnit: 'days',
+                        template: '',
+                        enabled: true,
+                        conditions: {
+                          sendIfNoResponse: true,
+                          sendIfNoAction: false
+                        }
+                      };
+                      setNewCampaign(prev => ({
+                        ...prev,
+                        advancedScheduling: {
+                          ...prev.advancedScheduling,
+                          intervals: [...prev.advancedScheduling.intervals, newInterval]
+                        }
+                      }));
+                    }}
+                  >
+                    Add Interval
+                  </Button>
+                </Box>
+
+                {newCampaign.advancedScheduling.intervals.length === 0 ? (
+                  <Paper sx={{ p: 3, textAlign: 'center', bgcolor: 'grey.50' }}>
+                    <ScheduleIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+                    <Typography variant="h6" color="text.secondary" gutterBottom>
+                      No intervals configured
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      Add communication intervals to create automated follow-up sequences
+                    </Typography>
+                    <Button
+                      startIcon={<AddIcon />}
+                      variant="contained"
+                      onClick={() => {
+                        const newInterval = {
+                          id: Date.now(),
+                          channel: newCampaign.channels[0] || 'email',
+                          delay: 1,
+                          delayUnit: 'days',
+                          template: '',
+                          enabled: true,
+                          conditions: {
+                            sendIfNoResponse: true,
+                            sendIfNoAction: false
+                          }
+                        };
+                        setNewCampaign(prev => ({
+                          ...prev,
+                          advancedScheduling: {
+                            ...prev.advancedScheduling,
+                            intervals: [...prev.advancedScheduling.intervals, newInterval]
+                          }
+                        }));
+                      }}
+                    >
+                      Add First Interval
+                    </Button>
+                  </Paper>
+                ) : (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {newCampaign.advancedScheduling.intervals.map((interval, index) => (
+                      <Card key={interval.id} sx={{ border: '1px solid', borderColor: 'divider' }}>
+                        <CardContent sx={{ p: 2 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Avatar sx={{ 
+                                width: 32, 
+                                height: 32, 
+                                bgcolor: getChannelColor(interval.channel)
+                              }}>
+                                {getChannelIcon(interval.channel)}
+                              </Avatar>
+                              <Typography variant="subtitle1" fontWeight="600">
+                                Interval {index + 1}
+                              </Typography>
+                              <Chip 
+                                label={interval.enabled ? 'Enabled' : 'Disabled'} 
+                                color={interval.enabled ? 'success' : 'default'}
+                                size="small"
+                              />
+                            </Box>
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                              <Switch
+                                checked={interval.enabled}
+                                onChange={(e) => {
+                                  const updatedIntervals = newCampaign.advancedScheduling.intervals.map(int =>
+                                    int.id === interval.id ? { ...int, enabled: e.target.checked } : int
+                                  );
+                                  setNewCampaign(prev => ({
+                                    ...prev,
+                                    advancedScheduling: {
+                                      ...prev.advancedScheduling,
+                                      intervals: updatedIntervals
+                                    }
+                                  }));
+                                }}
+                                size="small"
+                              />
+                              <IconButton
+                                size="small"
+                                onClick={() => {
+                                  const updatedIntervals = newCampaign.advancedScheduling.intervals.filter(int => int.id !== interval.id);
+                                  setNewCampaign(prev => ({
+                                    ...prev,
+                                    advancedScheduling: {
+                                      ...prev.advancedScheduling,
+                                      intervals: updatedIntervals
+                                    }
+                                  }));
+                                }}
+                                color="error"
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            </Box>
+                          </Box>
+
+                          <Grid container spacing={2}>
+                            <Grid item xs={12} md={4}>
+                              <FormControl fullWidth size="small">
+                                <InputLabel>Channel</InputLabel>
+                                <Select
+                                  value={interval.channel}
+                                  label="Channel"
+                                  onChange={(e) => {
+                                    const updatedIntervals = newCampaign.advancedScheduling.intervals.map(int =>
+                                      int.id === interval.id ? { ...int, channel: e.target.value } : int
+                                    );
+                                    setNewCampaign(prev => ({
+                                      ...prev,
+                                      advancedScheduling: {
+                                        ...prev.advancedScheduling,
+                                        intervals: updatedIntervals
+                                      }
+                                    }));
+                                  }}
+                                >
+                                  {newCampaign.channels.map((channel) => (
+                                    <MenuItem key={channel} value={channel}>
+                                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        {getChannelIcon(channel)}
+                                        {channel.charAt(0).toUpperCase() + channel.slice(1)}
+                                      </Box>
+                                    </MenuItem>
+                                  ))}
+                                </Select>
+                              </FormControl>
+                            </Grid>
+                            <Grid item xs={12} md={3}>
+                              <TextField
+                                fullWidth
+                                size="small"
+                                label="Delay"
+                                type="number"
+                                value={interval.delay}
+                                onChange={(e) => {
+                                  const updatedIntervals = newCampaign.advancedScheduling.intervals.map(int =>
+                                    int.id === interval.id ? { ...int, delay: parseInt(e.target.value) } : int
+                                  );
+                                  setNewCampaign(prev => ({
+                                    ...prev,
+                                    advancedScheduling: {
+                                      ...prev.advancedScheduling,
+                                      intervals: updatedIntervals
+                                    }
+                                  }));
+                                }}
+                                inputProps={{ min: 1 }}
+                              />
+                            </Grid>
+                            <Grid item xs={12} md={3}>
+                              <FormControl fullWidth size="small">
+                                <InputLabel>Unit</InputLabel>
+                                <Select
+                                  value={interval.delayUnit}
+                                  label="Unit"
+                                  onChange={(e) => {
+                                    const updatedIntervals = newCampaign.advancedScheduling.intervals.map(int =>
+                                      int.id === interval.id ? { ...int, delayUnit: e.target.value } : int
+                                    );
+                                    setNewCampaign(prev => ({
+                                      ...prev,
+                                      advancedScheduling: {
+                                        ...prev.advancedScheduling,
+                                        intervals: updatedIntervals
+                                      }
+                                    }));
+                                  }}
+                                >
+                                  <MenuItem value="minutes">Minutes</MenuItem>
+                                  <MenuItem value="hours">Hours</MenuItem>
+                                  <MenuItem value="days">Days</MenuItem>
+                                  <MenuItem value="weeks">Weeks</MenuItem>
+                                </Select>
+                              </FormControl>
+                            </Grid>
+                            <Grid item xs={12} md={2}>
+                              <TextField
+                                fullWidth
+                                size="small"
+                                label="Template"
+                                value={interval.template}
+                                onChange={(e) => {
+                                  const updatedIntervals = newCampaign.advancedScheduling.intervals.map(int =>
+                                    int.id === interval.id ? { ...int, template: e.target.value } : int
+                                  );
+                                  setNewCampaign(prev => ({
+                                    ...prev,
+                                    advancedScheduling: {
+                                      ...prev.advancedScheduling,
+                                      intervals: updatedIntervals
+                                    }
+                                  }));
+                                }}
+                                placeholder="Template ID"
+                              />
+                            </Grid>
+                          </Grid>
+
+                          {/* Conditions */}
+                          <Box sx={{ mt: 2 }}>
+                            <Typography variant="subtitle2" gutterBottom>
+                              Trigger Conditions
+                            </Typography>
+                            <FormGroup row>
+                              <FormControlLabel
+                                control={
+                                  <Checkbox
+                                    checked={interval.conditions.sendIfNoResponse}
+                                    onChange={(e) => {
+                                      const updatedIntervals = newCampaign.advancedScheduling.intervals.map(int =>
+                                        int.id === interval.id ? { 
+                                          ...int, 
+                                          conditions: { ...int.conditions, sendIfNoResponse: e.target.checked }
+                                        } : int
+                                      );
+                                      setNewCampaign(prev => ({
+                                        ...prev,
+                                        advancedScheduling: {
+                                          ...prev.advancedScheduling,
+                                          intervals: updatedIntervals
+                                        }
+                                      }));
+                                    }}
+                                    size="small"
+                                  />
+                                }
+                                label="Send if no response"
+                              />
+                              <FormControlLabel
+                                control={
+                                  <Checkbox
+                                    checked={interval.conditions.sendIfNoAction}
+                                    onChange={(e) => {
+                                      const updatedIntervals = newCampaign.advancedScheduling.intervals.map(int =>
+                                        int.id === interval.id ? { 
+                                          ...int, 
+                                          conditions: { ...int.conditions, sendIfNoAction: e.target.checked }
+                                        } : int
+                                      );
+                                      setNewCampaign(prev => ({
+                                        ...prev,
+                                        advancedScheduling: {
+                                          ...prev.advancedScheduling,
+                                          intervals: updatedIntervals
+                                        }
+                                      }));
+                                    }}
+                                    size="small"
+                                  />
+                                }
+                                label="Send if no action taken"
+                              />
+                            </FormGroup>
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </Box>
+                )}
+              </Box>
+
+              <Box sx={{ mt: 3, display: 'flex', gap: 1 }}>
+                <Button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setCampaignStep(2);
                   }}
                   type="button"
                 >
@@ -1008,7 +1466,6 @@ const CampaignManager = () => {
                     e.preventDefault();
                     handleSaveCampaign();
                   }}
-                  disabled={!newCampaign.audience}
                   startIcon={<SaveIcon />}
                   type="button"
                 >

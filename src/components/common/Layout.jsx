@@ -47,9 +47,7 @@ import {
   Close as CloseIcon,
   Build as PolicyServicingIcon,
   BusinessCenter as NewBusinessIcon,
-  LocalHospital as MedicalManagementIcon,
-  Description as TemplateIcon,
-  Poll as SurveyIcon
+  LocalHospital as MedicalManagementIcon
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext.js';
 import { useThemeMode } from '../../context/ThemeModeContext.js';
@@ -284,6 +282,8 @@ const Layout = ({ children }) => {
     { text: 'Closed Cases', icon: <AssignmentTurnedInIcon />, path: '/closed-cases', permission: 'closed-cases' },
     { text: 'Policy Timeline', icon: <TimelineIcon />, path: '/policy-timeline', permission: 'policy-timeline' },
     { text: 'Case Logs', icon: <ListIcon />, path: '/logs', permission: 'logs' },
+    { text: 'Email Manager', icon: <EmailIcon />, path: '/renewals/email-manager', permission: 'renewal-email-manager' },
+    { text: 'WhatsApp Manager', icon: <WhatsAppIcon />, path: '/renewals/whatsapp-manager', permission: 'renewal-whatsapp-manager' },
   ].filter(item => hasPermission(item.permission));
 
   const emailMenuItems = [

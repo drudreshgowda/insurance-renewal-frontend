@@ -25,6 +25,8 @@ const mockUserPermissions = {
     'feedback', 'survey-designer',
     // WhatsApp Pages
     'whatsapp-flow',
+    // Renewal Communication Pages
+    'renewal-email-manager', 'renewal-whatsapp-manager',
     // Admin Pages
     'settings', 'billing', 'users',
     // Personal Pages
@@ -42,6 +44,8 @@ const mockUserPermissions = {
     'feedback', 'survey-designer',
     // WhatsApp Pages
     'whatsapp-flow',
+    // Renewal Communication Pages
+    'renewal-email-manager', 'renewal-whatsapp-manager',
     // Admin Pages
     'settings', 'billing', 'users',
     // Personal Pages
@@ -50,6 +54,8 @@ const mockUserPermissions = {
   'renewals_specialist': [
     // Renewals Module Only
     'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs',
+    // Renewal Communication Pages
+    'renewal-email-manager', 'renewal-whatsapp-manager',
     // Personal Pages
     'profile'
   ],
@@ -81,6 +87,8 @@ const mockUserPermissions = {
     'feedback', 'survey-designer',
     // WhatsApp Pages
     'whatsapp-flow',
+    // Renewal Communication Pages
+    'renewal-email-manager', 'renewal-whatsapp-manager',
     // Personal Pages
     'profile'
   ],
@@ -91,6 +99,8 @@ const mockUserPermissions = {
     'emails', 'email-dashboard',
     // WhatsApp Pages
     'whatsapp-flow',
+    // Renewal Communication Pages
+    'renewal-email-manager', 'renewal-whatsapp-manager',
     // Personal Pages
     'profile'
   ],
@@ -160,7 +170,9 @@ export const PermissionsProvider = ({ children }) => {
       '/policy-servicing': 'policy-servicing',
       '/new-business': 'new-business',
       '/medical-management': 'medical-management',
-      '/whatsapp-flow': 'whatsapp-flow'
+      '/whatsapp-flow': 'whatsapp-flow',
+      '/renewals/email-manager': 'renewal-email-manager',
+      '/renewals/whatsapp-manager': 'renewal-whatsapp-manager'
     };
 
     const requiredPermission = routePermissions[routePath];
@@ -188,6 +200,10 @@ export const PermissionsProvider = ({ children }) => {
       { path: '/emails/dashboard', permission: 'email-dashboard', name: 'Email Dashboard' },
       { path: '/emails/analytics', permission: 'email-analytics', name: 'Email Analytics' },
       { path: '/emails/bulk', permission: 'bulk-email', name: 'Bulk Email' },
+      
+      // Renewal Communication Pages
+      { path: '/renewals/email-manager', permission: 'renewal-email-manager', name: 'Renewal Email Manager' },
+      { path: '/renewals/whatsapp-manager', permission: 'renewal-whatsapp-manager', name: 'Renewal WhatsApp Manager' },
       
       // Marketing Pages
       { path: '/campaigns', permission: 'campaigns', name: 'Campaigns' },
@@ -230,7 +246,7 @@ export const PermissionsProvider = ({ children }) => {
 
   // Permission grouping for module-based access control
   const permissionGroups = {
-    renewals: ['cases', 'closed-cases', 'policy-timeline', 'logs'],
+    renewals: ['cases', 'closed-cases', 'policy-timeline', 'logs', 'renewal-email-manager', 'renewal-whatsapp-manager'],
     email: ['emails', 'email-dashboard', 'email-analytics', 'bulk-email'],
     business: ['claims', 'policy-servicing', 'new-business', 'medical-management'],
     marketing: ['campaigns', 'templates'],
