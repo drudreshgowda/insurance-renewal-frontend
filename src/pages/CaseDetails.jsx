@@ -83,10 +83,17 @@ import {
   Group as GroupIcon,
   StarRate as StarRateIcon,
   Assessment as AssessmentIcon,
-  Lightbulb as LightbulbIcon
+  Lightbulb as LightbulbIcon,
+  Business as BusinessIcon,
+  LocationCity as LocationCityIcon,
+  SupervisorAccount as SupervisorAccountIcon,
+  Badge as BadgeIcon,
+  CheckCircle as CheckCircleIcon,
+  Cancel as CancelIcon
 } from '@mui/icons-material';
 import { useSettings } from '../context/SettingsContext';
 import { useTheme } from '@mui/material/styles';
+import ChannelDetails from '../components/common/ChannelDetails';
 
 // Custom TabPanel component
 function TabPanel(props) {
@@ -625,6 +632,9 @@ const CaseDetails = () => {
               </Card>
             </Grow>
           </Grid>
+
+          {/* Channel Details */}
+          <ChannelDetails caseData={caseData} loaded={loaded} timeout={500} />
 
           {/* Policy Features */}
           <Grid item xs={12}>
@@ -3200,6 +3210,9 @@ const CaseDetails = () => {
                     </Card>
                   </Grow>
                 </Grid>
+
+                {/* Channel Details */}
+                <ChannelDetails caseData={caseData} loaded={loaded} timeout={500} />
 
                 {/* Policy Features */}
                 <Grid item xs={12}>

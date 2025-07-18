@@ -599,7 +599,7 @@ const Feedback = () => {
     }
     
     return (
-      <Grow in={loaded} style={{ transformOrigin: '0 0 0' }} timeout={(index + 1) * 200}>
+      <Grow in={loaded} timeout={(index + 1) * 200}>
         <Card 
           sx={{ 
             height: '100%', 
@@ -925,7 +925,7 @@ const Feedback = () => {
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {/* Feedback Trends Chart */}
         <Grid item xs={12} md={6}>
-          <Grow in={loaded} style={{ transformOrigin: '0 0 0' }} timeout={1000}>
+          <Grow in={loaded} timeout={1000}>
             <Paper sx={{ p: 3, height: 400, boxShadow: '0 8px 32px rgba(0,0,0,0.1)', borderRadius: 3 }}>
               <Typography variant="h6" gutterBottom fontWeight="600">
                 Recent Feedback Trends
@@ -996,7 +996,7 @@ const Feedback = () => {
 
         {/* Top Feedback Categories */}
         <Grid item xs={12} md={6}>
-          <Grow in={loaded} style={{ transformOrigin: '0 0 0' }} timeout={1100}>
+          <Grow in={loaded} timeout={1100}>
             <Paper sx={{ p: 3, height: 400, boxShadow: '0 8px 32px rgba(0,0,0,0.1)', borderRadius: 3 }}>
               <Typography variant="h6" gutterBottom fontWeight="600">
                 Top Feedback Categories
@@ -1039,7 +1039,7 @@ const Feedback = () => {
 
         {/* Sentiment Analysis Overview */}
         <Grid item xs={12} md={6}>
-          <Grow in={loaded} style={{ transformOrigin: '0 0 0' }} timeout={1200}>
+          <Grow in={loaded} timeout={1200}>
             <Paper sx={{ p: 3, height: 400, boxShadow: '0 8px 32px rgba(0,0,0,0.1)', borderRadius: 3 }}>
               <Typography variant="h6" gutterBottom fontWeight="600">
                 Sentiment Analysis Overview

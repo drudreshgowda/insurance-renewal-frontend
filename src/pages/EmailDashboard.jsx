@@ -314,7 +314,7 @@ const EmailDashboard = () => {
     const gradientTo = alpha(color, theme.palette.mode === 'dark' ? 0.4 : 0.6);
     
     return (
-      <Grow in={loaded} style={{ transformOrigin: '0 0 0' }} timeout={(index + 1) * 200}>
+      <Grow in={loaded} timeout={(index + 1) * 200}>
         <Card 
           sx={{ 
             height: '100%', 

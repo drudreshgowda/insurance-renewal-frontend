@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   AppBar, Box, Drawer, Toolbar, Typography, Divider, 
@@ -6,7 +6,7 @@ import {
   Avatar, Menu, MenuItem, Tooltip, Badge, useTheme,
   ListItemButton, styled, Button, Collapse, Fab, Dialog, 
   DialogTitle, DialogContent, DialogActions, TextField, 
-  InputAdornment, CircularProgress, Paper, Chip
+  InputAdornment, CircularProgress, Paper, Chip, Alert
 } from '@mui/material';
 import { 
   Menu as MenuIcon, 
@@ -56,6 +56,7 @@ import { usePermissions } from '../../context/PermissionsContext.jsx';
 import NotificationsDialog from '../notifications/Notifications';
 import { alpha } from '@mui/material/styles';
 import { useTranslation } from 'react-i18next';
+import { initializeRenewalAgent, sendMessage } from '../../services/ollamaService';
 
 const drawerWidth = 260;
 
@@ -100,12 +101,16 @@ const Layout = ({ children }) => {
   const [aiQuery, setAiQuery] = useState('');
   const [aiResponse, setAiResponse] = useState('');
   const [isAILoading, setIsAILoading] = useState(false);
+  const [agentInitialized, setAgentInitialized] = useState(false);
+  const [agentError, setAgentError] = useState('');
+  const [chatHistory, setChatHistory] = useState([]);
+  const [isStreaming, setIsStreaming] = useState(false);
   const [aiSuggestions] = useState([
-    "How can I improve renewal rates?",
-    "What are the common reasons for renewal failures?",
-    "Show me best practices for customer retention",
-    "How to optimize the renewal process?",
-    "What communication strategies work best?"
+    "How can I improve renewal rates on this page?",
+    "What specific insights can you provide about this data?",
+    "What are the key performance indicators I should focus on?",
+    "How can I optimize the processes shown here?",
+    "What trends and patterns do you see in this data?"
   ]);
   const navigate = useNavigate();
   const location = useLocation();
@@ -115,6 +120,23 @@ const Layout = ({ children }) => {
   const { notifications, unreadCount, markAsRead } = useNotifications();
   const { hasPermission, hasModuleAccess } = usePermissions();
   const { t } = useTranslation();
+
+  // Initialize AI agent on component mount
+  useEffect(() => {
+    const initializeAgent = async () => {
+      try {
+        await initializeRenewalAgent();
+        setAgentInitialized(true);
+        setAgentError('');
+      } catch (error) {
+        console.error('Failed to initialize AI agent:', error);
+        setAgentError(`Failed to initialize AI: ${error.message}`);
+        setAgentInitialized(false);
+      }
+    };
+
+    initializeAgent();
+  }, []);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -181,40 +203,214 @@ const Layout = ({ children }) => {
     setAiQuery('');
     setAiResponse('');
     setIsAILoading(false);
+    setIsStreaming(false);
+    setChatHistory([]);
   };
 
   const handleSendAIQuery = async () => {
-    if (!aiQuery.trim()) return;
+    if (!aiQuery.trim() || !agentInitialized) return;
     
     setIsAILoading(true);
+    setIsStreaming(true);
     
-    // Simulate AI response (in real implementation, this would call an AI service)
-    setTimeout(() => {
-      const mockResponses = {
-        "improve renewal rates": "To improve renewal rates, focus on: 1) Proactive communication 30-45 days before expiry, 2) Personalized offers based on customer history, 3) Simplified renewal process, 4) Multi-channel reminders (email, SMS, calls), 5) Incentives for early renewal.",
-        "renewal failures": "Common reasons for renewal failures include: 1) Lack of timely communication, 2) Complex renewal process, 3) Price increases without explanation, 4) Poor customer service experience, 5) Competitive offers, 6) Changed customer needs.",
-        "customer retention": "Best practices for customer retention: 1) Regular check-ins and relationship building, 2) Value-added services, 3) Loyalty programs, 4) Feedback collection and action, 5) Personalized communication, 6) Proactive issue resolution.",
-        "optimize renewal process": "To optimize the renewal process: 1) Automate reminders and notifications, 2) Simplify forms and paperwork, 3) Offer multiple payment options, 4) Provide online self-service options, 5) Use AI for predictive analytics, 6) Streamline approval workflows.",
-        "communication strategies": "Effective communication strategies: 1) Use multiple channels (email, SMS, calls), 2) Personalize messages based on customer data, 3) Time communications appropriately, 4) Use clear, simple language, 5) Include value propositions, 6) Follow up consistently."
-      };
+    // Add user message to chat history
+    const userMessage = { type: 'user', content: aiQuery, timestamp: new Date() };
+    const aiMessage = { type: 'ai', content: '', timestamp: new Date(), streaming: true };
+    
+    setChatHistory(prev => [...prev, userMessage, aiMessage]);
+    
+    // Clear the input
+    const currentQuery = aiQuery;
+    setAiQuery('');
+    
+    try {
+      // Filter chat history to only include user and AI messages for context
+      const contextForAI = chatHistory.filter(msg => msg.type === 'user' || msg.type === 'ai');
       
-      const queryLower = aiQuery.toLowerCase();
-      let response = "I can help you with renewal management strategies, process optimization, customer retention techniques, and communication best practices. Could you please provide more specific details about your question?";
+      // Get current page context
+      const currentPath = location.pathname;
+      const pageContext = getPageContext(currentPath);
       
-      for (const [key, value] of Object.entries(mockResponses)) {
-        if (queryLower.includes(key)) {
-          response = value;
-          break;
+      // Enhanced query with page context
+      const contextualQuery = `
+CURRENT PAGE CONTEXT:
+Page: ${pageContext.name}
+Context: ${pageContext.context}
+Focus Area: ${pageContext.focus}
+
+USER QUERY: ${currentQuery}
+
+Please provide a response specifically relevant to the ${pageContext.name} page context. Focus on ${pageContext.focus}.`;
+      
+      let fullResponse = '';
+      
+      const response = await sendMessage(contextualQuery, contextForAI, (chunk, fullContent) => {
+        fullResponse = fullContent;
+        // Update the last AI message with streaming content
+        setChatHistory(prev => {
+          const updated = [...prev];
+          const lastIndex = updated.length - 1;
+          if (updated[lastIndex] && updated[lastIndex].type === 'ai') {
+            updated[lastIndex] = {
+              ...updated[lastIndex],
+              content: fullContent,
+              streaming: true
+            };
+          }
+          return updated;
+        });
+      });
+      
+      // Mark streaming as complete
+      setChatHistory(prev => {
+        const updated = [...prev];
+        const lastIndex = updated.length - 1;
+        if (updated[lastIndex] && updated[lastIndex].type === 'ai') {
+          updated[lastIndex] = {
+            ...updated[lastIndex],
+            content: response.message.content,
+            streaming: false
+          };
         }
-      }
+        return updated;
+      });
       
-      setAiResponse(response);
+      setAiResponse(response.message.content);
+      
+    } catch (error) {
+      console.error('AI query failed:', error);
+      const errorMessage = `Error: ${error.message}`;
+      setAiResponse(errorMessage);
+      
+      // Update the last AI message with error
+      setChatHistory(prev => {
+        const updated = [...prev];
+        const lastIndex = updated.length - 1;
+        if (updated[lastIndex] && updated[lastIndex].type === 'ai') {
+          updated[lastIndex] = {
+            ...updated[lastIndex],
+            content: errorMessage,
+            streaming: false
+          };
+        }
+        return updated;
+      });
+    } finally {
       setIsAILoading(false);
-    }, 2000);
+      setIsStreaming(false);
+    }
+  };
+
+  // Get page context information based on current location
+  const getPageContext = (pathname) => {
+    const pageContexts = {
+      '/dashboard': {
+        name: 'Dashboard',
+        context: 'renewal performance overview, key metrics, and high-level insights',
+        focus: 'overall portfolio performance, trends, and strategic recommendations'
+      },
+      '/upload': {
+        name: 'Upload',
+        context: 'file uploads, data processing, and document management',
+        focus: 'data integrity, processing efficiency, and document organization'
+      },
+      '/cases': {
+        name: 'Case Tracking',
+        context: 'individual case management, status tracking, and workflow optimization',
+        focus: 'case progression, bottlenecks, and process improvements'
+      },
+      '/closed-cases': {
+        name: 'Closed Cases',
+        context: 'archived cases, historical data, and performance analysis',
+        focus: 'case history, performance metrics, and lessons learned'
+      },
+      '/policy-timeline': {
+        name: 'Policy Timeline',
+        context: 'policy lifecycle, renewal timing, and customer journey mapping',
+        focus: 'policy progression, renewal timing, and customer experience'
+      },
+      '/logs': {
+        name: 'Case Logs',
+        context: 'detailed activity logs, system events, and operational data',
+        focus: 'audit trails, troubleshooting, and performance monitoring'
+      },
+      '/renewals/email-manager': {
+        name: 'Email Manager',
+        context: 'email campaigns, communication strategies, and engagement metrics',
+        focus: 'email effectiveness, open rates, and customer communication'
+      },
+      '/renewals/whatsapp-manager': {
+        name: 'WhatsApp Manager',
+        context: 'WhatsApp messaging, automated flows, and customer engagement',
+        focus: 'messaging effectiveness, delivery rates, and conversation optimization'
+      },
+      '/email': {
+        name: 'Email Dashboard',
+        context: 'email performance metrics, inbox management, and communication analytics',
+        focus: 'email campaign performance, response rates, and customer engagement'
+      },
+      '/whatsapp-flow': {
+        name: 'WhatsApp Flow',
+        context: 'WhatsApp automation, flow building, and message templates',
+        focus: 'conversation flows, automation efficiency, and customer experience'
+      },
+      '/campaigns': {
+        name: 'Campaign Management',
+        context: 'marketing campaigns, performance tracking, and ROI analysis',
+        focus: 'campaign effectiveness, conversion rates, and optimization strategies'
+      },
+      '/billing': {
+        name: 'Billing',
+        context: 'payment processing, collection rates, and financial management',
+        focus: 'payment efficiency, collection optimization, and financial insights'
+      }
+    };
+
+    return pageContexts[pathname] || {
+      name: 'Renewal Management',
+      context: 'general renewal management and insurance operations',
+      focus: 'renewal optimization and customer retention strategies'
+    };
   };
 
   const handleSuggestionClick = (suggestion) => {
     setAiQuery(suggestion);
+    setTimeout(() => {
+      handleSendAIQuery();
+    }, 100);
+  };
+
+  // Function to render text with inline formatting (bold, etc.)
+  const renderTextWithFormatting = (text) => {
+    if (!text) return '';
+    
+    // Split text by ** markers to handle bold formatting
+    const parts = text.split(/(\*\*[^*]+\*\*)/g);
+    
+    return parts.map((part, index) => {
+      // Check if this part is bold (wrapped in **)
+      if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+        const boldText = part.replace(/^\*\*|\*\*$/g, '');
+        // Only render as bold if there's actual content
+        if (boldText.trim()) {
+          return (
+            <Box
+              key={index}
+              component="span"
+              sx={{ 
+                fontWeight: 600,
+                color: theme.palette.text.primary
+              }}
+            >
+              {boldText}
+            </Box>
+          );
+        }
+      }
+      
+      // Regular text - filter out empty parts
+      return part || null;
+    }).filter(Boolean); // Remove null/empty elements
   };
 
   // Check if current page is renewal-related
@@ -1062,10 +1258,13 @@ const Layout = ({ children }) => {
           <AskAIIcon color="primary" sx={{ fontSize: '2rem' }} />
           <Box sx={{ flex: 1 }}>
             <Typography variant="h5" fontWeight="600">
-              Ask AI Assistant
+              iRenewal AI Assistant
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Get intelligent insights about renewal management
+              {(() => {
+                const pageContext = getPageContext(location.pathname);
+                return `${pageContext.name} • ${agentInitialized ? 'Ready to help' : 'Initializing...'}`;
+              })()}
             </Typography>
           </Box>
           <IconButton onClick={handleCloseAskAI} size="small">
@@ -1074,7 +1273,158 @@ const Layout = ({ children }) => {
         </DialogTitle>
 
         <DialogContent sx={{ p: 3 }}>
+          {/* Agent Status */}
+          {agentError && (
+            <Alert severity="error" sx={{ mb: 3 }}>
+              {agentError}
+            </Alert>
+          )}
+          
+          {!agentInitialized && !agentError && (
+            <Alert severity="info" sx={{ mb: 3 }}>
+              <CircularProgress size={16} sx={{ mr: 1 }} />
+              Initializing iRenewal AI Assistant...
+            </Alert>
+          )}
+
+          {/* Chat History */}
+          {chatHistory.length > 0 && (
+            <Box sx={{ mb: 3, maxHeight: 400, overflowY: 'auto' }}>
+              <Typography variant="subtitle2" fontWeight="600" gutterBottom>
+                Chat History:
+              </Typography>
+              {chatHistory.map((message, index) => (
+                <Paper
+                  key={index}
+                  sx={{
+                    p: 2,
+                    mb: 2,
+                    borderRadius: 2,
+                    bgcolor: message.type === 'user' 
+                      ? alpha(theme.palette.primary.main, 0.1)
+                      : alpha(theme.palette.secondary.main, 0.05),
+                    border: `1px solid ${message.type === 'user' 
+                      ? alpha(theme.palette.primary.main, 0.2)
+                      : alpha(theme.palette.secondary.main, 0.1)}`,
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                    {message.type === 'user' ? (
+                      <Avatar sx={{ bgcolor: theme.palette.primary.main, width: 32, height: 32 }}>
+                        <PersonIcon fontSize="small" />
+                      </Avatar>
+                    ) : (
+                      <Avatar sx={{ bgcolor: theme.palette.secondary.main, width: 32, height: 32 }}>
+                        <AskAIIcon fontSize="small" />
+                      </Avatar>
+                    )}
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="subtitle2" fontWeight="600" gutterBottom>
+                        {message.type === 'user' ? 'You' : 'iRenewal AI'}
+                      </Typography>
+                      <Typography variant="body2" sx={{ 
+                        whiteSpace: 'pre-wrap', 
+                        wordBreak: 'break-word',
+                        lineHeight: 1.6
+                      }}>
+                        {message.content.split('\n').map((line, lineIndex) => {
+                          // Handle bold headers (full line with **)
+                          if (line.startsWith('**') && line.endsWith('**') && line.length > 4) {
+                            return (
+                              <Typography
+                                key={lineIndex}
+                                variant="subtitle2"
+                                component="div"
+                                sx={{ 
+                                  fontWeight: 700,
+                                  color: theme.palette.primary.main,
+                                  mt: lineIndex > 0 ? 2 : 0,
+                                  mb: 1,
+                                  fontSize: '0.95rem'
+                                }}
+                              >
+                                {line.replace(/^\*\*|\*\*$/g, '')}
+                              </Typography>
+                            );
+                          }
+                          
+                          // Handle bullet points
+                          if (line.startsWith('•') || line.startsWith('  •')) {
+                            const isSubBullet = line.startsWith('  •');
+                            const bulletText = line.replace(/^\s*•\s*/, '');
+                            
+                            return (
+                              <Typography
+                                key={lineIndex}
+                                variant="body2"
+                                component="div"
+                                sx={{ 
+                                  ml: isSubBullet ? 3 : 1,
+                                  mb: 0.5,
+                                  display: 'flex',
+                                  alignItems: 'flex-start'
+                                }}
+                              >
+                                <Box component="span" sx={{ mr: 1, color: theme.palette.primary.main }}>
+                                  {isSubBullet ? '◦' : '•'}
+                                </Box>
+                                <Box component="span" sx={{ flex: 1 }}>
+                                  {renderTextWithFormatting(bulletText)}
+                                </Box>
+                              </Typography>
+                            );
+                          }
+                          
+                          // Handle numbered lists
+                          if (/^\d+\./.test(line)) {
+                            return (
+                              <Typography
+                                key={lineIndex}
+                                variant="body2"
+                                component="div"
+                                sx={{ 
+                                  ml: 1,
+                                  mb: 0.5,
+                                  fontWeight: 500
+                                }}
+                              >
+                                {renderTextWithFormatting(line)}
+                              </Typography>
+                            );
+                          }
+                          
+                          // Handle empty lines for spacing
+                          if (line.trim() === '') {
+                            return <Box key={lineIndex} sx={{ height: 8 }} />;
+                          }
+                          
+                          // Regular text - check for inline formatting
+                          return (
+                            <Typography
+                              key={lineIndex}
+                              variant="body2"
+                              component="div"
+                              sx={{ mb: 0.5 }}
+                            >
+                              {renderTextWithFormatting(line)}
+                            </Typography>
+                          );
+                        })}
+                        {message.streaming && (
+                          <Box component="span" sx={{ ml: 1 }}>
+                            <CircularProgress size={12} />
+                          </Box>
+                        )}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Paper>
+              ))}
+            </Box>
+          )}
+
           {/* Suggestions */}
+          {chatHistory.length === 0 && (
           <Box sx={{ mb: 3 }}>
             <Typography variant="subtitle2" fontWeight="600" gutterBottom>
               Quick Suggestions:
@@ -1098,6 +1448,7 @@ const Layout = ({ children }) => {
               ))}
             </Box>
           </Box>
+          )}
 
           {/* Query Input */}
           <TextField
@@ -1108,6 +1459,7 @@ const Layout = ({ children }) => {
             onChange={(e) => setAiQuery(e.target.value)}
             placeholder="Ask me anything about renewal management, customer retention, process optimization, or best practices..."
             variant="outlined"
+            disabled={!agentInitialized}
             sx={{
               mb: 3,
               '& .MuiOutlinedInput-root': {
@@ -1119,7 +1471,7 @@ const Layout = ({ children }) => {
                 <InputAdornment position="end">
                   <IconButton
                     onClick={handleSendAIQuery}
-                    disabled={!aiQuery.trim() || isAILoading}
+                    disabled={!aiQuery.trim() || isAILoading || !agentInitialized}
                     color="primary"
                   >
                     {isAILoading ? <CircularProgress size={20} /> : <SendIcon />}
@@ -1128,53 +1480,30 @@ const Layout = ({ children }) => {
               ),
             }}
           />
-
-          {/* AI Response */}
-          {(aiResponse || isAILoading) && (
-            <Paper
-              sx={{
-                p: 3,
-                borderRadius: 2,
-                bgcolor: alpha(theme.palette.primary.main, 0.04),
-                border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-                <AskAIIcon color="primary" />
-                <Box sx={{ flex: 1 }}>
-                  <Typography variant="subtitle2" fontWeight="600" color="primary" gutterBottom>
-                    AI Assistant Response:
-                  </Typography>
-                  {isAILoading ? (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <CircularProgress size={20} />
-                      <Typography variant="body2" color="text.secondary">
-                        Analyzing your query and generating insights...
-                      </Typography>
-                    </Box>
-                  ) : (
-                    <Typography variant="body1" sx={{ lineHeight: 1.6 }}>
-                      {aiResponse}
-                    </Typography>
-                  )}
-                </Box>
-              </Box>
-            </Paper>
-          )}
         </DialogContent>
 
         <DialogActions sx={{ p: 3, pt: 0 }}>
           <Button onClick={handleCloseAskAI} color="inherit">
             Close
           </Button>
+          {chatHistory.length > 0 && (
+            <Button
+              onClick={() => setChatHistory([])}
+              color="inherit"
+              variant="outlined"
+              sx={{ mr: 1 }}
+            >
+              Clear Chat
+            </Button>
+          )}
           <Button
             onClick={handleSendAIQuery}
             variant="contained"
-            disabled={!aiQuery.trim() || isAILoading}
+            disabled={!aiQuery.trim() || isAILoading || !agentInitialized}
             startIcon={isAILoading ? <CircularProgress size={16} /> : <SendIcon />}
             sx={{ borderRadius: 2 }}
           >
-            {isAILoading ? 'Processing...' : 'Ask AI'}
+            {isAILoading ? 'Processing...' : 'Send to iRenewal'}
           </Button>
         </DialogActions>
       </Dialog>

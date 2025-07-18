@@ -176,6 +176,13 @@ export const getCaseById = async (caseId) => {
               comprehensive: '$250 deductible'
             }
           },
+          channelDetails: {
+            businessChannel: 'Agent Network',
+            region: 'North India',
+            salesManager: 'Rajesh Kumar',
+            agentName: 'Alice Johnson',
+            agentStatus: 'Active'
+          },
           flowSteps: ['Uploaded', 'Validated', 'Assigned', 'In Progress'],
           history: [
             {
@@ -237,6 +244,13 @@ export const getCaseById = async (caseId) => {
               personalProperty: '$250,000',
               liability: '$300,000'
             }
+          },
+          channelDetails: {
+            businessChannel: 'Branch Office',
+            region: 'West India',
+            salesManager: 'Priya Sharma',
+            agentName: 'Bob Miller',
+            agentStatus: 'Active'
           },
           flowSteps: ['Uploaded', 'Validated', 'Assigned', 'In Progress', 'Payment Processed', 'Renewed'],
           history: [
@@ -318,6 +332,13 @@ export const getCaseById = async (caseId) => {
               accidentalDeath: '$1,000,000'
             }
           },
+          channelDetails: {
+            businessChannel: 'Corporate Sales',
+            region: 'South India',
+            salesManager: 'Anita Desai',
+            agentName: 'Carol Davis',
+            agentStatus: 'Inactive'
+          },
           flowSteps: ['Uploaded', 'Validated', 'Assigned', 'In Progress', 'Failed'],
           history: [
             {
@@ -392,6 +413,13 @@ export const getCaseById = async (caseId) => {
               maternityBenefit: '₹1,50,000',
               ambulanceCover: '₹2,000'
             }
+          },
+          channelDetails: {
+            businessChannel: 'Online Portal',
+            region: 'East India',
+            salesManager: 'Vikram Singh',
+            agentName: 'Priya Sharma',
+            agentStatus: 'Active'
           },
           policyMembers: [
             {
@@ -612,11 +640,11 @@ export const fetchCases = async (page, rowsPerPage, searchTerm, statusFilter, da
             phone: '555-345-6789'
           },
           policyDetails: {
-            type: 'Life',
-            expiryDate: '2025-05-05',
-            premium: 2100.00
+            type: 'Auto',
+            expiryDate: '2025-05-20',
+            premium: 1450.00
           },
-          flowSteps: ['Uploaded', 'Validated', 'Assigned', 'In Progress', 'Failed']
+          flowSteps: ['Uploaded', 'Validated', 'Assigned', 'In Progress']
         },
         {
           id: 'CASE-004',

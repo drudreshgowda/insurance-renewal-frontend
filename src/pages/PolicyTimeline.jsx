@@ -1463,7 +1463,7 @@ const PolicyTimeline = () => {
                       {index < filteredEvents.length - 1 && <TimelineConnector />}
                     </TimelineSeparator>
                     <TimelineContent>
-                      <Grow in={loaded} style={{ transformOrigin: '0 0 0' }} timeout={400 + (index * 100)}>
+                      <Grow in={loaded} timeout={400 + (index * 100)}>
                         <Card 
                           sx={{ 
                             mb: 3, 
