@@ -36,6 +36,7 @@ import MedicalManagement from './pages/MedicalManagement';
 import WhatsappFlow from './pages/WhatsappFlow';
 import RenewalEmailManager from './pages/RenewalEmailManager';
 import RenewalWhatsAppManager from './pages/RenewalWhatsAppManager';
+import DNCManagement from './pages/DNCManagement';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import DashboardRedirect from './components/common/DashboardRedirect';
 import ErrorBoundary from './components/common/ErrorBoundary';
@@ -498,6 +499,14 @@ function AppWithTheme() {
               <ProtectedRoute>
                 <Layout>
                   <WhatsappFlow />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/dnc-management" element={
+              <ProtectedRoute requiredPermission="settings">
+                <Layout>
+                  <DNCManagement />
                 </Layout>
               </ProtectedRoute>
             } />

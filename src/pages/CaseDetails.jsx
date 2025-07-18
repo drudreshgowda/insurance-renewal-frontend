@@ -2354,6 +2354,346 @@ const CaseDetails = () => {
             </Grow>
           </Grid>
 
+          {/* Last 10 Years Premium Payment History */}
+          <Grid item xs={12}>
+            <Grow in={loaded} timeout={875}>
+              <Card 
+                elevation={0}
+                sx={{ 
+                  borderRadius: 3,
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
+                  overflow: 'visible',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 12px 32px rgba(0,0,0,0.1)'
+                  }
+                }}
+              >
+                <CardContent sx={{ p: 3 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                    <HistoryIcon sx={{ mr: 1, color: theme.palette.secondary.main }} />
+                    <Typography variant="h6" fontWeight="600">Last 10 Years Premium Payment History</Typography>
+                  </Box>
+                  <Divider sx={{ mb: 3 }} />
+                  
+                  <Grid container spacing={3}>
+                    {/* Payment History Table */}
+                    <Grid item xs={12}>
+                      <Box sx={{ 
+                        overflow: 'auto',
+                        maxHeight: '500px',
+                        '&::-webkit-scrollbar': {
+                          width: '8px',
+                        },
+                        '&::-webkit-scrollbar-track': {
+                          background: alpha(theme.palette.secondary.main, 0.1),
+                          borderRadius: '4px',
+                        },
+                        '&::-webkit-scrollbar-thumb': {
+                          background: alpha(theme.palette.secondary.main, 0.3),
+                          borderRadius: '4px',
+                          '&:hover': {
+                            background: alpha(theme.palette.secondary.main, 0.5),
+                          }
+                        }
+                      }}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          {/* Year 2024 */}
+                          <Box sx={{ 
+                            p: 3, 
+                            bgcolor: alpha(theme.palette.success.main, 0.05), 
+                            borderRadius: 2,
+                            border: '1px solid',
+                            borderColor: alpha(theme.palette.success.main, 0.2)
+                          }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                              <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'success.main' }}>
+                                2024 (Current Year)
+                              </Typography>
+                              <Chip 
+                                label="₹36,450 Total" 
+                                size="small" 
+                                color="success"
+                                sx={{ fontWeight: 'bold', borderRadius: 5 }} 
+                              />
+                            </Box>
+                            <Grid container spacing={2}>
+                              <Grid item xs={12} md={4}>
+                                <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 'medium', color: 'success.main' }}>
+                                    ₹12,500 - Paid
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary">
+                                    Feb 10, 2024 • Health Insurance
+                                  </Typography>
+                                  <Typography variant="caption" sx={{ display: 'block', color: 'primary.main' }}>
+                                    Mode: Auto-debit
+                                  </Typography>
+                                </Box>
+                              </Grid>
+                              <Grid item xs={12} md={4}>
+                                <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 'medium', color: 'success.main' }}>
+                                    ₹8,750 - Paid
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary">
+                                    Jan 18, 2024 • Motor Insurance
+                                  </Typography>
+                                  <Typography variant="caption" sx={{ display: 'block', color: 'primary.main' }}>
+                                    Mode: Online Banking
+                                  </Typography>
+                                </Box>
+                              </Grid>
+                              <Grid item xs={12} md={4}>
+                                <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 'medium', color: 'success.main' }}>
+                                    ₹15,200 - Paid
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary">
+                                    Jan 05, 2024 • Life Insurance
+                                  </Typography>
+                                  <Typography variant="caption" sx={{ display: 'block', color: 'primary.main' }}>
+                                    Mode: UPI
+                                  </Typography>
+                                </Box>
+                              </Grid>
+                            </Grid>
+                          </Box>
+
+                          {/* Year 2023 */}
+                          <Box sx={{ 
+                            p: 3, 
+                            bgcolor: alpha(theme.palette.primary.main, 0.05), 
+                            borderRadius: 2,
+                            border: '1px solid',
+                            borderColor: alpha(theme.palette.primary.main, 0.2)
+                          }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                              <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                                2023
+                              </Typography>
+                              <Chip 
+                                label="₹42,650 Total" 
+                                size="small" 
+                                color="primary"
+                                sx={{ fontWeight: 'bold', borderRadius: 5 }} 
+                              />
+                            </Box>
+                            <Grid container spacing={2}>
+                              <Grid item xs={12} md={3}>
+                                <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 'medium', color: 'success.main' }}>
+                                    ₹12,500 - Paid
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary">
+                                    Dec 15, 2023 • Health Insurance
+                                  </Typography>
+                                  <Typography variant="caption" sx={{ display: 'block', color: 'primary.main' }}>
+                                    Mode: Auto-debit
+                                  </Typography>
+                                </Box>
+                              </Grid>
+                              <Grid item xs={12} md={3}>
+                                <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 'medium', color: 'success.main' }}>
+                                    ₹8,750 - Paid
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary">
+                                    Sep 20, 2023 • Motor Insurance
+                                  </Typography>
+                                  <Typography variant="caption" sx={{ display: 'block', color: 'primary.main' }}>
+                                    Mode: Credit Card
+                                  </Typography>
+                                </Box>
+                              </Grid>
+                              <Grid item xs={12} md={3}>
+                                <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 'medium', color: 'success.main' }}>
+                                    ₹15,200 - Paid
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary">
+                                    Jun 10, 2023 • Life Insurance
+                                  </Typography>
+                                  <Typography variant="caption" sx={{ display: 'block', color: 'primary.main' }}>
+                                    Mode: Online Banking
+                                  </Typography>
+                                </Box>
+                              </Grid>
+                              <Grid item xs={12} md={3}>
+                                <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 'medium', color: 'success.main' }}>
+                                    ₹6,200 - Paid
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary">
+                                    Mar 25, 2023 • Travel Insurance
+                                  </Typography>
+                                  <Typography variant="caption" sx={{ display: 'block', color: 'primary.main' }}>
+                                    Mode: UPI
+                                  </Typography>
+                                </Box>
+                              </Grid>
+                            </Grid>
+                          </Box>
+
+                          {/* Year 2022 */}
+                          <Box sx={{ 
+                            p: 3, 
+                            bgcolor: alpha(theme.palette.info.main, 0.05), 
+                            borderRadius: 2,
+                            border: '1px solid',
+                            borderColor: alpha(theme.palette.info.main, 0.2)
+                          }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                              <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'info.main' }}>
+                                2022
+                              </Typography>
+                              <Chip 
+                                label="₹38,900 Total" 
+                                size="small" 
+                                color="info"
+                                sx={{ fontWeight: 'bold', borderRadius: 5 }} 
+                              />
+                            </Box>
+                            <Grid container spacing={2}>
+                              <Grid item xs={12} md={4}>
+                                <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 'medium', color: 'success.main' }}>
+                                    ₹11,800 - Paid
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary">
+                                    Nov 12, 2022 • Health Insurance
+                                  </Typography>
+                                  <Typography variant="caption" sx={{ display: 'block', color: 'primary.main' }}>
+                                    Mode: Auto-debit
+                                  </Typography>
+                                </Box>
+                              </Grid>
+                              <Grid item xs={12} md={4}>
+                                <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 'medium', color: 'success.main' }}>
+                                    ₹8,200 - Paid
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary">
+                                    Aug 15, 2022 • Motor Insurance
+                                  </Typography>
+                                  <Typography variant="caption" sx={{ display: 'block', color: 'primary.main' }}>
+                                    Mode: Cheque
+                                  </Typography>
+                                </Box>
+                              </Grid>
+                              <Grid item xs={12} md={4}>
+                                <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 'medium', color: 'success.main' }}>
+                                    ₹18,900 - Paid
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary">
+                                    May 20, 2022 • Life Insurance
+                                  </Typography>
+                                  <Typography variant="caption" sx={{ display: 'block', color: 'primary.main' }}>
+                                    Mode: Online Banking
+                                  </Typography>
+                                </Box>
+                              </Grid>
+                            </Grid>
+                          </Box>
+
+                          {/* Years 2021-2015 (Collapsed View) */}
+                          {[2021, 2020, 2019, 2018, 2017, 2016, 2015].map((year) => (
+                            <Box key={year} sx={{ 
+                              p: 2, 
+                              bgcolor: alpha(theme.palette.grey[500], 0.05), 
+                              borderRadius: 2,
+                              border: '1px solid',
+                              borderColor: alpha(theme.palette.grey[500], 0.2)
+                            }}>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Typography variant="subtitle1" sx={{ fontWeight: 'medium', color: 'text.primary' }}>
+                                  {year}
+                                </Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                  <Chip 
+                                    label={`₹${(Math.random() * 20000 + 25000).toFixed(0)} Total`}
+                                    size="small" 
+                                    variant="outlined"
+                                    sx={{ fontWeight: 'medium', borderRadius: 5 }} 
+                                  />
+                                  <Typography variant="body2" color="text.secondary">
+                                    {Math.floor(Math.random() * 4) + 2} payments
+                                  </Typography>
+                                  <Typography variant="body2" sx={{ color: 'success.main', fontWeight: 'medium' }}>
+                                    100% paid
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </Box>
+                          ))}
+                        </Box>
+                      </Box>
+                    </Grid>
+
+                    {/* Payment Summary Statistics */}
+                    <Grid item xs={12}>
+                      <Box sx={{ 
+                        p: 3, 
+                        bgcolor: alpha(theme.palette.warning.main, 0.05), 
+                        borderRadius: 2,
+                        border: '1px solid',
+                        borderColor: alpha(theme.palette.warning.main, 0.2)
+                      }}>
+                        <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'warning.main', mb: 2 }}>
+                          10-Year Payment Summary
+                        </Typography>
+                        <Grid container spacing={3}>
+                          <Grid item xs={12} md={3}>
+                            <Box sx={{ textAlign: 'center', p: 2 }}>
+                              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                                ₹3,24,850
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                Total Premiums Paid
+                              </Typography>
+                            </Box>
+                          </Grid>
+                          <Grid item xs={12} md={3}>
+                            <Box sx={{ textAlign: 'center', p: 2 }}>
+                              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'success.main' }}>
+                                98.5%
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                On-time Payment Rate
+                              </Typography>
+                            </Box>
+                          </Grid>
+                          <Grid item xs={12} md={3}>
+                            <Box sx={{ textAlign: 'center', p: 2 }}>
+                              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'info.main' }}>
+                                32
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                Total Payments Made
+                              </Typography>
+                            </Box>
+                          </Grid>
+                          <Grid item xs={12} md={3}>
+                            <Box sx={{ textAlign: 'center', p: 2 }}>
+                              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'secondary.main' }}>
+                                Auto-debit
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                Most Used Mode
+                              </Typography>
+                            </Box>
+                          </Grid>
+                        </Grid>
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+            </Grow>
+          </Grid>
+
           {/* Customer Profiling */}
           <Grid item xs={12}>
             <Grow in={loaded} timeout={900}>
@@ -4693,6 +5033,346 @@ const CaseDetails = () => {
                                   </Box>
                                 </Box>
                               </Box>
+                            </Box>
+                          </Grid>
+                        </Grid>
+                      </CardContent>
+                    </Card>
+                  </Grow>
+                </Grid>
+
+                {/* Last 10 Years Premium Payment History */}
+                <Grid item xs={12}>
+                  <Grow in={loaded} timeout={875}>
+                    <Card 
+                      elevation={0}
+                      sx={{ 
+                        borderRadius: 3,
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
+                        overflow: 'visible',
+                        transition: 'transform 0.2s, box-shadow 0.2s',
+                        '&:hover': {
+                          transform: 'translateY(-4px)',
+                          boxShadow: '0 12px 32px rgba(0,0,0,0.1)'
+                        }
+                      }}
+                    >
+                      <CardContent sx={{ p: 3 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                          <HistoryIcon sx={{ mr: 1, color: theme.palette.secondary.main }} />
+                          <Typography variant="h6" fontWeight="600">Last 10 Years Premium Payment History</Typography>
+                        </Box>
+                        <Divider sx={{ mb: 3 }} />
+                        
+                        <Grid container spacing={3}>
+                          {/* Payment History Table */}
+                          <Grid item xs={12}>
+                            <Box sx={{ 
+                              overflow: 'auto',
+                              maxHeight: '500px',
+                              '&::-webkit-scrollbar': {
+                                width: '8px',
+                              },
+                              '&::-webkit-scrollbar-track': {
+                                background: alpha(theme.palette.secondary.main, 0.1),
+                                borderRadius: '4px',
+                              },
+                              '&::-webkit-scrollbar-thumb': {
+                                background: alpha(theme.palette.secondary.main, 0.3),
+                                borderRadius: '4px',
+                                '&:hover': {
+                                  background: alpha(theme.palette.secondary.main, 0.5),
+                                }
+                              }
+                            }}>
+                              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                {/* Year 2024 */}
+                                <Box sx={{ 
+                                  p: 3, 
+                                  bgcolor: alpha(theme.palette.success.main, 0.05), 
+                                  borderRadius: 2,
+                                  border: '1px solid',
+                                  borderColor: alpha(theme.palette.success.main, 0.2)
+                                }}>
+                                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'success.main' }}>
+                                      2024 (Current Year)
+                                    </Typography>
+                                    <Chip 
+                                      label="₹36,450 Total" 
+                                      size="small" 
+                                      color="success"
+                                      sx={{ fontWeight: 'bold', borderRadius: 5 }} 
+                                    />
+                                  </Box>
+                                  <Grid container spacing={2}>
+                                    <Grid item xs={12} md={4}>
+                                      <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+                                        <Typography variant="body2" sx={{ fontWeight: 'medium', color: 'success.main' }}>
+                                          ₹12,500 - Paid
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary">
+                                          Feb 10, 2024 • Health Insurance
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ display: 'block', color: 'primary.main' }}>
+                                          Mode: Auto-debit
+                                        </Typography>
+                                      </Box>
+                                    </Grid>
+                                    <Grid item xs={12} md={4}>
+                                      <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+                                        <Typography variant="body2" sx={{ fontWeight: 'medium', color: 'success.main' }}>
+                                          ₹8,750 - Paid
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary">
+                                          Jan 18, 2024 • Motor Insurance
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ display: 'block', color: 'primary.main' }}>
+                                          Mode: Online Banking
+                                        </Typography>
+                                      </Box>
+                                    </Grid>
+                                    <Grid item xs={12} md={4}>
+                                      <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+                                        <Typography variant="body2" sx={{ fontWeight: 'medium', color: 'success.main' }}>
+                                          ₹15,200 - Paid
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary">
+                                          Jan 05, 2024 • Life Insurance
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ display: 'block', color: 'primary.main' }}>
+                                          Mode: UPI
+                                        </Typography>
+                                      </Box>
+                                    </Grid>
+                                  </Grid>
+                                </Box>
+
+                                {/* Year 2023 */}
+                                <Box sx={{ 
+                                  p: 3, 
+                                  bgcolor: alpha(theme.palette.primary.main, 0.05), 
+                                  borderRadius: 2,
+                                  border: '1px solid',
+                                  borderColor: alpha(theme.palette.primary.main, 0.2)
+                                }}>
+                                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                                      2023
+                                    </Typography>
+                                    <Chip 
+                                      label="₹42,650 Total" 
+                                      size="small" 
+                                      color="primary"
+                                      sx={{ fontWeight: 'bold', borderRadius: 5 }} 
+                                    />
+                                  </Box>
+                                  <Grid container spacing={2}>
+                                    <Grid item xs={12} md={3}>
+                                      <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+                                        <Typography variant="body2" sx={{ fontWeight: 'medium', color: 'success.main' }}>
+                                          ₹12,500 - Paid
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary">
+                                          Dec 15, 2023 • Health Insurance
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ display: 'block', color: 'primary.main' }}>
+                                          Mode: Auto-debit
+                                        </Typography>
+                                      </Box>
+                                    </Grid>
+                                    <Grid item xs={12} md={3}>
+                                      <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+                                        <Typography variant="body2" sx={{ fontWeight: 'medium', color: 'success.main' }}>
+                                          ₹8,750 - Paid
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary">
+                                          Sep 20, 2023 • Motor Insurance
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ display: 'block', color: 'primary.main' }}>
+                                          Mode: Credit Card
+                                        </Typography>
+                                      </Box>
+                                    </Grid>
+                                    <Grid item xs={12} md={3}>
+                                      <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+                                        <Typography variant="body2" sx={{ fontWeight: 'medium', color: 'success.main' }}>
+                                          ₹15,200 - Paid
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary">
+                                          Jun 10, 2023 • Life Insurance
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ display: 'block', color: 'primary.main' }}>
+                                          Mode: Online Banking
+                                        </Typography>
+                                      </Box>
+                                    </Grid>
+                                    <Grid item xs={12} md={3}>
+                                      <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+                                        <Typography variant="body2" sx={{ fontWeight: 'medium', color: 'success.main' }}>
+                                          ₹6,200 - Paid
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary">
+                                          Mar 25, 2023 • Travel Insurance
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ display: 'block', color: 'primary.main' }}>
+                                          Mode: UPI
+                                        </Typography>
+                                      </Box>
+                                    </Grid>
+                                  </Grid>
+                                </Box>
+
+                                {/* Year 2022 */}
+                                <Box sx={{ 
+                                  p: 3, 
+                                  bgcolor: alpha(theme.palette.info.main, 0.05), 
+                                  borderRadius: 2,
+                                  border: '1px solid',
+                                  borderColor: alpha(theme.palette.info.main, 0.2)
+                                }}>
+                                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'info.main' }}>
+                                      2022
+                                    </Typography>
+                                    <Chip 
+                                      label="₹38,900 Total" 
+                                      size="small" 
+                                      color="info"
+                                      sx={{ fontWeight: 'bold', borderRadius: 5 }} 
+                                    />
+                                  </Box>
+                                  <Grid container spacing={2}>
+                                    <Grid item xs={12} md={4}>
+                                      <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+                                        <Typography variant="body2" sx={{ fontWeight: 'medium', color: 'success.main' }}>
+                                          ₹11,800 - Paid
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary">
+                                          Nov 12, 2022 • Health Insurance
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ display: 'block', color: 'primary.main' }}>
+                                          Mode: Auto-debit
+                                        </Typography>
+                                      </Box>
+                                    </Grid>
+                                    <Grid item xs={12} md={4}>
+                                      <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+                                        <Typography variant="body2" sx={{ fontWeight: 'medium', color: 'success.main' }}>
+                                          ₹8,200 - Paid
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary">
+                                          Aug 15, 2022 • Motor Insurance
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ display: 'block', color: 'primary.main' }}>
+                                          Mode: Cheque
+                                        </Typography>
+                                      </Box>
+                                    </Grid>
+                                    <Grid item xs={12} md={4}>
+                                      <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+                                        <Typography variant="body2" sx={{ fontWeight: 'medium', color: 'success.main' }}>
+                                          ₹18,900 - Paid
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary">
+                                          May 20, 2022 • Life Insurance
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ display: 'block', color: 'primary.main' }}>
+                                          Mode: Online Banking
+                                        </Typography>
+                                      </Box>
+                                    </Grid>
+                                  </Grid>
+                                </Box>
+
+                                {/* Years 2021-2015 (Collapsed View) */}
+                                {[2021, 2020, 2019, 2018, 2017, 2016, 2015].map((year) => (
+                                  <Box key={year} sx={{ 
+                                    p: 2, 
+                                    bgcolor: alpha(theme.palette.grey[500], 0.05), 
+                                    borderRadius: 2,
+                                    border: '1px solid',
+                                    borderColor: alpha(theme.palette.grey[500], 0.2)
+                                  }}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                      <Typography variant="subtitle1" sx={{ fontWeight: 'medium', color: 'text.primary' }}>
+                                        {year}
+                                      </Typography>
+                                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                        <Chip 
+                                          label={`₹${(Math.random() * 20000 + 25000).toFixed(0)} Total`}
+                                          size="small" 
+                                          variant="outlined"
+                                          sx={{ fontWeight: 'medium', borderRadius: 5 }} 
+                                        />
+                                        <Typography variant="body2" color="text.secondary">
+                                          {Math.floor(Math.random() * 4) + 2} payments
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ color: 'success.main', fontWeight: 'medium' }}>
+                                          100% paid
+                                        </Typography>
+                                      </Box>
+                                    </Box>
+                                  </Box>
+                                ))}
+                              </Box>
+                            </Box>
+                          </Grid>
+
+                          {/* Payment Summary Statistics */}
+                          <Grid item xs={12}>
+                            <Box sx={{ 
+                              p: 3, 
+                              bgcolor: alpha(theme.palette.warning.main, 0.05), 
+                              borderRadius: 2,
+                              border: '1px solid',
+                              borderColor: alpha(theme.palette.warning.main, 0.2)
+                            }}>
+                              <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'warning.main', mb: 2 }}>
+                                10-Year Payment Summary
+                              </Typography>
+                              <Grid container spacing={3}>
+                                <Grid item xs={12} md={3}>
+                                  <Box sx={{ textAlign: 'center', p: 2 }}>
+                                    <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                                      ₹3,24,850
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                      Total Premiums Paid
+                                    </Typography>
+                                  </Box>
+                                </Grid>
+                                <Grid item xs={12} md={3}>
+                                  <Box sx={{ textAlign: 'center', p: 2 }}>
+                                    <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'success.main' }}>
+                                      98.5%
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                      On-time Payment Rate
+                                    </Typography>
+                                  </Box>
+                                </Grid>
+                                <Grid item xs={12} md={3}>
+                                  <Box sx={{ textAlign: 'center', p: 2 }}>
+                                    <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'info.main' }}>
+                                      32
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                      Total Payments Made
+                                    </Typography>
+                                  </Box>
+                                </Grid>
+                                <Grid item xs={12} md={3}>
+                                  <Box sx={{ textAlign: 'center', p: 2 }}>
+                                    <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'secondary.main' }}>
+                                      Auto-debit
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                      Most Used Mode
+                                    </Typography>
+                                  </Box>
+                                </Grid>
+                              </Grid>
                             </Box>
                           </Grid>
                         </Grid>

@@ -2,59 +2,59 @@
 // For now, it's just a placeholder with mock implementations
 
 // Base URL for API calls
-const API_BASE_URL = 'https://api.example.com/v1';
+// const API_BASE_URL = 'https://api.example.com/v1';
 
 // Provider configuration endpoints
-const PROVIDER_ENDPOINTS = {
-  email: {
-    sendgrid: 'https://api.sendgrid.com/v3',
-    'aws-ses': 'https://email.{region}.amazonaws.com',
-    mailgun: 'https://api.mailgun.net/v3',
-    smtp: 'custom-smtp-endpoint'
-  },
-  sms: {
-    twilio: 'https://api.twilio.com/2010-04-01',
-    msg91: 'https://api.msg91.com/api/v5',
-    'aws-sns': 'https://sns.{region}.amazonaws.com',
-    textlocal: 'https://api.textlocal.in'
-  },
-  whatsapp: {
-    meta: 'https://graph.facebook.com/v17.0',
-    gupshup: 'https://api.gupshup.io/sm/api/v1',
-    '360dialog': 'https://waba.360dialog.io/v1'
-  },
-  call: {
-    'twilio-voice': 'https://api.twilio.com/2010-04-01',
-    exotel: 'https://api.exotel.com/v1',
-    ubona: 'https://api.ubona.com/v1'
-  }
-};
+// const PROVIDER_ENDPOINTS = {
+//   email: {
+//     sendgrid: 'https://api.sendgrid.com/v3',
+//     'aws-ses': 'https://email.{region}.amazonaws.com',
+//     mailgun: 'https://api.mailgun.net/v3',
+//     smtp: 'custom-smtp-endpoint'
+//   },
+//   sms: {
+//     twilio: 'https://api.twilio.com/2010-04-01',
+//     msg91: 'https://api.msg91.com/api/v5',
+//     'aws-sns': 'https://sns.{region}.amazonaws.com',
+//     textlocal: 'https://api.textlocal.in'
+//   },
+//   whatsapp: {
+//     meta: 'https://graph.facebook.com/v17.0',
+//     gupshup: 'https://api.gupshup.io/sm/api/v1',
+//     '360dialog': 'https://waba.360dialog.io/v1'
+//   },
+//   call: {
+//     'twilio-voice': 'https://api.twilio.com/2010-04-01',
+//     exotel: 'https://api.exotel.com/v1',
+//     ubona: 'https://api.ubona.com/v1'
+//   }
+// };
 
 // Helper function for API requests
-const apiRequest = async (endpoint, options = {}) => {
-  try {
-    const url = `${API_BASE_URL}${endpoint}`;
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-    });
+// const apiRequest = async (endpoint, options = {}) => {
+//   try {
+//     const url = `${API_BASE_URL}${endpoint}`;
+//     const response = await fetch(url, {
+//       ...options,
+//       headers: {
+//         'Content-Type': 'application/json',
+//         ...options.headers,
+//       },
+//     });
     
-    if (!response.ok) {
-      throw new Error(`API request failed with status ${response.status}`);
-    }
+//     if (!response.ok) {
+//       throw new Error(`API request failed with status ${response.status}`);
+//     }
     
-    return await response.json();
-  } catch (error) {
-    console.error('API request error:', error);
-    throw error;
-  }
-};
+//     return await response.json();
+//   } catch (error) {
+//     console.error('API request error:', error);
+//     throw error;
+//   }
+// };
 
 // Dashboard API calls
-export const fetchDashboardStats = async (dateRange, policyType, caseStatus) => {
+export const fetchDashboardStats = async (_dateRange, _policyType, _caseStatus) => {
   // In a real app, this would call the API
   // return apiRequest(`/dashboard/stats?dateRange=${dateRange}&policyType=${policyType}&caseStatus=${caseStatus}`);
   
@@ -68,12 +68,12 @@ export const fetchDashboardStats = async (dateRange, policyType, caseStatus) => 
   };
 };
 
-export const fetchTrendData = async (dateRange, policyType, caseStatus) => {
+export const fetchTrendData = async (_dateRange, _policyType, _caseStatus) => {
   // In a real app, this would call the API
   // return apiRequest(`/dashboard/trends?dateRange=${dateRange}&policyType=${policyType}&caseStatus=${caseStatus}`);
   
   // Mock implementation
-  if (dateRange === 'week') {
+  if (_dateRange === 'week') {
     return [
       { name: 'Mon', newCases: 65, renewals: 42, successRate: 0.85 },
       { name: 'Tue', newCases: 59, renewals: 38, successRate: 0.82 },
@@ -83,7 +83,7 @@ export const fetchTrendData = async (dateRange, policyType, caseStatus) => {
       { name: 'Sat', newCases: 25, renewals: 20, successRate: 0.92 },
       { name: 'Sun', newCases: 15, renewals: 12, successRate: 0.90 },
     ];
-  } else if (dateRange === 'month') {
+  } else if (_dateRange === 'month') {
     // Generate mock data for a month
     return Array.from({ length: 30 }, (_, i) => ({
       name: `Day ${i + 1}`,
@@ -578,7 +578,7 @@ export const getCaseById = async (caseId) => {
   });
 };
 
-export const fetchCases = async (page, rowsPerPage, searchTerm, statusFilter, dateFilter, agentFilter) => {
+export const fetchCases = async (_page, _rowsPerPage, _searchTerm, _statusFilter, _dateFilter, _agentFilter) => {
   // In a real app, this would call the API
   // return apiRequest(
   //   `/cases?page=${page}&limit=${rowsPerPage}&search=${searchTerm}&status=${statusFilter}&date=${dateFilter}&agent=${agentFilter}`
@@ -691,7 +691,7 @@ export const fetchCases = async (page, rowsPerPage, searchTerm, statusFilter, da
   });
 };
 
-export const updateCase = async (caseId, caseData) => {
+export const updateCase = async (caseId, _caseData) => {
   // In a real app, this would call the API
   // return apiRequest(`/cases/${caseId}`, {
   //   method: 'PUT',
@@ -909,8 +909,70 @@ export const updateCasePriority = async (caseId, isPriority) => {
   });
 };
 
+// Bulk Case Operations
+export const bulkUpdateCaseStatus = async (caseIds, newStatus) => {
+  // In a real app, this would call the API
+  // return apiRequest('/cases/bulk-update-status', {
+  //   method: 'PUT',
+  //   body: JSON.stringify({ caseIds, status: newStatus })
+  // });
+  
+  // Mock implementation
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      // Simulate occasional failures for demonstration
+      if (Math.random() < 0.1) {
+        reject(new Error('Bulk status update failed due to server error'));
+        return;
+      }
+      
+      resolve({
+        success: true,
+        updatedCount: caseIds.length,
+        newStatus,
+        message: `Successfully updated ${caseIds.length} case(s) to status "${newStatus}"`
+      });
+    }, 800);
+  });
+};
+
+export const bulkAssignCases = async (caseIds, agentId) => {
+  // In a real app, this would call the API
+  // return apiRequest('/cases/bulk-assign', {
+  //   method: 'PUT',
+  //   body: JSON.stringify({ caseIds, agentId })
+  // });
+  
+  // Mock implementation
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      // Simulate occasional failures for demonstration
+      if (Math.random() < 0.1) {
+        reject(new Error('Bulk agent assignment failed due to server error'));
+        return;
+      }
+      
+      // Simulate dialer integration
+      const dialerIntegration = {
+        success: true,
+        queuedCases: caseIds.length,
+        dialerSystemId: `DIALER_QUEUE_${Date.now()}`,
+        estimatedCallTime: caseIds.length * 5 // 5 minutes per case
+      };
+      
+      resolve({
+        success: true,
+        assignedCount: caseIds.length,
+        agentId,
+        dialerIntegration,
+        message: `Successfully assigned ${caseIds.length} case(s) to ${agentId} and queued in dialer system`
+      });
+    }, 1000);
+  });
+};
+
 // Password Management
-export const changePassword = async (currentPassword, newPassword) => {
+export const changePassword = async (currentPassword, _newPassword) => {
   // In a real app, this would call the API
   // return apiRequest('/user/change-password', {
   //   method: 'PUT',
@@ -934,7 +996,7 @@ export const changePassword = async (currentPassword, newPassword) => {
 };
 
 // Export functionality
-export const exportCases = async (format, filters) => {
+export const exportCases = async (format, _filters) => {
   // In a real app, this would call the API to generate and download a file
   // return apiRequest('/export/cases', {
   //   method: 'POST',
@@ -1215,7 +1277,7 @@ export const fetchTeamMembers = async (teamId) => {
 // =====================================================================================
 
 // Test provider connection
-export const testProviderConnection = async (channel, providerId, config) => {
+export const testProviderConnection = async (_channel, _providerId, _config) => {
   try {
     // In a real app, this would make actual API calls to test the provider
     // return apiRequest(`/providers/test`, {
@@ -1235,24 +1297,227 @@ export const testProviderConnection = async (channel, providerId, config) => {
   }
 };
 
-// Send campaign via specific provider
-export const sendCampaignViaProvider = async (campaignData, providerConfig) => {
+// DNC Management Functions
+export const checkDNCStatus = async (contact, clientId, channel) => {
   try {
-    const { channel, provider, recipients, content } = campaignData;
+    // Mock DNC check - in real app, this would query the DNC registry
+    const mockDNCRegistry = [
+      {
+        customerPhone: '9876543210',
+        customerEmail: 'arjun.sharma@gmail.com',
+        clientId: 'CLIENT-001',
+        dncType: 'phone',
+        dncSource: 'customer',
+        reason: 'Customer requested to be removed from marketing calls',
+        isActive: true,
+        overrideAllowed: false
+      },
+      {
+        customerPhone: '9876543211',
+        customerEmail: 'meera.kapoor@gmail.com',
+        clientId: 'CLIENT-002',
+        dncType: 'both',
+        dncSource: 'government',
+        reason: 'Registered in TRAI DNC Registry',
+        isActive: true,
+        overrideAllowed: true
+      }
+    ];
     
-    // In a real app, this would route to the appropriate provider API
+    const dncEntry = mockDNCRegistry.find(entry => 
+      entry.clientId === clientId &&
+      entry.isActive &&
+      (
+        ((channel === 'whatsapp' || channel === 'sms' || channel === 'call') && 
+        (entry.dncType === 'phone' || entry.dncType === 'both') &&
+        entry.customerPhone === contact.phone)
+        ||
+        (channel === 'email' && 
+        (entry.dncType === 'email' || entry.dncType === 'both') &&
+        entry.customerEmail === contact.email)
+      )
+    );
+    
+    if (dncEntry) {
+      return {
+        isBlocked: true,
+        reason: dncEntry.reason,
+        source: dncEntry.dncSource,
+        overrideAllowed: dncEntry.overrideAllowed,
+        dncType: dncEntry.dncType
+      };
+    }
+    
+    return {
+      isBlocked: false,
+      reason: null,
+      source: null,
+      overrideAllowed: false,
+      dncType: null
+    };
+  } catch (error) {
+    console.error('DNC check error:', error);
+    return {
+      isBlocked: false,
+      reason: 'DNC check failed',
+      source: 'system',
+      overrideAllowed: false,
+      dncType: null
+    };
+  }
+};
+
+export const deduplicateContacts = async (contacts, clientId) => {
+  try {
+    // Remove duplicates within the dataset
+    const uniqueContacts = contacts.filter((contact, index, self) => 
+      index === self.findIndex(c => 
+        c.phone === contact.phone || c.email === contact.email
+      )
+    );
+    
+    // Check against DNC registry
+    const dncFilteredContacts = [];
+    const blockedContacts = [];
+    
+    for (const contact of uniqueContacts) {
+      const phoneCheck = await checkDNCStatus(contact, clientId, 'sms');
+      const emailCheck = await checkDNCStatus(contact, clientId, 'email');
+      
+      if (phoneCheck.isBlocked || emailCheck.isBlocked) {
+        blockedContacts.push({
+          ...contact,
+          dncReason: phoneCheck.reason || emailCheck.reason,
+          dncSource: phoneCheck.source || emailCheck.source
+        });
+      } else {
+        dncFilteredContacts.push(contact);
+      }
+    }
+    
+    return {
+      allowed: dncFilteredContacts,
+      blocked: blockedContacts,
+      duplicatesRemoved: contacts.length - uniqueContacts.length,
+      dncBlocked: blockedContacts.length
+    };
+  } catch (error) {
+    console.error('Deduplication error:', error);
+    return {
+      allowed: contacts,
+      blocked: [],
+      duplicatesRemoved: 0,
+      dncBlocked: 0
+    };
+  }
+};
+
+export const requestDNCOverride = async (_dncId, _overrideData) => {
+  try {
+    // Mock API call for DNC override request
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    return {
+      success: true,
+      overrideId: `OVERRIDE-${Date.now()}`,
+      status: 'pending',
+      message: 'Override request submitted for approval'
+    };
+  } catch (error) {
+    throw new Error('Failed to request DNC override');
+  }
+};
+
+export const addToDNCRegistry = async (_dncData) => {
+  try {
+    // Mock API call to add DNC entry
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    return {
+      success: true,
+      dncId: `DNC-${Date.now()}`,
+      message: 'DNC entry added successfully'
+    };
+  } catch (error) {
+    throw new Error('Failed to add DNC entry');
+  }
+};
+
+export const getDNCRegistry = async (clientId, _filters = {}) => {
+  try {
+    // Mock API call to get DNC registry
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // This would return filtered DNC entries from the database
+    return {
+      success: true,
+      data: [], // DNC entries would be returned here
+      pagination: {
+        page: 1,
+        limit: 10,
+        total: 0
+      }
+    };
+  } catch (error) {
+    throw new Error('Failed to fetch DNC registry');
+  }
+};
+
+// Enhanced campaign sending with DNC checking
+export const sendCampaignViaProvider = async (campaignData, _providerConfig) => {
+  try {
+    const { channel, provider, recipients, content, clientId } = campaignData;
+    
+    // Pre-send DNC check and deduplication
+    const filteredData = await deduplicateContacts(recipients, clientId);
+    
+    if (filteredData.blocked.length > 0) {
+      // In production, this would be logged to a proper logging service
+      // console.log(`Blocked ${filteredData.blocked.length} contacts due to DNC restrictions`);
+    }
+    
+    if (filteredData.duplicatesRemoved > 0) {
+      // In production, this would be logged to a proper logging service
+      // console.log(`Removed ${filteredData.duplicatesRemoved} duplicate contacts`);
+    }
+    
+    // Send to allowed contacts only
+    const allowedRecipients = filteredData.allowed;
+    
+    if (allowedRecipients.length === 0) {
+      return {
+        success: false,
+        message: 'No valid recipients after DNC filtering and deduplication',
+        blocked: filteredData.blocked,
+        duplicatesRemoved: filteredData.duplicatesRemoved
+      };
+    }
+    
+    // Route to appropriate provider
+    let result;
     switch (channel) {
       case 'email':
-        return await sendEmailViaProvider(provider, recipients, content);
+        result = await sendEmailViaProvider(provider, allowedRecipients, content);
+        break;
       case 'sms':
-        return await sendSMSViaProvider(provider, recipients, content);
+        result = await sendSMSViaProvider(provider, allowedRecipients, content);
+        break;
       case 'whatsapp':
-        return await sendWhatsAppViaProvider(provider, recipients, content);
+        result = await sendWhatsAppViaProvider(provider, allowedRecipients, content);
+        break;
       case 'call':
-        return await makeCallViaProvider(provider, recipients, content);
+        result = await makeCallViaProvider(provider, allowedRecipients, content);
+        break;
       default:
         throw new Error(`Unsupported channel: ${channel}`);
     }
+    
+    return {
+      ...result,
+      sentTo: allowedRecipients.length,
+      blocked: filteredData.blocked,
+      duplicatesRemoved: filteredData.duplicatesRemoved
+    };
   } catch (error) {
     console.error('Campaign send error:', error);
     throw error;
@@ -1260,8 +1525,8 @@ export const sendCampaignViaProvider = async (campaignData, providerConfig) => {
 };
 
 // Email provider implementations
-const sendEmailViaProvider = async (provider, recipients, content) => {
-  const endpoint = PROVIDER_ENDPOINTS.email[provider.type];
+const sendEmailViaProvider = async (provider, _recipients, _content) => {
+  // const endpoint = PROVIDER_ENDPOINTS.email[provider.type];
   
   switch (provider.type) {
     case 'sendgrid':
@@ -1297,8 +1562,8 @@ const sendEmailViaProvider = async (provider, recipients, content) => {
 };
 
 // SMS provider implementations
-const sendSMSViaProvider = async (provider, recipients, content) => {
-  const endpoint = PROVIDER_ENDPOINTS.sms[provider.type];
+const sendSMSViaProvider = async (provider, _recipients, _content) => {
+  // const endpoint = PROVIDER_ENDPOINTS.sms[provider.type];
   
   switch (provider.type) {
     case 'twilio':
@@ -1333,8 +1598,8 @@ const sendSMSViaProvider = async (provider, recipients, content) => {
 };
 
 // WhatsApp provider implementations
-const sendWhatsAppViaProvider = async (provider, recipients, content) => {
-  const endpoint = PROVIDER_ENDPOINTS.whatsapp[provider.type];
+const sendWhatsAppViaProvider = async (provider, _recipients, _content) => {
+  // const endpoint = PROVIDER_ENDPOINTS.whatsapp[provider.type];
   
   switch (provider.type) {
     case 'meta':
@@ -1366,8 +1631,8 @@ const sendWhatsAppViaProvider = async (provider, recipients, content) => {
 };
 
 // Call provider implementations
-const makeCallViaProvider = async (provider, recipients, content) => {
-  const endpoint = PROVIDER_ENDPOINTS.call[provider.type];
+const makeCallViaProvider = async (provider, _recipients, _content) => {
+  // const endpoint = PROVIDER_ENDPOINTS.call[provider.type];
   
   switch (provider.type) {
     case 'twilio-voice':
@@ -1399,7 +1664,7 @@ const makeCallViaProvider = async (provider, recipients, content) => {
 };
 
 // Get provider statistics
-export const getProviderStats = async (channel, providerId) => {
+export const getProviderStats = async (_channel, _providerId) => {
   try {
     // In a real app, this would fetch actual stats from the provider
     // return apiRequest(`/providers/${channel}/${providerId}/stats`);
@@ -1455,6 +1720,10 @@ export const validateProviderConfig = (channel, providerType, config) => {
       if (!config.fromNumber) {
         errors.push('From number is required');
       }
+      break;
+      
+    default:
+      errors.push(`Unsupported channel: ${channel}`);
       break;
   }
   

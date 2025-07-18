@@ -35,7 +35,7 @@ import {
   Timeline as TimelineIcon,
   Close as CloseIcon
 } from '@mui/icons-material';
-// import { uploadPolicyData } from '../services/api';
+import { deduplicateContacts } from '../services/api';
 
 const Upload = () => {
   const theme = useTheme();
@@ -353,63 +353,99 @@ const Upload = () => {
     setCampaignDialog(true);
   };
 
-  const handleCampaignSubmit = () => {
-    // Create separate campaigns for each selected type
-    const newCampaigns = campaignData.type.map((type, index) => {
-      const selectedProvider = getProviders(type).find(p => p.id === campaignData.providers[type]) || getActiveProvider(type);
+  const handleCampaignSubmit = async () => {
+    try {
+      // Mock contacts from selected upload
+      const mockContacts = [
+        { phone: '9876543210', email: 'arjun.sharma@gmail.com', name: 'Arjun Sharma' },
+        { phone: '9876543211', email: 'meera.kapoor@gmail.com', name: 'Meera Kapoor' },
+        { phone: '9876543212', email: 'vikram.singh@gmail.com', name: 'Vikram Singh' },
+        { phone: '9876543213', email: 'priyanka.gupta@gmail.com', name: 'Priyanka Gupta' }
+      ];
       
-      return {
-      id: `camp-${Date.now()}-${index}`,
-      name: campaignData.type.length > 1 
-        ? `${campaignData.name} (${type.charAt(0).toUpperCase() + type.slice(1)})`
-        : campaignData.name,
-      type: type,
-        provider: selectedProvider ? {
-          id: selectedProvider.id,
-          name: selectedProvider.name,
-          type: selectedProvider.type
-        } : null,
-      status: campaignData.scheduleType === 'immediate' ? 'active' : 'scheduled',
-      uploadId: selectedUpload.id,
-      uploadFilename: selectedUpload.filename,
-      targetCount: selectedUpload.successful,
-      sent: 0,
-      opened: 0,
-      clicked: 0,
-      converted: 0,
-      createdAt: new Date().toISOString(),
-      scheduledAt: campaignData.scheduleType === 'scheduled' 
-        ? `${campaignData.scheduleDate}T${campaignData.scheduleTime}:00`
-          : new Date().toISOString(),
-        advancedScheduling: campaignData.advancedScheduling.enabled ? {
-          enabled: true,
-          intervals: campaignData.advancedScheduling.intervals.filter(interval => interval.enabled)
-        } : {
-          enabled: false,
-          intervals: []
+      // Perform deduplication and DNC filtering
+      const filteredData = await deduplicateContacts(mockContacts, 'CLIENT-001');
+      
+      // Create separate campaigns for each selected type
+      const newCampaigns = campaignData.type.map((type, index) => {
+        const selectedProvider = getProviders(type).find(p => p.id === campaignData.providers[type]) || getActiveProvider(type);
+        
+        return {
+        id: `camp-${Date.now()}-${index}`,
+        name: campaignData.type.length > 1 
+          ? `${campaignData.name} (${type.charAt(0).toUpperCase() + type.slice(1)})`
+          : campaignData.name,
+        type: type,
+          provider: selectedProvider ? {
+            id: selectedProvider.id,
+            name: selectedProvider.name,
+            type: selectedProvider.type
+          } : null,
+        status: campaignData.scheduleType === 'immediate' ? 'active' : 'scheduled',
+        uploadId: selectedUpload.id,
+        uploadFilename: selectedUpload.filename,
+        targetCount: filteredData.allowed.length,
+        originalCount: mockContacts.length,
+        dncBlocked: filteredData.dncBlocked,
+        duplicatesRemoved: filteredData.duplicatesRemoved,
+        sent: 0,
+        opened: 0,
+        clicked: 0,
+        converted: 0,
+        createdAt: new Date().toISOString(),
+        scheduledAt: campaignData.scheduleType === 'scheduled' 
+          ? `${campaignData.scheduleDate}T${campaignData.scheduleTime}:00`
+            : new Date().toISOString(),
+          advancedScheduling: campaignData.advancedScheduling.enabled ? {
+            enabled: true,
+            intervals: campaignData.advancedScheduling.intervals.filter(interval => interval.enabled)
+          } : {
+            enabled: false,
+            intervals: []
+          }
+        };
+      });
+      
+      setActiveCampaigns([...newCampaigns, ...activeCampaigns]);
+      setCampaignDialog(false);
+      
+      // Show success message with filtering details
+      const campaignCount = newCampaigns.length;
+      const campaignText = campaignCount > 1 ? `${campaignCount} campaigns` : 'campaign';
+      const scheduleText = campaignData.advancedScheduling.enabled 
+        ? ` with ${campaignData.advancedScheduling.intervals.filter(i => i.enabled).length} scheduled intervals`
+        : '';
+      
+      let filteringSummary = '';
+      if (filteredData.dncBlocked > 0 || filteredData.duplicatesRemoved > 0) {
+        const filterDetails = [];
+        if (filteredData.duplicatesRemoved > 0) {
+          filterDetails.push(`${filteredData.duplicatesRemoved} duplicates removed`);
         }
-      };
-    });
-    
-    setActiveCampaigns([...newCampaigns, ...activeCampaigns]);
-    setCampaignDialog(false);
-    
-    // Show success message
-    const campaignCount = newCampaigns.length;
-    const campaignText = campaignCount > 1 ? `${campaignCount} campaigns` : 'campaign';
-    const scheduleText = campaignData.advancedScheduling.enabled 
-      ? ` with ${campaignData.advancedScheduling.intervals.filter(i => i.enabled).length} scheduled intervals`
-      : '';
-    
-    setUploadStatus({
-      type: 'success',
-      message: `${campaignText} created successfully! (${campaignData.type.join(', ').toUpperCase()})${scheduleText}`
-    });
-    
-    // Clear the success message after 5 seconds
-    setTimeout(() => {
-      setUploadStatus(null);
-    }, 5000);
+        if (filteredData.dncBlocked > 0) {
+          filterDetails.push(`${filteredData.dncBlocked} blocked by DNC`);
+        }
+        filteringSummary = ` (${filterDetails.join(', ')})`;
+      }
+      
+      setUploadStatus({
+        type: 'success',
+        message: `${campaignText} created successfully! (${campaignData.type.join(', ').toUpperCase()})${scheduleText}${filteringSummary}`
+      });
+      
+      // Clear the success message after 5 seconds
+      setTimeout(() => {
+        setUploadStatus(null);
+      }, 5000);
+    } catch (error) {
+      setUploadStatus({
+        type: 'error',
+        message: 'Failed to create campaign. Please try again.'
+      });
+      setTimeout(() => {
+        setUploadStatus(null);
+      }, 5000);
+    }
   };
 
   const handleCampaignAction = (campaignId, action) => {

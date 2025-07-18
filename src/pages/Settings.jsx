@@ -61,7 +61,8 @@ import {
   PlayArrow as TestIcon,
   Star as StarIcon,
   StarBorder as StarBorderIcon,
-  Phone as PhoneIcon
+  Phone as PhoneIcon,
+  Block as BlockIcon
 } from '@mui/icons-material';
 import { useThemeMode } from '../context/ThemeModeContext';
 import { useSettings } from '../context/SettingsContext';
@@ -99,6 +100,24 @@ const Settings = () => {
   const [tabValue, setTabValue] = useState(0);
   const [welcomeModalOpen, setWelcomeModalOpen] = useState(false);
   const theme = useTheme();
+  
+  // DNC Settings State
+  const [dncSettings, setDncSettings] = useState({
+    enabled: true,
+    autoCheck: true,
+    blockOnDNC: true,
+    allowOverrides: true,
+    overrideRequiresApproval: true,
+    governmentDNCSync: true,
+    governmentDNCUrl: 'https://www.nccptrai.gov.in/nccpregistry/search.misc',
+    syncFrequency: 'daily',
+    notifyOnBlock: true,
+    logAllAttempts: true,
+    complianceReporting: true,
+    overrideExpiryHours: 24,
+    bulkOperationsEnabled: true,
+    clientWiseRegistry: true
+  });
 
   // Email settings state moved to main component level
   const [emailSettings, setEmailSettings] = useState({
@@ -652,6 +671,7 @@ const Settings = () => {
     { label: 'Providers', icon: <ProvidersIcon /> },
     { label: 'Campaigns', icon: <CampaignIcon /> },
     { label: 'WhatsApp Flow', icon: <WhatsAppIcon /> },
+    { label: 'DNC Management', icon: <BlockIcon /> },
     { label: 'Claims', icon: <GavelIcon /> },
     { label: 'Feedback', icon: <FeedbackIcon /> },
     { label: 'User Management', icon: <GroupIcon /> },
@@ -3659,6 +3679,148 @@ const Settings = () => {
     </Box>
   );
 
+  // DNC Management Settings Tab
+  const DNCManagementSettingsTab = () => (
+    <Box>
+      <Typography variant="h5" fontWeight="600" gutterBottom>
+        DNC Management Settings
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        Configure Do Not Call (DNC) registry settings, compliance rules, and override permissions
+      </Typography>
+
+      <Grid container spacing={3}>
+        {/* DNC Configuration */}
+        <Grid item xs={12}>
+          <Card sx={{ borderRadius: 3, boxShadow: '0 8px 24px rgba(0,0,0,0.05)' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <BlockIcon sx={{ mr: 1, color: theme.palette.error.main }} />
+                <Typography variant="h6" fontWeight="600">
+                  DNC Registry Configuration
+                </Typography>
+              </Box>
+              <Divider sx={{ mb: 3 }} />
+              
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={dncSettings.enabled}
+                        onChange={(e) => setDncSettings({...dncSettings, enabled: e.target.checked})}
+                        color="primary"
+                      />
+                    }
+                    label={
+                      <Box>
+                        <Typography variant="body2" fontWeight="500">
+                          Enable DNC Checking
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Automatically check contacts against DNC registry
+                        </Typography>
+                      </Box>
+                    }
+                  />
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={dncSettings.autoCheck}
+                        onChange={(e) => setDncSettings({...dncSettings, autoCheck: e.target.checked})}
+                        color="primary"
+                      />
+                    }
+                    label={
+                      <Box>
+                        <Typography variant="body2" fontWeight="500">
+                          Auto-check Before Sending
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Check DNC status before every message send
+                        </Typography>
+                      </Box>
+                    }
+                  />
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={dncSettings.blockOnDNC}
+                        onChange={(e) => setDncSettings({...dncSettings, blockOnDNC: e.target.checked})}
+                        color="primary"
+                      />
+                    }
+                    label={
+                      <Box>
+                        <Typography variant="body2" fontWeight="500">
+                          Block DNC Contacts
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Automatically block messages to DNC contacts
+                        </Typography>
+                      </Box>
+                    }
+                  />
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={dncSettings.allowOverrides}
+                        onChange={(e) => setDncSettings({...dncSettings, allowOverrides: e.target.checked})}
+                        color="primary"
+                      />
+                    }
+                    label={
+                      <Box>
+                        <Typography variant="body2" fontWeight="500">
+                          Allow DNC Overrides
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Allow authorized users to override DNC blocks
+                        </Typography>
+                      </Box>
+                    }
+                  />
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Action Buttons */}
+        <Grid item xs={12}>
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+            <Button
+              variant="outlined"
+              onClick={() => window.open('/dnc-management', '_blank')}
+              sx={{ borderRadius: 2 }}
+            >
+              Open DNC Management
+            </Button>
+            <Button
+              variant="contained"
+              onClick={() => {
+                setSuccessMessage('DNC settings saved successfully!');
+                setTimeout(() => setSuccessMessage(''), 3000);
+              }}
+              sx={{ borderRadius: 2 }}
+            >
+              Save DNC Settings
+            </Button>
+          </Box>
+        </Grid>
+      </Grid>
+    </Box>
+  );
+
   const SystemSettingsTab = () => (
     <Box>
       <Typography variant="h5" fontWeight="600" gutterBottom>
@@ -6059,18 +6221,21 @@ const Settings = () => {
               <WhatsAppFlowSettingsTab />
             </TabPanel>
             <TabPanel value={tabValue} index={6}>
-              <ModuleSettingsTab moduleName="Claims" icon={<GavelIcon sx={{ color: theme.palette.primary.main }} />} />
+              <DNCManagementSettingsTab />
             </TabPanel>
             <TabPanel value={tabValue} index={7}>
-              <FeedbackSettingsTab />
+              <ModuleSettingsTab moduleName="Claims" icon={<GavelIcon sx={{ color: theme.palette.primary.main }} />} />
             </TabPanel>
             <TabPanel value={tabValue} index={8}>
-              <UserManagementTab />
+              <FeedbackSettingsTab />
             </TabPanel>
             <TabPanel value={tabValue} index={9}>
-              <SystemSettingsTab />
+              <UserManagementTab />
             </TabPanel>
             <TabPanel value={tabValue} index={10}>
+              <SystemSettingsTab />
+            </TabPanel>
+            <TabPanel value={tabValue} index={11}>
               <LanguageTest />
             </TabPanel>
           </Box>
