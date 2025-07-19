@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
-  Paper,
   Card,
   CardContent,
   Button,
@@ -45,11 +44,8 @@ import {
   Attachment as AttachmentIcon,
   Note as NoteIcon,
   Person as PersonIcon,
-  Email as EmailIcon,
-  Schedule as ScheduleIcon,
   Save as SaveIcon,
   Cancel as CancelIcon,
-  Psychology as AIIcon,
   SentimentSatisfied as SentimentPositiveIcon,
   SentimentDissatisfied as SentimentNegativeIcon,
   SentimentNeutral as SentimentNeutralIcon,
@@ -86,101 +82,104 @@ const EmailDetail = () => {
   const [escalationReason, setEscalationReason] = useState('');
   const [escalationPriority, setEscalationPriority] = useState('high');
 
-  // Mock enhanced email data with AI features
-  const mockEmail = {
-    id: emailId,
-    from: 'john.doe@email.com',
-    to: 'support@intelipro.com',
-    subject: 'Policy renewal issue - urgent help needed',
-    category: 'complaint',
-    status: 'new',
-    priority: 'high',
-    dateReceived: '2024-12-28T10:30:00',
-    assignedTo: null,
-    slaStatus: 'warning',
-    // AI-powered features data
-    aiIntent: {
+  // Mock data will be defined inside useEffect to avoid dependency issues
+
+  useEffect(() => {
+    // Define mock data inside useEffect to avoid dependency issues
+    const mockEmail = {
+      id: emailId,
+      from: 'john.doe@email.com',
+      to: 'support@intelipro.com',
+      subject: 'Policy renewal issue - urgent help needed',
       category: 'complaint',
-      confidence: 94.5,
-      subcategories: [
-        { name: 'payment_issue', confidence: 87.2 },
-        { name: 'document_verification', confidence: 82.1 },
-        { name: 'policy_renewal', confidence: 91.3 }
-      ]
-    },
-    sentiment: {
-      overall: 'negative',
-      score: -0.65, // -1 to 1 scale
-      confidence: 89.3,
-      emotions: [
-        { emotion: 'frustration', intensity: 0.82 },
-        { emotion: 'urgency', intensity: 0.91 },
-        { emotion: 'concern', intensity: 0.76 }
-      ]
-    },
-    threadHistory: [
-      {
-        id: 'thread-1',
-        from: 'john.doe@email.com',
-        subject: 'Initial policy renewal query',
-        date: '2024-12-25T14:20:00',
-        preview: 'Hi, I wanted to inquire about my policy renewal process...',
-        status: 'resolved'
+      status: 'new',
+      priority: 'high',
+      dateReceived: '2024-12-28T10:30:00',
+      assignedTo: null,
+      slaStatus: 'warning',
+      // AI-powered features data
+      aiIntent: {
+        category: 'complaint',
+        confidence: 94.5,
+        subcategories: [
+          { name: 'payment_issue', confidence: 87.2 },
+          { name: 'document_verification', confidence: 82.1 },
+          { name: 'policy_renewal', confidence: 91.3 }
+        ]
       },
-      {
-        id: 'thread-2', 
-        from: 'support@intelipro.com',
-        subject: 'Re: Initial policy renewal query',
-        date: '2024-12-25T16:45:00',
-        preview: 'Thank you for contacting us. Your renewal process has been initiated...',
-        status: 'sent'
+      sentiment: {
+        overall: 'negative',
+        score: -0.65, // -1 to 1 scale
+        confidence: 89.3,
+        emotions: [
+          { emotion: 'frustration', intensity: 0.82 },
+          { emotion: 'urgency', intensity: 0.91 },
+          { emotion: 'concern', intensity: 0.76 }
+        ]
       },
-      {
-        id: 'thread-3',
-        from: 'john.doe@email.com',
-        subject: 'Follow-up on document submission',
-        date: '2024-12-27T09:30:00',
-        preview: 'I submitted the required documents but haven\'t received confirmation...',
-        status: 'resolved'
-      }
-    ],
-    attachments: [
-      { name: 'policy_document.pdf', size: '2.3 MB' },
-      { name: 'screenshot.png', size: '854 KB' }
-    ],
-    body: `
-      <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-        <p>Dear Support Team,</p>
-        
-        <p>I am writing to express my concern regarding the recent policy renewal process. Despite submitting all required documents well before the deadline, I have encountered several issues that need immediate attention:</p>
-        
-        <ol>
-          <li><strong>Payment Processing Delay:</strong> My premium payment was deducted from my account on December 20th, but the system still shows "Payment Pending" status.</li>
+      threadHistory: [
+        {
+          id: 'thread-1',
+          from: 'john.doe@email.com',
+          subject: 'Initial policy renewal query',
+          date: '2024-12-25T14:20:00',
+          preview: 'Hi, I wanted to inquire about my policy renewal process...',
+          status: 'resolved'
+        },
+        {
+          id: 'thread-2', 
+          from: 'support@intelipro.com',
+          subject: 'Re: Initial policy renewal query',
+          date: '2024-12-25T16:45:00',
+          preview: 'Thank you for contacting us. Your renewal process has been initiated...',
+          status: 'sent'
+        },
+        {
+          id: 'thread-3',
+          from: 'john.doe@email.com',
+          subject: 'Follow-up on document submission',
+          date: '2024-12-27T09:30:00',
+          preview: 'I submitted the required documents but haven\'t received confirmation...',
+          status: 'resolved'
+        }
+      ],
+      attachments: [
+        { name: 'policy_document.pdf', size: '2.3 MB' },
+        { name: 'screenshot.png', size: '854 KB' }
+      ],
+      body: `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+          <p>Dear Support Team,</p>
           
-          <li><strong>Document Verification:</strong> I uploaded my updated KYC documents three times, but they keep showing as "Under Review" without any feedback.</li>
+          <p>I am writing to express my concern regarding the recent policy renewal process. Despite submitting all required documents well before the deadline, I have encountered several issues that need immediate attention:</p>
           
-          <li><strong>Policy Certificate:</strong> The new policy certificate has not been generated despite multiple follow-ups.</li>
-        </ol>
-        
-        <p>This delay is causing significant inconvenience as I need the updated policy certificate for my upcoming business travel next week. I would appreciate your immediate assistance in resolving these issues.</p>
-        
-        <p>I have attached the relevant documents including:</p>
-        <ul>
-          <li>Bank statement showing the payment transaction</li>
-          <li>Screenshot of the current system status</li>
-        </ul>
-        
-        <p>Please prioritize this request and provide an update within 24 hours.</p>
-        
-        <p>Thank you for your prompt attention to this matter.</p>
-        
-        <p>Best regards,<br>
-        John Doe<br>
-        Policy Number: POL-2024-567890<br>
-        Phone: +1 (555) 123-4567</p>
-      </div>
-    `,
-    rawBody: `Dear Support Team,
+          <ol>
+            <li><strong>Payment Processing Delay:</strong> My premium payment was deducted from my account on December 20th, but the system still shows "Payment Pending" status.</li>
+            
+            <li><strong>Document Verification:</strong> I uploaded my updated KYC documents three times, but they keep showing as "Under Review" without any feedback.</li>
+            
+            <li><strong>Policy Certificate:</strong> The new policy certificate has not been generated despite multiple follow-ups.</li>
+          </ol>
+          
+          <p>This delay is causing significant inconvenience as I need the updated policy certificate for my upcoming business travel next week. I would appreciate your immediate assistance in resolving these issues.</p>
+          
+          <p>I have attached the relevant documents including:</p>
+          <ul>
+            <li>Bank statement showing the payment transaction</li>
+            <li>Screenshot of the current system status</li>
+          </ul>
+          
+          <p>Please prioritize this request and provide an update within 24 hours.</p>
+          
+          <p>Thank you for your prompt attention to this matter.</p>
+          
+          <p>Best regards,<br>
+          John Doe<br>
+          Policy Number: POL-2024-567890<br>
+          Phone: +1 (555) 123-4567</p>
+        </div>
+      `,
+      rawBody: `Dear Support Team,
 
 I am writing to express my concern regarding the recent policy renewal process. Despite submitting all required documents well before the deadline, I have encountered several issues that need immediate attention:
 
@@ -204,29 +203,28 @@ Best regards,
 John Doe
 Policy Number: POL-2024-567890
 Phone: +1 (555) 123-4567`
-  };
+    };
 
-  const mockNotes = [
-    {
-      id: 1,
-      author: 'Alice Johnson',
-      timestamp: '2024-12-28T11:15:00',
-      content: 'Verified payment in banking system. Payment was processed successfully. Updating status to In Progress.'
-    },
-    {
-      id: 2,
-      author: 'Bob Smith', 
-      timestamp: '2024-12-28T11:45:00',
-      content: 'Contacted customer via phone. Explained the verification process. Customer documents are being reviewed by compliance team.'
-    }
-  ];
+    const mockNotes = [
+      {
+        id: 1,
+        author: 'Priya Patel',
+        timestamp: '2024-12-28T11:15:00',
+        content: 'Verified payment in banking system. Payment was processed successfully. Updating status to In Progress.'
+      },
+      {
+        id: 2,
+        author: 'Ravi Gupta', 
+        timestamp: '2024-12-28T11:45:00',
+        content: 'Contacted customer via phone. Explained the verification process. Customer documents are being reviewed by compliance team.'
+      }
+    ];
 
-  const mockViewingAgents = [
-    { name: 'Alice Johnson', avatar: 'A', color: '#1976d2', lastActive: 'now' },
-    { name: 'Bob Smith', avatar: 'B', color: '#388e3c', lastActive: '2 min ago' }
-  ];
+    const mockViewingAgents = [
+      { name: 'Priya Patel', avatar: 'P', color: '#1976d2', lastActive: 'now' },
+      { name: 'Ravi Gupta', avatar: 'R', color: '#388e3c', lastActive: '2 min ago' }
+    ];
 
-  useEffect(() => {
     setEmail(mockEmail);
     setNotes(mockNotes);
     setViewingAgents(mockViewingAgents);
@@ -239,7 +237,7 @@ Phone: +1 (555) 123-4567`
       setViewingAgents(prev => 
         prev.map(agent => ({
           ...agent,
-          lastActive: agent.name === 'Alice Johnson' ? 'now' : 
+          lastActive: agent.name === 'Priya Patel' ? 'now' : 
                      Math.random() > 0.7 ? 'now' : `${Math.floor(Math.random() * 5) + 1} min ago`
         }))
       );
@@ -1056,9 +1054,9 @@ Phone: +1 (555) 123-4567`
             <FormControl fullWidth sx={{ mt: 2 }}>
               <InputLabel>Team Member</InputLabel>
               <Select label="Team Member">
-                <MenuItem value="alice">Alice Johnson</MenuItem>
-                <MenuItem value="bob">Bob Smith</MenuItem>
-                <MenuItem value="charlie">Charlie Brown</MenuItem>
+                <MenuItem value="priya">Priya Patel</MenuItem>
+                                  <MenuItem value="ravi">Ravi Gupta</MenuItem>
+                                  <MenuItem value="vikram">Vikram Singh</MenuItem>
               </Select>
             </FormControl>
           </DialogContent>

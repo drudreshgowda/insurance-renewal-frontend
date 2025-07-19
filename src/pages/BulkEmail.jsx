@@ -24,10 +24,8 @@ import {
   TableHead,
   TableRow,
   IconButton,
-  Tooltip,
   Switch,
   FormControlLabel,
-  Divider,
   Alert,
   LinearProgress,
   Stepper,
@@ -38,13 +36,8 @@ import {
   ListItem,
   ListItemText,
   ListItemIcon,
-  Avatar,
-  AvatarGroup,
-  useTheme,
-  alpha,
   Fade,
-  Grow,
-  Collapse
+  Grow
 } from '@mui/material';
 import {
   Email as EmailIcon,
@@ -53,32 +46,15 @@ import {
   Upload as UploadIcon,
   Download as DownloadIcon,
   Delete as DeleteIcon,
-  Edit as EditIcon,
-  Preview as PreviewIcon,
   Group as GroupIcon,
-  AttachFile as AttachFileIcon,
   Merge as MergeIcon,
   Settings as SettingsIcon,
-  PlayArrow as PlayArrowIcon,
   Pause as PauseIcon,
-  Stop as StopIcon,
-  CheckCircle as CheckCircleIcon,
-  Error as ErrorIcon,
-  Warning as WarningIcon,
-  Info as InfoIcon,
   Add as AddIcon,
-  Remove as RemoveIcon,
-  Visibility as VisibilityIcon,
-  DateRange as DateRangeIcon,
-  AccessTime as AccessTimeIcon,
-  Person as PersonIcon,
-  Business as BusinessIcon,
-  Description as DescriptionIcon
+  Visibility as VisibilityIcon
 } from '@mui/icons-material';
 
 const BulkEmail = () => {
-  const theme = useTheme();
-  const [loaded, setLoaded] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
   
   // Main states
@@ -95,7 +71,7 @@ const BulkEmail = () => {
   // Dialog states
   const [recipientDialog, setRecipientDialog] = useState({ open: false });
   const [templatePreviewDialog, setTemplatePreviewDialog] = useState({ open: false, template: null });
-  const [scheduleDialog, setScheduleDialog] = useState({ open: false });
+
   const [mergeConfigDialog, setMergeConfigDialog] = useState({ open: false });
   const [sendConfirmDialog, setSendConfirmDialog] = useState({ open: false });
   
@@ -404,12 +380,7 @@ Intelipro Insurance`
     setSendConfirmDialog({ open: false });
   };
 
-  const steps = [
-    'Select Recipients',
-    'Choose Template',
-    'Configure Settings',
-    'Review & Send'
-  ];
+
 
   return (
     <Fade in={true} timeout={800}>
@@ -971,7 +942,7 @@ Intelipro Insurance`
               fullWidth
               multiline
               rows={10}
-              placeholder="john@example.com, John Doe, ABC Company&#10;jane@example.com, Jane Smith, XYZ Corp"
+              placeholder="arjun@example.com, Arjun Sharma, ABC Company&#10;meera@example.com, Meera Kapoor, XYZ Corp"
               value={bulkRecipientText}
               onChange={(e) => setBulkRecipientText(e.target.value)}
             />

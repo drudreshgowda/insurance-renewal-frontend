@@ -22,11 +22,7 @@ import {
   TableHead,
   TableRow,
   Avatar,
-  AvatarGroup,
-  Tooltip,
-  IconButton,
   useTheme,
-  alpha,
   Fade,
   Grow
 } from '@mui/material';
@@ -41,18 +37,16 @@ import {
   Speed as SpeedIcon,
   Assessment as AssessmentIcon,
   Timeline as TimelineIcon,
-  PieChart as PieChartIcon,
-  BarChart as BarChartIcon,
-  ShowChart as ShowChartIcon,
+
   Download as DownloadIcon,
   Refresh as RefreshIcon,
-  DateRange as DateRangeIcon,
+
   Star as StarIcon,
-  Warning as WarningIcon,
+
   Campaign as CampaignIcon,
   Send as SendIcon,
   Visibility as VisibilityIcon,
-  TouchApp as TouchAppIcon,
+
   Group as GroupIcon
 } from '@mui/icons-material';
 
@@ -60,7 +54,7 @@ const EmailAnalytics = () => {
   const theme = useTheme();
   const [loaded, setLoaded] = useState(false);
   const [dateRange, setDateRange] = useState('7days');
-  const [selectedMetric, setSelectedMetric] = useState('volume');
+
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
@@ -99,7 +93,7 @@ const EmailAnalytics = () => {
     ],
     agentPerformance: [
       { 
-        name: 'Alice Johnson', 
+        name: 'Priya Patel', 
         avatar: 'AJ',
         emailsHandled: 342, 
         avgResponseTime: '1.8 hours', 

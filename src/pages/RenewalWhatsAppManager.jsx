@@ -386,7 +386,7 @@ const RenewalWhatsAppManager = () => {
       {/* Header */}
       <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
         <Typography variant="h4" sx={{ mb: 1, fontWeight: 600 }}>
-          Renewal WhatsApp Manager
+          WhatsApp Manager
         </Typography>
         <Typography variant="body1" color="text.secondary">
           Manage all renewal conversations and automated messaging

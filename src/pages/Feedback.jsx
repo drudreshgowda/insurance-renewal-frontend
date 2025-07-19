@@ -1,48 +1,46 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import ReactDOM from 'react-dom';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Grid, Card, CardContent, Button, Chip, Dialog, DialogTitle,
   DialogContent, DialogActions, TextField, FormControl, InputLabel, Select,
   MenuItem, Tabs, Tab, List, ListItem, ListItemText, ListItemIcon, Divider,
-  Alert, useTheme, Fade, Grow, IconButton, Tooltip, Avatar, Badge,
+  useTheme, Fade, Grow, IconButton, Tooltip, Avatar, Badge,
   Paper, Switch, FormControlLabel, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, LinearProgress, AvatarGroup, Toolbar,
-  Checkbox, Menu, ClickAwayListener, Popper, Collapse
+  TableContainer, TableHead, TableRow, LinearProgress, Toolbar,
+  Checkbox
 } from '@mui/material';
 import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, 
-  Tooltip as RechartsTooltip, Legend, ResponsiveContainer, AreaChart, Area, LineChart, Line,
+  XAxis, YAxis, CartesianGrid, 
+  Tooltip as RechartsTooltip, Legend, ResponsiveContainer, LineChart, Line,
   PieChart, Pie, Cell
 } from 'recharts';
 import { alpha } from '@mui/material/styles';
 import {
   Dashboard as DashboardIcon, Inbox as InboxIcon, Campaign as CampaignIcon,
-  Create as DesignIcon, TableChart as ResponsesIcon, Analytics as AnalyticsIcon,
+  TableChart as ResponsesIcon, Analytics as AnalyticsIcon,
   People as PeopleIcon, Send as SendIcon, AutoMode as AutomationIcon,
-  Settings as SettingsIcon, Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon,
+  Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon,
   Visibility as ViewIcon, TrendingUp as TrendingUpIcon, TrendingDown as TrendingDownIcon,
-  Star as StarIcon, ThumbUp as ThumbUpIcon, ThumbDown as ThumbDownIcon,
-  Flag as FlagIcon, CheckCircle as CheckCircleIcon, Schedule as ScheduleIcon,
+  Star as StarIcon, ThumbDown as ThumbDownIcon,
+  Flag as FlagIcon, CheckCircle as CheckCircleIcon,
   Email as EmailIcon, Sms as SmsIcon, WhatsApp as WhatsAppIcon,
-  QrCode as QrCodeIcon, Link as LinkIcon, Refresh as RefreshIcon,
-  FilterList as FilterIcon, GetApp as GetAppIcon, Close as CloseIcon,
+  Refresh as RefreshIcon,
+  GetApp as GetAppIcon, Close as CloseIcon,
   SentimentSatisfied as SentimentSatisfiedIcon, SentimentDissatisfied as SentimentDissatisfiedIcon,
   SentimentNeutral as SentimentNeutralIcon, Assignment as SurveyIcon,
-  TextFields as TextFieldsIcon, CheckBox as CheckBoxIcon, LinearScale as LinearScaleIcon,
   Category as CategoryIcon, SentimentSatisfied as SentimentIcon,
   AttachFile as AttachFileIcon, Phone as PhoneIcon, Web as WebIcon,
-  Person as PersonIcon, AccessTime as AccessTimeIcon, Business as BusinessIcon,
-  Search as SearchIcon, CalendarToday as CalendarIcon, MoreVert as MoreVertIcon,
-  Comment as CommentIcon, History as HistoryIcon, Drawer as DrawerIcon,
-  Archive as ArchiveIcon, Reply as ReplyIcon, PersonAdd as AssignIcon,
-  ContentCopy as ContentCopyIcon, ExpandLess, ExpandMore
+  Person as PersonIcon, CalendarToday as CalendarIcon, MoreVert as MoreVertIcon,
+  Search as SearchIcon,
+  Comment as CommentIcon, History as HistoryIcon,
+  Archive as ArchiveIcon, Reply as ReplyIcon, PersonAdd as AssignIcon
 } from '@mui/icons-material';
 
 const Feedback = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const location = useLocation();
+
   const [loaded, setLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   
@@ -53,21 +51,14 @@ const Feedback = () => {
   const [selectedFeedback, setSelectedFeedback] = useState(null);
   const [replyDialog, setReplyDialog] = useState(false);
   const [assignDialog, setAssignDialog] = useState(false);
-  const [templateDialog, setTemplateDialog] = useState(false);
-  const [automationDialog, setAutomationDialog] = useState(false);
-  const [settingsDialog, setSettingsDialog] = useState(false);
+
   const [dateRangeDialog, setDateRangeDialog] = useState(false);
-  const [publishDialog, setPublishDialog] = useState(false);
-  const [expandedCategories, setExpandedCategories] = useState({
-    basicInputs: true,
-    advancedElements: true,
-    brandingElements: true
-  });
+
   
   // Form states
   const [searchTerm, setSearchTerm] = useState('');
   const [feedbackFilter, setFeedbackFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter] = useState('all');
   const [ratingFilter, setRatingFilter] = useState('all');
   const [channelFilter, setChannelFilter] = useState('all');
   const [assignedFilter, setAssignedFilter] = useState('all');
@@ -81,26 +72,7 @@ const Feedback = () => {
   const [menuPosition, setMenuPosition] = useState(null);
   const menuRef = useRef(null);
   
-  // Publish form state
-  const [publishForm, setPublishForm] = useState({
-    distributionChannels: [],
-    targetAudience: '',
-    activeDate: '',
-    endDate: '',
-    generateShortLink: true,
-    generateQrCode: true,
-    emailSettings: {
-      subject: '',
-      fromName: '',
-      replyTo: ''
-    },
-    smsSettings: {
-      message: ''
-    },
-    whatsappSettings: {
-      message: ''
-    }
-  });
+  // Publish form state removed (unused)
   
   // Survey form states
   const [surveyForm, setSurveyForm] = useState({
@@ -170,7 +142,7 @@ const Feedback = () => {
   const [recentFeedback] = useState([
     {
       id: 1,
-      customer: 'John Smith',
+              customer: 'Arjun Sharma',
       customerEmail: 'john.smith@email.com',
       customerPhone: '+1234567890',
       rating: 5,
@@ -397,17 +369,6 @@ const Feedback = () => {
   ]);
 
   // Additional mock data
-  const [contacts] = useState([
-    { id: 1, name: 'John Smith', email: 'john@example.com', phone: '+1234567890', segment: 'Premium Customers' },
-    { id: 2, name: 'Sarah Johnson', email: 'sarah@example.com', phone: '+1234567891', segment: 'New Customers' },
-    { id: 3, name: 'Mike Davis', email: 'mike@example.com', phone: '+1234567892', segment: 'Loyal Customers' }
-  ]);
-
-  const [templates] = useState([
-    { id: 1, name: 'Thank You Response', category: 'positive', content: 'Thank you for your positive feedback!' },
-    { id: 2, name: 'Issue Resolution', category: 'negative', content: 'We apologize for the inconvenience and will resolve this immediately.' },
-    { id: 3, name: 'Follow-up Request', category: 'neutral', content: 'Could you provide more details about your experience?' }
-  ]);
 
   const [agents] = useState([
     { id: 1, name: 'Alice Cooper', email: 'alice@company.com', department: 'Customer Service' },
@@ -416,9 +377,9 @@ const Feedback = () => {
   ]);
 
   const [surveyResponses] = useState([
-    { id: 1, surveyId: 1, respondent: 'John Smith', responses: { 1: 5, 2: 'Great service!' }, submittedAt: '2024-12-28' },
-    { id: 2, surveyId: 1, respondent: 'Sarah Johnson', responses: { 1: 4, 2: 'Good overall' }, submittedAt: '2024-12-27' },
-    { id: 3, surveyId: 3, respondent: 'Mike Davis', responses: { 1: 5, 2: 5 }, submittedAt: '2024-11-25' }
+          { id: 1, surveyId: 1, respondent: 'Arjun Sharma', responses: { 1: 5, 2: 'Great service!' }, submittedAt: '2024-12-28' },
+          { id: 2, surveyId: 1, respondent: 'Meera Kapoor', responses: { 1: 4, 2: 'Good overall' }, submittedAt: '2024-12-27' },
+          { id: 3, surveyId: 3, respondent: 'Vikram Singh', responses: { 1: 5, 2: 5 }, submittedAt: '2024-11-25' }
   ]);
 
   useEffect(() => {
@@ -443,16 +404,13 @@ const Feedback = () => {
     setAssignDialog(true);
   };
 
-  const handleResolveFeedback = (feedbackId) => {
+  const handleResolveFeedback = (_feedbackId) => {
     // Update feedback status to resolved
     // Resolving feedback
     // In real app, this would call an API
   };
 
-  const handleCreateSurvey = () => {
-    setSurveyTabIndex(0);
-    setCreateSurveyDialog(true);
-  };
+
 
   const handleSaveSurvey = () => {
     const newSurvey = {
@@ -506,8 +464,8 @@ const Feedback = () => {
     setSelectedFeedback(null);
   };
 
-  const handleExportData = (format) => {
-    console.log('Exporting data in format:', format);
+  const handleExportData = (_format) => {
+
     // In real app, this would generate and download the file
   };
 
@@ -713,16 +671,16 @@ const Feedback = () => {
     setBulkActionsVisible(newSelection.length > 0);
   };
 
-  const handleBulkAction = (action) => {
-    console.log(`Bulk ${action} for feedback IDs:`, selectedFeedbackIds);
+  const handleBulkAction = (_action) => {
+
     // In real app, this would call an API
     setSelectedFeedbackIds([]);
     setBulkActionsVisible(false);
   };
 
-  const handleFlagFeedback = (feedbackId) => {
+  const handleFlagFeedback = (_feedbackId) => {
     // Update feedback to flagged status
-    console.log('Flagging feedback:', feedbackId);
+
     // In real app, this would call an API to update the feedback flag status
     // You could update the local state here for immediate UI feedback
   };
@@ -766,13 +724,13 @@ const Feedback = () => {
   }, [menuPosition, handleActionMenuClose]);
 
   const handleArchiveFeedback = (feedbackId) => {
-    console.log('Archiving feedback:', feedbackId);
+
     // In real app, this would call an API to archive the feedback
     handleActionMenuClose(feedbackId);
   };
 
   const handleDeleteFeedback = (feedbackId) => {
-    console.log('Deleting feedback:', feedbackId);
+
     // In real app, this would call an API to delete the feedback
     handleActionMenuClose(feedbackId);
   };
@@ -783,7 +741,7 @@ const Feedback = () => {
   // Update recentFeedback state when editedFeedback changes
   useEffect(() => {
     if (editedFeedback.id) {
-      console.log('Updated feedback:', editedFeedback);
+
       // In a real app, this would update the state or call an API
     }
   }, [editedFeedback]);
@@ -806,15 +764,15 @@ const Feedback = () => {
   
   const handleSaveFeedback = () => {
     // In a real app, this would save the feedback changes to the backend
-    console.log('Saving feedback changes:', editedFeedback);
+
     
     // Update the feedback in the local state
-    const updatedFeedback = recentFeedback.map(f => 
-      f.id === editedFeedback.id ? editedFeedback : f
-    );
-    
-    // This would be replaced with an actual state update in a real app
-    console.log('Updated feedback list:', updatedFeedback);
+    // In a real app, this would update the state:
+    // const updatedFeedback = recentFeedback.map(f => 
+    //   f.id === editedFeedback.id ? editedFeedback : f
+    // );
+    // setRecentFeedback(updatedFeedback);
+
     
     // Close the dialog
     setEditFeedbackDialog({ open: false, feedback: null });
@@ -2076,7 +2034,7 @@ const Feedback = () => {
                               variant="outlined"
                               color="info"
                               clickable
-                              onClick={() => console.log('Download:', attachment.name)}
+                              onClick={() => {}}
                             />
                           ))}
                         </Box>

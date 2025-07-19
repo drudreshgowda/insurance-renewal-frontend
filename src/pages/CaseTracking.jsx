@@ -284,6 +284,273 @@ const CaseTracking = () => {
       },
       flowSteps: ['Uploaded']
     },
+    {
+      id: 'CASE-006',
+      customerName: 'Sanjay Gupta',
+      policyNumber: 'POL-67890',
+      status: 'In Progress',
+      subStatus: 'Payment Processing',
+      policyStatus: 'Policy Due',
+      agent: 'Ananya Reddy',
+      uploadDate: '2025-04-09',
+      isPriority: true,
+      batchId: 'BATCH-2025-04-09-C',
+      nextFollowUpDate: '2025-04-13',
+      nextActionPlan: 'Confirm payment and process renewal',
+      currentWorkStep: 'Payment Processing',
+      customerProfile: 'Normal',
+      customerMobile: '9876543215',
+      preferredLanguage: 'English',
+      assignedAgent: 'Ananya Reddy',
+      productName: 'Life Insurance Plus',
+      productCategory: 'Life',
+      channel: 'Call Center',
+      subChannel: 'Inbound',
+      lastActionDate: '2025-04-09',
+      totalCalls: 2,
+      comments: [
+        {
+          id: 'comment-6',
+          text: 'Customer confirmed payment details, processing renewal',
+          user: 'Ananya Reddy',
+          timestamp: '2025-04-09T11:15:00Z',
+          status: 'In Progress',
+          subStatus: 'Payment Processing'
+        }
+      ],
+      contactInfo: {
+        email: 'sanjay.gupta@yahoo.com',
+        phone: '9876543215'
+      },
+      policyDetails: {
+        type: 'Life',
+        expiryDate: '2025-05-20',
+        premium: 2500.00,
+        renewalDate: '2025-05-20'
+      },
+      flowSteps: ['Uploaded', 'Validated', 'Assigned', 'In Progress']
+    },
+    {
+      id: 'CASE-007',
+      customerName: 'Kavitha Nair',
+      policyNumber: 'POL-78901',
+      status: 'Pending',
+      subStatus: 'Customer Contact Required',
+      policyStatus: 'Pre Due Stage',
+      agent: 'Amit Shah',
+      uploadDate: '2025-04-11',
+      isPriority: false,
+      batchId: 'BATCH-2025-04-11-A',
+      nextFollowUpDate: '2025-04-14',
+      nextActionPlan: 'Attempt customer contact via phone and email',
+      currentWorkStep: 'Initial Contact',
+      customerProfile: 'HNI',
+      customerMobile: '9876543216',
+      preferredLanguage: 'Malayalam',
+      assignedAgent: 'Amit Shah',
+      productName: 'Health Insurance Family',
+      productCategory: 'Health',
+      channel: 'Online',
+      subChannel: 'Mobile App',
+      lastActionDate: '2025-04-11',
+      totalCalls: 1,
+      comments: [
+        {
+          id: 'comment-7',
+          text: 'Unable to reach customer, will try again tomorrow',
+          user: 'Amit Shah',
+          timestamp: '2025-04-11T16:45:00Z',
+          status: 'Pending',
+          subStatus: 'Customer Contact Required'
+        }
+      ],
+      contactInfo: {
+        email: 'kavitha.nair@gmail.com',
+        phone: '9876543216'
+      },
+      policyDetails: {
+        type: 'Health',
+        expiryDate: '2025-06-15',
+        premium: 1800.00,
+        renewalDate: '2025-06-15'
+      },
+      flowSteps: ['Uploaded', 'Validated', 'Assigned']
+    },
+    {
+      id: 'CASE-008',
+      customerName: 'Vikram Singh',
+      policyNumber: 'POL-89012',
+      status: 'Failed',
+      subStatus: 'Verification in Progress',
+      policyStatus: 'Reinstatement',
+      agent: 'Sarah Johnson',
+      uploadDate: '2025-04-06',
+      isPriority: true,
+      batchId: 'BATCH-2025-04-06-B',
+      nextFollowUpDate: '2025-04-15',
+      nextActionPlan: 'Review failed verification and contact customer',
+      currentWorkStep: 'Verification',
+      customerProfile: 'Normal',
+      customerMobile: '9876543217',
+      preferredLanguage: 'Punjabi',
+      assignedAgent: 'Sarah Johnson',
+      productName: 'Travel Insurance Pro',
+      productCategory: 'Travel',
+      channel: 'Partner',
+      subChannel: 'Travel Agent',
+      lastActionDate: '2025-04-06',
+      totalCalls: 4,
+      comments: [
+        {
+          id: 'comment-8',
+          text: 'Document verification failed, need additional documents',
+          user: 'Sarah Johnson',
+          timestamp: '2025-04-06T13:30:00Z',
+          status: 'Failed',
+          subStatus: 'Verification in Progress'
+        }
+      ],
+      contactInfo: {
+        email: 'vikram.singh@outlook.com',
+        phone: '9876543217'
+      },
+      policyDetails: {
+        type: 'Travel',
+        expiryDate: '2025-04-30',
+        premium: 750.00,
+        renewalDate: '2025-04-30'
+      },
+      flowSteps: ['Uploaded', 'Validated', 'Assigned', 'Failed']
+    },
+    {
+      id: 'CASE-009',
+      customerName: 'Deepika Reddy',
+      policyNumber: 'POL-90123',
+      status: 'Assigned',
+      subStatus: 'Follow-up Required',
+      policyStatus: 'Policy Due',
+      agent: 'Mike Chen',
+      uploadDate: '2025-04-12',
+      isPriority: false,
+      batchId: 'BATCH-2025-04-12-A',
+      nextFollowUpDate: '2025-04-16',
+      nextActionPlan: 'Follow up on premium payment status',
+      currentWorkStep: 'Premium Calculation',
+      customerProfile: 'Normal',
+      customerMobile: '9876543218',
+      preferredLanguage: 'Telugu',
+      assignedAgent: 'Mike Chen',
+      productName: 'Motor Insurance Comprehensive',
+      productCategory: 'Motor',
+      channel: 'Branch',
+      subChannel: 'Walk-in',
+      lastActionDate: '2025-04-12',
+      totalCalls: 1,
+      comments: [
+        {
+          id: 'comment-9',
+          text: 'Customer inquired about premium calculation',
+          user: 'Mike Chen',
+          timestamp: '2025-04-12T09:20:00Z',
+          status: 'Assigned',
+          subStatus: 'Follow-up Required'
+        }
+      ],
+      contactInfo: {
+        email: 'deepika.reddy@gmail.com',
+        phone: '9876543218'
+      },
+      policyDetails: {
+        type: 'Motor',
+        expiryDate: '2025-05-25',
+        premium: 1650.00,
+        renewalDate: '2025-05-25'
+      },
+      flowSteps: ['Uploaded', 'Validated', 'Assigned']
+    },
+    {
+      id: 'CASE-010',
+      customerName: 'Ravi Krishnan',
+      policyNumber: 'POL-01234',
+      status: 'Uploaded',
+      subStatus: 'Under Review',
+      policyStatus: 'Pre Due Stage',
+      agent: 'Emma Davis',
+      uploadDate: '2025-04-13',
+      isPriority: false,
+      batchId: 'BATCH-2025-04-13-B',
+      nextFollowUpDate: '2025-04-17',
+      nextActionPlan: 'Complete initial review and assign agent',
+      currentWorkStep: 'Initial Contact',
+      customerProfile: 'HNI',
+      customerMobile: '9876543219',
+      preferredLanguage: 'Tamil',
+      assignedAgent: 'Emma Davis',
+      productName: 'Property Insurance Elite',
+      productCategory: 'Property',
+      channel: 'Online',
+      subChannel: 'Website',
+      lastActionDate: '2025-04-13',
+      totalCalls: 0,
+      comments: [],
+      contactInfo: {
+        email: 'ravi.krishnan@hotmail.com',
+        phone: '9876543219'
+      },
+      policyDetails: {
+        type: 'Property',
+        expiryDate: '2025-07-10',
+        premium: 3200.00,
+        renewalDate: '2025-07-10'
+      },
+      flowSteps: ['Uploaded']
+    },
+    {
+      id: 'CASE-011',
+      customerName: 'Pooja Sharma',
+      policyNumber: 'POL-11223',
+      status: 'In Progress',
+      subStatus: 'Approval Required',
+      policyStatus: 'Policy Due',
+      agent: 'Alex Rodriguez',
+      uploadDate: '2025-04-05',
+      isPriority: true,
+      batchId: 'BATCH-2025-04-05-C',
+      nextFollowUpDate: '2025-04-18',
+      nextActionPlan: 'Get management approval for special terms',
+      currentWorkStep: 'Final Review',
+      customerProfile: 'HNI',
+      customerMobile: '9876543220',
+      preferredLanguage: 'Hindi',
+      assignedAgent: 'Alex Rodriguez',
+      productName: 'Business Insurance Premium',
+      productCategory: 'Commercial',
+      channel: 'Partner',
+      subChannel: 'Corporate Broker',
+      lastActionDate: '2025-04-05',
+      totalCalls: 6,
+      comments: [
+        {
+          id: 'comment-11',
+          text: 'Special terms negotiated, awaiting management approval',
+          user: 'Alex Rodriguez',
+          timestamp: '2025-04-05T15:10:00Z',
+          status: 'In Progress',
+          subStatus: 'Approval Required'
+        }
+      ],
+      contactInfo: {
+        email: 'pooja.sharma@businessmail.com',
+        phone: '9876543220'
+      },
+      policyDetails: {
+        type: 'Commercial',
+        expiryDate: '2025-05-05',
+        premium: 5500.00,
+        renewalDate: '2025-05-05'
+      },
+      flowSteps: ['Uploaded', 'Validated', 'Assigned', 'In Progress']
+    },
   ], []);
 
   const [cases, setCases] = useState([]);
@@ -1251,106 +1518,71 @@ const CaseTracking = () => {
           </Grow>
         )}
         
-        {/* Static Header Section */}
-        <Grow in={loaded} timeout={400}>
-          <Card 
-            elevation={0}
-            sx={{ 
-              mb: 2, 
-              borderRadius: 3,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
-              overflow: 'visible'
-            }}
-          >
-            <CardContent sx={{ p: 3, pb: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <ManageAccountsIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
-                  <Typography variant="h6" fontWeight="600">
-                    Case Management
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Scroll horizontally to view all columns
-                  </Typography>
-                  <Box sx={{ 
-                    display: 'flex', 
-                    gap: 0.5,
-                    '& > div': {
-                      width: 4,
-                      height: 4,
-                      borderRadius: '50%',
-                      bgcolor: alpha(theme.palette.primary.main, 0.3),
-                      animation: 'pulse 1.5s infinite',
-                    },
-                    '@keyframes pulse': {
-                      '0%, 100%': { opacity: 0.3 },
-                      '50%': { opacity: 1 },
-                    }
-                  }}>
-                    <Box sx={{ animationDelay: '0s' }} />
-                    <Box sx={{ animationDelay: '0.2s' }} />
-                    <Box sx={{ animationDelay: '0.4s' }} />
-                  </Box>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grow>
+
 
         {/* Scrollable Table Section */}
         <Grow in={loaded} timeout={600}>
-          <TableContainer 
-            component={Card} 
+          <Card 
             elevation={0}
             sx={{ 
               borderRadius: 3,
-              overflow: 'auto',
               boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
               mb: 4,
               transition: 'transform 0.2s, box-shadow 0.2s',
-              maxHeight: '75vh',
               '&:hover': {
-                transform: 'translateY(-4px)',
+                transform: 'translateY(-2px)',
                 boxShadow: '0 12px 32px rgba(0,0,0,0.1)'
-              },
-              '&::-webkit-scrollbar': {
-                width: '8px',
-                height: '8px',
-              },
-              '&::-webkit-scrollbar-track': {
-                background: alpha(theme.palette.primary.main, 0.1),
-                borderRadius: '4px',
-              },
-              '&::-webkit-scrollbar-thumb': {
-                background: alpha(theme.palette.primary.main, 0.3),
-                borderRadius: '4px',
-                '&:hover': {
-                  background: alpha(theme.palette.primary.main, 0.5),
-                }
               }
             }}
           >
-            <Box sx={{ p: 1 }}>
-              <Table sx={{ minWidth: 1800 }} aria-label="case tracking table">
+            <TableContainer 
+              sx={{ 
+                maxHeight: '70vh',
+                overflowX: 'auto',
+                overflowY: 'auto',
+                '&::-webkit-scrollbar': {
+                  width: '8px',
+                  height: '8px',
+                },
+                '&::-webkit-scrollbar-track': {
+                  background: alpha(theme.palette.primary.main, 0.1),
+                  borderRadius: '4px',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  background: alpha(theme.palette.primary.main, 0.3),
+                  borderRadius: '4px',
+                  '&:hover': {
+                    background: alpha(theme.palette.primary.main, 0.5),
+                  }
+                }
+              }}
+            >
+              <Table 
+                sx={{ 
+                  minWidth: 2400,
+                  tableLayout: 'fixed'
+                }} 
+                aria-label="case tracking table"
+              >
                 <TableHead sx={{ 
                   position: 'sticky',
                   top: 0,
-                  zIndex: 1,
+                  zIndex: 10,
                   bgcolor: 'background.paper'
                 }}>
                   <TableRow sx={{ 
-                    bgcolor: alpha(theme.palette.primary.main, 0.05),
+                    bgcolor: alpha(theme.palette.primary.main, 0.08),
                     '& .MuiTableCell-head': {
-                      borderBottom: `2px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+                      borderBottom: `2px solid ${alpha(theme.palette.primary.main, 0.15)}`,
                       position: 'sticky',
                       top: 0,
-                      bgcolor: alpha(theme.palette.primary.main, 0.05),
-                      zIndex: 1,
+                      bgcolor: alpha(theme.palette.primary.main, 0.08),
+                      zIndex: 10,
+                      fontSize: '0.875rem',
+                      letterSpacing: '0.02em'
                     }
                   }}>
-                    <TableCell sx={{ fontWeight: 'bold', py: 2.5, width: 50, minWidth: 50 }}>
+                    <TableCell sx={{ fontWeight: 'bold', py: 3, width: 80, textAlign: 'center' }}>
                       <Checkbox
                         indeterminate={selectedCases.length > 0 && selectedCases.length < cases.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).length}
                         checked={cases.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).length > 0 && selectedCases.length === cases.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).length}
@@ -1363,25 +1595,25 @@ const CaseTracking = () => {
                         }}
                       />
                     </TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', py: 2.5, minWidth: 150, whiteSpace: 'nowrap' }}>Actions</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', py: 2.5, minWidth: 100, whiteSpace: 'nowrap' }}>Case ID</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', py: 2.5, minWidth: 150, whiteSpace: 'nowrap' }}>Customer Name</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', py: 2.5, minWidth: 120, whiteSpace: 'nowrap' }}>Customer Profile</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', py: 2.5, minWidth: 130, whiteSpace: 'nowrap' }}>Customer Mobile</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', py: 2.5, minWidth: 130, whiteSpace: 'nowrap' }}>Preferred Language</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', py: 2.5, minWidth: 130, whiteSpace: 'nowrap' }}>Policy Number</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', py: 2.5, minWidth: 180, whiteSpace: 'nowrap' }}>Product Name</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', py: 2.5, minWidth: 120, whiteSpace: 'nowrap' }}>Product Category</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', py: 2.5, minWidth: 150, whiteSpace: 'nowrap' }}>Channel/Sub Channel</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', py: 2.5, minWidth: 120, whiteSpace: 'nowrap' }}>Batch ID</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', py: 2.5, minWidth: 100, whiteSpace: 'nowrap' }}>Status</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', py: 2.5, minWidth: 120, whiteSpace: 'nowrap' }}>Policy Status</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', py: 2.5, minWidth: 130, whiteSpace: 'nowrap' }}>Assigned Agent</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', py: 2.5, minWidth: 100, whiteSpace: 'nowrap' }}>Priority</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', py: 2.5, minWidth: 130, whiteSpace: 'nowrap' }}>Last Action Date</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', py: 2.5, minWidth: 100, whiteSpace: 'nowrap' }}>Total Calls</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', py: 2.5, minWidth: 130, whiteSpace: 'nowrap' }}>Renewal Date</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', py: 2.5, minWidth: 120, whiteSpace: 'nowrap' }}>Upload Date</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', py: 3, width: 180, textAlign: 'center' }}>Actions</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', py: 3, width: 140 }}>Case ID</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', py: 3, width: 180 }}>Customer Name</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', py: 3, width: 150 }}>Profile</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', py: 3, width: 150 }}>Mobile</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', py: 3, width: 130 }}>Language</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', py: 3, width: 160 }}>Policy Number</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', py: 3, width: 200 }}>Product Name</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', py: 3, width: 140 }}>Category</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', py: 3, width: 170 }}>Channel</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', py: 3, width: 140 }}>Batch ID</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', py: 3, width: 130 }}>Status</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', py: 3, width: 150 }}>Policy Status</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', py: 3, width: 160 }}>Agent</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', py: 3, width: 120, textAlign: 'center' }}>Priority</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', py: 3, width: 150 }}>Last Action</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', py: 3, width: 120, textAlign: 'center' }}>Calls</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', py: 3, width: 150 }}>Renewal Date</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', py: 3, width: 140 }}>Upload Date</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -1392,7 +1624,7 @@ const CaseTracking = () => {
                       onClick={() => navigate(`/cases/${caseItem.id}`)}
                       sx={{ 
                         cursor: 'pointer',
-                        transition: 'background-color 0.2s, transform 0.2s',
+                        transition: 'background-color 0.2s, transform 0.1s',
                         bgcolor: index % 2 === 0 ? 'transparent' : alpha(theme.palette.primary.main, 0.02),
                         '&:hover': {
                           backgroundColor: alpha(theme.palette.primary.main, 0.08),
@@ -1401,12 +1633,15 @@ const CaseTracking = () => {
                           zIndex: 1,
                         },
                         '& .MuiTableCell-root': {
-                          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
-                          py: 1.5,
+                          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.3)}`,
+                          py: 2,
+                          px: 2,
+                          fontSize: '0.875rem',
+                          verticalAlign: 'middle'
                         }
                       }}
                     >
-                      <TableCell>
+                      <TableCell sx={{ textAlign: 'center', width: 80 }}>
                         <Checkbox
                           checked={selectedCases.includes(caseItem.id)}
                           onChange={(e) => {
@@ -1421,8 +1656,8 @@ const CaseTracking = () => {
                           }}
                         />
                       </TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+                      <TableCell sx={{ textAlign: 'center', width: 180 }}>
+                        <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center', justifyContent: 'center' }}>
                           {/* Primary Actions - Always Visible */}
                           <Tooltip title="View Details" arrow placement="top">
                             <IconButton
@@ -1494,12 +1729,12 @@ const CaseTracking = () => {
                           </Tooltip>
                         </Box>
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ width: 140 }}>
                         <Typography variant="body2" fontWeight="500" color="primary">
                           {caseItem.id}
                         </Typography>
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ width: 180 }}>
                         <Typography 
                           variant="body2" 
                           sx={{ 
@@ -1515,36 +1750,40 @@ const CaseTracking = () => {
                           {caseItem.customerName}
                         </Typography>
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ width: 150 }}>
                         <Chip
                           label={caseItem.customerProfile}
                           color={getCustomerProfileColor(caseItem.customerProfile)}
                           size="small"
                           sx={{ 
                             fontWeight: 500,
-                            minWidth: '60px',
+                            minWidth: '100px',
                             boxShadow: '0 2px 5px rgba(0,0,0,0.08)',
                             borderRadius: 5
                           }}
                         />
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ width: 150 }}>
                         <Typography variant="body2" fontWeight="500">
                           {caseItem.customerMobile}
                         </Typography>
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ width: 130 }}>
                         <Typography variant="body2" fontWeight="500">
                           {caseItem.preferredLanguage}
                         </Typography>
                       </TableCell>
-                      <TableCell>{caseItem.policyNumber}</TableCell>
-                      <TableCell>
+                      <TableCell sx={{ width: 160 }}>
+                        <Typography variant="body2" fontWeight="500">
+                          {caseItem.policyNumber}
+                        </Typography>
+                      </TableCell>
+                      <TableCell sx={{ width: 200 }}>
                         <Typography variant="body2" fontWeight="500">
                           {caseItem.productName}
                         </Typography>
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ width: 140 }}>
                         <Chip
                           label={caseItem.productCategory}
                           color="info"
@@ -1552,12 +1791,12 @@ const CaseTracking = () => {
                           size="small"
                           sx={{ 
                             fontWeight: 500,
-                            minWidth: '70px',
+                            minWidth: '110px',
                             borderRadius: 5
                           }}
                         />
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ width: 170 }}>
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                           <Typography variant="body2" fontWeight="500">
                             {caseItem.channel}
@@ -1567,24 +1806,15 @@ const CaseTracking = () => {
                           </Typography>
                         </Box>
                       </TableCell>
-                      <TableCell>{caseItem.batchId}</TableCell>
-                      <TableCell>
+                      <TableCell sx={{ width: 140 }}>
+                        <Typography variant="body2" fontWeight="500">
+                          {caseItem.batchId}
+                        </Typography>
+                      </TableCell>
+                      <TableCell sx={{ width: 130 }}>
                         <Chip
                           label={caseItem.status}
                           color={getStatusColor(caseItem.status)}
-                          size="small"
-                          sx={{ 
-                            fontWeight: 500,
-                            minWidth: '90px',
-                            boxShadow: '0 2px 5px rgba(0,0,0,0.08)',
-                            borderRadius: 5
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={caseItem.policyStatus}
-                          color={getPolicyStatusColor(caseItem.policyStatus)}
                           size="small"
                           sx={{ 
                             fontWeight: 500,
@@ -1594,12 +1824,25 @@ const CaseTracking = () => {
                           }}
                         />
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ width: 150 }}>
+                        <Chip
+                          label={caseItem.policyStatus}
+                          color={getPolicyStatusColor(caseItem.policyStatus)}
+                          size="small"
+                          sx={{ 
+                            fontWeight: 500,
+                            minWidth: '130px',
+                            boxShadow: '0 2px 5px rgba(0,0,0,0.08)',
+                            borderRadius: 5
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell sx={{ width: 160 }}>
                         <Typography variant="body2" fontWeight="500">
                           {caseItem.assignedAgent}
                         </Typography>
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ width: 120, textAlign: 'center' }}>
                         <Chip
                           icon={<PriorityHighIcon />}
                           label={caseItem.isPriority ? "Priority" : "Normal"}
@@ -1630,7 +1873,7 @@ const CaseTracking = () => {
                           }}
                           sx={{ 
                             cursor: 'pointer',
-                            minWidth: '90px',
+                            minWidth: '100px',
                             fontWeight: 500,
                             borderRadius: 5,
                             boxShadow: '0 2px 5px rgba(0,0,0,0.08)',
@@ -1650,13 +1893,13 @@ const CaseTracking = () => {
                           }}
                         />
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ width: 150 }}>
                         <Typography variant="body2" fontWeight="500">
                           {new Date(caseItem.lastActionDate).toLocaleDateString()}
                         </Typography>
                       </TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <TableCell sx={{ width: 120, textAlign: 'center' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center' }}>
                           <Typography variant="body2" fontWeight="600" color="primary">
                             {caseItem.totalCalls}
                           </Typography>
@@ -1665,82 +1908,83 @@ const CaseTracking = () => {
                           </Typography>
                         </Box>
                       </TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Typography variant="body2" fontWeight="500">
-                            {new Date(caseItem.policyDetails.renewalDate).toLocaleDateString()}
-                          </Typography>
-                          {/* Show urgency indicator if renewal is within 30 days */}
-                          {(() => {
-                            const renewalDate = new Date(caseItem.policyDetails.renewalDate);
-                            const today = new Date();
-                            const daysUntilRenewal = Math.ceil((renewalDate - today) / (1000 * 60 * 60 * 24));
-                            
-                            if (daysUntilRenewal <= 7 && daysUntilRenewal > 0) {
-                              return (
-                                <Chip 
-                                  label={`${daysUntilRenewal} days`} 
-                              size="small"
-                                  color="error" 
-                                  sx={{ fontSize: '0.7rem', height: '20px' }}
-                                />
-                              );
-                            } else if (daysUntilRenewal <= 30 && daysUntilRenewal > 7) {
-                              return (
-                                <Chip 
-                                  label={`${daysUntilRenewal} days`} 
-                              size="small"
-                                  color="warning" 
-                                  sx={{ fontSize: '0.7rem', height: '20px' }}
-                                />
-                              );
-                            } else if (daysUntilRenewal <= 0) {
-                              return (
-                                <Chip 
-                                  label="Overdue" 
-                                size="small"
-                                  color="error" 
-                                  variant="filled"
-                                  sx={{ fontSize: '0.7rem', height: '20px' }}
-                                />
-                              );
-                            }
-                            return null;
-                          })()}
-                        </Box>
+                      <TableCell sx={{ width: 150 }}>
+                        <Typography 
+                          variant="body2" 
+                          fontWeight="500"
+                          sx={{
+                            color: (() => {
+                              const renewalDate = new Date(caseItem.policyDetails.renewalDate);
+                              const today = new Date();
+                              const daysUntilRenewal = Math.ceil((renewalDate - today) / (1000 * 60 * 60 * 24));
+                              
+                              if (daysUntilRenewal <= 0) {
+                                return 'error.main'; // Overdue - red
+                              } else if (daysUntilRenewal <= 7) {
+                                return 'error.main'; // Due soon - red
+                              } else if (daysUntilRenewal <= 30) {
+                                return 'warning.main'; // Due within month - orange
+                              }
+                              return 'text.primary'; // Normal - default color
+                            })()
+                          }}
+                        >
+                          {new Date(caseItem.policyDetails.renewalDate).toLocaleDateString('en-GB', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                          })}
+                        </Typography>
                       </TableCell>
-                                            <TableCell>{new Date(caseItem.uploadDate).toLocaleDateString()}</TableCell>
+                      <TableCell sx={{ width: 140 }}>
+                        <Typography variant="body2" fontWeight="500">
+                          {new Date(caseItem.uploadDate).toLocaleDateString()}
+                        </Typography>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
-              <Box sx={{ p: 2 }}>
-                <TablePagination
-                  rowsPerPageOptions={[5, 10, 25]}
-                  component="div"
-                  count={cases.length}
-                  rowsPerPage={rowsPerPage}
-                  page={page}
-                  onPageChange={handleChangePage}
-                  onRowsPerPageChange={handleChangeRowsPerPage}
-                  sx={{
-                    '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
-                      fontWeight: 500,
-                    },
-                    '.MuiTablePagination-actions': {
-                      '& .MuiIconButton-root': {
-                        transition: 'transform 0.2s',
-                        '&:hover': {
-                          transform: 'scale(1.15)',
-                          backgroundColor: 'transparent'
-                        }
+            </TableContainer>
+          </Card>
+        </Grow>
+
+        {/* Fixed Pagination Outside Scrollable Area */}
+        <Grow in={loaded} timeout={800}>
+          <Card 
+            elevation={0}
+            sx={{ 
+              borderRadius: 3,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+              mt: 2
+            }}
+          >
+            <Box sx={{ p: 2 }}>
+              <TablePagination
+                rowsPerPageOptions={[5, 10, 25]}
+                component="div"
+                count={cases.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+                sx={{
+                  '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
+                    fontWeight: 500,
+                  },
+                  '.MuiTablePagination-actions': {
+                    '& .MuiIconButton-root': {
+                      transition: 'transform 0.2s',
+                      '&:hover': {
+                        transform: 'scale(1.15)',
+                        backgroundColor: 'transparent'
                       }
                     }
-                  }}
-                />
-              </Box>
+                  }
+                }}
+              />
             </Box>
-          </TableContainer>
+          </Card>
         </Grow>
 
         {/* More Actions Menu for each case */}

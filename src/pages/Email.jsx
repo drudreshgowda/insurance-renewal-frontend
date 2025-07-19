@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -48,7 +48,6 @@ import {
 } from '@mui/material';
 import {
   Search as SearchIcon,
-  FilterList as FilterIcon,
   Visibility as ViewIcon,
   PersonAdd as AssignIcon,
   Archive as ArchiveIcon,
@@ -61,18 +60,14 @@ import {
   CheckCircle as ResolvedIcon,
   Category as CategoryIcon,
   FileDownload as ExportIcon,
-  SelectAll as SelectAllIcon,
   ClearAll as ClearAllIcon,
   Edit as EditIcon,
   Reply as ReplyIcon,
   Circle as CircleIcon,
   AccessTime as AccessTimeIcon,
-  ArrowUpward as ArrowUpwardIcon,
-  ArrowDownward as ArrowDownwardIcon,
   CheckCircle as CheckCircleIcon,
   Add as AddIcon,
-  Delete as DeleteIcon,
-  Visibility as VisibilityIcon
+  Delete as DeleteIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
@@ -88,7 +83,7 @@ const EmailInbox = () => {
   const [dateFilter, setDateFilter] = useState('all');
   const [page, setPage] = useState(1);
   const [rowsPerPage] = useState(10);
-  const [filterAnchorEl, setFilterAnchorEl] = useState(null);
+
   const [assignDialog, setAssignDialog] = useState({ open: false, emailId: null, emailIds: [] });
   const [reclassifyDialog, setReclassifyDialog] = useState({ open: false, emailId: null, currentCategory: '' });
   const [replyDialog, setReplyDialog] = useState({ open: false, emailId: null, emailSubject: '', emailFrom: '', templateBody: '' });
@@ -112,8 +107,7 @@ const EmailInbox = () => {
   const [templatesDialog, setTemplatesDialog] = useState({ open: false, emailId: null });
   const [automationDialog, setAutomationDialog] = useState({ open: false });
   const [templatePreviewDialog, setTemplatePreviewDialog] = useState({ open: false, template: null, emailId: null });
-  const [selectedTemplate, setSelectedTemplate] = useState('');
-  const [customTemplate, setCustomTemplate] = useState('');
+
   const [automationSettings, setAutomationSettings] = useState({
     enabled: true,
     autoReplyDelay: 5, // minutes
@@ -137,13 +131,13 @@ const EmailInbox = () => {
     body: ''
   });
 
-  const agentsList = [
-    'Alice Johnson',
+  const agentsList = useMemo(() => [
+    'Priya Patel',
     'Bob Smith', 
     'Charlie Brown',
     'Diana Wilson',
     'Eric Thompson'
-  ];
+  ], []);
 
   const categoryOptions = [
     'complaint',
@@ -324,7 +318,7 @@ Intelipro Insurance`
     }
 
     return [...baseEmails, ...additionalEmails];
-  }, [categoryFilter, statusFilter]);
+  }, [categoryFilter, statusFilter, agentsList]);
 
   // Auto-refresh functionality
   const refreshEmails = useCallback(async () => {
@@ -455,37 +449,7 @@ Intelipro Insurance`
     showNotification('Email marked as read', 'success');
   };
 
-  // Enhanced bulk actions
-  const handleBulkAction = (action) => {
-    const selectedEmailObjects = emails.filter(email => selectedEmails.includes(email.id));
-    
-    switch (action) {
-      case 'markRead':
-        setEmails(prev => prev.map(email => 
-          selectedEmails.includes(email.id) ? { ...email, isRead: true } : email
-        ));
-        showNotification(`${selectedEmails.length} emails marked as read`, 'success');
-        break;
-      case 'markUnread':
-        setEmails(prev => prev.map(email => 
-          selectedEmails.includes(email.id) ? { ...email, isRead: false } : email
-        ));
-        showNotification(`${selectedEmails.length} emails marked as unread`, 'success');
-        break;
-      case 'archive':
-        setEmails(prev => prev.filter(email => !selectedEmails.includes(email.id)));
-        showNotification(`${selectedEmails.length} emails archived`, 'success');
-        break;
-      case 'delete':
-        setEmails(prev => prev.filter(email => !selectedEmails.includes(email.id)));
-        showNotification(`${selectedEmails.length} emails deleted`, 'warning');
-        break;
-      default:
-        break;
-    }
-    
-    setSelectedEmails([]);
-  };
+
 
   // Sorting functionality
   const handleSort = (key) => {
@@ -604,14 +568,7 @@ Intelipro Insurance`
     }
   };
 
-  const getSLAStatusColor = (slaStatus) => {
-    switch (slaStatus) {
-      case 'ok': return 'success';
-      case 'warning': return 'warning';
-      case 'breach': return 'error';
-      default: return 'default';
-    }
-  };
+
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -660,7 +617,7 @@ Intelipro Insurance`
     }
   };
 
-  const handleConfirmReply = (replyText) => {
+  const handleConfirmReply = (_replyText) => {
     // In a real app, this would send the reply
     showNotification(`Reply sent successfully to ${replyDialog.emailFrom}`);
     setReplyDialog({ open: false, emailId: null, emailSubject: '', emailFrom: '', templateBody: '' });
@@ -700,9 +657,7 @@ Intelipro Insurance`
     showNotification(`${emailIds.length} email(s) marked as resolved`);
   };
 
-  const handleReclassifyEmail = (emailId, currentCategory) => {
-    setReclassifyDialog({ open: true, emailId, currentCategory });
-  };
+
 
   const handleConfirmReclassify = (newCategory) => {
     setEmails(prev => prev.map(email => 
@@ -779,40 +734,11 @@ Intelipro Insurance`
     setExportAnchorEl(null);
   };
 
-  const handleActionMenuClick = (event, emailId) => {
-    setActionMenus(prev => ({ ...prev, [emailId]: event.currentTarget }));
-  };
 
-  const handleActionMenuClose = (emailId) => {
-    setActionMenus(prev => ({ ...prev, [emailId]: null }));
-  };
 
   const paginatedEmails = sortedEmails.slice((page - 1) * rowsPerPage, page * rowsPerPage);
 
-  // Automated Response Logic
-  const shouldAutoRespond = (email) => {
-    if (!automationSettings.enabled) return false;
-    
-    // Check business hours if enabled
-    if (automationSettings.businessHoursOnly) {
-      const now = new Date();
-      const hour = now.getHours();
-      if (hour < 9 || hour > 17) return false; // 9 AM to 5 PM
-    }
-    
-    // Check if category is enabled for auto-response
-    if (!automationSettings.categories.includes(email.category)) return false;
-    
-    // Check for excluded keywords
-    const emailContent = (email.subject + ' ' + email.content).toLowerCase();
-    const hasExcludedKeyword = automationSettings.excludeKeywords.some(keyword => 
-      emailContent.includes(keyword.toLowerCase())
-    );
-    
-    if (hasExcludedKeyword) return false;
-    
-    return true;
-  };
+  // Automated Response Logic (removed unused shouldAutoRespond function)
 
   // Process template variables
   const processTemplate = (template, email, additionalVars = {}) => {
@@ -841,25 +767,7 @@ Intelipro Insurance`
     return { subject: processedSubject, body: processedBody };
   };
 
-  // Auto-respond to new emails
-  const processAutoResponse = useCallback((email) => {
-    if (shouldAutoRespond(email)) {
-      setTimeout(() => {
-        const template = emailTemplates.find(t => t.category === email.category) || 
-                        emailTemplates.find(t => t.id === 'acknowledgment');
-        
-        const processedTemplate = processTemplate(template, email);
-        
-        // Simulate sending auto-response
-        showNotification(`Auto-response sent to ${email.from}`, 'info');
-        
-        // Update email status
-        setEmails(prev => prev.map(e => 
-          e.id === email.id ? { ...e, status: 'in_progress', autoResponded: true } : e
-        ));
-      }, automationSettings.autoReplyDelay * 60 * 1000);
-    }
-  }, [automationSettings, emailTemplates]);
+
 
   // Handle template selection and sending
   const handleUseTemplate = (templateId, emailId) => {

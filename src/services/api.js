@@ -138,10 +138,10 @@ export const getCaseById = async (caseId) => {
       const mockCases = [
         {
           id: 'CASE-001',
-          customerName: 'John Smith',
-          policyNumber: 'POL-12345',
-          status: 'In Progress',
-          agent: 'Alice Johnson',
+                  customerName: 'Arjun Sharma',
+        policyNumber: 'POL-12345',
+        status: 'In Progress',
+        agent: 'Priya Patel',
           uploadDate: '2025-04-08',
           isPriority: false,
           contactInfo: {
@@ -149,22 +149,22 @@ export const getCaseById = async (caseId) => {
             phone: '555-123-4567'
           },
           policyProposer: {
-            name: 'John Smith',
-            relationship: 'Self',
-            age: 42,
-            dateOfBirth: '1982-08-20',
-            gender: 'Male',
-            occupation: 'Business Owner',
-            annualIncome: '₹8,50,000'
-          },
-          lifeAssured: {
-            name: 'John Smith',
+                    name: 'Arjun Sharma',
+        relationship: 'Self',
+        age: 42,
+        dateOfBirth: '1982-08-20',
+        gender: 'Male',
+        occupation: 'Business Owner',
+        annualIncome: '₹8,50,000'
+      },
+      lifeAssured: {
+        name: 'Arjun Sharma',
             relationship: 'Self',
             age: 42,
             dateOfBirth: '1982-08-20',
             gender: 'Male',
             sumAssured: '₹25,00,000',
-            nomineeDetails: 'Jane Smith (Spouse)'
+            nomineeDetails: 'Kavya Sharma (Spouse)'
           },
           policyDetails: {
             type: 'Auto',
@@ -180,7 +180,7 @@ export const getCaseById = async (caseId) => {
             businessChannel: 'Agent Network',
             region: 'North India',
             salesManager: 'Rajesh Kumar',
-            agentName: 'Alice Johnson',
+            agentName: 'Priya Patel',
             agentStatus: 'Active'
           },
           flowSteps: ['Uploaded', 'Validated', 'Assigned', 'In Progress'],
@@ -200,17 +200,17 @@ export const getCaseById = async (caseId) => {
             {
               date: '2025-04-08T10:30:12',
               action: 'Assignment',
-              details: 'Case assigned to agent Alice Johnson',
+              details: 'Case assigned to agent Priya Patel',
               user: 'System'
             }
           ]
         },
         {
           id: 'CASE-002',
-          customerName: 'Sarah Williams',
+          customerName: 'Meera Kapoor',
           policyNumber: 'POL-23456',
           status: 'Renewed',
-          agent: 'Bob Miller',
+          agent: 'Ravi Gupta',
           uploadDate: '2025-04-07',
           isPriority: true,
           contactInfo: {
@@ -218,16 +218,16 @@ export const getCaseById = async (caseId) => {
             phone: '555-234-5678'
           },
           policyProposer: {
-            name: 'Sarah Williams',
-            relationship: 'Self',
-            age: 38,
-            dateOfBirth: '1986-12-05',
-            gender: 'Female',
-            occupation: 'Marketing Manager',
-            annualIncome: '₹9,75,000'
-          },
-          lifeAssured: {
-            name: 'Sarah Williams',
+                      name: 'Meera Kapoor',
+          relationship: 'Self',
+          age: 38,
+          dateOfBirth: '1986-12-05',
+          gender: 'Female',
+          occupation: 'Marketing Manager',
+          annualIncome: '₹9,75,000'
+        },
+        lifeAssured: {
+          name: 'Meera Kapoor',
             relationship: 'Self',
             age: 38,
             dateOfBirth: '1986-12-05',
@@ -249,7 +249,7 @@ export const getCaseById = async (caseId) => {
             businessChannel: 'Branch Office',
             region: 'West India',
             salesManager: 'Priya Sharma',
-            agentName: 'Bob Miller',
+            agentName: 'Ravi Gupta',
             agentStatus: 'Active'
           },
           flowSteps: ['Uploaded', 'Validated', 'Assigned', 'In Progress', 'Payment Processed', 'Renewed'],
@@ -269,14 +269,14 @@ export const getCaseById = async (caseId) => {
             {
               date: '2025-04-07T15:10:45',
               action: 'Assignment',
-              details: 'Case assigned to agent Bob Miller',
+              details: 'Case assigned to agent Ravi Gupta',
               user: 'System'
             },
             {
               date: '2025-04-08T09:30:22',
               action: 'Processing',
               details: 'Agent has begun renewal processing',
-              user: 'Bob Miller'
+              user: 'Ravi Gupta'
             },
             {
               date: '2025-04-09T11:15:33',
@@ -305,16 +305,16 @@ export const getCaseById = async (caseId) => {
             phone: '555-345-6789'
           },
           policyProposer: {
-            name: 'Michael Johnson',
-            relationship: 'Self',
-            age: 45,
-            dateOfBirth: '1979-11-12',
-            gender: 'Male',
-            occupation: 'Senior Manager',
-            annualIncome: '₹15,00,000'
-          },
-          lifeAssured: {
-            name: 'Michael Johnson',
+                      name: 'Vikram Singh',
+          relationship: 'Self',
+          age: 45,
+          dateOfBirth: '1979-11-12',
+          gender: 'Male',
+          occupation: 'Senior Manager',
+          annualIncome: '₹15,00,000'
+        },
+        lifeAssured: {
+          name: 'Vikram Singh',
             relationship: 'Self',
             age: 45,
             dateOfBirth: '1979-11-12',
@@ -336,7 +336,7 @@ export const getCaseById = async (caseId) => {
             businessChannel: 'Corporate Sales',
             region: 'South India',
             salesManager: 'Anita Desai',
-            agentName: 'Carol Davis',
+            agentName: 'Neha Sharma',
             agentStatus: 'Inactive'
           },
           flowSteps: ['Uploaded', 'Validated', 'Assigned', 'In Progress', 'Failed'],
@@ -356,7 +356,7 @@ export const getCaseById = async (caseId) => {
             {
               date: '2025-04-06T11:30:45',
               action: 'Assignment',
-              details: 'Case assigned to agent Carol Davis',
+              details: 'Case assigned to agent Neha Sharma',
               user: 'System'
             },
             {
@@ -591,10 +591,10 @@ export const fetchCases = async (_page, _rowsPerPage, _searchTerm, _statusFilter
       const mockCases = [
         {
           id: 'CASE-001',
-          customerName: 'John Smith',
+          customerName: 'Arjun Sharma',
           policyNumber: 'POL-12345',
           status: 'Assigned',
-          agent: 'Alice Johnson',
+          agent: 'Priya Patel',
           uploadDate: '2025-04-08',
           isPriority: false,
           contactInfo: {
@@ -1190,14 +1190,14 @@ export const fetchTeamMembers = async (teamId) => {
     setTimeout(() => {
       const teamMembers = {
         'team-1': [
-          { id: 'member-1', name: 'Alice Johnson', role: 'Senior Sales Executive', email: 'alice.johnson@company.com' },
-          { id: 'member-2', name: 'Bob Smith', role: 'Sales Manager', email: 'bob.smith@company.com' },
-          { id: 'member-3', name: 'Carol Davis', role: 'Sales Executive', email: 'carol.davis@company.com' },
-          { id: 'member-4', name: 'David Wilson', role: 'Sales Representative', email: 'david.wilson@company.com' },
-          { id: 'member-5', name: 'Emma Brown', role: 'Sales Executive', email: 'emma.brown@company.com' },
-          { id: 'member-6', name: 'Frank Miller', role: 'Sales Representative', email: 'frank.miller@company.com' },
-          { id: 'member-7', name: 'Grace Taylor', role: 'Senior Sales Executive', email: 'grace.taylor@company.com' },
-          { id: 'member-8', name: 'Henry Anderson', role: 'Sales Manager', email: 'henry.anderson@company.com' }
+          { id: 'member-1', name: 'Priya Patel', role: 'Senior Sales Executive', email: 'priya.patel@company.com' },
+          { id: 'member-2', name: 'Ravi Gupta', role: 'Sales Manager', email: 'ravi.gupta@company.com' },
+          { id: 'member-3', name: 'Neha Sharma', role: 'Sales Executive', email: 'neha.sharma@company.com' },
+          { id: 'member-4', name: 'Amit Kumar', role: 'Sales Representative', email: 'amit.kumar@company.com' },
+          { id: 'member-5', name: 'Sanya Singh', role: 'Sales Executive', email: 'sanya.singh@company.com' },
+          { id: 'member-6', name: 'Rohit Agarwal', role: 'Sales Representative', email: 'rohit.agarwal@company.com' },
+          { id: 'member-7', name: 'Kavya Malhotra', role: 'Senior Sales Executive', email: 'kavya.malhotra@company.com' },
+          { id: 'member-8', name: 'Deepak Verma', role: 'Sales Manager', email: 'deepak.verma@company.com' }
         ],
         'team-2': [
           { id: 'member-9', name: 'Ivy Martinez', role: 'Customer Service Manager', email: 'ivy.martinez@company.com' },

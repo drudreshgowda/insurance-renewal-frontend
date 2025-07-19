@@ -1,26 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { 
-  Box, Typography, Paper, TextField, Button, 
+  Box, Typography, TextField, Button, 
   List, ListItem, ListItemText, Divider, 
   Chip, CircularProgress, Alert, 
   FormControl, InputLabel, Select, MenuItem,
-  Card, CardContent, useTheme, alpha,
+  Card, CardContent,
   Fade, Grow, InputAdornment
 } from '@mui/material';
 import { 
   Search as SearchIcon,
-  FilterAlt as FilterIcon,
   Info as InfoIcon,
   Warning as WarningIcon,
   Error as ErrorIcon,
   CheckCircle as CheckCircleIcon
 } from '@mui/icons-material';
-import { fetchLogs } from '../services/api';
+
 
 const Logs = () => {
   const location = useLocation();
-  const theme = useTheme();
+
   const queryParams = new URLSearchParams(location.search);
   const caseIdParam = queryParams.get('caseId');
   
@@ -32,19 +31,7 @@ const Logs = () => {
   const [searched, setSearched] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
-  useEffect(() => {
-    // Set loaded state for animations
-    setTimeout(() => {
-      setLoaded(true);
-    }, 100);
-
-    // Auto-search if caseId is provided in URL
-    if (caseIdParam) {
-      handleSearch();
-    }
-  }, []);
-
-  const handleSearch = async () => {
+  const handleSearch = useCallback(async () => {
     if (!searchQuery.trim()) return;
     
     setLoading(true);
@@ -81,7 +68,7 @@ const Logs = () => {
             id: 'log-003',
             timestamp: '2025-04-08T10:30:12',
             action: 'Assignment',
-            details: 'Case assigned to agent Alice Johnson',
+            details: 'Case assigned to agent Priya Patel',
             user: 'System',
             level: 'info'
           },
@@ -90,7 +77,7 @@ const Logs = () => {
             timestamp: '2025-04-09T11:45:22',
             action: 'Contact Update',
             details: 'Customer phone number updated from 555-123-4567 to 555-123-9876',
-            user: 'Alice Johnson',
+            user: 'Priya Patel',
             level: 'warning'
           },
           {
@@ -98,7 +85,7 @@ const Logs = () => {
             timestamp: '2025-04-09T14:20:05',
             action: 'Processing',
             details: 'Agent has begun renewal processing',
-            user: 'Alice Johnson',
+            user: 'Priya Patel',
             level: 'info'
           },
           {
@@ -106,7 +93,7 @@ const Logs = () => {
             timestamp: '2025-04-10T09:05:18',
             action: 'Comment Added',
             details: 'Customer requested additional coverage options. Will follow up tomorrow.',
-            user: 'Alice Johnson',
+            user: 'Priya Patel',
             level: 'info'
           }
         ]);
@@ -132,7 +119,7 @@ const Logs = () => {
             id: 'log-003',
             timestamp: '2025-04-08T10:30:12',
             action: 'Assignment',
-            details: 'Case assigned to agent Alice Johnson',
+            details: 'Case assigned to agent Priya Patel',
             user: 'System',
             level: 'info'
           }
@@ -146,7 +133,19 @@ const Logs = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchType, searchQuery]);
+
+  useEffect(() => {
+    // Set loaded state for animations
+    setTimeout(() => {
+      setLoaded(true);
+    }, 100);
+
+    // Auto-search if caseId is provided in URL
+    if (caseIdParam) {
+      handleSearch();
+    }
+  }, [caseIdParam, handleSearch]);
 
   const handleKeyDown = (event) => {
     if (event.key === 'Enter') {

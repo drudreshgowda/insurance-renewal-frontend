@@ -14,6 +14,7 @@ import {
   Avatar,
   Tab,
   Tabs,
+  Stack,
   useTheme,
   alpha,
   Fade,
@@ -55,7 +56,8 @@ import {
   SmartToy as SmartToyIcon,
   Language as LanguageIcon,
   CalendarToday as CalendarTodayIcon,
-  Pending as PendingIcon
+  Pending as PendingIcon,
+  Person as PersonIcon
 } from '@mui/icons-material';
 import { useLocation } from 'react-router-dom';
 
@@ -91,7 +93,7 @@ const PolicyTimeline = () => {
           {
             id: "ev-001",
             date: "2018-06-15",
-            type: "creation",
+            type: "policy_created",
             title: "Policy Created",
             description: "Vehicle insurance policy initiated with basic coverage",
             details: {
@@ -103,7 +105,7 @@ const PolicyTimeline = () => {
           {
             id: "ev-002",
             date: "2019-05-30",
-            type: "modification",
+            type: "renewal",
             title: "Coverage Update",
             description: "Added comprehensive coverage to the policy",
             details: {
@@ -221,7 +223,7 @@ const PolicyTimeline = () => {
           {
             id: "ev-101",
             date: "2020-09-22",
-            type: "creation",
+            type: "policy_created",
             title: "Policy Created",
             description: "Life insurance policy initiated with standard coverage",
             details: {
@@ -415,7 +417,7 @@ const PolicyTimeline = () => {
   
   const getEventIcon = (type) => {
     switch (type) {
-      case 'creation':
+      case 'policy_created':
         return <CreateIcon />;
       case 'renewal':
         return <AutorenewIcon />;
@@ -434,20 +436,37 @@ const PolicyTimeline = () => {
 
   const getEventColor = (type) => {
     switch (type) {
-      case 'creation':
-        return 'success';
-      case 'renewal':
-        return 'primary';
-      case 'modification':
-        return 'info';
-      case 'claim':
-        return 'warning';
-      case 'payment':
-        return 'secondary';
-      case 'communication':
-        return 'grey';
-      default:
-        return 'grey';
+      case 'policy_created': return 'primary';
+      case 'payment': return 'success';
+      case 'renewal': return 'warning';
+      case 'claim': return 'error';
+      case 'communication': return 'info';
+      case 'document': return 'secondary';
+      default: return 'primary';
+    }
+  };
+
+  const getBrandColor = (type) => {
+    switch (type) {
+      case 'policy_created': return theme.palette.primary.main;
+      case 'payment': return theme.palette.success.main;
+      case 'renewal': return theme.palette.warning.main;
+      case 'claim': return theme.palette.error.main;
+      case 'communication': return theme.palette.info.main;
+      case 'document': return theme.palette.secondary.main;
+      default: return theme.palette.primary.main;
+    }
+  };
+
+  const getEventLabel = (type) => {
+    switch (type) {
+      case 'policy_created': return 'Policy Created';
+      case 'payment': return 'Payment';
+      case 'renewal': return 'Renewal';
+      case 'claim': return 'Claim';
+      case 'communication': return 'Communication';
+      case 'document': return 'Document';
+      default: return type;
     }
   };
 
@@ -1400,124 +1419,282 @@ const PolicyTimeline = () => {
         
         {/* Timeline */}
         <Grow in={loaded} timeout={1000}>
-          <Paper 
-            sx={{ 
-              p: { xs: 2, sm: 3 }, 
-              boxShadow: '0 8px 24px rgba(0,0,0,0.05)', 
-              borderRadius: 3, 
-              mb: 4 
-            }}
-          >
-            <Typography variant="h5" fontWeight="600" gutterBottom>
-              Policy Event Timeline
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Full history of events, communications, and changes
-            </Typography>
-            
-            {filteredEvents.length === 0 ? (
-              <Box sx={{ 
-                py: 5, 
-                display: 'flex', 
-                flexDirection: 'column',
-                alignItems: 'center', 
-                bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
-                borderRadius: 2
-              }}>
-                <InfoIcon sx={{ fontSize: 40, color: 'text.secondary', mb: 2 }} />
-                <Typography variant="body1" color="text.secondary">
-                  No events found matching your criteria
+          <Grid container spacing={3}>
+            {/* Timeline Section */}
+            <Grid item xs={12} lg={8}>
+              <Paper 
+                sx={{ 
+                  p: { xs: 2, sm: 3 }, 
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.05)', 
+                  borderRadius: 3, 
+                  mb: 4 
+                }}
+              >
+                <Typography variant="h5" fontWeight="600" gutterBottom>
+                  Policy Event Timeline
                 </Typography>
-                <Button 
-                  variant="outlined" 
-                  sx={{ mt: 2, borderRadius: 2 }}
-                  onClick={() => {
-                    setFilterType('all');
-                    setSearchTerm('');
-                  }}
-                >
-                  Reset Filters
-                </Button>
-              </Box>
-            ) : (
-              <Timeline position="right">
-                {filteredEvents.map((event, index) => (
-                  <TimelineItem key={event.id}>
-                    <TimelineOppositeContent 
-                      color="text.secondary"
-                      sx={{ 
-                        maxWidth: { xs: 90, sm: 120 },
-                        minWidth: { xs: 90, sm: 120 }
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Complete timeline of policy events, communications, and changes
+                </Typography>
+                
+                {filteredEvents.length === 0 ? (
+                  <Box sx={{ 
+                    py: 5, 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    alignItems: 'center', 
+                    bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                    borderRadius: 2
+                  }}>
+                    <InfoIcon sx={{ fontSize: 40, color: 'text.secondary', mb: 2 }} />
+                    <Typography variant="body1" color="text.secondary">
+                      No events found matching your criteria
+                    </Typography>
+                    <Button 
+                      variant="outlined" 
+                      sx={{ mt: 2, borderRadius: 2 }}
+                      onClick={() => {
+                        setFilterType('all');
+                        setSearchTerm('');
                       }}
                     >
-                      <Typography variant="caption" sx={{ whiteSpace: 'nowrap' }}>
-                        {formatDate(event.date)}
-                      </Typography>
-                    </TimelineOppositeContent>
-                    <TimelineSeparator>
-                      <Zoom in={loaded} style={{ transitionDelay: `${index * 100}ms` }}>
-                        <TimelineDot color={getEventColor(event.type)}>
+                      Reset Filters
+                    </Button>
+                  </Box>
+                ) : (
+                  <Box sx={{ position: 'relative', pl: 4 }}>
+                    {/* Vertical Line */}
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        left: 20,
+                        top: 0,
+                        bottom: 0,
+                        width: 2,
+                        background: `linear-gradient(180deg, ${theme.palette.primary.main} 0%, ${alpha(theme.palette.primary.main, 0.3)} 100%)`,
+                        borderRadius: 1
+                      }}
+                    />
+
+                    {filteredEvents.map((event, index) => (
+                      <Box key={event.id} sx={{ position: 'relative', mb: 4 }}>
+                        {/* Timeline Dot with Brand Colors */}
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            left: -28,
+                            top: 8,
+                            width: 40,
+                            height: 40,
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            bgcolor: getBrandColor(event.type),
+                            boxShadow: `0 4px 12px ${alpha(getBrandColor(event.type), 0.3)}`,
+                            border: `3px solid ${theme.palette.background.paper}`,
+                            zIndex: 1
+                          }}
+                        >
                           {getEventIcon(event.type)}
-                        </TimelineDot>
-                      </Zoom>
-                      {index < filteredEvents.length - 1 && <TimelineConnector />}
-                    </TimelineSeparator>
-                    <TimelineContent>
-                      <Grow in={loaded} timeout={400 + (index * 100)}>
-                        <Card 
-                          sx={{ 
-                            mb: 3, 
-                            borderLeft: `4px solid ${theme.palette[getEventColor(event.type)].main}`,
-                            transition: 'transform 0.2s, box-shadow 0.2s',
+                        </Box>
+
+                        {/* Timeline Content Card */}
+                        <Card
+                          sx={{
+                            ml: 3,
+                            borderRadius: 3,
+                            boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                            border: `1px solid ${alpha(getBrandColor(event.type), 0.1)}`,
+                            transition: 'all 0.3s ease',
                             '&:hover': {
-                              transform: 'translateY(-3px)',
-                              boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
+                              transform: 'translateY(-2px)',
+                              boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
                             }
                           }}
                         >
-                          <CardContent>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                              <Typography variant="h6" fontWeight="600">
-                                {event.title}
-                              </Typography>
-                              <Chip 
-                                label={event.type.charAt(0).toUpperCase() + event.type.slice(1)} 
-                                size="small"
-                                color={getEventColor(event.type)}
-                                sx={{ fontWeight: 500 }}
-                              />
-                            </Box>
-                            <Typography variant="body2" sx={{ mb: 2 }}>
-                              {event.description}
-                            </Typography>
-                            
-                            <Box sx={{ 
-                              bgcolor: theme => alpha(theme.palette[getEventColor(event.type)].main, 0.08),
-                              borderRadius: 2,
-                              p: 1.5,
-                            }}>
-                              {event.details && Object.entries(event.details).map(([key, value]) => (
-                                <Box key={key} sx={{ display: 'flex', mb: 0.5, alignItems: 'center' }}>
-                                  <Typography variant="body2" color="text.secondary" sx={{ minWidth: 120, mr: 2, fontWeight: 500 }}>
-                                    {key.charAt(0).toUpperCase() + key.slice(1)}:
-                                  </Typography>
-                                  <Typography variant="body2">
-                                    {typeof value === 'number' && key.toLowerCase().includes('premium') 
-                                      ? `₹${value.toFixed(2)}`
-                                      : value.toString()}
+                          <CardContent sx={{ p: 3 }}>
+                            {/* Header */}
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                              <Box sx={{ flex: 1 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                  <Chip
+                                    label={getEventLabel(event.type)}
+                                    size="small"
+                                    sx={{
+                                      bgcolor: alpha(getBrandColor(event.type), 0.1),
+                                      color: getBrandColor(event.type),
+                                      fontWeight: 600,
+                                      mr: 1
+                                    }}
+                                  />
+                                  <Typography variant="caption" color="text.secondary">
+                                    {new Date(event.date).toLocaleDateString('en-US', {
+                                      month: 'short',
+                                      day: 'numeric',
+                                      year: 'numeric'
+                                    })}
                                   </Typography>
                                 </Box>
-                              ))}
+                                <Typography variant="h6" fontWeight="600" sx={{ mb: 1 }}>
+                                  {event.title}
+                                </Typography>
+                              </Box>
                             </Box>
+
+                            {/* Content */}
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2, lineHeight: 1.6 }}>
+                              {event.description}
+                            </Typography>
+
+                            {/* Event Details */}
+                            {event.details && (
+                              <Box
+                                sx={{
+                                  bgcolor: alpha(getBrandColor(event.type), 0.05),
+                                  borderRadius: 2,
+                                  p: 2,
+                                  border: `1px solid ${alpha(getBrandColor(event.type), 0.1)}`
+                                }}
+                              >
+                                <Grid container spacing={2}>
+                                  {Object.entries(event.details).map(([key, value]) => (
+                                    <Grid item xs={12} sm={6} key={key}>
+                                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500, minWidth: 100, mr: 2 }}>
+                                          {key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}:
+                                        </Typography>
+                                        <Typography variant="body2" fontWeight="500">
+                                          {typeof value === 'number' && key.toLowerCase().includes('premium') 
+                                            ? `₹${value.toLocaleString()}`
+                                            : value.toString()}
+                                        </Typography>
+                                      </Box>
+                                    </Grid>
+                                  ))}
+                                </Grid>
+                              </Box>
+                            )}
                           </CardContent>
                         </Card>
-                      </Grow>
-                    </TimelineContent>
-                  </TimelineItem>
-                ))}
-              </Timeline>
-            )}
-          </Paper>
+                      </Box>
+                    ))}
+                  </Box>
+                )}
+              </Paper>
+            </Grid>
+
+            {/* Customer Details Panel */}
+            <Grid item xs={12} lg={4}>
+              <Card
+                sx={{
+                  position: 'sticky',
+                  top: 24,
+                  borderRadius: 3,
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+                  border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`
+                }}
+              >
+                <CardContent sx={{ p: 3 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                    <PersonIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
+                    <Typography variant="h6" fontWeight="600">Customer Details</Typography>
+                  </Box>
+
+                  {policyData && (
+                    <>
+                      <Box sx={{ textAlign: 'center', mb: 3 }}>
+                        <Avatar
+                          sx={{
+                            width: 80,
+                            height: 80,
+                            bgcolor: theme.palette.primary.main,
+                            fontSize: '2rem',
+                            fontWeight: 600,
+                            mx: 'auto',
+                            mb: 2,
+                            boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
+                          }}
+                        >
+                          {policyData.customerName.split(' ').map(n => n[0]).join('')}
+                        </Avatar>
+                        <Typography variant="h6" fontWeight="600" sx={{ mb: 0.5 }}>
+                          {policyData.customerName}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Customer ID: {policyData.customerId}
+                        </Typography>
+                      </Box>
+
+                      <Divider sx={{ my: 3 }} />
+
+                      {/* Policy Summary */}
+                      <Box sx={{ mb: 3 }}>
+                        <Typography variant="subtitle2" fontWeight="600" sx={{ mb: 2, color: theme.palette.primary.main }}>
+                          Policy Summary
+                        </Typography>
+                        <Stack spacing={2}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', p: 2, bgcolor: alpha(theme.palette.primary.main, 0.05), borderRadius: 2 }}>
+                            <PolicyIcon sx={{ mr: 2, color: theme.palette.primary.main }} />
+                            <Box>
+                              <Typography variant="body2" color="text.secondary">Active Policies</Typography>
+                              <Typography variant="body2" fontWeight="500">{policyData.policies?.length || 0}</Typography>
+                            </Box>
+                          </Box>
+                          {currentPolicy && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', p: 2, bgcolor: alpha(theme.palette.success.main, 0.05), borderRadius: 2 }}>
+                              <VerifiedUserIcon sx={{ mr: 2, color: theme.palette.success.main }} />
+                              <Box>
+                                <Typography variant="body2" color="text.secondary">Current Policy</Typography>
+                                <Typography variant="body2" fontWeight="500">{currentPolicy.policyNumber}</Typography>
+                              </Box>
+                            </Box>
+                          )}
+                        </Stack>
+                      </Box>
+
+                      <Divider sx={{ my: 3 }} />
+
+                      {/* Event Stats */}
+                      <Box>
+                        <Typography variant="subtitle2" fontWeight="600" sx={{ mb: 2, color: theme.palette.primary.main }}>
+                          Timeline Summary
+                        </Typography>
+                        <Grid container spacing={2}>
+                          <Grid item xs={6}>
+                            <Box sx={{ textAlign: 'center', p: 2, bgcolor: alpha(theme.palette.info.main, 0.05), borderRadius: 2 }}>
+                              <Typography variant="h6" color="info.main" fontWeight="bold">
+                                {filteredEvents.length}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">Total Events</Typography>
+                            </Box>
+                          </Grid>
+                          <Grid item xs={6}>
+                            <Box sx={{ textAlign: 'center', p: 2, bgcolor: alpha(theme.palette.success.main, 0.05), borderRadius: 2 }}>
+                              <Typography variant="h6" color="success.main" fontWeight="bold">
+                                {currentPolicy?.status === 'Active' ? 'Active' : 'Inactive'}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">Status</Typography>
+                            </Box>
+                          </Grid>
+                          {currentPolicy && (
+                            <Grid item xs={12}>
+                              <Box sx={{ textAlign: 'center', p: 2, bgcolor: alpha(theme.palette.warning.main, 0.05), borderRadius: 2 }}>
+                                <Typography variant="body2" color="warning.main" fontWeight="bold">
+                                  ₹{currentPolicy.premium?.toLocaleString()}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">Annual Premium</Typography>
+                              </Box>
+                            </Grid>
+                          )}
+                        </Grid>
+                      </Box>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
         </Grow>
       </Box>
     </Fade>

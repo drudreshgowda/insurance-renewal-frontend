@@ -295,7 +295,7 @@ const Settings = () => {
     },
     {
       id: 2,
-      name: 'John Smith',
+              name: 'Arjun Sharma',
       email: 'john.smith@company.com',
       role: 'admin',
       status: 'active',
@@ -564,8 +564,8 @@ const Settings = () => {
     { id: 'whatsapp-flow', name: 'WhatsApp Flow', description: 'Manage automated WhatsApp messaging flows', category: 'Communication Pages', route: '/whatsapp-flow' },
     
     // Renewal Communication Pages
-    { id: 'renewal-email-manager', name: 'Renewal Email Manager', description: 'Manage email communications for policy renewals', category: 'Renewal Pages', route: '/renewals/email-manager' },
-    { id: 'renewal-whatsapp-manager', name: 'Renewal WhatsApp Manager', description: 'Manage WhatsApp communications for policy renewals', category: 'Renewal Pages', route: '/renewals/whatsapp-manager' },
+          { id: 'renewal-email-manager', name: 'Email Manager', description: 'Manage email communications for policy renewals', category: 'Renewal Pages', route: '/renewals/email-manager' },
+          { id: 'renewal-whatsapp-manager', name: 'WhatsApp Manager', description: 'Manage WhatsApp communications for policy renewals', category: 'Renewal Pages', route: '/renewals/whatsapp-manager' },
     
     // Administration Pages
     { id: 'settings', name: 'Settings', description: 'Access system settings and configuration', category: 'Admin Pages', route: '/settings' },

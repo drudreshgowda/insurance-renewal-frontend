@@ -387,6 +387,30 @@ const CommunicationDetails = () => {
     }
   };
 
+  const getBrandColor = (type) => {
+    switch (type) {
+      case 'email': return theme.palette.primary.main;
+      case 'phone': return theme.palette.success.main;
+      case 'sms': return theme.palette.warning.main;
+      case 'whatsapp': return theme.palette.success.main;
+      case 'chat': return theme.palette.info.main;
+      case 'video': return theme.palette.secondary.main;
+      default: return theme.palette.primary.main;
+    }
+  };
+
+  const getTypeLabel = (type) => {
+    switch (type) {
+      case 'email': return 'Email';
+      case 'phone': return 'Call';
+      case 'sms': return 'SMS';
+      case 'whatsapp': return 'WhatsApp';
+      case 'chat': return 'Chat';
+      case 'video': return 'Video Call';
+      default: return type;
+    }
+  };
+
   return (
     <Box sx={{ p: 3 }}>
       {/* Header */}
@@ -598,29 +622,316 @@ const CommunicationDetails = () => {
           </TabPanel>
 
           <TabPanel value={tabValue} index={1}>
-            <Timeline>
-              {communicationData.communications.map((comm) => (
-                <TimelineItem key={comm.id}>
-                  <TimelineOppositeContent color="text.secondary">
-                    {new Date(comm.timestamp).toLocaleDateString()}
-                  </TimelineOppositeContent>
-                  <TimelineSeparator>
-                    <TimelineDot color={getTypeColor(comm.type)}>
-                      {getTypeIcon(comm.type)}
-                    </TimelineDot>
-                    <TimelineConnector />
-                  </TimelineSeparator>
-                  <TimelineContent>
-                    <Typography variant="h6" component="span">
-                      {comm.subject}
+            <Grid container spacing={3}>
+              {/* Timeline Section */}
+              <Grid item xs={12} lg={8}>
+                <Box sx={{ position: 'relative' }}>
+                  {/* Timeline Header */}
+                  <Box sx={{ mb: 4 }}>
+                    <Typography variant="h5" fontWeight="600" sx={{ mb: 1 }}>
+                      Communication Journey
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      {comm.content}
+                      Complete timeline of customer interactions and touchpoints
                     </Typography>
-                  </TimelineContent>
-                </TimelineItem>
-              ))}
-            </Timeline>
+                  </Box>
+
+                  {/* Custom Timeline */}
+                  <Box sx={{ position: 'relative', pl: 4 }}>
+                    {/* Vertical Line */}
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        left: 20,
+                        top: 0,
+                        bottom: 0,
+                        width: 2,
+                        background: `linear-gradient(180deg, ${theme.palette.primary.main} 0%, ${alpha(theme.palette.primary.main, 0.3)} 100%)`,
+                        borderRadius: 1
+                      }}
+                    />
+
+                    {communicationData.communications.map((comm, index) => (
+                      <Box key={comm.id} sx={{ position: 'relative', mb: 4 }}>
+                        {/* Timeline Dot with Brand Colors */}
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            left: -28,
+                            top: 8,
+                            width: 40,
+                            height: 40,
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            bgcolor: getBrandColor(comm.type),
+                            boxShadow: `0 4px 12px ${alpha(getBrandColor(comm.type), 0.3)}`,
+                            border: `3px solid ${theme.palette.background.paper}`,
+                            zIndex: 1
+                          }}
+                        >
+                          {getTypeIcon(comm.type)}
+                        </Box>
+
+                        {/* Timeline Content Card */}
+                        <Card
+                          sx={{
+                            ml: 3,
+                            borderRadius: 3,
+                            boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                            border: `1px solid ${alpha(getBrandColor(comm.type), 0.1)}`,
+                            transition: 'all 0.3s ease',
+                            '&:hover': {
+                              transform: 'translateY(-2px)',
+                              boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+                            }
+                          }}
+                        >
+                          <CardContent sx={{ p: 3 }}>
+                            {/* Header */}
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                              <Box sx={{ flex: 1 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                  <Chip
+                                    label={getTypeLabel(comm.type)}
+                                    size="small"
+                                    sx={{
+                                      bgcolor: alpha(getBrandColor(comm.type), 0.1),
+                                      color: getBrandColor(comm.type),
+                                      fontWeight: 600,
+                                      mr: 1
+                                    }}
+                                  />
+                                  <Typography variant="caption" color="text.secondary">
+                                    {new Date(comm.timestamp).toLocaleDateString('en-US', {
+                                      month: 'short',
+                                      day: 'numeric',
+                                      year: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                  </Typography>
+                                </Box>
+                                <Typography variant="h6" fontWeight="600" sx={{ mb: 1 }}>
+                                  {comm.subject}
+                                </Typography>
+                              </Box>
+                              <IconButton
+                                size="small"
+                                onClick={() => {/* Handle star toggle */}}
+                                color={comm.starred ? "warning" : "default"}
+                              >
+                                {comm.starred ? <StarIcon /> : <StarBorderIcon />}
+                              </IconButton>
+                            </Box>
+
+                            {/* Content */}
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2, lineHeight: 1.6 }}>
+                              {comm.content}
+                            </Typography>
+
+                            {/* Event Details */}
+                            <Box
+                              sx={{
+                                bgcolor: alpha(getBrandColor(comm.type), 0.05),
+                                borderRadius: 2,
+                                p: 2,
+                                border: `1px solid ${alpha(getBrandColor(comm.type), 0.1)}`
+                              }}
+                            >
+                              <Grid container spacing={2}>
+                                <Grid item xs={12} sm={6}>
+                                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                    <PersonIcon sx={{ fontSize: 16, mr: 1, color: 'text.secondary' }} />
+                                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+                                      Agent: {comm.agent}
+                                    </Typography>
+                                  </Box>
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                    <Chip
+                                      label={comm.status}
+                                      size="small"
+                                      color={getStatusColor(comm.status)}
+                                      variant="outlined"
+                                      sx={{ fontSize: '0.7rem', height: 20 }}
+                                    />
+                                  </Box>
+                                </Grid>
+                                {comm.duration && (
+                                  <Grid item xs={12} sm={6}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                      <AccessTimeIcon sx={{ fontSize: 16, mr: 1, color: 'text.secondary' }} />
+                                      <Typography variant="caption" color="text.secondary">
+                                        Duration: {comm.duration}
+                                      </Typography>
+                                    </Box>
+                                  </Grid>
+                                )}
+                                {comm.responseTime && (
+                                  <Grid item xs={12} sm={6}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                      <TrendingUpIcon sx={{ fontSize: 16, mr: 1, color: 'text.secondary' }} />
+                                      <Typography variant="caption" color="text.secondary">
+                                        Response Time: {comm.responseTime}
+                                      </Typography>
+                                    </Box>
+                                  </Grid>
+                                )}
+                              </Grid>
+
+                              {/* Tags */}
+                              {comm.tags && comm.tags.length > 0 && (
+                                <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                  {comm.tags.map((tag, tagIndex) => (
+                                    <Chip
+                                      key={tagIndex}
+                                      label={tag}
+                                      size="small"
+                                      variant="outlined"
+                                      sx={{
+                                        fontSize: '0.7rem',
+                                        height: 22,
+                                        bgcolor: alpha(theme.palette.primary.main, 0.05)
+                                      }}
+                                    />
+                                  ))}
+                                </Box>
+                              )}
+
+                              {/* Attachments */}
+                              {comm.attachments && comm.attachments.length > 0 && (
+                                <Box sx={{ mt: 2 }}>
+                                  <Chip
+                                    icon={<DownloadIcon sx={{ fontSize: 14 }} />}
+                                    label={`${comm.attachments.length} attachment(s)`}
+                                    size="small"
+                                    variant="outlined"
+                                    clickable
+                                    sx={{
+                                      fontSize: '0.7rem',
+                                      height: 24,
+                                      '&:hover': {
+                                        bgcolor: alpha(theme.palette.info.main, 0.1)
+                                      }
+                                    }}
+                                  />
+                                </Box>
+                              )}
+                            </Box>
+                          </CardContent>
+                        </Card>
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+              </Grid>
+
+              {/* User Details Panel */}
+              <Grid item xs={12} lg={4}>
+                <Card
+                  sx={{
+                    position: 'sticky',
+                    top: 24,
+                    borderRadius: 3,
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+                    border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`
+                  }}
+                >
+                  <CardContent sx={{ p: 3 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                      <PersonIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
+                      <Typography variant="h6" fontWeight="600">User Details</Typography>
+                    </Box>
+
+                    <Box sx={{ textAlign: 'center', mb: 3 }}>
+                      <Avatar
+                        sx={{
+                          width: 80,
+                          height: 80,
+                          bgcolor: theme.palette.primary.main,
+                          fontSize: '2rem',
+                          fontWeight: 600,
+                          mx: 'auto',
+                          mb: 2,
+                          boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
+                        }}
+                      >
+                        {communicationData.customerName.split(' ').map(n => n[0]).join('')}
+                      </Avatar>
+                      <Typography variant="h6" fontWeight="600" sx={{ mb: 0.5 }}>
+                        {communicationData.customerName}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Customer ID: {communicationData.caseId}
+                      </Typography>
+                    </Box>
+
+                    <Divider sx={{ my: 3 }} />
+
+                    {/* Customer Details */}
+                    <Box sx={{ mb: 3 }}>
+                      <Typography variant="subtitle2" fontWeight="600" sx={{ mb: 2, color: theme.palette.primary.main }}>
+                        Contact Information
+                      </Typography>
+                      <Stack spacing={2}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', p: 2, bgcolor: alpha(theme.palette.primary.main, 0.05), borderRadius: 2 }}>
+                          <EmailIcon sx={{ mr: 2, color: theme.palette.primary.main }} />
+                          <Box>
+                            <Typography variant="body2" color="text.secondary">Email</Typography>
+                            <Typography variant="body2" fontWeight="500">john.doe@example.com</Typography>
+                          </Box>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', p: 2, bgcolor: alpha(theme.palette.success.main, 0.05), borderRadius: 2 }}>
+                          <PhoneIcon sx={{ mr: 2, color: theme.palette.success.main }} />
+                          <Box>
+                            <Typography variant="body2" color="text.secondary">Phone</Typography>
+                            <Typography variant="body2" fontWeight="500">+91 98765 43210</Typography>
+                          </Box>
+                        </Box>
+                      </Stack>
+                    </Box>
+
+                    <Divider sx={{ my: 3 }} />
+
+                    {/* Communication Stats */}
+                    <Box>
+                      <Typography variant="subtitle2" fontWeight="600" sx={{ mb: 2, color: theme.palette.primary.main }}>
+                        Communication Summary
+                      </Typography>
+                      <Grid container spacing={2}>
+                        <Grid item xs={6}>
+                          <Box sx={{ textAlign: 'center', p: 2, bgcolor: alpha(theme.palette.info.main, 0.05), borderRadius: 2 }}>
+                            <Typography variant="h6" color="info.main" fontWeight="bold">
+                              {communicationData.totalCommunications}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">Total</Typography>
+                          </Box>
+                        </Grid>
+                        <Grid item xs={6}>
+                          <Box sx={{ textAlign: 'center', p: 2, bgcolor: alpha(theme.palette.success.main, 0.05), borderRadius: 2 }}>
+                            <Typography variant="h6" color="success.main" fontWeight="bold">
+                              {communicationData.summary.satisfactionRating}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">Rating</Typography>
+                          </Box>
+                        </Grid>
+                        <Grid item xs={12}>
+                          <Box sx={{ textAlign: 'center', p: 2, bgcolor: alpha(theme.palette.warning.main, 0.05), borderRadius: 2 }}>
+                            <Typography variant="body2" color="warning.main" fontWeight="bold">
+                              {communicationData.summary.averageResponseTime}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">Avg Response Time</Typography>
+                          </Box>
+                        </Grid>
+                      </Grid>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
           </TabPanel>
 
           <TabPanel value={tabValue} index={2}>

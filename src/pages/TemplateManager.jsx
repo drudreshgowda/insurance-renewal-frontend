@@ -1,22 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box, Typography, Grid, Card, CardContent, Button, Chip, Dialog, DialogTitle,
   DialogContent, DialogActions, TextField, FormControl, InputLabel, Select,
-  MenuItem, Tabs, Tab, List, ListItem, ListItemText, ListItemIcon, Divider,
-  Alert, useTheme, alpha, Fade, Grow, IconButton, Tooltip, Avatar, Badge,
-  Accordion, AccordionSummary, AccordionDetails, Stack, Paper, Switch,
-  FormControlLabel, Autocomplete, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, Stepper, Step, StepLabel, StepContent
+  MenuItem, Tabs, Tab,
+  Alert, useTheme, Fade, Grow, IconButton, Tooltip, Avatar,
+  Paper, Switch,
+  FormControlLabel, Autocomplete, Stepper, Step, StepLabel, StepContent
 } from '@mui/material';
 import {
   Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, ContentCopy as CopyIcon,
   Preview as PreviewIcon, Save as SaveIcon, Email as EmailIcon, Sms as SmsIcon,
-  WhatsApp as WhatsAppIcon, Campaign as CampaignIcon, Code as CodeIcon,
-  Palette as PaletteIcon, TextFields as TextIcon, Image as ImageIcon,
-  Link as LinkIcon, FormatBold as BoldIcon, FormatItalic as ItalicIcon,
-  ExpandMore as ExpandMoreIcon, DragIndicator as DragIcon, Close as CloseIcon,
+  WhatsApp as WhatsAppIcon, Campaign as CampaignIcon,
+  Close as CloseIcon,
   CloudUpload as CloudUploadIcon, GetApp as GetAppIcon, Verified as VerifiedIcon,
-  Security as SecurityIcon, Assignment as AssignmentIcon, Schedule as ScheduleIcon,
+  Security as SecurityIcon, Assignment as AssignmentIcon,
   Analytics as AnalyticsIcon, FilterList as FilterIcon, Search as SearchIcon,
   Refresh as RefreshIcon
 } from '@mui/icons-material';
@@ -63,9 +60,35 @@ const TemplateManager = () => {
     setTimeout(() => setLoaded(true), 100);
   }, []);
 
+  const filterTemplates = useCallback(() => {
+    let filtered = templates;
+
+    if (searchTerm) {
+      filtered = filtered.filter(template =>
+        template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        template.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        template.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    }
+
+    if (typeFilter !== 'all') {
+      filtered = filtered.filter(template => template.type === typeFilter);
+    }
+
+    if (categoryFilter !== 'all') {
+      filtered = filtered.filter(template => template.category === categoryFilter);
+    }
+
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(template => template.status === statusFilter);
+    }
+
+    setFilteredTemplates(filtered);
+  }, [templates, searchTerm, typeFilter, categoryFilter, statusFilter]);
+
   useEffect(() => {
     filterTemplates();
-  }, [templates, searchTerm, typeFilter, categoryFilter, statusFilter]);
+  }, [filterTemplates]);
 
   const loadTemplates = () => {
     const mockTemplates = [
@@ -124,32 +147,6 @@ Thank you for choosing us! 🙏`,
       }
     ];
     setTemplates(mockTemplates);
-  };
-
-  const filterTemplates = () => {
-    let filtered = templates;
-
-    if (searchTerm) {
-      filtered = filtered.filter(template =>
-        template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        template.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        template.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
-    }
-
-    if (typeFilter !== 'all') {
-      filtered = filtered.filter(template => template.type === typeFilter);
-    }
-
-    if (categoryFilter !== 'all') {
-      filtered = filtered.filter(template => template.category === categoryFilter);
-    }
-
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(template => template.status === statusFilter);
-    }
-
-    setFilteredTemplates(filtered);
   };
 
   const getChannelIcon = (type) => {
@@ -257,7 +254,7 @@ Thank you for choosing us! 🙏`,
   const handlePreviewTemplate = (template) => {
     setSelectedTemplate(template);
     setPreviewData({
-      CustomerName: 'John Doe',
+      CustomerName: 'Arjun Sharma',
       PolicyType: 'Health Insurance',
       PolicyNumber: 'POL123456789',
       ExpiryDate: '2025-03-15',

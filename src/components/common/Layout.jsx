@@ -56,7 +56,7 @@ import { usePermissions } from '../../context/PermissionsContext.jsx';
 import NotificationsDialog from '../notifications/Notifications';
 import { alpha } from '@mui/material/styles';
 import { useTranslation } from 'react-i18next';
-import { initializeRenewalAgent, sendMessage } from '../../services/ollamaService';
+import { initializeRenewalAgent, sendMessage } from '../../services/iRenewalAI';
 
 const drawerWidth = 260;
 
@@ -99,18 +99,20 @@ const Layout = ({ children }) => {
   const [emailMenuOpen, setEmailMenuOpen] = useState(true);
   const [askAIOpen, setAskAIOpen] = useState(false);
   const [aiQuery, setAiQuery] = useState('');
-  const [aiResponse, setAiResponse] = useState('');
+  const [, setAiResponse] = useState('');
   const [isAILoading, setIsAILoading] = useState(false);
   const [agentInitialized, setAgentInitialized] = useState(false);
   const [agentError, setAgentError] = useState('');
   const [chatHistory, setChatHistory] = useState([]);
-  const [isStreaming, setIsStreaming] = useState(false);
+  const [, setIsStreaming] = useState(false);
   const [aiSuggestions] = useState([
-    "How can I improve renewal rates on this page?",
-    "What specific insights can you provide about this data?",
-    "What are the key performance indicators I should focus on?",
-    "How can I optimize the processes shown here?",
-    "What trends and patterns do you see in this data?"
+    "Analyze my current renewal portfolio performance",
+    "What strategies can improve my renewal rates?", 
+    "How can I optimize my digital channel performance?",
+    "What are the key bottlenecks in my renewal process?",
+    "Provide insights on my premium collection efficiency",
+    "How can I reduce customer churn this quarter?",
+    "What predictive insights do you see in my data?"
   ]);
   const navigate = useNavigate();
   const location = useLocation();
@@ -231,7 +233,18 @@ const Layout = ({ children }) => {
       const currentPath = location.pathname;
       const pageContext = getPageContext(currentPath);
       
-      // Enhanced query with page context
+      // Get dashboard data for context (mock data for now)
+      const dashboardData = {
+        totalCases: 1250,
+        inProgress: 470,
+        renewed: 780,
+        pendingAction: 125,
+        collectionRate: 81.0,
+        digitalUsage: 75,
+        period: 'Q4 2024'
+      };
+      
+      // Enhanced query with page and dashboard context
       const contextualQuery = `
 CURRENT PAGE CONTEXT:
 Page: ${pageContext.name}
@@ -242,10 +255,7 @@ USER QUERY: ${currentQuery}
 
 Please provide a response specifically relevant to the ${pageContext.name} page context. Focus on ${pageContext.focus}.`;
       
-      let fullResponse = '';
-      
       const response = await sendMessage(contextualQuery, contextForAI, (chunk, fullContent) => {
-        fullResponse = fullContent;
         // Update the last AI message with streaming content
         setChatHistory(prev => {
           const updated = [...prev];
@@ -259,7 +269,7 @@ Please provide a response specifically relevant to the ${pageContext.name} page 
           }
           return updated;
         });
-      });
+      }, pageContext, dashboardData);
       
       // Mark streaming as complete
       setChatHistory(prev => {

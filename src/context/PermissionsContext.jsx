@@ -202,8 +202,8 @@ export const PermissionsProvider = ({ children }) => {
       { path: '/emails/bulk', permission: 'bulk-email', name: 'Bulk Email' },
       
       // Renewal Communication Pages
-      { path: '/renewals/email-manager', permission: 'renewal-email-manager', name: 'Renewal Email Manager' },
-      { path: '/renewals/whatsapp-manager', permission: 'renewal-whatsapp-manager', name: 'Renewal WhatsApp Manager' },
+      { path: '/renewals/email-manager', permission: 'renewal-email-manager', name: 'Email Manager' },
+              { path: '/renewals/whatsapp-manager', permission: 'renewal-whatsapp-manager', name: 'WhatsApp Manager' },
       
       // Marketing Pages
       { path: '/campaigns', permission: 'campaigns', name: 'Campaigns' },
