@@ -33,7 +33,9 @@ import {
   Collapse,
   Alert,
   AvatarGroup,
-  CircularProgress
+  CircularProgress,
+  FormControlLabel,
+  Checkbox
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -58,7 +60,11 @@ import {
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
   Remove as RemoveIcon,
-  SupervisorAccount as EscalateIcon
+  SupervisorAccount as EscalateIcon,
+  Reply as ReplyIcon,
+  Forward as ForwardIcon,
+  Send as SendIcon,
+  Email as EmailIcon
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -81,6 +87,11 @@ const EmailDetail = () => {
   const [escalateDialog, setEscalateDialog] = useState(false);
   const [escalationReason, setEscalationReason] = useState('');
   const [escalationPriority, setEscalationPriority] = useState('high');
+  const [replyDialog, setReplyDialog] = useState(false);
+  const [forwardDialog, setForwardDialog] = useState(false);
+  const [replyText, setReplyText] = useState('');
+  const [forwardText, setForwardText] = useState('');
+  const [includeThread, setIncludeThread] = useState(true);
 
   // Mock data will be defined inside useEffect to avoid dependency issues
 
@@ -722,6 +733,23 @@ Phone: +1 (555) 123-4567`
           
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button
+              startIcon={<ReplyIcon />}
+              variant="contained"
+              onClick={() => setReplyDialog(true)}
+              sx={{ borderRadius: 2 }}
+            >
+              Reply
+            </Button>
+            <Button
+              startIcon={<ForwardIcon />}
+              variant="contained"
+              color="secondary"
+              onClick={() => setForwardDialog(true)}
+              sx={{ borderRadius: 2 }}
+            >
+              Forward
+            </Button>
+            <Button
               startIcon={<AssignIcon />}
               variant="outlined"
               onClick={() => setAssignDialog(true)}
@@ -1136,6 +1164,229 @@ Phone: +1 (555) 123-4567`
               startIcon={<EscalateIcon />}
             >
               Escalate Now
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Reply Dialog with Thread Attachment */}
+        <Dialog 
+          open={replyDialog} 
+          onClose={() => setReplyDialog(false)} 
+          maxWidth="lg" 
+          fullWidth
+        >
+          <DialogTitle>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <ReplyIcon color="primary" />
+              Reply to: {email.subject}
+            </Box>
+            <Typography variant="body2" color="text.secondary">
+              To: {email.from}
+            </Typography>
+          </DialogTitle>
+          <DialogContent>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
+              <TextField
+                label="Subject"
+                fullWidth
+                value={`Re: ${email.subject}`}
+                variant="outlined"
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+              />
+              
+              <TextField
+                label="Your Reply"
+                fullWidth
+                multiline
+                rows={12}
+                variant="outlined"
+                placeholder="Type your reply here..."
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+              />
+              
+              <FormControlLabel
+                control={
+                  <Checkbox 
+                    checked={includeThread}
+                    onChange={(e) => setIncludeThread(e.target.checked)}
+                  />
+                }
+                label="Include email thread in reply"
+              />
+              
+              {includeThread && (
+                <Card sx={{ bgcolor: 'background.default', p: 2 }}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Email Thread Preview:
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    The following conversation history will be included:
+                  </Typography>
+                  <Box sx={{ mt: 1, p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
+                    <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                      --- Original Message ---<br/>
+                      From: {email.from}<br/>
+                      To: {email.to}<br/>
+                      Date: {formatDate(email.dateReceived)}<br/>
+                      Subject: {email.subject}<br/><br/>
+                      {email.body.substring(0, 200)}...
+                    </Typography>
+                    {email.threadHistory.length > 0 && (
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                        + {email.threadHistory.length} previous messages in thread
+                      </Typography>
+                    )}
+                  </Box>
+                </Card>
+              )}
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{ p: 3 }}>
+            <Button onClick={() => setReplyDialog(false)} variant="outlined">
+              Cancel
+            </Button>
+            <Button 
+              variant="contained"
+              startIcon={<SendIcon />}
+              disabled={!replyText.trim()}
+              onClick={() => {
+                // Handle reply logic here
+                console.log('Sending reply:', { replyText, includeThread });
+                setReplyDialog(false);
+                setReplyText('');
+              }}
+            >
+              Send Reply
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Forward Dialog with Thread Attachment */}
+        <Dialog 
+          open={forwardDialog} 
+          onClose={() => setForwardDialog(false)} 
+          maxWidth="lg" 
+          fullWidth
+        >
+          <DialogTitle>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <ForwardIcon color="secondary" />
+              Forward: {email.subject}
+            </Box>
+          </DialogTitle>
+          <DialogContent>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
+              <TextField
+                label="To"
+                fullWidth
+                placeholder="Enter recipient email addresses..."
+                variant="outlined"
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+              />
+              
+              <TextField
+                label="Subject"
+                fullWidth
+                value={`Fwd: ${email.subject}`}
+                variant="outlined"
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+              />
+              
+              <TextField
+                label="Message"
+                fullWidth
+                multiline
+                rows={8}
+                variant="outlined"
+                placeholder="Add your message here..."
+                value={forwardText}
+                onChange={(e) => setForwardText(e.target.value)}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+              />
+              
+              <FormControlLabel
+                control={
+                  <Checkbox 
+                    checked={includeThread}
+                    onChange={(e) => setIncludeThread(e.target.checked)}
+                  />
+                }
+                label="Include complete email thread"
+              />
+              
+              {includeThread && (
+                <Card sx={{ bgcolor: 'background.default', p: 2 }}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Forwarded Email Content:
+                  </Typography>
+                  <Box sx={{ mt: 1, p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
+                    <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                      --- Forwarded Message ---<br/>
+                      From: {email.from}<br/>
+                      To: {email.to}<br/>
+                      Date: {formatDate(email.dateReceived)}<br/>
+                      Subject: {email.subject}<br/><br/>
+                      {email.body}
+                    </Typography>
+                    
+                    {email.threadHistory.length > 0 && (
+                      <Box sx={{ mt: 2 }}>
+                        <Typography variant="subtitle2" gutterBottom>
+                          Thread History:
+                        </Typography>
+                        {email.threadHistory.map((thread, index) => (
+                          <Box key={thread.id} sx={{ mb: 2, p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+                            <Typography variant="caption" color="text.secondary">
+                              From: {thread.from} • {formatDate(thread.date)}
+                            </Typography>
+                            <Typography variant="body2" sx={{ mt: 0.5 }}>
+                              {thread.preview}
+                            </Typography>
+                          </Box>
+                        ))}
+                      </Box>
+                    )}
+                    
+                    {email.attachments && email.attachments.length > 0 && (
+                      <Box sx={{ mt: 2 }}>
+                        <Typography variant="subtitle2" gutterBottom>
+                          Attachments:
+                        </Typography>
+                        {email.attachments.map((attachment, index) => (
+                          <Chip
+                            key={index}
+                            icon={<AttachmentIcon />}
+                            label={`${attachment.name} (${attachment.size})`}
+                            variant="outlined"
+                            size="small"
+                            sx={{ mr: 1, mb: 1 }}
+                          />
+                        ))}
+                      </Box>
+                    )}
+                  </Box>
+                </Card>
+              )}
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{ p: 3 }}>
+            <Button onClick={() => setForwardDialog(false)} variant="outlined">
+              Cancel
+            </Button>
+            <Button 
+              variant="contained"
+              color="secondary"
+              startIcon={<SendIcon />}
+              onClick={() => {
+                // Handle forward logic here
+                console.log('Forwarding email:', { forwardText, includeThread });
+                setForwardDialog(false);
+                setForwardText('');
+              }}
+            >
+              Forward Email
             </Button>
           </DialogActions>
         </Dialog>
