@@ -3,7 +3,7 @@ import {
   Box, Typography, Grid, Card, CardContent, Button, Chip, Dialog, DialogTitle,
   DialogContent, DialogActions, TextField, FormControl, InputLabel, Select,
   MenuItem, useTheme, alpha, IconButton, Switch, FormControlLabel, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, LinearProgress, Checkbox,
+  TableContainer, TableHead, TableRow, LinearProgress, Checkbox, CircularProgress,
   Tabs, Tab, List, ListItem, ListItemText, Divider, AppBar,
   Badge, Tooltip, SpeedDial, SpeedDialAction, SpeedDialIcon,
   Alert, Snackbar, ToggleButton, ToggleButtonGroup
@@ -28,6 +28,225 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { analyzeEmail, enhanceEmailContent, initializeEmailAgent, generateSmartReplies as generateEmailAIReplies } from '../services/emailAI';
+
+// Component to format AI analysis text properly
+const FormattedAIAnalysis = ({ text }) => {
+  const theme = useTheme();
+  const [debouncedText, setDebouncedText] = useState('');
+  const [isStreaming, setIsStreaming] = useState(false);
+  
+  // Debounce the text to avoid parsing incomplete streaming content
+  useEffect(() => {
+    setIsStreaming(true);
+    const timer = setTimeout(() => {
+      setDebouncedText(text);
+      setIsStreaming(false);
+    }, 300); // Wait 300ms after last update
+    
+    return () => clearTimeout(timer);
+  }, [text]);
+  
+  if (!text) return null;
+  
+  // Parse the AI analysis text and format it properly
+  const parseAnalysisText = (analysisText) => {
+    const sections = {};
+    
+    // Handle incomplete streaming text
+    if (!analysisText || analysisText.length < 20) {
+      return sections;
+    }
+    
+    // Try to extract sections using a more robust approach
+    const sectionPatterns = [
+      /(?:^|\n)\s*\*\*Sentiment\*\*:\s*([^\n]*(?:\n(?!\s*\*\*\w+\*\*:)[^\n]*)*)/gi,
+      /(?:^|\n)\s*\*\*Intent\*\*:\s*([^\n]*(?:\n(?!\s*\*\*\w+\*\*:)[^\n]*)*)/gi,
+      /(?:^|\n)\s*\*\*Urgency\*\*:\s*([^\n]*(?:\n(?!\s*\*\*\w+\*\*:)[^\n]*)*)/gi,
+      /(?:^|\n)\s*\*\*Key Points?\*\*:\s*([^\n]*(?:\n(?!\s*\*\*\w+\*\*:)[^\n]*)*)/gi,
+      /(?:^|\n)\s*\*\*Tone\*\*:\s*([^\n]*(?:\n(?!\s*\*\*\w+\*\*:)[^\n]*)*)/gi,
+      /(?:^|\n)\s*\*\*Suggested Tone\*\*:\s*([^\n]*(?:\n(?!\s*\*\*\w+\*\*:)[^\n]*)*)/gi
+    ];
+    
+    const sectionNames = ['Sentiment', 'Intent', 'Urgency', 'Key Points', 'Tone', 'Suggested Tone'];
+    
+    sectionPatterns.forEach((pattern, index) => {
+      const matches = [...analysisText.matchAll(pattern)];
+      if (matches.length > 0) {
+        const sectionName = sectionNames[index];
+        let content = matches[0][1].trim();
+        
+        // Clean up the content
+        content = content
+          .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold markers
+          .replace(/\(confidence[:\s]*\d+%?\)/gi, '') // Remove confidence indicators
+          .replace(/confidence[:\s]*\d+%?/gi, '') // Remove confidence labels
+          .replace(/\s+/g, ' ') // Normalize spaces
+          .trim();
+        
+        if (content) {
+          sections[sectionName] = content;
+        }
+      }
+    });
+    
+    // Fallback to line-by-line parsing if regex approach didn't work well
+    if (Object.keys(sections).length === 0) {
+      const lines = analysisText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+      let currentSection = null;
+      
+      for (const line of lines) {
+        // Check for section headers
+        const sectionMatch = line.match(/^\*?\*?(Sentiment|Intent|Urgency|Key Points?|Tone|Emotional State|Suggested Tone)\*?\*?:\s*(.*)/i);
+        
+        if (sectionMatch) {
+          const sectionName = sectionMatch[1];
+          let sectionValue = sectionMatch[2].trim();
+          
+          // Clean up the value
+          sectionValue = sectionValue
+            .replace(/\*\*(.*?)\*\*/g, '$1')
+            .replace(/\(confidence[:\s]*\d+%?\)/gi, '')
+            .replace(/confidence[:\s]*\d+%?/gi, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+          
+          sections[sectionName] = sectionValue;
+          currentSection = sectionName;
+        }
+        // Check for continuation lines
+        else if (currentSection && !line.includes(':')) {
+          const content = line.replace(/\*\*(.*?)\*\*/g, '$1').trim();
+          if (content) {
+            sections[currentSection] = (sections[currentSection] + ' ' + content).trim();
+          }
+        }
+      }
+    }
+    
+    return sections;
+  };
+  
+  // Use debounced text for parsing to avoid parsing incomplete content
+  const textToParse = debouncedText || text;
+  const sections = parseAnalysisText(textToParse);
+  const hasValidSections = Object.keys(sections).length > 0;
+  
+  const getSentimentColor = (sentiment) => {
+    const sentimentLower = sentiment.toLowerCase();
+    if (sentimentLower.includes('positive')) return theme.palette.success.main;
+    if (sentimentLower.includes('negative')) return theme.palette.error.main;
+    return theme.palette.info.main;
+  };
+  
+  const getUrgencyColor = (urgency) => {
+    const urgencyLower = urgency.toLowerCase();
+    if (urgencyLower.includes('high') || urgencyLower.includes('urgent')) return theme.palette.error.main;
+    if (urgencyLower.includes('medium')) return theme.palette.warning.main;
+    return theme.palette.info.main;
+  };
+  
+  // Show streaming indicator or fallback display
+  if (!hasValidSections) {
+    if (isStreaming || (text && text.length < 50)) {
+      return (
+        <Box sx={{ p: 2, backgroundColor: alpha(theme.palette.info.main, 0.1), borderRadius: 1 }}>
+          <Typography variant="body2" color="info.main" sx={{ fontWeight: 600, mb: 1 }}>
+            🤖 AI Analysis in Progress...
+          </Typography>
+          <Typography variant="body2" sx={{ whiteSpace: 'pre-line', opacity: 0.7 }}>
+            {text || 'Analyzing email content...'}
+          </Typography>
+          <LinearProgress sx={{ mt: 1 }} />
+        </Box>
+      );
+    }
+    
+    // If we have substantial text but no parsed sections, show formatted fallback
+    if (text && text.length > 50) {
+      // Split text into lines and format them properly
+      const lines = text.split('\n').filter(line => line.trim());
+      
+      return (
+        <Box sx={{ p: 2, backgroundColor: alpha(theme.palette.primary.main, 0.05), borderRadius: 1 }}>
+          <Typography variant="body2" color="primary.main" sx={{ fontWeight: 600, mb: 1 }}>
+            📧 AI Analysis:
+          </Typography>
+          <Box>
+            {lines.map((line, i) => {
+              const trimmedLine = line.trim();
+              if (!trimmedLine) return null;
+              
+              // Check if this is a section header
+              const isSectionHeader = trimmedLine.match(/^\*\*(Sentiment|Intent|Urgency|Key Points?|Tone)\*\*:/i) || 
+                                    trimmedLine.match(/^(Sentiment|Intent|Urgency|Key Points?|Tone):/i);
+              
+              // Check if this is a bullet point
+              const isBullet = trimmedLine.startsWith('•') || trimmedLine.startsWith('-') || trimmedLine.startsWith('*');
+              
+              // Clean the text
+              const cleanText = trimmedLine
+                .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold markers
+                .replace(/\(confidence[:\s]*\d+%?\)/gi, '') // Remove confidence indicators
+                .replace(/confidence[:\s]*\d+%?/gi, '') // Remove confidence labels
+                .trim();
+              
+              return (
+                <Typography 
+                  key={i} 
+                  variant="body2" 
+                  sx={{ 
+                    mb: isSectionHeader ? 1 : 0.5,
+                    mt: isSectionHeader ? (i > 0 ? 1.5 : 0) : 0,
+                    fontWeight: isSectionHeader ? 600 : 400,
+                    color: isSectionHeader ? 'primary.main' : 'text.primary',
+                    ml: isBullet ? 2 : 0,
+                    lineHeight: 1.5
+                  }}
+                >
+                  {cleanText}
+                </Typography>
+              );
+            })}
+          </Box>
+        </Box>
+      );
+    }
+    
+    return null;
+  }
+  
+  return (
+    <Box>
+      {Object.entries(sections).map(([sectionName, value], index) => {
+        if (!value) return null;
+        
+        return (
+          <Box key={index} sx={{ mb: 2 }}>
+            <Typography variant="subtitle2" sx={{ 
+              fontWeight: 600, 
+              color: sectionName.toLowerCase().includes('sentiment') ? getSentimentColor(value) :
+                     sectionName.toLowerCase().includes('urgency') ? getUrgencyColor(value) :
+                     'primary.main',
+              mb: 0.5 
+            }}>
+              {sectionName}:
+            </Typography>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                ml: 1,
+                color: 'text.primary',
+                whiteSpace: 'pre-line'
+              }}
+            >
+              {value}
+            </Typography>
+          </Box>
+        );
+      })}
+    </Box>
+  );
+};
 
 const RenewalEmailManager = () => {
   const theme = useTheme();
@@ -87,6 +306,16 @@ const RenewalEmailManager = () => {
   const [selectedAiSuggestion, setSelectedAiSuggestion] = useState('');
   const [currentAnalyzedEmail, setCurrentAnalyzedEmail] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
+  
+  // AI Connection Status State
+  const [emailBotConnected, setEmailBotConnected] = useState(false);
+  const [iRenewalConnected, setIRenewalConnected] = useState(false);
+  const [connectionTesting, setConnectionTesting] = useState(false);
+  
+  // Streaming State
+  const [streamingAnalysis, setStreamingAnalysis] = useState('');
+  const [streamingSuggestions, setStreamingSuggestions] = useState([]);
+  const [isStreaming, setIsStreaming] = useState(false);
   const [aiSettings, setAiSettings] = useState({
     tone: 'professional',
     style: 'formal',
@@ -754,6 +983,11 @@ Best regards,
     loadEmails();
   }, [loadEmails]);
 
+  // Check AI connection status on component mount
+  useEffect(() => {
+    checkAIConnectionStatus();
+  }, []);
+
   // Advanced filtering logic
   const applyFilters = useCallback(() => {
     let filtered = emails;
@@ -979,224 +1213,876 @@ Best regards,
     }
   };
 
-  // AI Assistant Functions
-  // Generate smart replies using Email AI service
-  const generateEmailSmartReplies = useCallback(async (analysis, email) => {
-    try {
-      await generateEmailAIReplies(email, analysis, aiSettings, (_chunk, _fullContent) => {
-        // Handle streaming response if needed
-      });
-      
-      // The Email AI service will return formatted suggestions
-      // For now, we'll use the existing format but enhance it with AI insights
-      const { sentiment, contextualInfo, urgency } = analysis;
-      const suggestions = [];
-      
-      // Use the current email's subject for reply generation
-      const emailSubject = email?.subject || selectedEmail?.subject || 'Your Policy Matter';
-
-      // Generate replies based on sentiment and AI analysis
-      if (sentiment === 'negative' || urgency === 'urgent') {
-        suggestions.push({
-          id: 'ai_urgent_response',
-          type: 'AI-Enhanced Urgent Response',
-          subject: `Re: ${emailSubject} - Immediate Attention Required`,
-          body: `Dear ${contextualInfo.customerName},
-
-Thank you for contacting us regarding your policy ${contextualInfo.policyNumber}. I understand this matter requires immediate attention, and I sincerely apologize for any inconvenience you may have experienced.
-
-Based on our AI analysis of your message, I have personally reviewed your case and am taking the following immediate actions:
-• Prioritizing your request for expedited processing
-• Assigning a dedicated specialist to handle your case
-• Ensuring all necessary documentation is processed within 24 hours
-
-I will personally monitor the progress and keep you updated every step of the way. You can reach me directly at this email or by calling our priority line.
-
-We value your trust in our services and are committed to resolving this matter swiftly.
-
-Best regards,
-${contextualInfo.agentName}
-Priority Support Team
-
----
-This response was enhanced with AI analysis to better address your specific concerns.`,
-          tone: 'empathetic',
-          urgency: 'high',
-          aiEnhanced: true
-        });
-      }
-
-      if (sentiment === 'positive') {
-        suggestions.push({
-          id: 'ai_positive_response',
-          type: 'AI-Enhanced Appreciation',
-          subject: `Re: ${emailSubject} - Thank You for Your Trust`,
-          body: `Dear ${contextualInfo.customerName},
-
-Thank you so much for your kind words and positive feedback regarding your renewal experience with policy ${contextualInfo.policyNumber}.
-
-Our AI analysis shows your satisfaction with our service, and it's wonderful to hear that our renewal process met your expectations. Customer satisfaction is our top priority, and your feedback motivates our entire team to continue delivering excellent service.
-
-If you have any future insurance needs or questions, please don't hesitate to reach out. We're here to help and look forward to serving you for years to come.
-
-Thank you again for choosing us and for taking the time to share your positive experience.
-
-Warm regards,
-${contextualInfo.agentName}
-Customer Relations Team
-
----
-This response was personalized using AI insights from your message.`,
-          tone: 'appreciative',
-          urgency: 'normal',
-          aiEnhanced: true
-        });
-      }
-
-      // Always include a professional AI-enhanced response
-      suggestions.push({
-        id: 'ai_professional_response',
-        type: 'AI-Enhanced Professional Response',
-        subject: `Re: ${emailSubject}`,
-        body: `Dear ${contextualInfo.customerName},
-
-Thank you for contacting us regarding your policy ${contextualInfo.policyNumber}.
-
-Based on our AI analysis of your message, I have reviewed your inquiry and am pleased to assist you with your renewal process. I will:
-• Process your renewal application with priority attention
-• Ensure all documentation is properly reviewed and validated
-• Provide you with updated policy terms and premium information
-• Address the specific concerns identified in your message
-
-Your renewal date is ${contextualInfo.renewalDate}, and I will ensure everything is completed well in advance of this deadline.
-
-If you have any additional questions or need further clarification on any aspect of your policy, please feel free to contact me directly.
-
-Best regards,
-${contextualInfo.agentName}
-Renewal Services Department
-
----
-This response incorporates AI insights to better address your specific needs.`,
-        tone: 'professional',
-        urgency: 'normal',
-        aiEnhanced: true
-      });
-
-      setAiSuggestions(suggestions);
-      showNotification('AI-powered smart replies generated successfully', 'success');
-    } catch (error) {
-      console.error('Email AI smart replies failed:', error);
-      // Fallback to basic smart replies generation
-      const { contextualInfo } = analysis;
-      const suggestions = [];
-      
-      // Basic fallback suggestions
-      suggestions.push({
-        id: 'basic_professional_response',
-        type: 'Professional Response',
-        subject: `Re: ${email?.subject || 'Your Policy Matter'}`,
-        body: `Dear ${contextualInfo.customerName},
+  // Helper functions for AI processing
+  const generateFallbackSuggestions = useCallback((analysis, email) => {
+    const { contextualInfo } = analysis;
+    
+    return [{
+      id: 'fallback_response',
+      type: 'Professional Response',
+      subject: `Re: ${email.subject}`,
+      body: `Dear ${contextualInfo.customerName},
 
 Thank you for contacting us regarding your policy ${contextualInfo.policyNumber}.
 
 I have reviewed your inquiry and will ensure your request receives proper attention. I will get back to you shortly with the information you need.
 
+If you have any urgent concerns, please don't hesitate to call our customer service line.
+
 Best regards,
 ${contextualInfo.agentName}
 Customer Service Team`,
-        tone: 'professional',
-        urgency: 'normal'
+      tone: 'professional',
+      urgency: 'normal'
+    }];
+  }, []);
+
+  const parseAIResponseForSuggestions = useCallback((aiResponse, analysis, email) => {
+    try {
+      const suggestions = [];
+      
+      // Split response into sections based on REPLY markers
+      const replySections = aiResponse.split(/REPLY\s*\d+:/i).filter(section => section.trim());
+      
+      for (let i = 0; i < replySections.length && suggestions.length < 3; i++) {
+        const replyContent = replySections[i].trim();
+        
+        // Skip empty sections or meta-commentary
+        if (!replyContent || replyContent.length < 20) continue;
+        
+        // Clean the content - remove meta-commentary and formatting artifacts
+        let cleanContent = replyContent
+          .replace(/\*\*.*?Response.*?\*\*/gi, '') // Remove response type labels
+          .replace(/\*\*Complete Response Summary.*$/s, '') // Remove summary sections
+          .replace(/Do you want me to.*$/s, '') // Remove questions to user
+          .replace(/^\s*[*\-•]\s*/gm, '') // Remove bullet points
+          .replace(/\n\s*\n\s*\n/g, '\n\n') // Clean up multiple line breaks
+          .trim();
+        
+        // Extract subject if present, otherwise use default
+        let subject = `Re: ${email.subject}`;
+        const subjectMatch = cleanContent.match(/Subject:\s*(.+?)(?:\n|$)/i);
+        if (subjectMatch) {
+          subject = subjectMatch[1].trim();
+          cleanContent = cleanContent.replace(/Subject:\s*(.+?)(?:\n|$)/i, '').trim();
+        }
+        
+        // Ensure proper email structure if missing greeting
+        if (!cleanContent.toLowerCase().includes('dear ') && !cleanContent.toLowerCase().includes('hello ')) {
+          const customerName = analysis.contextualInfo?.customerName || 'Customer';
+          cleanContent = `Dear ${customerName},\n\n${cleanContent}`;
+        }
+        
+        // Ensure proper closing if missing
+        if (!cleanContent.toLowerCase().includes('regards') && !cleanContent.toLowerCase().includes('sincerely')) {
+          const agentName = analysis.contextualInfo?.agentName || 'Customer Service Team';
+          cleanContent += `\n\nBest regards,\n${agentName}`;
+        }
+        
+        // Determine suggestion type
+        let suggestionType = 'Professional Response';
+        if (i === 1) suggestionType = 'Detailed Response';
+        if (i === 2) suggestionType = 'Empathetic Response';
+        
+        suggestions.push({
+          id: `ai_reply_${i + 1}`,
+          type: suggestionType,
+          subject: subject,
+          body: cleanContent,
+          tone: i === 2 ? 'empathetic' : 'professional',
+          urgency: analysis.urgency || 'normal',
+          aiEnhanced: true
+        });
+      }
+      
+      // If no valid replies found, create a single clean response
+      if (suggestions.length === 0) {
+        const cleanResponse = aiResponse
+          .replace(/\*\*.*?\*\*/g, '') // Remove all bold formatting
+          .replace(/Complete Response Summary.*$/s, '') // Remove summary
+          .replace(/Do you want me to.*$/s, '') // Remove questions
+          .trim();
+          
+        if (cleanResponse.length > 20) {
+          suggestions.push({
+            id: 'ai_clean_response',
+            type: 'AI Response',
+            subject: `Re: ${email.subject}`,
+            body: cleanResponse,
+            tone: 'professional',
+            urgency: analysis.urgency || 'normal',
+            aiEnhanced: true
+          });
+        }
+      }
+      
+      return suggestions.length > 0 ? suggestions : generateFallbackSuggestions(analysis, email);
+    } catch (error) {
+      console.error('Error parsing AI suggestions:', error);
+      return generateFallbackSuggestions(analysis, email);
+    }
+  }, [generateFallbackSuggestions]);
+
+  // AI Assistant Functions - Fixed Implementation
+  // Generate smart replies using Email AI service with streaming support
+  const generateEmailSmartReplies = useCallback(async (analysis, email, onChunk = null) => {
+    try {
+      setAiLoading(true);
+      let aiResponse = '';
+      
+      // Call the actual AI service for smart replies with streaming
+      await generateEmailAIReplies(email, analysis, (chunk, fullContent) => {
+        aiResponse = fullContent;
+        // Pass streaming data to external callback if provided
+        if (onChunk && typeof onChunk === 'function') {
+          onChunk(chunk, fullContent);
+        }
       });
+      
+      // Parse AI response to extract suggestions
+      const suggestions = parseAIResponseForSuggestions(aiResponse, analysis, email);
       
       setAiSuggestions(suggestions);
+      showNotification('AI-powered smart replies generated successfully', 'success');
+      return aiResponse; // Return the response for further processing
+    } catch (error) {
+      console.error('Email AI smart replies failed:', error);
+      // Fallback to basic smart replies generation
+      const fallbackSuggestions = generateFallbackSuggestions(analysis, email);
+      setAiSuggestions(fallbackSuggestions);
+      showNotification('Using fallback AI suggestions due to service error', 'warning');
+      return ''; // Return empty response on error
+    } finally {
+      setAiLoading(false);
     }
-  }, [aiSettings, selectedEmail]);
+  }, [parseAIResponseForSuggestions, generateFallbackSuggestions]);
 
-  const analyzeEmailWithAI = useCallback(async (email) => {
-    if (!email) {
-      showNotification('No email selected for analysis', 'warning');
-      return null;
-    }
+  const generateQuickSmartReplies = useCallback((analysis, email) => {
+    // Generate immediate, template-based smart replies for instant response
+    const suggestions = [];
+    const { contextualInfo, sentiment, urgency } = analysis;
+    const emailSubject = email?.subject || 'Your Policy Matter';
 
-    // Store the current email being analyzed
-    setCurrentAnalyzedEmail(email);
-    setAiLoading(true);
-    
-    try {
-      // Use the Email AI service for analysis
-      await analyzeEmail(email, (_chunk, _fullContent) => {
-        // Handle streaming response if needed
+    // Quick professional response (always available)
+    suggestions.push({
+      id: 'quick_professional',
+      type: 'Professional Response',
+      subject: `Re: ${emailSubject}`,
+      body: `Dear ${contextualInfo.customerName},
+
+Thank you for contacting us regarding your policy ${contextualInfo.policyNumber}.
+
+I have received your message and will review your request promptly. I will get back to you shortly with the information you need.
+
+If you have any urgent concerns, please don't hesitate to call our customer service line.
+
+Best regards,
+${contextualInfo.agentName}
+Customer Service Team`,
+      tone: 'professional',
+      urgency: 'normal',
+      isQuick: true
+    });
+
+    // Sentiment-based quick responses
+    if (sentiment === 'negative' || urgency === 'urgent') {
+      suggestions.push({
+        id: 'quick_urgent',
+        type: 'Urgent Response',
+        subject: `Re: ${emailSubject} - Immediate Attention`,
+        body: `Dear ${contextualInfo.customerName},
+
+Thank you for contacting us regarding your policy ${contextualInfo.policyNumber}. I understand this matter requires immediate attention.
+
+I have prioritized your request and am personally reviewing your case. I will contact you within the next 2 hours with a detailed response.
+
+In the meantime, if you need immediate assistance, please call our priority line.
+
+Best regards,
+${contextualInfo.agentName}
+Priority Support Team`,
+        tone: 'empathetic',
+        urgency: 'high',
+        isQuick: true
       });
+    }
+
+    if (sentiment === 'positive') {
+      suggestions.push({
+        id: 'quick_appreciation',
+        type: 'Appreciation Response',
+        subject: `Re: ${emailSubject} - Thank You`,
+        body: `Dear ${contextualInfo.customerName},
+
+Thank you for your message regarding policy ${contextualInfo.policyNumber}. We appreciate your continued trust in our services.
+
+I will review your request and provide you with the information you need shortly.
+
+Thank you for choosing us for your insurance needs.
+
+Best regards,
+${contextualInfo.agentName}
+Customer Relations Team`,
+        tone: 'appreciative',
+        urgency: 'normal',
+        isQuick: true
+      });
+    }
+
+    // Quick acknowledgment for document/payment related emails
+    if (email.body.toLowerCase().includes('document') || email.body.toLowerCase().includes('payment')) {
+      suggestions.push({
+        id: 'quick_document',
+        type: 'Document/Payment Response',
+        subject: `Re: ${emailSubject} - Processing Your Request`,
+        body: `Dear ${contextualInfo.customerName},
+
+Thank you for your message regarding policy ${contextualInfo.policyNumber}.
+
+I have received your request and am processing the necessary documentation/payment information. I will update you on the status within 24 hours.
+
+If you have any questions, please feel free to contact me directly.
+
+Best regards,
+${contextualInfo.agentName}
+Processing Team`,
+        tone: 'professional',
+        urgency: 'normal',
+        isQuick: true
+      });
+    }
+
+    return suggestions.slice(0, 3); // Limit to 3 quick suggestions
+  }, []);
+
+  const generateFallbackAnalysis = useCallback((email) => {
+    // Helper function defined inside to avoid "used before defined" issues
+    const extractKeyPoints = (emailBody) => {
+      const points = [];
+      const lowerBody = emailBody.toLowerCase();
       
-      // Parse the AI response and create analysis object
-      const analysis = {
-        sentiment: email.sentiment || 'neutral',
-        confidence: email.confidence || 0.8,
-        intent: email.aiIntent || 'general_inquiry',
-        urgency: email.priority === 'high' ? 'urgent' : 'normal',
-        keyPoints: extractKeyPoints(email.body),
-        suggestedTone: email.sentiment === 'negative' ? 'empathetic' : 'professional',
+      if (lowerBody.includes('urgent') || lowerBody.includes('asap') || lowerBody.includes('immediately')) {
+        points.push('Customer indicates urgency');
+      }
+      if (lowerBody.includes('renewal') || lowerBody.includes('renew')) {
+        points.push('Related to policy renewal');
+      }
+      if (lowerBody.includes('premium') || lowerBody.includes('payment') || lowerBody.includes('cost')) {
+        points.push('Premium or payment inquiry');
+      }
+      if (lowerBody.includes('document') || lowerBody.includes('paperwork') || lowerBody.includes('form')) {
+        points.push('Documentation required');
+      }
+      if (lowerBody.includes('deadline') || lowerBody.includes('due date') || lowerBody.includes('expires')) {
+        points.push('Time-sensitive matter');
+      }
+      if (lowerBody.includes('thank') || lowerBody.includes('appreciate') || lowerBody.includes('grateful')) {
+        points.push('Customer expressing gratitude');
+      }
+      if (lowerBody.includes('problem') || lowerBody.includes('issue') || lowerBody.includes('trouble') || lowerBody.includes('error')) {
+        points.push('Customer reporting an issue');
+      }
+      if (lowerBody.includes('cancel') || lowerBody.includes('discontinue')) {
+        points.push('Cancellation request');
+      }
+      if (lowerBody.includes('claim') || lowerBody.includes('accident') || lowerBody.includes('damage')) {
+        points.push('Claim-related inquiry');
+      }
+      
+      return points.length > 0 ? points : ['General inquiry'];
+    };
+
+    return {
+      sentiment: email.sentiment || 'neutral',
+      confidence: 0.6,
+      intent: email.aiIntent || 'general_inquiry',
+      urgency: email.priority === 'high' ? 'urgent' : 'normal',
+      keyPoints: extractKeyPoints(email.body),
+      suggestedTone: 'professional',
+      contextualInfo: {
+        customerName: email.renewalContext?.customerName || 'Customer',
+        policyNumber: email.renewalContext?.policyNumber || 'N/A',
+        renewalDate: email.renewalContext?.renewalDate || 'N/A',
+        agentName: email.renewalContext?.agentName || currentUser.name
+      }
+    };
+  }, [currentUser.name]);
+
+  const parseAIAnalysisResponse = useCallback((aiResponse, email) => {
+    // Helper functions defined inside to avoid "used before defined" issues
+    const extractFromAIResponse = (response, keywords, defaultValue) => {
+      try {
+        const lowerResponse = response.toLowerCase();
+        for (const keyword of keywords) {
+          const pattern = new RegExp(`${keyword}[:\\s]*([^\\n•-]+)`, 'i');
+          const match = lowerResponse.match(pattern);
+          if (match) {
+            return match[1].trim().replace(/[()]/g, '');
+          }
+        }
+        return defaultValue;
+      } catch {
+        return defaultValue;
+      }
+    };
+
+    const extractConfidenceFromAIResponse = (response) => {
+      try {
+        const confidenceMatch = response.match(/(\d+)%/);
+        return confidenceMatch ? parseInt(confidenceMatch[1]) / 100 : 0.8;
+      } catch {
+        return 0.8;
+      }
+    };
+
+    const extractKeyPointsFromAIResponse = (response, originalBody) => {
+      try {
+        const points = [];
+        const lines = response.split('\n');
+        
+        for (const line of lines) {
+          if (line.trim().startsWith('•') || line.trim().startsWith('-')) {
+            const point = line.replace(/^[•-]\s*/, '').trim();
+            if (point.length > 5) {
+              points.push(point);
+            }
+          }
+        }
+        
+        // If no bullet points found, use basic extraction
+        if (points.length === 0) {
+          return extractBasicKeyPoints(originalBody);
+        }
+        
+        return points.slice(0, 5); // Limit to 5 key points
+      } catch {
+        return extractBasicKeyPoints(originalBody);
+      }
+    };
+
+    const extractBasicKeyPoints = (emailBody) => {
+      const points = [];
+      const lowerBody = emailBody.toLowerCase();
+      
+      if (lowerBody.includes('urgent') || lowerBody.includes('asap') || lowerBody.includes('immediately')) {
+        points.push('Customer indicates urgency');
+      }
+      if (lowerBody.includes('renewal') || lowerBody.includes('renew')) {
+        points.push('Related to policy renewal');
+      }
+      if (lowerBody.includes('premium') || lowerBody.includes('payment') || lowerBody.includes('cost')) {
+        points.push('Premium or payment inquiry');
+      }
+      if (lowerBody.includes('document') || lowerBody.includes('paperwork') || lowerBody.includes('form')) {
+        points.push('Documentation required');
+      }
+      if (lowerBody.includes('deadline') || lowerBody.includes('due date') || lowerBody.includes('expires')) {
+        points.push('Time-sensitive matter');
+      }
+      if (lowerBody.includes('thank') || lowerBody.includes('appreciate') || lowerBody.includes('grateful')) {
+        points.push('Customer expressing gratitude');
+      }
+      if (lowerBody.includes('problem') || lowerBody.includes('issue') || lowerBody.includes('trouble') || lowerBody.includes('error')) {
+        points.push('Customer reporting an issue');
+      }
+      if (lowerBody.includes('cancel') || lowerBody.includes('discontinue')) {
+        points.push('Cancellation request');
+      }
+      if (lowerBody.includes('claim') || lowerBody.includes('accident') || lowerBody.includes('damage')) {
+        points.push('Claim-related inquiry');
+      }
+      
+      return points.length > 0 ? points : ['General inquiry'];
+    };
+
+    try {
+      // Extract key information from AI response
+      const sentiment = extractFromAIResponse(aiResponse, ['sentiment', 'emotion'], 'neutral');
+      const confidence = extractConfidenceFromAIResponse(aiResponse);
+      const intent = extractFromAIResponse(aiResponse, ['intent', 'purpose', 'goal'], 'general_inquiry');
+      const urgency = extractFromAIResponse(aiResponse, ['urgency', 'priority'], 'normal');
+      const keyPoints = extractKeyPointsFromAIResponse(aiResponse, email.body);
+      const suggestedTone = extractFromAIResponse(aiResponse, ['tone', 'recommended tone'], 'professional');
+      
+      return {
+        sentiment,
+        confidence,
+        intent,
+        urgency,
+        keyPoints,
+        suggestedTone,
         contextualInfo: {
           customerName: email.renewalContext?.customerName || 'Customer',
           policyNumber: email.renewalContext?.policyNumber || 'N/A',
           renewalDate: email.renewalContext?.renewalDate || 'N/A',
           agentName: email.renewalContext?.agentName || currentUser.name
         },
-        aiResponse: 'Analysis completed'
+        aiResponse: aiResponse.substring(0, 200) + '...' // Store excerpt of AI response
       };
-      
-      setAiAnalysis(analysis);
-      
-      // Generate smart replies using Email AI
-      await generateEmailSmartReplies(analysis, email);
-      
-      showNotification('Email AI analysis completed successfully', 'success');
-      return analysis;
     } catch (error) {
-      console.error('Email AI analysis failed:', error);
-      showNotification('Email AI analysis failed. Using fallback analysis.', 'warning');
+      console.error('Error parsing AI analysis response:', error);
+      return generateFallbackAnalysis(email);
+    }
+  }, [generateFallbackAnalysis, currentUser.name]);
+
+  const analyzeEmailWithAI = useCallback(async (email) => {
+    if (!email) return;
+    
+    setCurrentAnalyzedEmail(email);
+    setAiLoading(true);
+    
+    // Provide immediate fallback analysis for instant response
+    const quickAnalysis = generateFallbackAnalysis(email);
+    setAiAnalysis(quickAnalysis);
+    
+    // Generate quick smart replies immediately
+    const quickSuggestions = generateQuickSmartReplies(quickAnalysis, email);
+    setAiSuggestions(quickSuggestions);
+    
+    // Show immediate response
+    showNotification('Quick analysis ready! AI enhancement in progress...', 'info');
+    setAiLoading(false);
+    
+    // Run AI analysis and smart replies generation in parallel (background)
+    setIsStreaming(true);
+    setStreamingAnalysis('');
+    setStreamingSuggestions([]);
+    
+    Promise.all([
+      // Parallel task 1: Enhanced analysis with streaming
+      analyzeEmail(email, (chunk, fullContent) => {
+        // Real-time updates as analysis streams in
+        setStreamingAnalysis(fullContent);
+      }).then(aiAnalysisResponse => {
+        const enhancedAnalysis = parseAIAnalysisResponse(aiAnalysisResponse, email);
+        setAiAnalysis(enhancedAnalysis);
+        setStreamingAnalysis(''); // Clear streaming content once complete
+        return enhancedAnalysis;
+      }),
       
-      // Fallback to basic analysis
-      const fallbackAnalysis = {
-        sentiment: email.sentiment || 'neutral',
-        confidence: 0.6,
-        intent: email.aiIntent || 'general_inquiry',
-        urgency: email.priority === 'high' ? 'urgent' : 'normal',
-        keyPoints: extractKeyPoints(email.body),
-        suggestedTone: 'professional',
-        contextualInfo: {
-          customerName: email.renewalContext?.customerName || 'Customer',
-          policyNumber: email.renewalContext?.policyNumber || 'N/A',
-          renewalDate: email.renewalContext?.renewalDate || 'N/A',
-          agentName: email.renewalContext?.agentName || currentUser.name
+      // Parallel task 2: Enhanced smart replies with streaming
+      generateEmailSmartReplies(quickAnalysis, email, (chunk, fullContent) => {
+        // Real-time streaming of suggestions
+        if (fullContent && fullContent.length > 50) {
+          // Parse partial content for progressive suggestions
+          const partialSuggestions = parseAIResponseForSuggestions(fullContent, quickAnalysis, email);
+          setStreamingSuggestions(partialSuggestions);
         }
-      };
+      }).then(aiSuggestionsResponse => {
+        const enhancedSuggestions = parseAIResponseForSuggestions(aiSuggestionsResponse, quickAnalysis, email);
+        setAiSuggestions(enhancedSuggestions);
+        setStreamingSuggestions([]); // Clear streaming content once complete
+        return enhancedSuggestions;
+      })
+    ]).then(([_enhancedAnalysis, _enhancedSuggestions]) => {
+      // Both tasks completed
+      setIsStreaming(false);
+      showNotification('🚀 AI analysis and suggestions enhanced!', 'success');
+    }).catch(_error => {
+      // If AI enhancement fails, keep the quick analysis
+      setIsStreaming(false);
+      setStreamingAnalysis('');
+      setStreamingSuggestions([]);
+      showNotification('Using quick analysis (AI enhancement unavailable)', 'info');
+    });
+    
+    return quickAnalysis;
+  }, [generateEmailSmartReplies, parseAIAnalysisResponse, generateFallbackAnalysis, generateQuickSmartReplies, parseAIResponseForSuggestions]);
+
+  // Auto-analyze email when AI Assistant dialog opens
+  useEffect(() => {
+    if (aiAssistantDialog && selectedEmail && !aiAnalysis) {
+      // Automatically analyze the selected email if no analysis exists
+      setCurrentAnalyzedEmail(selectedEmail);
+      analyzeEmailWithAI(selectedEmail);
+    }
+  }, [aiAssistantDialog, selectedEmail, aiAnalysis, analyzeEmailWithAI]);
+
+  const enhanceEmailWithAI = async () => {
+    // AI enhancement of current email content
+    const hasMinimalContent = !composeData.body.trim() || 
+                             composeData.body.trim().length < 50 || 
+                             isOnlyGreetingAndSignature(composeData.body);
+
+    if (hasMinimalContent) {
+      // For minimal content, generate a complete professional email
+      const enhancedEmail = generateProfessionalEmailContent(composeData);
+      setComposeData(prev => ({
+        ...prev,
+        subject: enhancedEmail.subject || prev.subject,
+        body: enhancedEmail.body
+      }));
       
-      setAiAnalysis(fallbackAnalysis);
-      generateEmailSmartReplies(fallbackAnalysis, email);
-      return fallbackAnalysis;
-    } finally {
+      showNotification('Professional email template generated! AI optimization in progress...', 'success');
+    } else {
+      setAiLoading(true);
+      
+      // Provide immediate basic enhancement for existing content
+      const quickEnhancement = performQuickEnhancement(composeData);
+      setComposeData(prev => ({
+        ...prev,
+        subject: quickEnhancement.subject || prev.subject,
+        body: quickEnhancement.body || prev.body
+      }));
+      
+      showNotification('Quick enhancement applied! AI optimization in progress...', 'info');
       setAiLoading(false);
     }
-  }, [currentUser.name, generateEmailSmartReplies]);
-
-  const extractKeyPoints = (emailBody) => {
-    // Mock key point extraction
-    const points = [];
-    if (emailBody.toLowerCase().includes('urgent')) points.push('Customer indicates urgency');
-    if (emailBody.toLowerCase().includes('renewal')) points.push('Related to policy renewal');
-    if (emailBody.toLowerCase().includes('premium')) points.push('Premium inquiry');
-    if (emailBody.toLowerCase().includes('document')) points.push('Documentation required');
-    if (emailBody.toLowerCase().includes('payment')) points.push('Payment related');
-    if (emailBody.toLowerCase().includes('deadline')) points.push('Time-sensitive matter');
-    if (emailBody.toLowerCase().includes('thank')) points.push('Customer expressing gratitude');
-    if (emailBody.toLowerCase().includes('problem') || emailBody.toLowerCase().includes('issue')) points.push('Customer reporting an issue');
     
-    return points.length > 0 ? points : ['General inquiry'];
+    // Continue with AI enhancement in background (for both cases)
+    setTimeout(async () => {
+      try {
+        let enhancedContent = '';
+        
+        // Use current compose data (either enhanced or generated)
+        const currentData = { ...composeData };
+        if (hasMinimalContent) {
+          // For minimal content, use the generated template as base
+          const template = generateProfessionalEmailContent(composeData);
+          currentData.body = template.body;
+        }
+        
+        // Call the actual AI service for enhancement with streaming
+        setIsStreaming(true);
+        setStreamingAnalysis('Enhancing email content...');
+        
+        await enhanceEmailContent(currentData, (chunk, fullContent) => {
+          enhancedContent = fullContent;
+          // Show streaming progress for email enhancement
+          setStreamingAnalysis(`Enhancing: ${fullContent.substring(0, 100)}...`);
+        });
+        
+        setIsStreaming(false);
+        setStreamingAnalysis('');
+        
+        // Parse the AI response to extract enhanced content
+        const parsedEnhancement = parseAIEnhancementResponse(enhancedContent, currentData);
+        
+        setComposeData(prev => ({
+          ...prev,
+          subject: parsedEnhancement.subject || prev.subject,
+          body: parsedEnhancement.body || prev.body
+        }));
+        
+        showNotification('Email optimized with AI intelligence', 'success');
+      } catch (error) {
+        console.error('AI enhancement failed:', error);
+        if (hasMinimalContent) {
+          showNotification('Professional template applied (AI optimization unavailable)', 'info');
+        } else {
+          showNotification('Using quick enhancement (AI optimization unavailable)', 'info');
+        }
+      }
+    }, 100);
+  };
+
+  // Helper function to check if content is only greeting and signature
+  const isOnlyGreetingAndSignature = (content) => {
+    const cleanContent = content.toLowerCase().trim();
+    const hasGreeting = cleanContent.includes('dear') || cleanContent.includes('hello');
+    const hasSignature = cleanContent.includes('regards') || cleanContent.includes('sincerely');
+    
+    // Remove common greeting and signature patterns
+    const contentWithoutGreetingSignature = cleanContent
+      .replace(/dear\s+[^,\n]+,?/gi, '')
+      .replace(/hello\s*[^,\n]*,?/gi, '')
+      .replace(/best\s+regards,?\s*[^\n]*/gi, '')
+      .replace(/sincerely,?\s*[^\n]*/gi, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    
+    // If after removing greeting/signature, very little content remains
+    return hasGreeting && hasSignature && contentWithoutGreetingSignature.length < 20;
+  };
+
+  // Generate professional email content for minimal input
+  const generateProfessionalEmailContent = (emailData) => {
+    const customerName = emailData.renewalContext?.customerName || 'Customer';
+    const policyNumber = emailData.renewalContext?.policyNumber || '';
+    const agentName = emailData.renewalContext?.agentName || currentUser.name;
+    const premiumAmount = emailData.renewalContext?.premiumAmount || '';
+    const renewalDate = emailData.renewalContext?.renewalDate || '';
+    
+    // Generate contextual content based on available information
+    let professionalContent = '';
+    
+    if (policyNumber && renewalDate) {
+      professionalContent = `Thank you for contacting us regarding your policy ${policyNumber}.
+
+I have reviewed your account and am pleased to assist you with your renewal process. Your policy is scheduled for renewal on ${renewalDate}${premiumAmount ? ` with a premium of ${premiumAmount}` : ''}.
+
+I will ensure that your renewal is processed smoothly and efficiently. If you have any specific questions or requirements, please don't hesitate to let me know.
+
+I will follow up with you shortly with any additional information you may need.`;
+    } else if (policyNumber) {
+      professionalContent = `Thank you for contacting us regarding your policy ${policyNumber}.
+
+I have received your inquiry and am reviewing your account details. I will provide you with the information you need and ensure that any requests are handled promptly.
+
+Please feel free to reach out if you have any additional questions or concerns.`;
+    } else {
+      professionalContent = `Thank you for contacting our renewal department.
+
+I have received your message and am pleased to assist you with your insurance needs. I will review your inquiry and provide you with the appropriate information and support.
+
+If you have any urgent concerns or specific questions, please don't hesitate to contact me directly.
+
+I look forward to helping you with your renewal process.`;
+    }
+    
+    const fullBody = `Dear ${customerName},
+
+${professionalContent}
+
+Best regards,
+${agentName}
+Customer Service Team`;
+
+    let enhancedSubject = emailData.subject || '';
+    if (!enhancedSubject && policyNumber) {
+      enhancedSubject = `Re: Policy ${policyNumber} - Your Renewal Inquiry`;
+    } else if (!enhancedSubject) {
+      enhancedSubject = 'Re: Your Insurance Inquiry';
+    }
+    
+    return {
+      subject: enhancedSubject,
+      body: fullBody
+    };
+  };
+
+  const performQuickEnhancement = (emailData) => {
+    // Quick, rule-based enhancement for immediate feedback
+    let enhancedBody = emailData.body;
+    let enhancedSubject = emailData.subject;
+    
+    // Basic enhancements
+    if (enhancedBody) {
+      // Ensure proper greeting
+      if (!enhancedBody.toLowerCase().includes('dear') && !enhancedBody.toLowerCase().includes('hello')) {
+        const customerName = emailData.renewalContext?.customerName || 'Customer';
+        enhancedBody = `Dear ${customerName},\n\n${enhancedBody}`;
+      }
+      
+      // Ensure proper closing
+      if (!enhancedBody.toLowerCase().includes('regards') && !enhancedBody.toLowerCase().includes('sincerely')) {
+        const agentName = emailData.renewalContext?.agentName || currentUser.name;
+        enhancedBody += `\n\nBest regards,\n${agentName}`;
+      }
+      
+      // Add professional touches
+      enhancedBody = enhancedBody
+        .replace(/\n{3,}/g, '\n\n') // Remove excessive line breaks
+        .replace(/([.!?])\s*([a-z])/g, '$1 $2') // Ensure proper spacing after punctuation
+        .trim();
+    }
+    
+    // Enhance subject line
+    if (enhancedSubject && !enhancedSubject.toLowerCase().startsWith('re:')) {
+      if (emailData.renewalContext?.policyNumber) {
+        enhancedSubject = `${enhancedSubject} - Policy ${emailData.renewalContext.policyNumber}`;
+      }
+    }
+    
+    return {
+      subject: enhancedSubject,
+      body: enhancedBody
+    };
+  };
+
+  // Helper function to parse AI enhancement response
+  const parseAIEnhancementResponse = (aiResponse, originalData) => {
+    try {
+      if (!aiResponse || aiResponse.trim().length < 20) {
+        return {
+          subject: originalData.subject,
+          body: originalData.body
+        };
+      }
+
+      const lines = aiResponse.split('\n').filter(line => line.trim());
+      let enhancedSubject = originalData.subject;
+      let enhancedBody = '';
+      let inBodySection = false;
+      const bodyLines = [];
+      
+      for (const line of lines) {
+        const trimmedLine = line.trim();
+        
+        // Extract subject line
+        if (trimmedLine.toLowerCase().includes('subject:') || trimmedLine.toLowerCase().includes('subject line:')) {
+          const subjectMatch = trimmedLine.match(/subject.*?:\s*(.+)/i);
+          if (subjectMatch) {
+            enhancedSubject = subjectMatch[1].trim().replace(/["']/g, '');
+          }
+        } 
+        // Look for email content markers
+        else if (trimmedLine.toLowerCase().includes('enhanced') && 
+                (trimmedLine.toLowerCase().includes('content') || trimmedLine.toLowerCase().includes('email'))) {
+          inBodySection = true;
+        }
+        // Look for email greeting patterns
+        else if (trimmedLine.toLowerCase().startsWith('dear ') || 
+                trimmedLine.toLowerCase().startsWith('hello ')) {
+          inBodySection = true;
+          bodyLines.push(trimmedLine);
+        }
+        // Collect body content
+        else if (inBodySection && trimmedLine.length > 5 && 
+                !trimmedLine.startsWith('•') && !trimmedLine.startsWith('-') && 
+                !trimmedLine.toLowerCase().includes('analysis') &&
+                !trimmedLine.toLowerCase().includes('suggestion')) {
+          bodyLines.push(trimmedLine);
+        }
+        // Stop at analysis sections
+        else if (trimmedLine.toLowerCase().includes('analysis') || 
+                trimmedLine.toLowerCase().includes('key points') ||
+                trimmedLine.toLowerCase().includes('suggestions')) {
+          if (bodyLines.length > 0) break;
+        }
+      }
+      
+      // Reconstruct enhanced body
+      if (bodyLines.length > 0) {
+        enhancedBody = bodyLines.join('\n\n').trim();
+      }
+      
+      // If no enhanced body found, try to extract the main email content
+      if (!enhancedBody) {
+        enhancedBody = extractEmailContentFromAIResponse(aiResponse, originalData.renewalContext);
+      }
+      
+      // If enhanced body is still too short or empty, improve the original
+      if (!enhancedBody || enhancedBody.length < Math.max(originalData.body.length * 0.5, 100)) {
+        enhancedBody = improveOriginalContent(originalData.body, aiResponse) || originalData.body;
+      }
+      
+      // Ensure the enhanced body has proper structure
+      enhancedBody = ensureProperEmailStructure(enhancedBody, originalData.renewalContext);
+      
+      return {
+        subject: enhancedSubject,
+        body: enhancedBody
+      };
+    } catch (error) {
+      console.error('Error parsing AI enhancement response:', error);
+      return {
+        subject: originalData.subject,
+        body: improveOriginalContent(originalData.body, aiResponse) || originalData.body
+      };
+    }
+  };
+
+  // Extract email content from AI response more intelligently
+  const extractEmailContentFromAIResponse = (response, contextInfo) => {
+    try {
+      let cleaned = response;
+      
+      // Remove AI formatting markers and metadata
+      cleaned = cleaned.replace(/\*\*(.*?)\*\*/g, '$1');
+      cleaned = cleaned.replace(/📧|💭|✍️|📝|🎯|🔍|💡/g, '');
+      cleaned = cleaned.replace(/EMAIL ANALYSIS|CUSTOMER INSIGHTS|RESPONSE STRATEGY|ENHANCED EMAIL|AI OPTIMIZATION/gi, '');
+      cleaned = cleaned.replace(/---+/g, '');
+      
+      // Look for complete email patterns first
+      const emailPatterns = [
+        /(Dear\s+[^,\n]+,[\s\S]*?Best regards,[\s\S]*?)/i,
+        /(Hello\s+[^,\n]*,[\s\S]*?Sincerely,[\s\S]*?)/i,
+        /(Dear\s+[^,\n]+,[\s\S]*?Regards,[\s\S]*?)/i
+      ];
+      
+      for (const pattern of emailPatterns) {
+        const emailMatch = cleaned.match(pattern);
+        if (emailMatch && emailMatch[1].length > 100) {
+          return emailMatch[1].trim();
+        }
+      }
+      
+      // If no complete email found, extract meaningful paragraphs
+      const lines = cleaned.split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 20 && 
+                       !line.toLowerCase().includes('analysis') &&
+                       !line.toLowerCase().includes('suggestion') &&
+                       !line.startsWith('•') && !line.startsWith('-'));
+      
+      if (lines.length > 2) {
+        let extractedContent = lines.slice(0, 6).join('\n\n');
+        
+        // Ensure proper email structure
+        if (!extractedContent.toLowerCase().includes('dear')) {
+          const customerName = contextInfo?.customerName || 'Customer';
+          extractedContent = `Dear ${customerName},\n\n${extractedContent}`;
+        }
+        
+        if (!extractedContent.toLowerCase().includes('regards') && 
+            !extractedContent.toLowerCase().includes('sincerely')) {
+          const agentName = contextInfo?.agentName || 'Customer Service Team';
+          extractedContent += `\n\nBest regards,\n${agentName}`;
+        }
+        
+        return extractedContent;
+      }
+      
+      return '';
+    } catch (error) {
+      console.error('Error extracting email content from AI response:', error);
+      return '';
+    }
+  };
+
+  // Ensure proper email structure
+  const ensureProperEmailStructure = (content, contextInfo) => {
+    if (!content) return content;
+    
+    let structuredContent = content.trim();
+    
+    // Ensure proper greeting
+    if (!structuredContent.toLowerCase().includes('dear') && 
+        !structuredContent.toLowerCase().includes('hello')) {
+      const customerName = contextInfo?.customerName || 'Customer';
+      structuredContent = `Dear ${customerName},\n\n${structuredContent}`;
+    }
+    
+    // Ensure proper closing
+    if (!structuredContent.toLowerCase().includes('regards') && 
+        !structuredContent.toLowerCase().includes('sincerely')) {
+      const agentName = contextInfo?.agentName || 'Customer Service Team';
+      structuredContent += `\n\nBest regards,\n${agentName}`;
+    }
+    
+    // Clean up excessive whitespace
+    structuredContent = structuredContent
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+    
+    return structuredContent;
   };
 
 
+
+  const improveOriginalContent = (originalBody, aiResponse) => {
+    try {
+      // Look for improvement suggestions in AI response
+      const improvements = [];
+      const lines = aiResponse.split('\n');
+      
+      for (const line of lines) {
+        if (line.includes('improve') || line.includes('enhance') || line.includes('better')) {
+          improvements.push(line.trim());
+        }
+      }
+      
+      if (improvements.length > 0) {
+        return originalBody + '\n\n---\nAI Enhancement Notes:\n' + improvements.slice(0, 3).join('\n');
+      }
+      
+      return originalBody;
+    } catch {
+      return originalBody;
+    }
+  };
 
   const handleAiSuggestionSelect = (suggestion) => {
     setSelectedAiSuggestion(suggestion.id);
@@ -1208,57 +2094,11 @@ Customer Service Team`,
     showNotification('AI suggestion applied to your email', 'success');
   };
 
-  const enhanceEmailWithAI = async () => {
-    // AI enhancement of current email content
-    if (!composeData.body.trim()) {
-      showNotification('Please write some content first for AI to enhance', 'warning');
-      return;
-    }
-
-    setAiLoading(true);
+  const regenerateAISuggestions = async () => {
+    // Use currentAnalyzedEmail or fall back to selectedEmail
+    const emailToAnalyze = currentAnalyzedEmail || selectedEmail;
     
-    try {
-      await enhanceEmailContent(composeData, 'general', (_chunk, _fullContent) => {
-        // Handle streaming response if needed
-      });
-      
-      // For now, provide enhanced content with AI insights
-      const enhanced = `${composeData.body}
-
----
-Enhanced with Email AI assistance to improve clarity, professionalism, and customer engagement.
-
-AI Suggestions Applied:
-• Improved tone and clarity
-• Enhanced customer engagement
-• Optimized for better response rates
-• Personalized based on customer context`;
-
-      setComposeData(prev => ({
-        ...prev,
-        body: enhanced
-      }));
-      showNotification('Email enhanced with AI suggestions', 'success');
-    } catch (error) {
-      console.error('Email AI enhancement failed:', error);
-      // Fallback enhancement
-      const enhanced = `${composeData.body}
-
----
-Enhanced with AI assistance to improve clarity and professionalism.`;
-
-      setComposeData(prev => ({
-        ...prev,
-        body: enhanced
-      }));
-      showNotification('Email enhanced with basic AI suggestions', 'warning');
-    } finally {
-      setAiLoading(false);
-    }
-  };
-
-  const regenerateAISuggestions = () => {
-    if (!currentAnalyzedEmail) {
+    if (!emailToAnalyze) {
       showNotification('No email available for analysis. Please select an email first.', 'warning');
       return;
     }
@@ -1266,37 +2106,155 @@ Enhanced with AI assistance to improve clarity and professionalism.`;
     // Set loading state
     setAiLoading(true);
     
-    // Clear previous suggestions
+    // Clear previous suggestions but keep analysis
     setAiSuggestions([]);
-    setAiAnalysis(null);
     setSelectedAiSuggestion('');
     
-    // Show loading state
-    showNotification('Regenerating AI suggestions...', 'info');
+    // Show loading notification
+    showNotification('Generating fresh AI suggestions...', 'info');
     
-    // Simulate AI processing delay
-    setTimeout(() => {
-      analyzeEmailWithAI(currentAnalyzedEmail);
+    try {
+      // Start streaming
+      setIsStreaming(true);
+      setStreamingAnalysis('');
+      setStreamingSuggestions([]);
+      
+      // Run analysis and suggestions in parallel for maximum speed with streaming
+      const [aiAnalysisResponse, aiSuggestionsResponse] = await Promise.all([
+        // Fast analysis with streaming
+        analyzeEmail(emailToAnalyze, (chunk, fullContent) => {
+          // Real-time analysis updates
+          setStreamingAnalysis(fullContent);
+        }),
+        
+        // Fast suggestions with streaming
+        generateEmailSmartReplies(emailToAnalyze, aiAnalysis || generateFallbackAnalysis(emailToAnalyze), (chunk, fullContent) => {
+          // Real-time suggestions updates
+          if (fullContent && fullContent.length > 50) {
+            const partialSuggestions = parseAIResponseForSuggestions(fullContent, aiAnalysis || generateFallbackAnalysis(emailToAnalyze), emailToAnalyze);
+            setStreamingSuggestions(partialSuggestions);
+          }
+        })
+      ]);
+      
+      // Parse results in parallel
+      const [enhancedAnalysis, enhancedSuggestions] = await Promise.all([
+        Promise.resolve(parseAIAnalysisResponse(aiAnalysisResponse, emailToAnalyze)),
+        Promise.resolve(parseAIResponseForSuggestions(aiSuggestionsResponse, aiAnalysis || generateFallbackAnalysis(emailToAnalyze), emailToAnalyze))
+      ]);
+      
+      // Update UI and clear streaming
+      setAiAnalysis(enhancedAnalysis);
+      setAiSuggestions(enhancedSuggestions);
+      setIsStreaming(false);
+      setStreamingAnalysis('');
+      setStreamingSuggestions([]);
+      
+      showNotification('🚀 Fresh AI suggestions generated!', 'success');
+    } catch (error) {
+      // Fast fallback
+      showNotification(`⚠️ AI service error: ${error.message}. Using intelligent fallback.`, 'warning');
+      
+      const fallbackAnalysis = generateFallbackAnalysis(emailToAnalyze);
+      setAiAnalysis(fallbackAnalysis);
+      
+      const fallbackSuggestions = generateQuickSmartReplies(fallbackAnalysis, emailToAnalyze);
+      setAiSuggestions(fallbackSuggestions);
+    } finally {
       setAiLoading(false);
-    }, 1500);
+    }
   };
 
-  const generateSubjectSuggestions = () => {
-    const email = currentAnalyzedEmail || selectedEmail;
-    if (!email) return [];
+  // Check AI connection status
+  const checkAIConnectionStatus = async () => {
+    try {
+      // Test EmailBot (Email AI)
+      const { testOllamaConnection: testEmailAI } = await import('../services/emailAI');
+      const emailBotTest = await testEmailAI();
+      setEmailBotConnected(emailBotTest.connected && emailBotTest.modelAvailable);
+
+      // Test iRenewal (General AI) - Use the same robust testing approach
+      const iRenewalTest = await testEmailAI(); // Use the same test function
+      setIRenewalConnected(iRenewalTest.connected && iRenewalTest.modelAvailable);
+      
+
+    } catch (error) {
+      console.error('Connection status check failed:', error);
+      setEmailBotConnected(false);
+      setIRenewalConnected(false);
+    }
+  };
+
+  // Test AI service connection
+  const testAIConnection = async () => {
+    setConnectionTesting(true);
+    setAiLoading(true);
+    showNotification('Testing AI service connection...', 'info');
     
-    const originalSubject = email.subject;
-    const customerName = email.renewalContext?.customerName || 'Customer';
-    const policyNumber = email.renewalContext?.policyNumber || 'Policy';
-    
-    return [
-      `Re: ${originalSubject}`,
-      `Re: ${originalSubject} - Immediate Response`,
-      `Re: ${originalSubject} - Update on ${policyNumber}`,
-      `${customerName} - Response to Your ${policyNumber} Inquiry`,
-      `Policy ${policyNumber} - Response to Your Request`,
-      `Thank You for Contacting Us - ${policyNumber}`
-    ];
+    try {
+      // Import the test function
+      const { testOllamaConnection } = await import('../services/emailAI');
+      
+      // Test Ollama connection first
+      const connectionTest = await testOllamaConnection();
+
+      
+      if (!connectionTest.connected) {
+        setEmailBotConnected(false);
+        setIRenewalConnected(false);
+        throw new Error(`Ollama server not accessible: ${connectionTest.error}`);
+      }
+      
+      if (!connectionTest.modelAvailable) {
+        const availableModels = connectionTest.models?.map(m => m.name).join(', ') || 'none';
+        setEmailBotConnected(false);
+        setIRenewalConnected(false);
+        throw new Error(`Model llama3.2:1b not available. Available models: ${availableModels}. Please run: ollama pull llama3.2:1b`);
+      }
+      
+      // Test actual AI functionality
+      const testEmail = {
+        from: 'test@example.com',
+        subject: 'Test Email',
+        body: 'This is a test email to check AI service connectivity.',
+        renewalContext: {
+          customerName: 'Test Customer',
+          policyNumber: 'TEST123',
+          agentName: currentUser.name
+        }
+      };
+      
+      let testResponse = '';
+      
+      
+              await analyzeEmail(testEmail, (_chunk, _fullContent) => {
+
+          testResponse = _fullContent;
+      });
+      
+
+      
+      if (testResponse && testResponse.trim().length > 10) {
+        // Update connection status for both agents
+        setEmailBotConnected(true);
+        setIRenewalConnected(true);
+        showNotification('✅ AI service is working correctly!', 'success');
+        return true;
+      } else {
+        setEmailBotConnected(false);
+        setIRenewalConnected(false);
+        throw new Error('AI service returned empty response - check console for details');
+      }
+    } catch (error) {
+      console.error('🔧 AI Connection test error:', error);
+      setEmailBotConnected(false);
+      setIRenewalConnected(false);
+      showNotification(`❌ AI service test failed: ${error.message}`, 'error');
+      return false;
+    } finally {
+      setConnectionTesting(false);
+      setAiLoading(false);
+    }
   };
 
   return (
@@ -1718,7 +2676,13 @@ Enhanced with AI assistance to improve clarity and professionalism.`;
               </Button>
                 <Button 
                   size="small" 
-                  onClick={() => setAiAssistantDialog(true)}
+                  onClick={() => {
+                    // Ensure we have an email context for AI assistant
+                    if (selectedEmail) {
+                      setCurrentAnalyzedEmail(selectedEmail);
+                    }
+                    setAiAssistantDialog(true);
+                  }}
                   startIcon={<SmartToyIcon />}
                 >
                   AI Assistant
@@ -2280,10 +3244,44 @@ Enhanced with AI assistance to improve clarity and professionalism.`;
         >
           <DialogTitle>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <SmartToyIcon color="primary" />
                 <Typography variant="h6">AI Email Assistant</Typography>
-    </Box>
+                
+                {/* AI Connection Status Indicators */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 2 }}>
+                  <Tooltip title={`EmailBot: ${emailBotConnected ? 'Connected' : 'Disconnected'}`}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <SmartToyIcon 
+                        sx={{ 
+                          fontSize: 16,
+                          color: emailBotConnected ? theme.palette.info.main : theme.palette.error.main,
+                          transition: 'color 0.3s ease'
+                        }} 
+                      />
+                      <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
+                        EmailBot
+                      </Typography>
+                    </Box>
+                  </Tooltip>
+                  
+                  <Tooltip title={`iRenewal: ${iRenewalConnected ? 'Connected' : 'Disconnected'}`}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <PsychologyIcon 
+                        sx={{ 
+                          fontSize: 16,
+                          color: iRenewalConnected ? theme.palette.info.main : theme.palette.error.main,
+                          transition: 'color 0.3s ease'
+                        }} 
+                      />
+                      <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
+                        iRenewal
+                      </Typography>
+                    </Box>
+                  </Tooltip>
+                </Box>
+              </Box>
+              
               <IconButton onClick={() => setAiAssistantDialog(false)}>
                 <CloseIcon />
               </IconButton>
@@ -2456,42 +3454,91 @@ Enhanced with AI assistance to improve clarity and professionalism.`;
                        </Typography>
                      </Box>
                    )}
+
+                   {/* Streaming Content Display */}
+                   {isStreaming && (
+                     <Box sx={{ mb: 3 }}>
+                       <Typography variant="h6" sx={{ mb: 2, color: 'primary.main', display: 'flex', alignItems: 'center', gap: 1 }}>
+                         <SmartToyIcon />
+                         AI is generating content...
+                       </Typography>
+                       
+                       {streamingAnalysis && (
+                         <Card sx={{ mb: 2, p: 2, backgroundColor: alpha(theme.palette.primary.main, 0.05) }}>
+                           <Typography variant="subtitle2" color="primary" sx={{ mb: 1 }}>
+                             📊 Analysis Stream:
+                           </Typography>
+                           <FormattedAIAnalysis text={streamingAnalysis} />
+                         </Card>
+                       )}
+                       
+                       {streamingSuggestions.length > 0 && (
+                         <Box>
+                           <Typography variant="subtitle2" color="primary" sx={{ mb: 1 }}>
+                             💡 Suggestions Stream:
+                           </Typography>
+                           {streamingSuggestions.map((suggestion, index) => (
+                             <Card key={`stream-${index}`} sx={{ mb: 1, p: 2, backgroundColor: alpha(theme.palette.success.main, 0.05), border: `1px solid ${alpha(theme.palette.success.main, 0.2)}` }}>
+                               <Box sx={{ display: 'flex', justifyContent: 'between', alignItems: 'start', mb: 1 }}>
+                                 <Typography variant="subtitle2" color="success.main" sx={{ fontWeight: 600 }}>
+                                   {suggestion.type}
+                                 </Typography>
+                                 <Chip label="Streaming..." size="small" color="success" variant="outlined" />
+                               </Box>
+                               <Typography variant="body2" sx={{ opacity: 0.9, fontStyle: 'italic' }}>
+                                 {suggestion.body?.substring(0, 200)}...
+                               </Typography>
+                             </Card>
+                           ))}
+                         </Box>
+                       )}
+                     </Box>
+                   )}
                   
                   {aiSuggestions.map((suggestion) => (
-                    <Card 
-                      key={suggestion.id}
-                      sx={{ 
-                        mb: 2, 
-                        cursor: 'pointer',
-                        border: selectedAiSuggestion === suggestion.id ? `2px solid ${theme.palette.primary.main}` : '1px solid transparent',
-                        transition: 'all 0.2s',
-                        '&:hover': {
-                          transform: 'translateY(-2px)',
-                          boxShadow: theme.shadows[4]
-                        }
-                      }}
-                      onClick={() => handleAiSuggestionSelect(suggestion)}
-                    >
-                      <CardContent>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
-                          <Typography variant="h6" color="primary" sx={{ fontWeight: 600 }}>
-                            {suggestion.type}
-                          </Typography>
-                          <Box sx={{ display: 'flex', gap: 1 }}>
-                            <Chip 
-                              label={suggestion.tone}
-                              size="small"
-                              color="primary"
-                              variant="outlined"
-                            />
-                            <Chip 
-                              label={suggestion.urgency}
-                              size="small"
-                              color={suggestion.urgency === 'high' ? 'error' : 'default'}
-                              variant="outlined"
-                            />
+                                          <Card 
+                        key={suggestion.id}
+                        sx={{ 
+                          mb: 2, 
+                          cursor: 'pointer',
+                          border: selectedAiSuggestion === suggestion.id ? `2px solid ${theme.palette.primary.main}` : '1px solid transparent',
+                          transition: 'all 0.2s',
+                          backgroundColor: suggestion.isQuick ? alpha(theme.palette.info.main, 0.05) : 'background.paper',
+                          '&:hover': {
+                            transform: 'translateY(-2px)',
+                            boxShadow: theme.shadows[4]
+                          }
+                        }}
+                        onClick={() => handleAiSuggestionSelect(suggestion)}
+                      >
+                        <CardContent>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
+                            <Typography variant="h6" color="primary" sx={{ fontWeight: 600 }}>
+                              {suggestion.type}
+                              {suggestion.isQuick && (
+                                <Chip 
+                                  label="Quick Response"
+                                  size="small"
+                                  color="info"
+                                  sx={{ ml: 1 }}
+                                />
+                              )}
+                            </Typography>
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                              <Chip 
+                                label={suggestion.tone}
+                                size="small"
+                                color="primary"
+                                variant="outlined"
+                              />
+                              <Chip 
+                                label={suggestion.urgency}
+                                size="small"
+                                color={suggestion.urgency === 'high' ? 'error' : 'default'}
+                                variant="outlined"
+                              />
+                            </Box>
                           </Box>
-                        </Box>
                         
                         <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
                           Subject: {suggestion.subject}
@@ -2526,33 +3573,7 @@ Enhanced with AI assistance to improve clarity and professionalism.`;
                     </Card>
                   ))}
                   
-                  {/* Subject Suggestions */}
-                  {aiSuggestions.length > 0 && (
-                    <Card sx={{ mt: 3, backgroundColor: alpha(theme.palette.success.main, 0.05) }}>
-                      <CardContent>
-                        <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <EditIcon color="success" />
-                          Subject Line Suggestions
-                        </Typography>
-                        
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                          {generateSubjectSuggestions().map((subject, index) => (
-                            <Chip
-                              key={index}
-                              label={subject}
-                              variant="outlined"
-                              color="success"
-                              clickable
-                              onClick={() => {
-                                setComposeData(prev => ({ ...prev, subject }));
-                                showNotification('Subject line applied', 'success');
-                              }}
-                            />
-                          ))}
-                        </Box>
-                      </CardContent>
-                    </Card>
-                  )}
+                  
                 </Grid>
               </Grid>
             )}
@@ -2560,6 +3581,15 @@ Enhanced with AI assistance to improve clarity and professionalism.`;
           <DialogActions>
             <Button onClick={() => setAiAssistantDialog(false)}>
               Close
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={testAIConnection}
+              startIcon={connectionTesting ? <CircularProgress size={16} /> : <SettingsIcon />}
+              disabled={aiLoading || connectionTesting}
+              sx={{ mr: 'auto' }}
+            >
+              {connectionTesting ? 'Testing Connection...' : 'Test AI Connection'}
             </Button>
             <Button
               variant="outlined"

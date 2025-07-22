@@ -2,7 +2,7 @@
 // Focused on email composition, sentiment analysis, communication strategies, and customer engagement
 
 const OLLAMA_BASE_URL = 'http://localhost:11434';
-const MODEL_NAME = 'gemma3:1b';
+const MODEL_NAME = 'gemma3:1b'; // Updated to use available model
 
 // Enhanced system prompt for Email AI Agent
 const EMAIL_AI_PROMPT = `You are EmailBot, an intelligent AI assistant specialized in email communication, customer engagement, and email marketing for insurance renewal management. You are the dedicated AI for the Email Manager page and focus exclusively on email-related tasks.
@@ -123,103 +123,100 @@ export const initializeEmailAgent = async () => {
 };
 
 /**
- * Analyze email content and generate insights
+ * Analyze email content and generate insights - Ultra-fast version
  */
 export const analyzeEmail = async (emailData, onChunk = null) => {
   try {
-    const analysisPrompt = `Analyze this customer email and provide comprehensive insights:
+    // Ultra-compact prompt for maximum speed
+    const analysisPrompt = `Quick email analysis:
 
-EMAIL DETAILS:
-From: ${emailData.from || 'Customer'}
-Subject: ${emailData.subject || 'No Subject'}
-Date: ${emailData.date || 'Recent'}
-Priority: ${emailData.priority || 'Normal'}
+FROM: ${emailData.from || 'Customer'}
+SUBJECT: ${emailData.subject || 'No Subject'}
+BODY: ${(emailData.body || emailData.content || 'No content').substring(0, 150)}
 
-EMAIL CONTENT:
-${emailData.body || emailData.content || 'No content provided'}
+Output format:
+Sentiment: [Positive/Negative/Neutral] (confidence %)
+Intent: [main request in 5 words]
+Urgency: [High/Medium/Low] (confidence %)
+Key Points: [2-3 bullet points max]
+Tone: [Professional/Empathetic/Urgent]`;
 
-CUSTOMER CONTEXT:
-• Customer Name: ${emailData.renewalContext?.customerName || 'Not specified'}
-• Policy Number: ${emailData.renewalContext?.policyNumber || 'Not specified'}
-• Renewal Date: ${emailData.renewalContext?.renewalDate || 'Not specified'}
-• Previous Interactions: ${emailData.threadHistory?.length || 0} emails in thread
+    const result = await sendEmailMessage(analysisPrompt, [], onChunk, {
+      temperature: 0.3,  // Lower temperature for faster, more consistent responses
+      num_predict: 200,  // Limit tokens for speed (Ollama parameter name)
+      top_p: 0.8        // Reduce randomness for speed
+    });
 
-Please provide a detailed analysis including sentiment, intent, urgency, and strategic response recommendations.`;
-
-    return await sendEmailMessage(analysisPrompt, [], onChunk);
+    return result.message.content;
   } catch (error) {
-    console.error('Email analysis failed:', error);
     throw error;
   }
 };
 
 /**
- * Generate smart email replies based on analysis
+ * Generate smart email replies based on analysis - Ultra-fast version
  */
-export const generateSmartReplies = async (emailData, analysisData, aiSettings = {}, onChunk = null) => {
+export const generateSmartReplies = async (emailData, analysisData, onChunk = null) => {
   try {
-    const replyPrompt = `Generate smart reply options for this customer email:
+    // Ultra-compact prompt for clean email responses
+    const replyPrompt = `Generate 3 complete email replies for this customer:
 
-ORIGINAL EMAIL:
-From: ${emailData.from}
-Subject: ${emailData.subject}
-Content: ${emailData.body || emailData.content}
+EMAIL: "${emailData.subject}" from ${emailData.from}
+CONTENT: ${(emailData.body || emailData.content || '').substring(0, 100)}
+SENTIMENT: ${analysisData.sentiment}, URGENCY: ${analysisData.urgency}
+CUSTOMER: ${analysisData.contextualInfo?.customerName || 'Customer'}
 
-EMAIL ANALYSIS:
-• Sentiment: ${analysisData.sentiment} (${analysisData.confidence}% confidence)
-• Intent: ${analysisData.intent}
-• Urgency: ${analysisData.urgency}
-• Key Points: ${analysisData.keyPoints?.join(', ') || 'General inquiry'}
+IMPORTANT: Provide ONLY the email content, no explanations or summaries.
 
-CUSTOMER CONTEXT:
-• Name: ${analysisData.contextualInfo?.customerName || 'Customer'}
-• Policy: ${analysisData.contextualInfo?.policyNumber || 'N/A'}
-• Renewal Date: ${analysisData.contextualInfo?.renewalDate || 'N/A'}
-• Agent: ${analysisData.contextualInfo?.agentName || 'Support Team'}
+Format each reply as:
 
-AI SETTINGS:
-• Tone: ${aiSettings.tone || 'professional'}
-• Style: ${aiSettings.style || 'formal'}
-• Length: ${aiSettings.length || 'medium'}
-• Include Personalization: ${aiSettings.includePersonalization ? 'Yes' : 'No'}
-• Language: ${aiSettings.language || 'English'}
+REPLY 1:
+[Complete professional email response]
 
-Generate 3-4 different reply options with varying approaches (urgent response, detailed explanation, empathetic response, professional acknowledgment).`;
+REPLY 2:
+[Complete detailed email response]
 
-    return await sendEmailMessage(replyPrompt, [], onChunk);
+REPLY 3:
+[Complete empathetic email response]
+
+Each reply must be a complete, ready-to-send email with proper greeting, body, and closing.`;
+
+    const result = await sendEmailMessage(replyPrompt, [], onChunk, {
+      temperature: 0.4,  // Slightly higher for variety but still fast
+      num_predict: 400,  // Increased for complete emails (Ollama parameter name)
+      top_p: 0.9
+    });
+
+    return result.message.content;
   } catch (error) {
-    console.error('Smart reply generation failed:', error);
+    console.error('Smart replies generation failed:', error);
     throw error;
   }
 };
 
 /**
- * Enhance email content with AI suggestions
+ * Enhance email content with AI suggestions - Ultra-fast version
  */
-export const enhanceEmailContent = async (emailDraft, enhancementType = 'general', onChunk = null) => {
+export const enhanceEmailContent = async (emailDraft, onChunk = null) => {
   try {
-    const enhancementPrompt = `Enhance this email draft to improve its effectiveness:
+    // Minimal prompt for maximum speed
+    const enhancementPrompt = `Improve this email quickly:
 
-CURRENT DRAFT:
-Subject: ${emailDraft.subject || 'No Subject'}
-To: ${emailDraft.to || 'Customer'}
-Content:
-${emailDraft.body || 'No content provided'}
+SUBJECT: ${emailDraft.subject || 'Re: Your Policy'}
+TO: ${emailDraft.renewalContext?.customerName || 'Customer'}
+CONTENT: ${emailDraft.body || 'No content'}
 
-ENHANCEMENT TYPE: ${enhancementType}
-CUSTOMER CONTEXT:
-• Policy Number: ${emailDraft.renewalContext?.policyNumber || 'N/A'}
-• Customer Name: ${emailDraft.renewalContext?.customerName || 'Customer'}
-• Renewal Date: ${emailDraft.renewalContext?.renewalDate || 'N/A'}
+Output:
+Subject: [improved subject line]
+Body: [enhanced professional content - 100 words max]`;
 
-Please provide:
-1. Enhanced subject line options
-2. Improved email content with better structure and engagement
-3. Strong call-to-action recommendations
-4. Personalization suggestions
-5. Tone and style improvements`;
+    const result = await sendEmailMessage(enhancementPrompt, [], onChunk, {
+      temperature: 0.2,  // Very low for consistent improvements
+      num_predict: 250,  // Limited for speed (Ollama parameter name)
+      top_p: 0.7
+    });
 
-    return await sendEmailMessage(enhancementPrompt, [], onChunk);
+    return result.message.content;
   } catch (error) {
     console.error('Email enhancement failed:', error);
     throw error;
@@ -293,41 +290,44 @@ Provide detailed analysis with specific recommendations for improving performanc
 /**
  * Core message sending function for Email AI
  */
-const sendEmailMessage = async (message, context = [], onChunk = null) => {
+const sendEmailMessage = async (message, context = [], onChunk = null, modelOptions = {}) => {
   try {
     const recentContext = context.slice(-6);
+    
+    const requestBody = {
+      model: MODEL_NAME,
+      messages: [
+        {
+          role: 'system',
+          content: EMAIL_AI_PROMPT,
+        },
+        ...recentContext.map(msg => ({
+          role: msg.type === 'user' ? 'user' : 'assistant',
+          content: msg.content,
+        })),
+        {
+          role: 'user',
+          content: `${message}
+
+Please provide a comprehensive response using the structured format specified in your system prompt for email-related tasks.`,
+        },
+      ],
+      stream: false,
+      options: {
+        temperature: 0.4,
+        top_p: 0.9,
+        num_ctx: 4096,
+        num_predict: 2000,
+        ...modelOptions, // Apply model-specific options
+      },
+    };
     
     const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model: MODEL_NAME,
-        messages: [
-          {
-            role: 'system',
-            content: EMAIL_AI_PROMPT,
-          },
-          ...recentContext.map(msg => ({
-            role: msg.type === 'user' ? 'user' : 'assistant',
-            content: msg.content,
-          })),
-          {
-            role: 'user',
-            content: `${message}
-
-Please provide a comprehensive response using the structured format specified in your system prompt for email-related tasks.`,
-          },
-        ],
-        stream: true,
-        options: {
-          temperature: 0.4,
-          top_p: 0.9,
-          num_ctx: 4096,
-          num_predict: 2000,
-        },
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
@@ -344,7 +344,9 @@ Please provide a comprehensive response using the structured format specified in
       try {
         while (true) {
           const { done, value } = await reader.read();
-          if (done) break;
+          if (done) {
+            break;
+          }
 
           const chunk = decoder.decode(value, { stream: true });
           const lines = chunk.split('\n').filter(line => line.trim());
@@ -391,6 +393,32 @@ Please provide a comprehensive response using the structured format specified in
   }
 };
 
+/**
+ * Test Ollama connection and model availability
+ */
+const testOllamaConnection = async () => {
+  try {
+    // Test if Ollama is running
+    const healthResponse = await fetch(`${OLLAMA_BASE_URL}/api/tags`);
+    if (!healthResponse.ok) {
+      throw new Error(`Ollama server not responding: ${healthResponse.statusText}`);
+    }
+    
+    const models = await healthResponse.json();
+    
+    // Check if our model is available
+    const hasModel = models.models && models.models.some(model => model.name.includes(MODEL_NAME.split(':')[0]));
+    if (!hasModel) {
+      return { connected: true, modelAvailable: false, models: models.models };
+    }
+    
+    return { connected: true, modelAvailable: true, models: models.models };
+    
+  } catch (error) {
+    return { connected: false, modelAvailable: false, error: error.message };
+  }
+};
+
 const emailAI = {
   initializeEmailAgent,
   analyzeEmail,
@@ -398,7 +426,11 @@ const emailAI = {
   enhanceEmailContent,
   generateSubjectSuggestions,
   analyzeCampaignPerformance,
-  sendEmailMessage
+  sendEmailMessage,
+  testOllamaConnection
 };
+
+// Named exports for direct import
+export { testOllamaConnection };
 
 export default emailAI; 

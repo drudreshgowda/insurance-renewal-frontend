@@ -229,23 +229,34 @@ const Layout = ({ children }) => {
       // Filter chat history to only include user and AI messages for context
       const contextForAI = chatHistory.filter(msg => msg.type === 'user' || msg.type === 'ai');
       
-      // Get current page context
-      const currentPath = location.pathname;
-      const pageContext = getPageContext(currentPath);
+      // Check if this is a greeting and first message - handle it specially
+      const isGreeting = /^(hi|hello|hey|good morning|good afternoon|good evening)$/i.test(currentQuery.trim());
+      const isFirstMessage = contextForAI.length === 0;
       
-      // Get dashboard data for context (mock data for now)
-      const dashboardData = {
-        totalCases: 1250,
-        inProgress: 470,
-        renewed: 780,
-        pendingAction: 125,
-        collectionRate: 81.0,
-        digitalUsage: 75,
-        period: 'Q4 2024'
-      };
+      let queryToSend;
+      let dashboardDataToSend = null;
       
-      // Enhanced query with page and dashboard context
-      const contextualQuery = `
+      if (isGreeting && isFirstMessage) {
+        // For greetings, send simple message without page context
+        queryToSend = currentQuery;
+      } else {
+        // Get current page context for non-greeting messages
+        const currentPath = location.pathname;
+        const pageContext = getPageContext(currentPath);
+        
+        // Get dashboard data ONLY for dashboard page
+        dashboardDataToSend = currentPath === '/dashboard' ? {
+          totalCases: 1250,
+          inProgress: 470,
+          renewed: 780,
+          pendingAction: 125,
+          collectionRate: 81.0,
+          digitalUsage: 75,
+          period: 'Q4 2024'
+        } : null;
+        
+        // Enhanced query with page-specific context
+        queryToSend = `
 CURRENT PAGE CONTEXT:
 Page: ${pageContext.name}
 Context: ${pageContext.context}
@@ -253,9 +264,10 @@ Focus Area: ${pageContext.focus}
 
 USER QUERY: ${currentQuery}
 
-Please provide a response specifically relevant to the ${pageContext.name} page context. Focus on ${pageContext.focus}.`;
+Please provide a response specifically relevant to the ${pageContext.name} page context. Focus on ${pageContext.focus} and avoid discussing dashboard metrics unless the user is on the Dashboard page.`;
+      }
       
-      const response = await sendMessage(contextualQuery, contextForAI, (chunk, fullContent) => {
+      const response = await sendMessage(queryToSend, contextForAI, (chunk, fullContent) => {
         // Update the last AI message with streaming content
         setChatHistory(prev => {
           const updated = [...prev];
@@ -269,7 +281,7 @@ Please provide a response specifically relevant to the ${pageContext.name} page 
           }
           return updated;
         });
-      }, pageContext, dashboardData);
+      }, null, dashboardDataToSend);
       
       // Mark streaming as complete
       setChatHistory(prev => {
@@ -1467,7 +1479,13 @@ Please provide a response specifically relevant to the ${pageContext.name} page 
             rows={3}
             value={aiQuery}
             onChange={(e) => setAiQuery(e.target.value)}
-            placeholder="Ask me anything about renewal management, customer retention, process optimization, or best practices..."
+            onKeyPress={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendAIQuery();
+              }
+            }}
+            placeholder="Ask me anything about renewal management, customer retention, process optimization, or best practices... (Press Enter to send, Shift+Enter for new line)"
             variant="outlined"
             disabled={!agentInitialized}
             sx={{
@@ -1501,20 +1519,10 @@ Please provide a response specifically relevant to the ${pageContext.name} page 
               onClick={() => setChatHistory([])}
               color="inherit"
               variant="outlined"
-              sx={{ mr: 1 }}
             >
               Clear Chat
             </Button>
           )}
-          <Button
-            onClick={handleSendAIQuery}
-            variant="contained"
-            disabled={!aiQuery.trim() || isAILoading || !agentInitialized}
-            startIcon={isAILoading ? <CircularProgress size={16} /> : <SendIcon />}
-            sx={{ borderRadius: 2 }}
-          >
-            {isAILoading ? 'Processing...' : 'Send to iRenewal'}
-          </Button>
         </DialogActions>
       </Dialog>
     </Box>

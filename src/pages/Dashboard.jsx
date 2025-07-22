@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Grid, Paper, Typography, Box, Card, CardContent, 
   FormControl, InputLabel, Select, MenuItem, alpha, useTheme,
-  Fade, Grow, Chip, IconButton
+  Fade, Grow, Chip, IconButton, Button, Collapse, Divider
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -34,7 +34,10 @@ import {
   Pause as PauseIcon,
   Visibility as ViewIcon,
   Group as TeamIcon,
-  Person as MemberIcon
+  Person as MemberIcon,
+  FileDownload as ExportIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon
 } from '@mui/icons-material';
 
 const Dashboard = () => {
@@ -62,6 +65,17 @@ const Dashboard = () => {
   const [selectedTeamMember, setSelectedTeamMember] = useState('all');
   const [teams, setTeams] = useState([]);
   const [teamMembers, setTeamMembers] = useState([]);
+  
+  // MIS Export states
+  const [exportExpanded, setExportExpanded] = useState(false);
+  const [exportDateRange, setExportDateRange] = useState('month');
+  const [exportDataType, setExportDataType] = useState('all');
+  const [exportFormat, setExportFormat] = useState('excel');
+  const [exporting, setExporting] = useState(false);
+  const [exportStartDate, setExportStartDate] = useState(null);
+  const [exportEndDate, setExportEndDate] = useState(null);
+  const [exportPolicyType, setExportPolicyType] = useState('all');
+  const [exportCaseStatus, setExportCaseStatus] = useState('all');
 
   // New chart data states
   const [channelData, setChannelData] = useState([]);
@@ -144,6 +158,64 @@ const Dashboard = () => {
     
     loadTeamMembers();
   }, [selectedTeam]);
+
+  // MIS Export functionality
+  const handleMISExport = async () => {
+    setExporting(true);
+    
+    try {
+      // Simulate export process
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Create export data based on selected filters
+      const exportData = {
+        dateRange: exportDateRange,
+        customStartDate: exportStartDate,
+        customEndDate: exportEndDate,
+        dataType: exportDataType,
+        format: exportFormat,
+        policyType: exportPolicyType,
+        caseStatus: exportCaseStatus,
+        stats: stats,
+        trends: trendData,
+        timestamp: new Date().toISOString()
+      };
+      
+      // Generate filename
+      const timestamp = new Date().toISOString().split('T')[0];
+      const dateRangeStr = exportDateRange === 'custom' && exportStartDate && exportEndDate ? 
+        `${exportStartDate.toISOString().split('T')[0]}_to_${exportEndDate.toISOString().split('T')[0]}` : 
+        exportDateRange;
+      
+      // Build filename parts
+      const filenameParts = ['MIS_Report', exportDataType];
+      if (exportPolicyType !== 'all') filenameParts.push(exportPolicyType);
+      if (exportCaseStatus !== 'all') filenameParts.push(exportCaseStatus);
+      filenameParts.push(dateRangeStr, timestamp);
+      
+      const filename = `${filenameParts.join('_')}.${exportFormat === 'excel' ? 'xlsx' : exportFormat === 'csv' ? 'csv' : exportFormat === 'pdf' ? 'pdf' : 'json'}`;
+      
+      // Simulate file download
+      const dataStr = JSON.stringify(exportData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      // Collapse the export panel after successful export
+      setExportExpanded(false);
+      
+    } catch (error) {
+      console.error('Export failed:', error);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   useEffect(() => {
     // Initialize with default values to prevent NaN issues
@@ -686,6 +758,226 @@ const Dashboard = () => {
                 )}
               </Box>
             )}
+          </CardContent>
+        </Card>
+
+        {/* MIS Export Section */}
+        <Card sx={{ mb: 4, boxShadow: 'none', border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}` }}>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: exportExpanded ? 2 : 0 }}>
+              <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <ExportIcon color="primary" />
+                MIS Export
+              </Typography>
+              <Button
+                variant={exportExpanded ? "contained" : "outlined"}
+                color="primary"
+                startIcon={<ExportIcon />}
+                endIcon={exportExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                onClick={() => setExportExpanded(!exportExpanded)}
+                sx={{ 
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 600
+                }}
+              >
+                {exportExpanded ? 'Collapse Export' : 'Export Data'}
+              </Button>
+            </Box>
+            
+            <Collapse in={exportExpanded} timeout="auto" unmountOnExit>
+              <Divider sx={{ mb: 2 }} />
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+                {/* Date Range Filter */}
+                <FormControl sx={{ minWidth: 160 }} size="small">
+                  <InputLabel>Export Date Range</InputLabel>
+                  <Select
+                    value={exportDateRange}
+                    label="Export Date Range"
+                    onChange={(e) => {
+                      setExportDateRange(e.target.value);
+                      // Reset custom dates when switching to preset ranges
+                      if (e.target.value !== 'custom') {
+                        setExportStartDate(null);
+                        setExportEndDate(null);
+                      }
+                    }}
+                  >
+                    <MenuItem value="day">Today</MenuItem>
+                    <MenuItem value="week">This Week</MenuItem>
+                    <MenuItem value="month">This Month</MenuItem>
+                    <MenuItem value="quarter">This Quarter</MenuItem>
+                    <MenuItem value="year">This Year</MenuItem>
+                    <MenuItem value="custom">Custom Range</MenuItem>
+                    <MenuItem value="all">All Time</MenuItem>
+                  </Select>
+                </FormControl>
+
+                {/* Custom Date Pickers - Show when Custom Range is selected */}
+                {exportDateRange === 'custom' && (
+                  <LocalizationProvider dateAdapter={AdapterDateFns}>
+                    <DatePicker
+                      label="Export Start Date"
+                      value={exportStartDate}
+                      onChange={(newValue) => setExportStartDate(newValue)}
+                      slotProps={{
+                        textField: {
+                          size: "small",
+                          sx: {
+                            minWidth: 160,
+                            '& .MuiOutlinedInput-root': {
+                              fontSize: '0.875rem'
+                            }
+                          }
+                        }
+                      }}
+                    />
+                    <DatePicker
+                      label="Export End Date"
+                      value={exportEndDate}
+                      onChange={(newValue) => setExportEndDate(newValue)}
+                      minDate={exportStartDate}
+                      slotProps={{
+                        textField: {
+                          size: "small",
+                          sx: {
+                            minWidth: 160,
+                            '& .MuiOutlinedInput-root': {
+                              fontSize: '0.875rem'
+                            }
+                          }
+                        }
+                      }}
+                    />
+                  </LocalizationProvider>
+                )}
+
+                {/* Data Type Filter */}
+                <FormControl sx={{ minWidth: 160 }} size="small">
+                  <InputLabel>Data Type</InputLabel>
+                  <Select
+                    value={exportDataType}
+                    label="Data Type"
+                    onChange={(e) => setExportDataType(e.target.value)}
+                  >
+                    <MenuItem value="all">All Data</MenuItem>
+                    <MenuItem value="cases">Cases Only</MenuItem>
+                    <MenuItem value="payments">Payments Only</MenuItem>
+                    <MenuItem value="trends">Trends Only</MenuItem>
+                    <MenuItem value="teams">Team Performance</MenuItem>
+                    <MenuItem value="channels">Channel Analytics</MenuItem>
+                  </Select>
+                </FormControl>
+
+                {/* Policy Type Filter */}
+                <FormControl sx={{ minWidth: 160 }} size="small">
+                  <InputLabel>Policy Type</InputLabel>
+                  <Select
+                    value={exportPolicyType}
+                    label="Policy Type"
+                    onChange={(e) => setExportPolicyType(e.target.value)}
+                  >
+                    <MenuItem value="all">All Types</MenuItem>
+                    <MenuItem value="life">Life Insurance</MenuItem>
+                    <MenuItem value="health">Health Insurance</MenuItem>
+                    <MenuItem value="motor">Motor Insurance</MenuItem>
+                    <MenuItem value="home">Home Insurance</MenuItem>
+                    <MenuItem value="travel">Travel Insurance</MenuItem>
+                    <MenuItem value="business">Business Insurance</MenuItem>
+                  </Select>
+                </FormControl>
+
+                {/* Case Status Filter */}
+                <FormControl sx={{ minWidth: 160 }} size="small">
+                  <InputLabel>Case Status</InputLabel>
+                  <Select
+                    value={exportCaseStatus}
+                    label="Case Status"
+                    onChange={(e) => setExportCaseStatus(e.target.value)}
+                  >
+                    <MenuItem value="all">All Status</MenuItem>
+                    <MenuItem value="pending">Pending</MenuItem>
+                    <MenuItem value="in_progress">In Progress</MenuItem>
+                    <MenuItem value="renewed">Renewed</MenuItem>
+                    <MenuItem value="lapsed">Lapsed</MenuItem>
+                    <MenuItem value="cancelled">Cancelled</MenuItem>
+                    <MenuItem value="on_hold">On Hold</MenuItem>
+                    <MenuItem value="follow_up">Follow Up Required</MenuItem>
+                  </Select>
+                </FormControl>
+
+                {/* Export Format */}
+                <FormControl sx={{ minWidth: 160 }} size="small">
+                  <InputLabel>Export Format</InputLabel>
+                  <Select
+                    value={exportFormat}
+                    label="Export Format"
+                    onChange={(e) => setExportFormat(e.target.value)}
+                  >
+                    <MenuItem value="excel">Excel (.xlsx)</MenuItem>
+                    <MenuItem value="csv">CSV (.csv)</MenuItem>
+                    <MenuItem value="pdf">PDF Report</MenuItem>
+                    <MenuItem value="json">JSON Data</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+              
+              {/* Validation Message for Custom Date Range */}
+              {exportDateRange === 'custom' && (!exportStartDate || !exportEndDate) && (
+                <Box sx={{ mb: 2, p: 1.5, bgcolor: alpha(theme.palette.warning.main, 0.1), borderRadius: 1, border: `1px solid ${alpha(theme.palette.warning.main, 0.3)}` }}>
+                  <Typography variant="body2" color="warning.main" sx={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <ErrorIcon fontSize="small" />
+                    Please select both start and end dates for custom range export
+                  </Typography>
+                </Box>
+              )}
+
+              {/* Export Actions */}
+              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<ExportIcon />}
+                  onClick={handleMISExport}
+                  disabled={exporting || (exportDateRange === 'custom' && (!exportStartDate || !exportEndDate))}
+                  sx={{ 
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    minWidth: 120
+                  }}
+                >
+                  {exporting ? 'Exporting...' : 'Generate Export'}
+                </Button>
+              </Box>
+              
+              {/* Export Info */}
+              <Box sx={{ mt: 2, p: 2, bgcolor: alpha(theme.palette.info.main, 0.1), borderRadius: 2 }}>
+                <Typography variant="body2" color="info.main" sx={{ fontWeight: 500, mb: 1 }}>
+                  Export Preview:
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  • Date Range: {
+                    exportDateRange === 'all' ? 'All Time' :
+                    exportDateRange === 'custom' ? 
+                      (exportStartDate && exportEndDate ? 
+                        `${exportStartDate.toLocaleDateString()} - ${exportEndDate.toLocaleDateString()}` : 
+                        'Custom Range (Please select dates)') :
+                      exportDateRange.charAt(0).toUpperCase() + exportDateRange.slice(1)
+                  }
+                  <br />
+                  • Data Type: {exportDataType === 'all' ? 'Complete Dataset' : exportDataType.charAt(0).toUpperCase() + exportDataType.slice(1)}
+                  <br />
+                  • Policy Type: {exportPolicyType === 'all' ? 'All Types' : exportPolicyType.charAt(0).toUpperCase() + exportPolicyType.slice(1).replace('_', ' ')}
+                  <br />
+                  • Case Status: {exportCaseStatus === 'all' ? 'All Status' : exportCaseStatus.charAt(0).toUpperCase() + exportCaseStatus.slice(1).replace('_', ' ')}
+                  <br />
+                  • Format: {exportFormat.toUpperCase()}
+                  <br />
+                  • Estimated Size: {exportDataType === 'all' && exportPolicyType === 'all' && exportCaseStatus === 'all' ? '~2.5MB' : '~500KB - 1.5MB'}
+                </Typography>
+              </Box>
+            </Collapse>
           </CardContent>
         </Card>
         

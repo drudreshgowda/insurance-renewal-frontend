@@ -8,7 +8,8 @@ const MODEL_NAME = 'gemma3:1b';
 const IRENEWAL_AI_PROMPT = `You are iRenewal, an intelligent AI assistant specialized in insurance renewal management and strategic analysis. You are the primary AI assistant for the renewal management dashboard and provide comprehensive insights across all aspects of renewal operations.
 
 PERSONALITY & IDENTITY:
-- Your name is "iRenewal" - always introduce yourself warmly
+- Your name is "iRenewal" - always introduce yourself warmly\
+
 - You are a senior renewal management consultant with deep expertise
 - Maintain conversation context and build relationships with users
 - Be proactive in offering insights and asking relevant follow-up questions
@@ -58,12 +59,20 @@ RESPONSE STRUCTURE - ALWAYS USE THIS FORMAT:
 • [Additional data or context needed]
 
 CONTEXT-AWARE RESPONSES BY PAGE:
-- **Dashboard**: Focus on overall portfolio performance, trend analysis, strategic insights
+- **Dashboard**: Focus on overall portfolio performance, trend analysis, strategic insights using actual metrics
 - **Case Tracking**: Emphasize workflow optimization, bottleneck identification, process efficiency
-- **Upload**: Concentrate on data quality, processing efficiency, automation opportunities
+- **Upload**: Concentrate on data quality, file processing, document management, and upload optimization
 - **Policy Timeline**: Highlight customer journey optimization, timing strategies, touchpoint effectiveness
 - **Closed Cases**: Analyze completion patterns, success factors, lessons learned
 - **Campaign Management**: Focus on campaign performance, ROI optimization, audience targeting
+- **Email Manager**: Concentrate on email effectiveness, communication strategies, engagement metrics
+- **WhatsApp Manager**: Focus on messaging optimization, conversation flows, delivery rates
+
+IMPORTANT PAGE-SPECIFIC RULES:
+- Only reference dashboard metrics when on the Dashboard page
+- Provide page-appropriate advice and insights
+- Avoid generic responses - be specific to the current page context
+- Ask page-relevant follow-up questions
 
 CONVERSATION GUIDELINES:
 - Always acknowledge previous conversations and build on them
@@ -134,7 +143,54 @@ export const sendMessage = async (message, context = [], onChunk = null, _pageCo
       }
     }
     
-    // Enhanced context with dashboard data
+    // Check if this is a greeting message and no previous context - BEFORE processing context
+    const isGreeting = /^(hi|hello|hey|good morning|good afternoon|good evening)$/i.test(actualUserMessage.trim());
+    const isFirstMessage = recentContext.length === 0;
+    
+    if (isGreeting && isFirstMessage) {
+      // Return a structured greeting response immediately
+      const greetingResponse = `**👋 Hello! I'm iRenewal**
+
+I'm your intelligent AI assistant specialized in insurance renewal management and strategic analysis. I'm here to help you optimize your renewal processes and improve business performance.
+
+**🎯 What I Can Help You With:**
+• **Dashboard Analytics** - Analyze your portfolio performance and identify trends
+• **Renewal Strategy** - Optimize renewal rates and reduce customer churn  
+• **Process Optimization** - Streamline workflows and eliminate bottlenecks
+• **Performance Analysis** - Evaluate team and channel effectiveness
+• **Predictive Insights** - Forecast trends and identify potential risks
+• **Customer Journey** - Map and optimize the customer experience
+• **Financial Analysis** - Analyze premium collection and revenue optimization
+
+**💡 Quick Start Options:**
+• "Analyze my current renewal portfolio performance"
+• "What strategies can improve my renewal rates?"
+• "How can I optimize my digital channel performance?"
+• "What are the key bottlenecks in my renewal process?"
+• "Provide insights on my premium collection efficiency"
+
+**❓ What would you like to explore today?**
+Please let me know what specific area you'd like to focus on, and I'll provide detailed insights and recommendations!`;
+
+      if (onChunk && typeof onChunk === 'function') {
+        // Simulate streaming for consistency
+        const words = greetingResponse.split(' ');
+        let currentText = '';
+        
+        for (let i = 0; i < words.length; i++) {
+          currentText += words[i] + ' ';
+          onChunk(words[i] + ' ', currentText.trim());
+          await new Promise(resolve => setTimeout(resolve, 50)); // Small delay for streaming effect
+        }
+      }
+      
+      return {
+        message: { content: greetingResponse },
+        done: true,
+      };
+    }
+    
+    // Enhanced context with dashboard data (only when relevant)
     let dashboardContextPrompt = '';
     if (dashboardData) {
       dashboardContextPrompt = `
@@ -146,6 +202,8 @@ CURRENT DASHBOARD METRICS:
 • Collection Rate: ${dashboardData.collectionRate || 'N/A'}%
 • Digital Channel Usage: ${dashboardData.digitalUsage || 'N/A'}%
 • Current Period: ${dashboardData.period || 'Current Quarter'}
+
+Use these metrics to provide specific insights and recommendations.
 `;
     }
     
@@ -157,9 +215,10 @@ ${dashboardContextPrompt}
 
 IMPORTANT: 
 - Provide responses using the exact format specified in your prompt
-- Reference specific metrics when available
-- Be proactive in offering strategic insights
-- Always end with relevant follow-up questions`;
+- Reference specific metrics ONLY when provided in the dashboard context
+- Be proactive in offering strategic insights relevant to the current page
+- Focus specifically on the current page context and avoid unrelated topics
+- Always end with relevant follow-up questions specific to the current page`;
     
     const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
       method: 'POST',
