@@ -85,8 +85,6 @@ const BulkEmail = () => {
   const [bulkRecipientText, setBulkRecipientText] = useState('');
 
   useEffect(() => {
-    // eslint-disable-next-line
-    setTimeout(() => setLoaded(true), 100);
     loadCampaigns();
   }, []);
 

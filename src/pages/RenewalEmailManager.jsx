@@ -6,7 +6,7 @@ import {
   TableContainer, TableHead, TableRow, LinearProgress, Checkbox, CircularProgress,
   Tabs, Tab, List, ListItem, ListItemText, Divider, AppBar,
   Badge, Tooltip, SpeedDial, SpeedDialAction, SpeedDialIcon,
-  Alert, Snackbar, ToggleButton, ToggleButtonGroup
+  Alert, Snackbar
 } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -16,14 +16,13 @@ import {
   Reply as ReplyIcon, Delete as DeleteIcon, Archive as ArchiveIcon, Star as StarIcon, 
   StarBorder as StarBorderIcon, Attachment as AttachmentIcon, Search as SearchIcon,
   MoreVert as MoreVertIcon, Flag as PriorityIcon, Close as CloseIcon, Add as AddIcon,
-  Edit as EditIcon, Visibility as ViewIcon, FilterList as FilterIcon, Clear as ClearIcon,
+  Edit as EditIcon, Visibility as ViewIcon, Clear as ClearIcon,
   Schedule as ScheduleIcon, AutoMode as AutoModeIcon, Analytics as AnalyticsIcon,
   Settings as SettingsIcon, Label as LabelIcon,
   Forward as ForwardIcon, Print as PrintIcon,
   SmartToy as SmartToyIcon, Psychology as PsychologyIcon,
   Assignment as AssignmentIcon,
-  Snooze as SnoozeIcon, ViewList as ViewListIcon,
-  ViewModule as ViewModuleIcon,
+  Snooze as SnoozeIcon,
   Drafts as DraftsIcon
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
@@ -255,7 +254,7 @@ const RenewalEmailManager = () => {
   // Enhanced State Management
   const [loading, setLoading] = useState(false);
   const [currentTab, setCurrentTab] = useState(0);
-  const [viewMode, setViewMode] = useState('table'); // table, card, timeline
+
   const [emails, setEmails] = useState([]);
   const [filteredEmails, setFilteredEmails] = useState([]);
   const [selectedEmails, setSelectedEmails] = useState([]);
@@ -274,6 +273,9 @@ const RenewalEmailManager = () => {
     starred: 'all',
     size: 'all'
   });
+  // Due Date Filtering
+  const [dueDateFilter, setDueDateFilter] = useState('all');
+  const [customDateRange, setCustomDateRange] = useState({ start: '', end: '' });
   const [sortConfig] = useState({ field: 'date', direction: 'desc' });
   
   // Dialog States
@@ -328,7 +330,7 @@ const RenewalEmailManager = () => {
   // UI State
   const [speedDialOpen, setSpeedDialOpen] = useState(false);
   const [notification, setNotification] = useState({ open: false, message: '', severity: 'info' });
-  const [, setFilterPanelOpen] = useState(false);
+
   
   // Compose Email Enhanced State
   const [composeData, setComposeData] = useState({
@@ -403,6 +405,8 @@ const RenewalEmailManager = () => {
         policyType: 'Auto Insurance',
         currentStage: 'documentation_pending'
       },
+      dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(), // Due tomorrow
+      policyExpiryDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
       aiSuggestions: [
         { type: 'quick_reply', text: 'We\'ll expedite your renewal process immediately.' },
         { type: 'template', name: 'Urgent Renewal Response' },
@@ -446,6 +450,8 @@ const RenewalEmailManager = () => {
         policyType: 'Home Insurance',
         currentStage: 'quote_sent'
       },
+      dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), // Due in 5 days
+      policyExpiryDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
       scheduledFollowUp: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
       },
       {
@@ -479,7 +485,9 @@ const RenewalEmailManager = () => {
         customerPhone: '+1-555-0789',
         policyType: 'Life Insurance',
         currentStage: 'completed'
-      }
+      },
+      dueDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // Overdue by 3 days
+      policyExpiryDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
     },
     {
       id: 4,
@@ -1062,6 +1070,57 @@ Best regards,
       );
     }
 
+    // Apply due date filter
+    if (dueDateFilter !== 'all') {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      switch (dueDateFilter) {
+        case 'current':
+          // Due within next 30 days
+          const next30Days = new Date(today);
+          next30Days.setDate(today.getDate() + 30);
+          filtered = filtered.filter(email => {
+            if (!email.dueDate) return false;
+            const dueDate = new Date(email.dueDate);
+            return dueDate >= today && dueDate <= next30Days;
+          });
+          break;
+        case 'due':
+          // Due today or within next 7 days
+          const next7Days = new Date(today);
+          next7Days.setDate(today.getDate() + 7);
+          filtered = filtered.filter(email => {
+            if (!email.dueDate) return false;
+            const dueDate = new Date(email.dueDate);
+            return dueDate >= today && dueDate <= next7Days;
+          });
+          break;
+        case 'overdue':
+          // Past due date
+          filtered = filtered.filter(email => {
+            if (!email.dueDate) return false;
+            const dueDate = new Date(email.dueDate);
+            return dueDate < today;
+          });
+          break;
+        case 'custom':
+          // Custom date range
+          if (customDateRange.start && customDateRange.end) {
+            const startDate = new Date(customDateRange.start);
+            const endDate = new Date(customDateRange.end);
+            filtered = filtered.filter(email => {
+              if (!email.dueDate) return false;
+              const dueDate = new Date(email.dueDate);
+              return dueDate >= startDate && dueDate <= endDate;
+            });
+          }
+          break;
+        default:
+          break;
+      }
+    }
+
     // Apply sorting
     filtered.sort((a, b) => {
       let aValue = a[sortConfig.field];
@@ -1080,7 +1139,7 @@ Best regards,
     });
 
     setFilteredEmails(filtered);
-  }, [emails, currentTab, searchTerm, advancedFilters, sortConfig, snoozedEmails, scheduledEmails]);
+  }, [emails, currentTab, searchTerm, advancedFilters, sortConfig, snoozedEmails, scheduledEmails, dueDateFilter, customDateRange]);
 
   useEffect(() => {
     applyFilters();
@@ -2306,7 +2365,7 @@ Customer Service Team`;
       <Card sx={{ mb: 3, borderRadius: 3 }}>
         <CardContent>
           <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={3}>
               <TextField
                 fullWidth
                 size="small"
@@ -2323,31 +2382,26 @@ Customer Service Team`;
                 }}
               />
             </Grid>
-            <Grid item xs={6} md={2}>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  startIcon={<FilterIcon />}
-                  onClick={() => setFilterPanelOpen(true)}
+            <Grid item xs={12} md={2}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Due Status</InputLabel>
+                <Select
+                  value={dueDateFilter}
+                  label="Due Status"
+                  onChange={(e) => setDueDateFilter(e.target.value)}
                 >
-                  Filters
-                </Button>
+                  <MenuItem value="all">All Emails</MenuItem>
+                  <MenuItem value="current">Current (30 days)</MenuItem>
+                  <MenuItem value="due">Due Soon (7 days)</MenuItem>
+                  <MenuItem value="overdue">Overdue</MenuItem>
+                  <MenuItem value="custom">Custom Range</MenuItem>
+                </Select>
+              </FormControl>
             </Grid>
-            <Grid item xs={6} md={2}>
-                <ToggleButtonGroup
-                  value={viewMode}
-                  exclusive
-                  onChange={(e, newMode) => newMode && setViewMode(newMode)}
-                  size="small"
-                >
-                  <ToggleButton value="table">
-                    <ViewListIcon />
-                  </ToggleButton>
-                  <ToggleButton value="card">
-                    <ViewModuleIcon />
-                  </ToggleButton>
-                </ToggleButtonGroup>
-            </Grid>
+            
+            {/* Spacer to push buttons to the right */}
+            <Grid item xs={0} md={3} />
+            
             <Grid item xs={6} md={2}>
                 <Button
                   fullWidth
@@ -2369,6 +2423,32 @@ Customer Service Team`;
                 </Button>
             </Grid>
           </Grid>
+          {dueDateFilter === 'custom' && (
+            <Grid container spacing={2} sx={{ mt: 1 }}>
+              <Grid item xs={12} md={3}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  type="date"
+                  label="Start Date"
+                  value={customDateRange.start}
+                  onChange={(e) => setCustomDateRange(prev => ({ ...prev, start: e.target.value }))}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  type="date"
+                  label="End Date"
+                  value={customDateRange.end}
+                  onChange={(e) => setCustomDateRange(prev => ({ ...prev, end: e.target.value }))}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+            </Grid>
+          )}
         </CardContent>
       </Card>
 
@@ -2469,6 +2549,7 @@ Customer Service Team`;
                     <TableCell sx={{ fontWeight: 600 }}>Priority</TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>Sentiment</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Due Date</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
@@ -2582,6 +2663,46 @@ Customer Service Team`;
                         <Typography variant="body2">
                           {email.date.toLocaleString()}
                         </Typography>
+                      </TableCell>
+                      <TableCell>
+                        {email.dueDate ? (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography 
+                              variant="body2" 
+                              color={
+                                new Date(email.dueDate) < new Date() ? 'error.main' :
+                                new Date(email.dueDate) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) ? 'warning.main' :
+                                'text.secondary'
+                              }
+                              sx={{ fontWeight: new Date(email.dueDate) < new Date() ? 600 : 400 }}
+                            >
+                              {new Date(email.dueDate).toLocaleDateString()}
+                            </Typography>
+                            {new Date(email.dueDate) < new Date() && (
+                              <Chip 
+                                label="OVERDUE" 
+                                size="small" 
+                                color="error" 
+                                variant="outlined"
+                                sx={{ fontSize: '0.7rem', height: 20 }}
+                              />
+                            )}
+                            {new Date(email.dueDate) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) && 
+                             new Date(email.dueDate) >= new Date() && (
+                              <Chip 
+                                label="DUE SOON" 
+                                size="small" 
+                                color="warning" 
+                                variant="outlined"
+                                sx={{ fontSize: '0.7rem', height: 20 }}
+                              />
+                            )}
+                          </Box>
+                        ) : (
+                          <Typography variant="body2" color="text.disabled">
+                            No due date
+                          </Typography>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Box sx={{ display: 'flex', gap: 0.5 }}>

@@ -146,7 +146,8 @@ export const getCaseById = async (caseId) => {
           isPriority: false,
           contactInfo: {
             email: 'john.smith@example.com',
-            phone: '555-123-4567'
+            phone: '555-123-4567',
+            pan: 'ABCDE1234F'
           },
           policyProposer: {
                     name: 'Arjun Sharma',

@@ -33,10 +33,13 @@ import {
   Checkbox,
   Snackbar,
   Alert,
+  Toolbar,
   Divider,
   ListItemIcon,
   ListItemText,
-  LinearProgress,
+  Grid,
+  Card,
+  CardContent,
   CircularProgress,
   List,
   ListItem,
@@ -60,7 +63,7 @@ import {
   Email as EmailIcon,
   Attachment as AttachmentIcon,
   Schedule as ScheduleIcon,
-  FileDownload as ExportIcon,
+
   Edit as EditIcon,
   Reply as ReplyIcon,
   Star as StarIcon,
@@ -82,32 +85,36 @@ import {
   Assignment as AssignmentIcon,
   Delete as DeleteIcon,
   Add as AddIcon,
-  AccessTime as AccessTimeIcon
+  CheckCircle as CheckCircleIcon,
+  Flag as FlagIcon,
+  GetApp as GetAppIcon,
+  Close as CloseIcon,
+  Save as SaveIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
 const EmailInbox = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const [loaded, setLoaded] = useState(false);
+  const [loaded, setLoaded] = useState(false); // Loading state
   const [emails, setEmails] = useState([]);
   const [filteredEmails, setFilteredEmails] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
+  const [dueDateFilter, setDueDateFilter] = useState('all'); // New due date filter
+  const [customDateRange, setCustomDateRange] = useState({ start: '', end: '' });
   const [page, setPage] = useState(1);
   const [rowsPerPage] = useState(10);
 
-  const [assignDialog, setAssignDialog] = useState({ open: false, emailId: null, emailIds: [] });
-  const [reclassifyDialog, setReclassifyDialog] = useState({ open: false, emailId: null, currentCategory: '' });
-  const [replyDialog, setReplyDialog] = useState({ open: false, emailId: null, emailSubject: '', emailFrom: '', templateBody: '' });
+  // Removed unused dialog states
   const [actionMenus, setActionMenus] = useState({});
   const [selectedEmails, setSelectedEmails] = useState([]);
   const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
   
   // New state for sorting
-  const [sortConfig, setSortConfig] = useState({ key: 'dateReceived', direction: 'desc' });
+  const [sortConfig] = useState({ key: 'dateReceived', direction: 'desc' });
 
   // New responsive states
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -115,17 +122,14 @@ const EmailInbox = () => {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [newEmailsCount, setNewEmailsCount] = useState(0);
   
-  // Email Templates and Automation states
-  const [templatesDialog, setTemplatesDialog] = useState({ open: false, emailId: null });
-  const [automationDialog, setAutomationDialog] = useState({ open: false });
-  const [templatePreviewDialog, setTemplatePreviewDialog] = useState({ open: false, template: null, emailId: null });
+  // Email Templates and Automation states (removed unused dialogs)
 
   // New Outlook-style features state
   const [currentFolder, setCurrentFolder] = useState('inbox');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen] = useState(true);
   const [starredEmails, setStarredEmails] = useState(new Set());
   const [customerCategories, setCustomerCategories] = useState({});
-  const [emailFolders, setEmailFolders] = useState([
+  const [emailFolders] = useState([
     { id: 'inbox', name: 'Inbox', icon: 'inbox', count: 0 },
     { id: 'starred', name: 'Starred', icon: 'star', count: 0 },
     { id: 'sent', name: 'Sent', icon: 'send', count: 0 },
@@ -157,33 +161,14 @@ const EmailInbox = () => {
     }
   ]);
   const [relatedEmailsDialog, setRelatedEmailsDialog] = useState({ open: false, email: null, relatedEmails: [] });
-  const [senderFilterDialog, setSenderFilterDialog] = useState({ open: false, sender: '' });
+  const [, setSenderFilterDialog] = useState({ open: false, sender: '' });
   const [newFolderDialog, setNewFolderDialog] = useState({ open: false });
   const [rulesDialog, setRulesDialog] = useState({ open: false });
   const [composeDialog, setComposeDialog] = useState({ open: false, mode: 'new', replyTo: null, forwardFrom: null });
   const [auditTrailDialog, setAuditTrailDialog] = useState({ open: false, emailId: null });
 
   // Automation and template management states (restored for compatibility)
-  const [automationSettings, setAutomationSettings] = useState({
-    enabled: true,
-    autoReplyDelay: 5,
-    businessHoursOnly: true,
-    categories: ['complaint', 'feedback', 'appointment'],
-    excludeKeywords: ['urgent', 'escalate', 'manager']
-  });
-  const [customTemplates, setCustomTemplates] = useState([]);
-  const [templateManagementDialog, setTemplateManagementDialog] = useState({ open: false });
-  const [editTemplateDialog, setEditTemplateDialog] = useState({ 
-    open: false, 
-    template: null, 
-    mode: 'add'
-  });
-  const [newTemplate, setNewTemplate] = useState({
-    name: '',
-    category: 'general',
-    subject: '',
-    body: ''
-  });
+    // Removed unused template management states
 
   // Customer categorization options
   const customerCategoryOptions = [
@@ -201,126 +186,10 @@ const EmailInbox = () => {
     'Eric Thompson'
   ], []);
 
-  const categoryOptions = [
-    'complaint',
-    'feedback', 
-    'refund',
-    'appointment',
-    'uncategorized'
-  ];
+  // Removed unused categoryOptions
 
   // Email Templates
-  const emailTemplates = [
-    {
-      id: 'acknowledgment',
-      name: 'Acknowledgment',
-      category: 'general',
-      subject: 'Re: {{subject}}',
-      body: `Dear {{customerName}},
-
-Thank you for contacting us. We have received your email regarding {{subject}} and want to assure you that we are reviewing your request.
-
-Our team will respond to your inquiry within 24 hours during business hours. If this is an urgent matter, please call our customer service line at (555) 123-4567.
-
-We appreciate your patience and look forward to assisting you.
-
-Best regards,
-Customer Support Team
-Intelipro Insurance`
-    },
-    {
-      id: 'complaint_response',
-      name: 'Complaint Response',
-      category: 'complaint',
-      subject: 'Re: {{subject}} - We\'re Here to Help',
-      body: `Dear {{customerName}},
-
-Thank you for bringing this matter to our attention. We sincerely apologize for any inconvenience you have experienced.
-
-Your concern is important to us, and we are committed to resolving this issue promptly. A senior customer service representative will review your case and contact you within 4 hours.
-
-In the meantime, if you have any additional information that might help us resolve this matter, please don't hesitate to share it with us.
-
-We value your business and appreciate your patience as we work to make this right.
-
-Sincerely,
-Customer Care Team
-Intelipro Insurance`
-    },
-    {
-      id: 'appointment_confirmation',
-      name: 'Appointment Confirmation',
-      category: 'appointment',
-      subject: 'Appointment Confirmation - {{date}}',
-      body: `Dear {{customerName}},
-
-This email confirms your appointment scheduled for {{date}} at {{time}}.
-
-Meeting Details:
-- Date: {{date}}
-- Time: {{time}}
-- Duration: 30 minutes
-- Meeting Type: {{meetingType}}
-- Agent: {{agentName}}
-
-Please ensure you have the following documents ready:
-- Valid ID
-- Policy documents
-- Any relevant correspondence
-
-If you need to reschedule or cancel, please contact us at least 24 hours in advance at (555) 123-4567.
-
-We look forward to meeting with you.
-
-Best regards,
-{{agentName}}
-Intelipro Insurance`
-    },
-    {
-      id: 'refund_processing',
-      name: 'Refund Processing',
-      category: 'refund',
-      subject: 'Refund Request - Processing Update',
-      body: `Dear {{customerName}},
-
-We have received and are processing your refund request for policy {{policyNumber}}.
-
-Refund Details:
-- Amount: {{refundAmount}}
-- Processing Time: 5-7 business days
-- Method: Original payment method
-- Reference: {{referenceNumber}}
-
-You will receive an email confirmation once the refund has been processed. The funds should appear in your account within 5-7 business days from the processing date.
-
-If you have any questions about your refund, please contact us at (555) 123-4567 with your reference number.
-
-Thank you for your patience.
-
-Best regards,
-Billing Department
-Intelipro Insurance`
-    },
-    {
-      id: 'feedback_thanks',
-      name: 'Feedback Thank You',
-      category: 'feedback',
-      subject: 'Thank You for Your Feedback',
-      body: `Dear {{customerName}},
-
-Thank you for taking the time to share your feedback with us. Your input is invaluable in helping us improve our services.
-
-We have forwarded your comments to the appropriate team for review and consideration. Your feedback helps us understand what we're doing well and where we can make improvements.
-
-If you have any additional suggestions or concerns, please don't hesitate to reach out to us. We're always here to listen and help.
-
-We appreciate your business and look forward to serving you better.
-
-Warm regards,
-Customer Experience Team
-Intelipro Insurance`
-    }
-  ];
+  // Removed unused emailTemplates array
 
   // Generate dynamic email data based on current filters and time
   const generateDynamicEmails = useCallback(() => {
@@ -339,7 +208,9 @@ Intelipro Insurance`
         content: 'Dear Team, I submitted my policy renewal documents last week but haven\'t received any confirmation. My policy expires tomorrow and I\'m worried about coverage gap. Please expedite this urgent matter.',
         isRead: false,
         slaTimeRemaining: Math.floor(2 * 60 * 60 * 1000),
-        slaDeadline: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString()
+        slaDeadline: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
+        dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(), // Due tomorrow
+        policyExpiryDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString()
       },
       {
         id: 'EMAIL-002',
@@ -355,7 +226,9 @@ Intelipro Insurance`
         content: 'I wanted to express my gratitude for the exceptional service during my recent claim process. The adjuster was professional and the settlement was fair and quick. Thank you for your excellent customer service.',
         isRead: true,
         slaTimeRemaining: Math.floor(19 * 60 * 60 * 1000),
-        slaDeadline: new Date(Date.now() + 19 * 60 * 60 * 1000).toISOString()
+        slaDeadline: new Date(Date.now() + 19 * 60 * 60 * 1000).toISOString(),
+        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // Due in a week
+        policyExpiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
       },
       {
         id: 'EMAIL-003',
@@ -371,7 +244,9 @@ Intelipro Insurance`
         content: 'I need to cancel my business insurance policy due to company closure. Please process the refund for the unused premium. I have attached the necessary documents including the business closure certificate.',
         isRead: true,
         slaTimeRemaining: Math.floor(16 * 60 * 60 * 1000),
-        slaDeadline: new Date(Date.now() + 16 * 60 * 60 * 1000).toISOString()
+        slaDeadline: new Date(Date.now() + 16 * 60 * 60 * 1000).toISOString(),
+        dueDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // Overdue by 2 days
+        policyExpiryDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
       },
       {
         id: 'EMAIL-004',
@@ -387,7 +262,9 @@ Intelipro Insurance`
         content: 'Hello, I would like to schedule an appointment to review my current health insurance policy and discuss options for reducing my premium while maintaining adequate coverage. Please let me know your availability.',
         isRead: false,
         slaTimeRemaining: Math.floor(20 * 60 * 60 * 1000),
-        slaDeadline: new Date(Date.now() + 20 * 60 * 60 * 1000).toISOString()
+        slaDeadline: new Date(Date.now() + 20 * 60 * 60 * 1000).toISOString(),
+        dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // Due in 3 days
+        policyExpiryDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString()
       },
       {
         id: 'EMAIL-005',
@@ -403,7 +280,9 @@ Intelipro Insurance`
         content: 'I received my renewal notice with a 40% premium increase for my Lamborghini insurance. This seems excessive without any claims history. I need an explanation and possible alternatives.',
         isRead: true,
         slaTimeRemaining: Math.floor(6 * 60 * 60 * 1000),
-        slaDeadline: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString()
+        slaDeadline: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
+        dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(), // Due in 15 days
+        policyExpiryDate: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString()
       },
       {
         id: 'EMAIL-006',
@@ -634,9 +513,60 @@ Intelipro Insurance`
       }
     }
 
+    // Apply due date filter
+    if (dueDateFilter !== 'all') {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      switch (dueDateFilter) {
+        case 'current':
+          // Due within next 30 days
+          const next30Days = new Date(today);
+          next30Days.setDate(today.getDate() + 30);
+          filtered = filtered.filter(email => {
+            if (!email.dueDate) return false;
+            const dueDate = new Date(email.dueDate);
+            return dueDate >= today && dueDate <= next30Days;
+          });
+          break;
+        case 'due':
+          // Due today or within next 7 days
+          const next7Days = new Date(today);
+          next7Days.setDate(today.getDate() + 7);
+          filtered = filtered.filter(email => {
+            if (!email.dueDate) return false;
+            const dueDate = new Date(email.dueDate);
+            return dueDate >= today && dueDate <= next7Days;
+          });
+          break;
+        case 'overdue':
+          // Past due date
+          filtered = filtered.filter(email => {
+            if (!email.dueDate) return false;
+            const dueDate = new Date(email.dueDate);
+            return dueDate < today;
+          });
+          break;
+        case 'custom':
+          // Custom date range
+          if (customDateRange.start && customDateRange.end) {
+            const startDate = new Date(customDateRange.start);
+            const endDate = new Date(customDateRange.end);
+            filtered = filtered.filter(email => {
+              if (!email.dueDate) return false;
+              const dueDate = new Date(email.dueDate);
+              return dueDate >= startDate && dueDate <= endDate;
+            });
+          }
+          break;
+        default:
+          break;
+      }
+    }
+
     setFilteredEmails(filtered);
     setPage(1); // Reset to first page when filters change
-  }, [emails, searchTerm, categoryFilter, statusFilter, dateFilter]);
+  }, [emails, searchTerm, categoryFilter, statusFilter, dateFilter, dueDateFilter, customDateRange]);
 
   // Update bulk actions visibility when selection changes
   useEffect(() => {
@@ -664,14 +594,7 @@ Intelipro Insurance`
 
 
 
-  // Sorting functionality
-  const handleSort = (key) => {
-    let direction = 'asc';
-    if (sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
-    }
-    setSortConfig({ key, direction });
-  };
+  // Removed unused handleSort function
 
   // Apply sorting to filtered emails
   const sortedEmails = React.useMemo(() => {
@@ -702,85 +625,9 @@ Intelipro Insurance`
     return sortableEmails;
   }, [filteredEmails, sortConfig]);
 
-  // SLA Time Remaining Component
-  const SLATimeRemaining = ({ email }) => {
-    const [timeRemaining, setTimeRemaining] = useState(email.slaTimeRemaining);
+  // Removed unused SLATimeRemaining component
 
-    useEffect(() => {
-      const interval = setInterval(() => {
-        setTimeRemaining(prev => prev - 1000);
-      }, 1000);
-
-      return () => clearInterval(interval);
-    }, []);
-
-    const formatTime = (ms) => {
-      if (ms <= 0) return 'Overdue';
-      
-      const hours = Math.floor(ms / (1000 * 60 * 60));
-      const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
-      
-      if (hours > 0) {
-        return `${hours}h ${minutes}m`;
-      }
-      return `${minutes}m`;
-    };
-
-    const getProgressColor = () => {
-      if (timeRemaining <= 0) return 'error';
-      if (timeRemaining <= 2 * 60 * 60 * 1000) return 'warning'; // Less than 2 hours
-      return 'success';
-    };
-
-    const getProgressValue = () => {
-      const totalSLATime = 24 * 60 * 60 * 1000; // 24 hours SLA
-      return Math.max(0, Math.min(100, (timeRemaining / totalSLATime) * 100));
-    };
-
-    return (
-      <Box sx={{ width: '100%', minWidth: 120 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-          <AccessTimeIcon 
-            fontSize="small" 
-            color={timeRemaining <= 0 ? 'error' : timeRemaining <= 2 * 60 * 60 * 1000 ? 'warning' : 'success'} 
-          />
-          <Typography variant="caption" fontWeight="500">
-            {formatTime(timeRemaining)}
-          </Typography>
-        </Box>
-        <LinearProgress
-          variant="determinate"
-          value={getProgressValue()}
-          color={getProgressColor()}
-          sx={{
-            height: 4,
-            borderRadius: 2,
-            bgcolor: alpha(theme.palette.grey[500], 0.2)
-          }}
-        />
-      </Box>
-    );
-  };
-
-  const getCategoryColor = (category) => {
-    switch (category) {
-      case 'complaint': return 'error';
-      case 'feedback': return 'info';
-      case 'refund': return 'warning';
-      case 'appointment': return 'success';
-      default: return 'default';
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'new': return 'primary';
-      case 'in_progress': return 'warning';
-      case 'resolved': return 'success';
-      default: return 'default';
-    }
-  };
-
+  // Removed unused getCategoryColor and getStatusColor functions
 
 
   const formatDate = (dateString) => {
@@ -815,264 +662,248 @@ Intelipro Insurance`
     navigate(`/emails/detail/${emailId}`);
   };
 
-  const handleReplyEmail = (emailId) => {
+  // Removed unused legacy functions:
+  // - handleReplyEmail, handleConfirmReply
+  // - handleAssignEmail, handleConfirmAssign  
+  // - handleMarkAsResolved, handleConfirmReclassify
+  // - handleArchiveEmail, handleExportEmails
+  // - handleUseTemplate, handleAddTemplate
+  // - handleEditTemplate, handleSaveTemplate
+  // - handleDeleteTemplate, getAllTemplates
+
+
+
+  const paginatedEmails = sortedEmails.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+
+  // Removed unused processTemplate function
+
+  // Template management states
+  const [templateManagementDialog, setTemplateManagementDialog] = useState(false);
+  const [createTemplateDialog, setCreateTemplateDialog] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [templateForEmail, setTemplateForEmail] = useState(null); // Track which email to apply template to
+  const [templateStep, setTemplateStep] = useState(0);
+  const [newTemplate, setNewTemplate] = useState({
+    name: '',
+    type: 'email',
+    category: 'general',
+    subject: '',
+    content: '',
+    variables: [],
+    tags: [],
+    status: 'draft'
+  });
+  const [templates, setTemplates] = useState([
+    {
+      id: 'acknowledgment',
+      name: 'Acknowledgment',
+      category: 'general',
+      subject: 'Re: {{subject}}',
+      content: `Dear {{customerName}},
+
+Thank you for contacting us. We have received your email regarding {{subject}} and want to assure you that we are reviewing your request.
+
+Our team will respond to your inquiry within 24 hours during business hours. If this is an urgent matter, please call our customer service line at (555) 123-4567.
+
+We appreciate your patience and look forward to assisting you.
+
+Best regards,
+Customer Support Team
+Intelipro Insurance`,
+      variables: ['customerName', 'subject'],
+      tags: ['general', 'acknowledgment'],
+      status: 'active',
+      usage: 45
+    },
+    {
+      id: 'complaint_response',
+      name: 'Complaint Response',
+      category: 'complaint',
+      subject: 'Re: {{subject}} - We\'re Here to Help',
+      content: `Dear {{customerName}},
+
+Thank you for bringing this matter to our attention. We sincerely apologize for any inconvenience you have experienced.
+
+Your concern is important to us, and we are committed to resolving this issue promptly. A senior customer service representative will review your case and contact you within 4 hours.
+
+In the meantime, if you have any additional information that might help us resolve this matter, please don't hesitate to share it with us.
+
+We value your business and appreciate your patience as we work to make this right.
+
+Sincerely,
+Customer Care Team
+Intelipro Insurance`,
+      variables: ['customerName', 'subject'],
+      tags: ['complaint', 'response'],
+      status: 'active',
+      usage: 32
+    }
+  ]);
+
+  // Template management functions
+  const handleOpenTemplateManagement = () => {
+    setTemplateManagementDialog(true);
+  };
+
+  const handleCreateTemplate = () => {
+    setNewTemplate({
+      name: '',
+      type: 'email',
+      category: 'general',
+      subject: '',
+      content: '',
+      variables: [],
+      tags: [],
+      status: 'draft'
+    });
+    setTemplateStep(0);
+    setCreateTemplateDialog(true);
+  };
+
+  const extractVariables = (content) => {
+    const regex = /\{\{([^}]+)\}\}/g;
+    const variables = [];
+    let match;
+    while ((match = regex.exec(content)) !== null) {
+      if (!variables.includes(match[1])) {
+        variables.push(match[1]);
+      }
+    }
+    return variables;
+  };
+
+  const handleSaveTemplate = () => {
+    const variables = extractVariables(newTemplate.content);
+    const template = {
+      ...newTemplate,
+      variables,
+      id: selectedTemplate ? selectedTemplate.id : `template_${Date.now()}`,
+      usage: selectedTemplate ? selectedTemplate.usage : 0,
+      createdBy: 'Current User',
+      lastModified: new Date().toISOString().split('T')[0]
+    };
+
+    if (selectedTemplate) {
+      setTemplates(prev => prev.map(t => t.id === selectedTemplate.id ? template : t));
+    } else {
+      setTemplates(prev => [...prev, template]);
+    }
+
+    setCreateTemplateDialog(false);
+    setSelectedTemplate(null);
+    showNotification('Template saved successfully', 'success');
+  };
+
+  const handleEditTemplate = (template) => {
+    setSelectedTemplate(template);
+    setNewTemplate({ ...template });
+    setTemplateStep(0);
+    setCreateTemplateDialog(true);
+  };
+
+  const handleDeleteTemplate = (templateId) => {
+    setTemplates(prev => prev.filter(t => t.id !== templateId));
+    showNotification('Template deleted successfully', 'success');
+  };
+
+  const handleUseTemplate = (template, emailId) => {
     const email = emails.find(e => e.id === emailId);
-    if (email) {
-      setReplyDialog({
+    if (email && template) {
+      const processedTemplate = processTemplate(template, email);
+      // Open compose dialog with template content
+      setComposeDialog({
         open: true,
         emailId: emailId,
-        emailSubject: `Re: ${email.subject}`,
-        emailFrom: email.from,
-        templateBody: ''
+        subject: processedTemplate.subject,
+        body: processedTemplate.content,
+        templateUsed: template.name
       });
-      // Clear any previous reply text
       markAsRead(emailId);
+      showNotification(`Template "${template.name}" applied`, 'success');
     }
   };
 
-  const handleConfirmReply = (_replyText) => {
-    // In a real app, this would send the reply
-    showNotification(`Reply sent successfully to ${replyDialog.emailFrom}`);
-    setReplyDialog({ open: false, emailId: null, emailSubject: '', emailFrom: '', templateBody: '' });
-  };
-
-  const handleAssignEmail = (emailId) => {
-    if (emailId) {
-      setAssignDialog({ open: true, emailId, emailIds: [emailId] });
-    } else {
-      // Bulk assignment
-      setAssignDialog({ open: true, emailId: null, emailIds: selectedEmails });
-    }
-  };
-
-  const handleConfirmAssign = (agent) => {
-    const emailIds = assignDialog.emailIds;
-    setEmails(prev => prev.map(email => 
-      emailIds.includes(email.id) 
-        ? { ...email, assignedTo: agent, status: email.status === 'new' ? 'in_progress' : email.status }
-        : email
-    ));
+  const processTemplate = (template, email, additionalVars = {}) => {
+    let processedSubject = template.subject || '';
+    let processedContent = template.content || '';
     
-    setAssignDialog({ open: false, emailId: null, emailIds: [] });
-    setSelectedEmails([]);
-    showNotification(`${emailIds.length} email(s) assigned to ${agent}`);
+    const variables = {
+      customerName: email.from.split('@')[0].replace('.', ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      subject: email.subject,
+      date: new Date().toLocaleDateString(),
+      agentName: 'Customer Support',
+      companyName: 'Intelipro Insurance',
+      ...additionalVars
+    };
+    
+    Object.entries(variables).forEach(([key, value]) => {
+      const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+      processedSubject = processedSubject.replace(regex, value);
+      processedContent = processedContent.replace(regex, value);
+    });
+    
+    return { subject: processedSubject, content: processedContent };
   };
 
-  const handleMarkAsResolved = (emailId) => {
-    const emailIds = emailId ? [emailId] : selectedEmails;
+  // Bulk action handlers
+  const handleBulkAssign = () => {
+    // Implementation for bulk assign functionality
+    showNotification(`Bulk assign functionality for ${selectedEmails.length} emails - to be implemented`, 'info');
+  };
+
+  const handleBulkMarkResolved = () => {
+    // Mark selected emails as resolved
     setEmails(prev => prev.map(email => 
-      emailIds.includes(email.id) 
+      selectedEmails.includes(email.id) 
         ? { ...email, status: 'resolved' }
         : email
     ));
-    
-    if (!emailId) setSelectedEmails([]);
-    showNotification(`${emailIds.length} email(s) marked as resolved`);
+    showNotification(`${selectedEmails.length} email(s) marked as resolved`);
+    setSelectedEmails([]);
   };
 
-
-
-  const handleConfirmReclassify = (newCategory) => {
+  const handleBulkFlag = () => {
+    // Flag selected emails for follow-up
     setEmails(prev => prev.map(email => 
-      email.id === reclassifyDialog.emailId 
-        ? { ...email, category: newCategory }
+      selectedEmails.includes(email.id) 
+        ? { ...email, flagged: true, priority: 'high' }
         : email
     ));
-    
-    setReclassifyDialog({ open: false, emailId: null, currentCategory: '' });
-    showNotification('Email category updated successfully');
+    showNotification(`${selectedEmails.length} email(s) flagged for follow-up`);
+    setSelectedEmails([]);
   };
 
-  const handleArchiveEmail = (emailId) => {
-    const emailIds = emailId ? [emailId] : selectedEmails;
-    setEmails(prev => prev.filter(email => !emailIds.includes(email.id)));
-    
-    if (!emailId) setSelectedEmails([]);
-    showNotification(`${emailIds.length} email(s) archived`);
-  };
-
-  const handleExportEmails = (format) => {
-    const dataToExport = selectedEmails.length > 0 
-      ? emails.filter(email => selectedEmails.includes(email.id))
-      : filteredEmails;
-
-    // Prepare data for export - matching Case Tracking format
-    const exportData = dataToExport.map(email => ({
+  const handleBulkExport = () => {
+    // Export selected emails
+    const selectedEmailsData = emails.filter(email => selectedEmails.includes(email.id));
+    const exportData = selectedEmailsData.map(email => ({
       'Email ID': email.id,
       'From': email.from,
       'Subject': email.subject,
       'Category': email.category,
       'Status': email.status,
       'Priority': email.priority,
-      'Assigned To': email.assignedTo || 'Unassigned',
       'Date Received': formatDate(email.dateReceived),
-      'SLA Status': email.slaStatus,
       'Has Attachments': email.hasAttachments ? 'Yes' : 'No'
     }));
 
-    let content = '';
-    if (format === 'csv') {
-      // Create CSV content
-      const headers = Object.keys(exportData[0]).join(',');
-      const rows = exportData.map(row => Object.values(row).map(val => `"${val}"`).join(','));
-      content = `${headers}\n${rows.join('\n')}`;
-    } else {
-      // Create XLS (tab-separated) content
-      const headers = Object.keys(exportData[0]).join('\t');
-      const rows = exportData.map(row => Object.values(row).join('\t'));
-      content = `${headers}\n${rows.join('\n')}`;
-    }
+    const csvContent = [
+      Object.keys(exportData[0]).join(','),
+      ...exportData.map(row => Object.values(row).map(val => `"${val}"`).join(','))
+    ].join('\n');
 
-    // Create and trigger download
-    const blob = new Blob([content], { type: 'text/plain' });
+    const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `emails_export_${new Date().toISOString().split('T')[0]}.${format}`;
+    link.download = `selected_emails_${new Date().toISOString().split('T')[0]}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
 
-    // Export completed
+    showNotification(`Successfully exported ${selectedEmails.length} emails`);
     setSelectedEmails([]);
-    showNotification(`Successfully exported ${exportData.length} emails in ${format.toUpperCase()} format`);
-  };
-
-  const handleExportClick = () => {
-    // Export functionality can be implemented here
-  };
-
-
-
-  const paginatedEmails = sortedEmails.slice((page - 1) * rowsPerPage, page * rowsPerPage);
-
-  // Automated Response Logic (removed unused shouldAutoRespond function)
-
-  // Process template variables
-  const processTemplate = (template, email, additionalVars = {}) => {
-    let processedSubject = template.subject;
-    let processedBody = template.body;
-    
-    const variables = {
-      customerName: email.from.split('@')[0].replace('.', ' ').replace(/\b\w/g, l => l.toUpperCase()),
-      subject: email.subject,
-      date: new Date().toLocaleDateString(),
-      time: '2:00 PM',
-      meetingType: 'Policy Review',
-      agentName: 'Sarah Johnson',
-      policyNumber: 'POL-2024-567890',
-      refundAmount: '$250.00',
-      referenceNumber: 'REF-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
-      ...additionalVars
-    };
-    
-    Object.entries(variables).forEach(([key, value]) => {
-      const regex = new RegExp(`{{${key}}}`, 'g');
-      processedSubject = processedSubject.replace(regex, value);
-      processedBody = processedBody.replace(regex, value);
-    });
-    
-    return { subject: processedSubject, body: processedBody };
-  };
-
-
-
-  // Handle template selection and sending
-  const handleUseTemplate = (templateId, emailId) => {
-    const template = emailTemplates.find(t => t.id === templateId);
-    const email = emails.find(e => e.id === emailId);
-    
-    if (template && email) {
-      const processedTemplate = processTemplate(template, email);
-      setReplyDialog({
-        open: true,
-        emailId: emailId,
-        emailSubject: processedTemplate.subject,
-        emailFrom: email.from,
-        templateBody: processedTemplate.body
-      });
-      // Set the reply text (processedTemplate.body)
-      setTemplatesDialog({ open: false, emailId: null });
-      markAsRead(emailId);
-    }
-  };
-
-  const handleOpenTemplates = (emailId) => {
-    setTemplatesDialog({ open: true, emailId });
-  };
-
-  const handleOpenAutomation = () => {
-    setAutomationDialog({ open: true });
-  };
-
-  const handleSaveAutomationSettings = (newSettings) => {
-    setAutomationSettings(newSettings);
-    setAutomationDialog({ open: false });
-    showNotification('Automation settings saved successfully', 'success');
-  };
-
-  // Custom template management functions
-  const handleOpenTemplateManagement = () => {
-    setTemplateManagementDialog({ open: true });
-  };
-
-  const handleAddTemplate = () => {
-    setNewTemplate({
-      name: '',
-      category: 'general',
-      subject: '',
-      body: ''
-    });
-    setEditTemplateDialog({ open: true, template: null, mode: 'add' });
-  };
-
-  const handleEditTemplate = (template) => {
-    setNewTemplate({
-      name: template.name,
-      category: template.category,
-      subject: template.subject,
-      body: template.body
-    });
-    setEditTemplateDialog({ open: true, template: template, mode: 'edit' });
-  };
-
-  const handleSaveTemplate = () => {
-    if (!newTemplate.name.trim() || !newTemplate.subject.trim() || !newTemplate.body.trim()) {
-      showNotification('Please fill in all required fields', 'error');
-      return;
-    }
-
-    const templateData = {
-      ...newTemplate,
-      id: editTemplateDialog.mode === 'add' 
-        ? `custom_${Date.now()}` 
-        : editTemplateDialog.template.id,
-      isCustom: true
-    };
-
-    if (editTemplateDialog.mode === 'add') {
-      setCustomTemplates([...customTemplates, templateData]);
-      showNotification('Template added successfully');
-    } else {
-      setCustomTemplates(customTemplates.map(t => 
-        t.id === editTemplateDialog.template.id ? templateData : t
-      ));
-      showNotification('Template updated successfully');
-    }
-
-    setEditTemplateDialog({ open: false, template: null, mode: 'add' });
-    setNewTemplate({ name: '', category: 'general', subject: '', body: '' });
-  };
-
-  const handleDeleteTemplate = (templateId) => {
-    setCustomTemplates(customTemplates.filter(t => t.id !== templateId));
-    showNotification('Template deleted successfully');
-  };
-
-  // Get all templates (built-in + custom)
-  const getAllTemplates = () => {
-    return [...emailTemplates, ...customTemplates];
   };
 
   // New Outlook-style feature handlers
@@ -1401,39 +1232,8 @@ Intelipro Insurance`
                 <ScheduleIcon />
               </IconButton>
             </Tooltip>
-            <Button
-              startIcon={<ExportIcon />}
-              variant="outlined"
-              onClick={handleExportClick}
-              sx={{
-                borderRadius: 2,
-                py: 1.2,
-                px: 3,
-                fontWeight: 600,
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 6px 20px rgba(0,0,0,0.1)',
-                }
-              }}
-            >
-              Export
-            </Button>
-            <Button
-              startIcon={<EmailIcon />}
-              variant="outlined"
-              onClick={handleOpenAutomation}
-              sx={{ 
-                borderRadius: 2,
-                transition: 'all 0.2s',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow: 2
-                }
-              }}
-            >
-              Automation
-            </Button>
+
+            {/* Automation button removed - functionality not implemented */}
             <Button
               startIcon={<EditIcon />}
               variant="outlined"
@@ -1447,7 +1247,7 @@ Intelipro Insurance`
                 }
               }}
             >
-              Manage Templates
+              Templates
             </Button>
             <Button
               startIcon={isRefreshing ? <CircularProgress size={16} /> : <RefreshIcon />}
@@ -1529,9 +1329,148 @@ Intelipro Insurance`
                   <MenuItem value="month">This Month</MenuItem>
                 </Select>
               </FormControl>
+
+              <FormControl sx={{ minWidth: 140 }}>
+                <InputLabel>Due Status</InputLabel>
+                <Select
+                  value={dueDateFilter}
+                  label="Due Status"
+                  onChange={(e) => setDueDateFilter(e.target.value)}
+                  sx={{ borderRadius: 2 }}
+                >
+                  <MenuItem value="all">All Emails</MenuItem>
+                  <MenuItem value="current">Current (30 days)</MenuItem>
+                  <MenuItem value="due">Due Soon (7 days)</MenuItem>
+                  <MenuItem value="overdue">Overdue</MenuItem>
+                  <MenuItem value="custom">Custom Range</MenuItem>
+                </Select>
+              </FormControl>
+
+              {dueDateFilter === 'custom' && (
+                <>
+                  <TextField
+                    type="date"
+                    label="Start Date"
+                    value={customDateRange.start}
+                    onChange={(e) => setCustomDateRange(prev => ({ ...prev, start: e.target.value }))}
+                    InputLabelProps={{ shrink: true }}
+                    sx={{ minWidth: 150 }}
+                  />
+                  <TextField
+                    type="date"
+                    label="End Date"
+                    value={customDateRange.end}
+                    onChange={(e) => setCustomDateRange(prev => ({ ...prev, end: e.target.value }))}
+                    InputLabelProps={{ shrink: true }}
+                    sx={{ minWidth: 150 }}
+                  />
+                </>
+              )}
             </Box>
           </Paper>
         </Grow>
+
+        {/* Bulk Actions Toolbar */}
+        {selectedEmails.length > 0 && (
+          <Grow in={selectedEmails.length > 0} timeout={300}>
+            <Paper sx={{ 
+              p: 2, 
+              mb: 3, 
+              borderRadius: 3, 
+              bgcolor: alpha(theme.palette.primary.main, 0.05),
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`
+            }}>
+              <Toolbar sx={{ px: '0 !important', minHeight: 'auto !important' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                  <CheckCircleIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    {selectedEmails.length} email(s) selected
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button
+                    startIcon={<PersonIcon />}
+                    variant="contained"
+                    size="small"
+                    onClick={() => handleBulkAssign()}
+                    sx={{ 
+                      borderRadius: 2,
+                      fontWeight: 600,
+                      boxShadow: '0 4px 14px rgba(0,118,255,0.25)',
+                      '&:hover': {
+                        boxShadow: '0 6px 20px rgba(0,118,255,0.35)',
+                      }
+                    }}
+                  >
+                    Bulk Assign
+                  </Button>
+                  <Button
+                    startIcon={<CheckCircleIcon />}
+                    variant="contained"
+                    color="success"
+                    size="small"
+                    onClick={() => handleBulkMarkResolved()}
+                    sx={{ 
+                      borderRadius: 2,
+                      fontWeight: 600,
+                      boxShadow: '0 4px 14px rgba(76,175,80,0.25)',
+                      '&:hover': {
+                        boxShadow: '0 6px 20px rgba(76,175,80,0.35)',
+                      }
+                    }}
+                  >
+                    Mark Resolved
+                  </Button>
+                  <Button
+                    startIcon={<FlagIcon />}
+                    variant="contained"
+                    color="warning"
+                    size="small"
+                    onClick={() => handleBulkFlag()}
+                    sx={{ 
+                      borderRadius: 2,
+                      fontWeight: 600,
+                      boxShadow: '0 4px 14px rgba(255,152,0,0.25)',
+                      '&:hover': {
+                        boxShadow: '0 6px 20px rgba(255,152,0,0.35)',
+                      }
+                    }}
+                  >
+                    Flag for Follow-Up
+                  </Button>
+                  <Button
+                    startIcon={<GetAppIcon />}
+                    variant="outlined"
+                    size="small"
+                    onClick={() => handleBulkExport()}
+                    sx={{ 
+                      borderRadius: 2,
+                      fontWeight: 600
+                    }}
+                  >
+                    Export Selected
+                  </Button>
+                  <Button
+                    startIcon={<CloseIcon />}
+                    variant="text"
+                    size="small"
+                    onClick={() => setSelectedEmails([])}
+                    sx={{ 
+                      borderRadius: 2,
+                      fontWeight: 600,
+                      color: theme.palette.error.main,
+                      '&:hover': {
+                        backgroundColor: alpha(theme.palette.error.main, 0.05),
+                      }
+                    }}
+                  >
+                    Clear Selection
+                  </Button>
+                </Box>
+              </Toolbar>
+            </Paper>
+          </Grow>
+        )}
 
             {/* Enhanced Email Table with new features */}
         <Grow in={loaded} timeout={600}>
@@ -1559,6 +1498,7 @@ Intelipro Insurance`
                         <TableCell sx={{ fontWeight: 600 }}>Subject</TableCell>
                         <TableCell sx={{ fontWeight: 600 }}>Customer Type</TableCell>
                         <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>Due Date</TableCell>
                         <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
@@ -1663,6 +1603,46 @@ Intelipro Insurance`
                         </Typography>
                       </TableCell>
                       <TableCell>
+                        {email.dueDate ? (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography 
+                              variant="body2" 
+                              color={
+                                new Date(email.dueDate) < new Date() ? 'error.main' :
+                                new Date(email.dueDate) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) ? 'warning.main' :
+                                'text.secondary'
+                              }
+                              sx={{ fontWeight: new Date(email.dueDate) < new Date() ? 600 : 400 }}
+                            >
+                              {formatDate(email.dueDate)}
+                            </Typography>
+                            {new Date(email.dueDate) < new Date() && (
+                              <Chip 
+                                label="OVERDUE" 
+                                size="small" 
+                                color="error" 
+                                variant="outlined"
+                                sx={{ fontSize: '0.7rem', height: 20 }}
+                              />
+                            )}
+                            {new Date(email.dueDate) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) && 
+                             new Date(email.dueDate) >= new Date() && (
+                              <Chip 
+                                label="DUE SOON" 
+                                size="small" 
+                                color="warning" 
+                                variant="outlined"
+                                sx={{ fontSize: '0.7rem', height: 20 }}
+                              />
+                            )}
+                          </Box>
+                        ) : (
+                          <Typography variant="body2" color="text.disabled">
+                            No due date
+                          </Typography>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         <Box sx={{ display: 'flex', gap: 0.5 }}>
                           <Tooltip title="View">
                             <IconButton 
@@ -1709,6 +1689,14 @@ Intelipro Insurance`
                             }}>
                                     <ListItemIcon><FindRelatedIcon fontSize="small" /></ListItemIcon>
                                     <ListItemText>Find Related Emails</ListItemText>
+                            </MenuItem>
+                            <MenuItem onClick={() => {
+                              setActionMenus({ ...actionMenus, [email.id]: null });
+                              setTemplateForEmail(email);
+                              setTemplateManagementDialog(true);
+                            }}>
+                              <ListItemIcon><EditIcon fontSize="small" /></ListItemIcon>
+                              <ListItemText>Use Template</ListItemText>
                             </MenuItem>
                             <MenuItem onClick={() => {
                                     handleMarkAsJunk([email.id]);
@@ -1998,6 +1986,268 @@ Intelipro Insurance`
             </Button>
             <Button variant="contained" startIcon={<CreateIcon />}>
               Send
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Template Management Dialog */}
+        <Dialog 
+          open={templateManagementDialog}
+          onClose={() => setTemplateManagementDialog(false)}
+          maxWidth="lg"
+          fullWidth
+          PaperProps={{ sx: { borderRadius: 3, minHeight: '80vh' } }}
+        >
+          <DialogTitle sx={{ 
+            fontWeight: 600, 
+            pb: 1,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`
+          }}>
+            <Box>
+              <Typography variant="h6" fontWeight="600">
+                Template Manager
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Create and manage email templates for quick responses
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button
+                startIcon={<AddIcon />}
+                variant="contained"
+                onClick={handleCreateTemplate}
+                size="small"
+                sx={{ borderRadius: 2 }}
+              >
+                Create Template
+              </Button>
+              <IconButton onClick={() => setTemplateManagementDialog(false)}>
+                <CloseIcon />
+              </IconButton>
+            </Box>
+          </DialogTitle>
+          <DialogContent dividers sx={{ minHeight: '400px' }}>
+            <Grid container spacing={2}>
+              {templates.map((template) => (
+                <Grid item xs={12} md={6} key={template.id}>
+                  <Card sx={{ 
+                    borderRadius: 2,
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: 4
+                    }
+                  }}>
+                    <CardContent>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                        <Box>
+                          <Typography variant="h6" fontWeight="600" gutterBottom>
+                            {template.name}
+                          </Typography>
+                          <Chip 
+                            label={template.category} 
+                            size="small" 
+                            color="primary" 
+                            variant="outlined"
+                            sx={{ mb: 1 }}
+                          />
+                        </Box>
+                                                 <Box sx={{ display: 'flex', gap: 0.5 }}>
+                           <Tooltip title="Use Template">
+                             <IconButton 
+                               size="small"
+                               color="primary"
+                               onClick={() => {
+                                 if (templateForEmail) {
+                                   handleUseTemplate(template, templateForEmail.id);
+                                   setTemplateManagementDialog(false);
+                                   setTemplateForEmail(null);
+                                 } else {
+                                   showNotification(`Template "${template.name}" ready to use - select an email from the action menu first`, 'info');
+                                 }
+                               }}
+                             >
+                               <CheckCircleIcon fontSize="small" />
+                             </IconButton>
+                           </Tooltip>
+                           <Tooltip title="Edit Template">
+                             <IconButton 
+                               size="small"
+                               onClick={() => handleEditTemplate(template)}
+                             >
+                               <EditIcon fontSize="small" />
+                             </IconButton>
+                           </Tooltip>
+                           <Tooltip title="Delete Template">
+                             <IconButton 
+                               size="small"
+                               color="error"
+                               onClick={() => handleDeleteTemplate(template.id)}
+                             >
+                               <DeleteIcon fontSize="small" />
+                             </IconButton>
+                           </Tooltip>
+                         </Box>
+                      </Box>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        <strong>Subject:</strong> {template.subject}
+                      </Typography>
+                      <Typography 
+                        variant="body2" 
+                        color="text.secondary"
+                        sx={{ 
+                          display: '-webkit-box',
+                          WebkitLineClamp: 3,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          mb: 2
+                        }}
+                      >
+                        {template.content}
+                      </Typography>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Typography variant="caption" color="text.secondary">
+                          Used {template.usage} times
+                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          {template.variables.slice(0, 3).map((variable, index) => (
+                            <Chip 
+                              key={index}
+                              label={variable}
+                              size="small"
+                              variant="outlined"
+                              sx={{ fontSize: '0.7rem' }}
+                            />
+                          ))}
+                          {template.variables.length > 3 && (
+                            <Chip 
+                              label={`+${template.variables.length - 3}`}
+                              size="small"
+                              variant="outlined"
+                              sx={{ fontSize: '0.7rem' }}
+                            />
+                          )}
+                        </Box>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          </DialogContent>
+        </Dialog>
+
+        {/* Create/Edit Template Dialog */}
+        <Dialog 
+          open={createTemplateDialog}
+          onClose={() => setCreateTemplateDialog(false)}
+          maxWidth="md"
+          fullWidth
+          PaperProps={{ sx: { borderRadius: 3, minHeight: '70vh' } }}
+        >
+          <DialogTitle sx={{ 
+            fontWeight: 600, 
+            pb: 1,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`
+          }}>
+            <Box>
+              <Typography variant="h6" fontWeight="600">
+                {selectedTemplate ? 'Edit Template' : 'Create New Template'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {templateStep === 0 ? 'Template Information' : 'Template Content'}
+              </Typography>
+            </Box>
+            <IconButton onClick={() => setCreateTemplateDialog(false)}>
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent dividers sx={{ minHeight: '400px' }}>
+            {templateStep === 0 ? (
+              <Grid container spacing={3} sx={{ mt: 1 }}>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Template Name"
+                    value={newTemplate.name}
+                    onChange={(e) => setNewTemplate(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Enter template name"
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Category</InputLabel>
+                    <Select
+                      value={newTemplate.category}
+                      onChange={(e) => setNewTemplate(prev => ({ ...prev, category: e.target.value }))}
+                    >
+                      <MenuItem value="general">General</MenuItem>
+                      <MenuItem value="complaint">Complaint</MenuItem>
+                      <MenuItem value="inquiry">Inquiry</MenuItem>
+                      <MenuItem value="renewal">Renewal</MenuItem>
+                      <MenuItem value="welcome">Welcome</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Subject Line"
+                    value={newTemplate.subject}
+                    onChange={(e) => setNewTemplate(prev => ({ ...prev, subject: e.target.value }))}
+                    placeholder="Enter email subject (use {{variable}} for dynamic content)"
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <Alert severity="info" sx={{ mb: 2 }}>
+                    Use double curly braces for variables: {`{{customerName}}, {{subject}}, {{date}}`}
+                  </Alert>
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={10}
+                    label="Template Content"
+                    value={newTemplate.content}
+                    onChange={(e) => setNewTemplate(prev => ({ ...prev, content: e.target.value }))}
+                    placeholder="Enter your email template content..."
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Detected Variables:
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {extractVariables(newTemplate.content).map((variable, index) => (
+                      <Chip 
+                        key={index}
+                        label={variable}
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                      />
+                    ))}
+                  </Box>
+                </Grid>
+              </Grid>
+            ) : null}
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setCreateTemplateDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleSaveTemplate}
+              disabled={!newTemplate.name || !newTemplate.content}
+              startIcon={<SaveIcon />}
+            >
+              Save Template
             </Button>
           </DialogActions>
         </Dialog>
