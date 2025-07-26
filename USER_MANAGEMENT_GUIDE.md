@@ -1,5 +1,8 @@
 # User Management System Guide - Intelipro Renewal System
 
+**Last Updated:** January 2025  
+**Version:** 2.1 (includes Outstanding Amounts, Social Media Integrations, and Enhanced Analytics)
+
 ## Overview
 The User Management system provides comprehensive role-based access control (RBAC) for the Intelipro Insurance Policy Renewal System with permissions mapped to actual pages and features. This system ensures secure access control, compliance with industry standards, and efficient user administration.
 
@@ -10,6 +13,11 @@ The User Management system provides comprehensive role-based access control (RBA
 - Assign granular permissions to individual users
 - Multi-channel campaign management access control
 - Upload and data management permissions
+- Outstanding amounts and payment management access
+- Social media integration permissions
+- AI recommendations and customer profiling access
+- Channel and hierarchy management controls
+- Enhanced analytics and vendor management permissions
 
 ## Available Pages & Permissions
 

@@ -46,6 +46,21 @@ A comprehensive **Policy Renewal Management System** built with React.js, featur
 
 ## 🚀 Recent Major Updates
 
+### **💰 Outstanding Amounts Management (January 2025)**
+- ✅ **Complete Outstanding Amounts tracking system** in CaseDetails page
+- ✅ **Dual view support** - Both tabbed and consolidated view implementations
+- ✅ **Interactive payment management** with individual and bulk payment options
+- ✅ **Scrollable interface** showing 3 cards at a time with custom styling
+- ✅ **Real-time status indicators** for overdue and upcoming payments
+
+### **🎯 Enhanced Features (January 2025)**
+- ✅ **Social Media Integrations** - New Settings tab for platform connections
+- ✅ **AI-Powered Policy Recommendations** - Enhanced PolicyTimeline with customer profiling
+- ✅ **Billing Enhancements** - Quick edit, vendor analytics, delivery status tracking
+- ✅ **Channel & Hierarchy Management** - Advanced Dashboard management systems
+
+📖 **[View Detailed Updates →](RECENT_UPDATES_2025.md)**
+
 ### **🧹 Comprehensive ESLint Cleanup (December 2024)**
 - ✅ **200+ ESLint warnings resolved** across all components
 - ✅ **500+ lines of unused code removed**

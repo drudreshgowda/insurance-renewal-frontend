@@ -2,7 +2,10 @@
 
 ## 📋 Overview
 
-This document outlines the development standards, best practices, and guidelines for the Renewal Frontend application. Following the comprehensive ESLint cleanup, these guidelines ensure continued code quality and maintainability.
+This document outlines the development standards, best practices, and guidelines for the Renewal Frontend application. Following the comprehensive ESLint cleanup and recent feature enhancements (January 2025), these guidelines ensure continued code quality and maintainability for the latest features including Outstanding Amounts Management, Social Media Integrations, and Advanced Analytics.
+
+**Last Updated:** January 2025  
+**Version:** 2.1 (includes recent feature updates)
 
 ---
 
@@ -41,7 +44,8 @@ This document outlines the development standards, best practices, and guidelines
 ```javascript
 // ✅ Good: Descriptive names and proper initialization
 const [isLoading, setIsLoading] = useState(false);
-const [userData, setUserData] = useState(null);
+const [outstandingAmounts, setOutstandingAmounts] = useState([]);
+const [socialMediaConnections, setSocialMediaConnections] = useState({});
 
 // ❌ Bad: Generic names and missing initialization
 const [data, setData] = useState();
@@ -50,297 +54,498 @@ const [flag, setFlag] = useState();
 
 #### **useEffect:**
 ```javascript
-// ✅ Good: Complete dependency array
+// ✅ Good: Complete dependency array for Outstanding Amounts
 useEffect(() => {
-  fetchUserData();
-}, [userId, apiEndpoint]); // Include ALL dependencies
+  if (caseData?.outstandingAmounts) {
+    calculateTotalOutstanding();
+  }
+}, [caseData?.outstandingAmounts, calculateTotalOutstanding]);
 
 // ❌ Bad: Missing dependencies
 useEffect(() => {
-  fetchUserData();
+  fetchOutstandingAmounts();
 }, []); // ESLint will warn about missing dependencies
 ```
 
 #### **useCallback:**
 ```javascript
-// ✅ Good: Memoize functions that are passed as props or used in dependencies
-const handleSubmit = useCallback(async (formData) => {
-  await submitForm(formData);
-  setSubmitted(true);
-}, [submitForm]); // Include dependencies
+// ✅ Good: Memoize payment processing functions
+const handlePaymentProcess = useCallback(async (paymentData) => {
+  await processPayment(paymentData);
+  setPaymentStatus('completed');
+}, [processPayment]);
+
+// ✅ Good: Memoize social media connection handlers
+const handleSocialMediaConnect = useCallback((platform, credentials) => {
+  connectToPlatform(platform, credentials);
+}, [connectToPlatform]);
 
 // ❌ Bad: Not memoizing functions that cause re-renders
-const handleSubmit = (formData) => {
+const handlePayment = (data) => {
   // This creates a new function on every render
 };
 ```
 
 #### **useMemo:**
 ```javascript
-// ✅ Good: Memoize expensive calculations or objects
-const expensiveValue = useMemo(() => {
-  return heavyCalculation(data);
-}, [data]);
+// ✅ Good: Memoize expensive calculations for Outstanding Amounts
+const totalOutstanding = useMemo(() => {
+  return outstandingAmounts.reduce((total, amount) => total + amount.amount, 0);
+}, [outstandingAmounts]);
 
-const agentsList = useMemo(() => [
-  'Priya Patel',
-  'Ravi Gupta',
-  'Neha Sharma'
-], []); // Prevent array recreation on every render
+// ✅ Good: Memoize AI recommendations
+const policyRecommendations = useMemo(() => {
+  return generatePolicyRecommendations(customerProfile);
+}, [customerProfile]);
 
 // ❌ Bad: Creating objects/arrays in render
-const agentsList = ['Priya Patel', 'Ravi Gupta']; // New array every render
+const paymentOptions = ['UPI', 'Card', 'Net Banking']; // New array every render
 ```
 
 ---
 
-## 📦 Import Management
+## 🆕 New Feature Development Standards (January 2025)
 
-### **Import Organization:**
+### **Outstanding Amounts Management:**
 ```javascript
-// ✅ Good: Organized imports
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import {
-  Box,
-  Typography,
-  Button,
-  Card
-} from '@mui/material';
-import {
-  Search as SearchIcon,
-  Add as AddIcon
-} from '@mui/icons-material';
-import { customUtility } from '../utils/helpers';
+// ✅ Good: Proper Outstanding Amounts component structure
+const OutstandingAmountsTab = ({ caseData, onPayment }) => {
+  const [paymentDialog, setPaymentDialog] = useState(false);
+  
+  const totalOutstanding = useMemo(() => {
+    return caseData.outstandingAmounts?.reduce((total, amount) => 
+      total + amount.amount, 0) || 0;
+  }, [caseData.outstandingAmounts]);
 
-// ❌ Bad: Unused imports
-import {
-  Box,
-  Typography,
-  Button,
-  Card,
-  Paper, // Unused - ESLint will warn
-  Tooltip // Unused - ESLint will warn
-} from '@mui/material';
-```
-
-### **Import Rules:**
-1. **Only import what you use** - Remove unused imports immediately
-2. **Group related imports** - React hooks together, Material-UI components together
-3. **Use named imports** - Prefer named imports over default imports where possible
-4. **Alphabetical ordering** - Keep imports organized alphabetically within groups
-
----
-
-## 🎨 UI/UX Standards
-
-### **Material-UI Usage:**
-1. **Consistent Theming** - Use the established theme colors and typography
-2. **Responsive Design** - Use Grid system and breakpoints consistently
-3. **Accessibility** - Follow WCAG 2.1 guidelines
-4. **Performance** - Only import components that are actually used
-
-### **Cultural Guidelines:**
-1. **Indian Names** - Use Indian names in all mock data and examples
-2. **Cultural Context** - Consider Indian business practices and cultural norms
-3. **Language Support** - Ensure new features work with multi-language support
-4. **Number Formats** - Use Indian number formatting (₹ symbol, lakhs/crores)
-
-### **UI Text Standards:**
-- Use "Email Manager" (not "Renewal Email Manager")
-- Use "WhatsApp Manager" (not "Renewal WhatsApp Manager")
-- Maintain consistency with established terminology
-
----
-
-## 🚀 Performance Guidelines
-
-### **Performance Best Practices:**
-1. **Memoization** - Use `React.memo`, `useMemo`, and `useCallback` strategically
-2. **Code Splitting** - Implement lazy loading for large components
-3. **Bundle Optimization** - Regularly audit bundle size and remove unused dependencies
-4. **Image Optimization** - Use appropriate image formats and lazy loading
-
-### **Performance Monitoring:**
-```javascript
-// ✅ Good: Performance-conscious component
-const ExpensiveComponent = React.memo(({ data, onAction }) => {
-  const processedData = useMemo(() => {
-    return heavyDataProcessing(data);
-  }, [data]);
-
-  const handleAction = useCallback((item) => {
-    onAction(item);
-  }, [onAction]);
+  const handlePaymentAction = useCallback(async (installmentId) => {
+    try {
+      await processPayment(installmentId);
+      onPayment?.(installmentId);
+    } catch (error) {
+      setSnackbar({ 
+        open: true, 
+        message: 'Payment processing failed', 
+        severity: 'error' 
+      });
+    }
+  }, [onPayment]);
 
   return (
-    <div>
-      {processedData.map(item => (
-        <Item key={item.id} data={item} onClick={handleAction} />
-      ))}
-    </div>
+    // Component JSX with proper error handling
   );
-});
+};
 ```
 
----
-
-## 🔧 Development Workflow
-
-### **Before Starting Development:**
-1. **Pull latest changes** from main branch
-2. **Run ESLint check** - `npm run lint`
-3. **Check for warnings** - Should show 0 warnings
-4. **Start development server** - `npm start`
-
-### **During Development:**
-1. **Write clean code** - Follow established patterns
-2. **Test frequently** - Check functionality as you develop
-3. **Run ESLint regularly** - Fix warnings immediately
-4. **Use React DevTools** - Monitor performance and re-renders
-
-### **Before Committing:**
-1. **Run full ESLint check** - `npm run lint`
-2. **Fix all warnings** - Use `npm run lint:fix` if needed
-3. **Test functionality** - Ensure features work as expected
-4. **Check console** - No console errors or warnings
-5. **Review changes** - Ensure only necessary changes are included
-
-### **Code Review Checklist:**
-- [ ] No ESLint warnings or errors
-- [ ] Proper React Hook usage and dependencies
-- [ ] No unused imports, variables, or functions
-- [ ] Performance considerations addressed
-- [ ] Cultural guidelines followed (Indian names, context)
-- [ ] UI text follows established conventions
-- [ ] No console.log statements in production code
-- [ ] Error handling implemented where needed
-- [ ] Accessibility standards met
-
----
-
-## 📊 Testing Standards
-
-### **Testing Requirements:**
-1. **Component Testing** - Test component rendering and interactions
-2. **Hook Testing** - Test custom hooks with proper cleanup
-3. **Integration Testing** - Test component interactions and data flow
-4. **Accessibility Testing** - Use tools like axe-core for accessibility checks
-
-### **Testing Best Practices:**
+### **Social Media Integrations:**
 ```javascript
-// ✅ Good: Comprehensive test
-import { render, screen, fireEvent } from '@testing-library/react';
-import { EmailManager } from './EmailManager';
-
-test('should filter emails when search term is entered', () => {
-  render(<EmailManager />);
+// ✅ Good: Social Media Integration component
+const SocialMediaIntegrations = () => {
+  const [connections, setConnections] = useState({});
+  const [verificationDialog, setVerificationDialog] = useState(null);
   
-  const searchInput = screen.getByPlaceholderText('Search emails...');
-  fireEvent.change(searchInput, { target: { value: 'urgent' } });
-  
-  expect(screen.getByText('Urgent policy renewal')).toBeInTheDocument();
-});
-```
+  const handlePlatformConnect = useCallback(async (platform) => {
+    try {
+      const result = await connectToPlatform(platform);
+      setConnections(prev => ({
+        ...prev,
+        [platform]: { connected: true, timestamp: new Date() }
+      }));
+    } catch (error) {
+      // Proper error handling
+    }
+  }, []);
 
----
-
-## 🔒 Security Guidelines
-
-### **Security Best Practices:**
-1. **Input Validation** - Validate all user inputs
-2. **XSS Prevention** - Sanitize HTML content and user inputs
-3. **Authentication** - Implement proper JWT handling
-4. **Error Handling** - Don't expose sensitive information in errors
-5. **HTTPS Only** - All production deployments must use HTTPS
-
-### **Data Privacy:**
-1. **GDPR Compliance** - Implement proper data handling
-2. **User Consent** - Get explicit consent for data processing
-3. **Data Minimization** - Only collect necessary data
-4. **Secure Storage** - Use secure methods for sensitive data
-
----
-
-## 🌍 Internationalization (i18n)
-
-### **i18n Best Practices:**
-1. **Translation Keys** - Use descriptive, hierarchical keys
-2. **Context Awareness** - Consider cultural context in translations
-3. **Fallback System** - Always provide English fallback
-4. **Professional Translation** - Use native speakers for translation review
-
-### **i18n Implementation:**
-```javascript
-// ✅ Good: Proper i18n usage
-import { useTranslation } from 'react-i18next';
-
-const EmailManager = () => {
-  const { t } = useTranslation();
-  
   return (
-    <Typography variant="h4">
-      {t('email.manager.title')} {/* Use translation keys */}
-    </Typography>
+    // Component JSX
+  );
+};
+```
+
+### **AI Policy Recommendations:**
+```javascript
+// ✅ Good: AI Recommendations with proper error handling
+const PolicyRecommendations = ({ customerProfile }) => {
+  const [recommendations, setRecommendations] = useState([]);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const generateRecommendations = useCallback(async () => {
+    if (!customerProfile) return;
+    
+    setIsGenerating(true);
+    try {
+      const aiRecommendations = await generatePolicyRecommendations(customerProfile);
+      setRecommendations(aiRecommendations);
+    } catch (error) {
+      setRecommendations([]);
+      // Error handling
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [customerProfile]);
+
+  useEffect(() => {
+    generateRecommendations();
+  }, [generateRecommendations]);
+
+  return (
+    // Component JSX with loading states
   );
 };
 ```
 
 ---
 
-## 📝 Documentation Standards
+## 📦 Import Management
 
-### **Code Documentation:**
-1. **Inline Comments** - Document complex logic and business rules
-2. **Function Documentation** - Document function purpose, parameters, and return values
-3. **Component Documentation** - Document props, usage, and examples
-4. **README Updates** - Keep documentation up to date with changes
-
-### **Documentation Example:**
+### **Import Organization for New Features:**
 ```javascript
-/**
- * Filters emails based on search criteria and user preferences
- * @param {Array} emails - Array of email objects to filter
- * @param {string} searchTerm - Search term to match against email content
- * @param {string} statusFilter - Filter by email status (new, in-progress, resolved)
- * @param {string} categoryFilter - Filter by email category
- * @returns {Array} Filtered array of emails
- */
-const filterEmails = useCallback((emails, searchTerm, statusFilter, categoryFilter) => {
-  // Implementation with proper filtering logic
-}, []);
+// ✅ Good: Organized imports for Outstanding Amounts
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  Button,
+  Grid,
+  Stack,
+  Chip,
+  Avatar,
+  Divider
+} from '@mui/material';
+import {
+  MonetizationOn as MonetizationOnIcon,
+  Receipt as ReceiptIcon,
+  Warning as WarningIcon,
+  Schedule as ScheduleIcon,
+  Payments as PaymentsIcon
+} from '@mui/icons-material';
+import { alpha } from '@mui/material/styles';
+import { processPayment, calculateOverdueDays } from '../utils/paymentHelpers';
+
+// ❌ Bad: Unused imports
+import {
+  Box,
+  Typography,
+  Card,
+  Paper, // Unused - ESLint will warn
+  Tooltip // Unused - ESLint will warn
+} from '@mui/material';
+```
+
+### **Import Rules for New Features:**
+1. **Only import what you use** - Remove unused imports immediately
+2. **Group by feature** - Outstanding amounts, social media, AI recommendations
+3. **Use named imports** - Prefer named imports over default imports
+4. **Alphabetical ordering** - Keep imports organized within groups
+
+---
+
+## 🎨 UI/UX Standards for New Features
+
+### **Outstanding Amounts UI Standards:**
+1. **Consistent Styling** - Use established theme colors (error for overdue, warning for upcoming)
+2. **Scrollable Interfaces** - Implement custom scrollbar styling for lists
+3. **Typography Consistency** - Use `h4` variant for all summary values
+4. **Visual Indicators** - Red borders and warning icons for overdue amounts
+
+```javascript
+// ✅ Good: Consistent Outstanding Amounts styling
+<Box
+  sx={{
+    maxHeight: '400px',
+    overflowY: 'auto',
+    '&::-webkit-scrollbar': {
+      width: '8px',
+    },
+    '&::-webkit-scrollbar-thumb': {
+      background: alpha(theme.palette.primary.main, 0.3),
+      borderRadius: '4px',
+    },
+  }}
+>
+  {outstandingAmounts.map((amount, index) => (
+    <Card 
+      key={index}
+      sx={{ 
+        border: `1px solid ${isOverdue ? theme.palette.error.main : theme.palette.divider}`,
+        minHeight: '120px'
+      }}
+    >
+      {/* Card content */}
+    </Card>
+  ))}
+</Box>
+```
+
+### **Social Media Integration UI Standards:**
+1. **Platform Icons** - Use consistent platform-specific icons
+2. **Connection Status** - Clear visual indicators for connected/disconnected state
+3. **Verification Flow** - Modal dialogs for verification processes
+4. **Timestamp Display** - Show connection timestamps in consistent format
+
+### **AI Recommendations UI Standards:**
+1. **Loading States** - Proper loading indicators during AI processing
+2. **Recommendation Cards** - Consistent card layout for recommendations
+3. **Reasoning Display** - Show AI reasoning for each recommendation
+4. **Priority Indicators** - Visual priority levels for recommendations
+
+---
+
+## 🚀 Performance Guidelines for New Features
+
+### **Outstanding Amounts Performance:**
+```javascript
+// ✅ Good: Optimized Outstanding Amounts calculations
+const OutstandingAmountsManager = ({ caseData }) => {
+  const totalOutstanding = useMemo(() => {
+    return caseData.outstandingAmounts?.reduce((total, amount) => 
+      total + amount.amount, 0) || 0;
+  }, [caseData.outstandingAmounts]);
+
+  const overdueCount = useMemo(() => {
+    const currentDate = new Date();
+    return caseData.outstandingAmounts?.filter(amount => 
+      new Date(amount.dueDate) < currentDate
+    ).length || 0;
+  }, [caseData.outstandingAmounts]);
+
+  // Memoize payment handler to prevent re-renders
+  const handlePayment = useCallback(async (installmentId) => {
+    // Payment processing logic
+  }, []);
+};
+```
+
+### **Social Media Integration Performance:**
+```javascript
+// ✅ Good: Efficient connection status checking
+const SocialMediaStatus = ({ platforms }) => {
+  const connectionStatus = useMemo(() => {
+    return platforms.reduce((status, platform) => {
+      status[platform.name] = platform.connected;
+      return status;
+    }, {});
+  }, [platforms]);
+
+  // Debounced verification to prevent excessive API calls
+  const debouncedVerification = useMemo(
+    () => debounce(verifyPlatformConnection, 500),
+    []
+  );
+};
 ```
 
 ---
 
-## 🚨 Error Handling
+## 🔧 Development Workflow for New Features
 
-### **Error Handling Standards:**
-1. **Error Boundaries** - Implement at appropriate component levels
-2. **User-Friendly Messages** - Show meaningful error messages to users
-3. **Logging** - Log errors for debugging (development only)
-4. **Graceful Degradation** - Provide fallback UI when components fail
+### **Before Starting New Feature Development:**
+1. **Review existing patterns** - Check how similar features are implemented
+2. **Plan component structure** - Design component hierarchy
+3. **Mock data preparation** - Prepare realistic mock data
+4. **API integration points** - Identify required API endpoints
 
-### **Error Handling Example:**
+### **During New Feature Development:**
+1. **Follow established patterns** - Use existing component structures
+2. **Implement proper error handling** - Handle loading, error, and success states
+3. **Add comprehensive logging** - Use proper logging for debugging
+4. **Test with mock data** - Ensure functionality works with mock data
+
+### **Feature-Specific Guidelines:**
+
+#### **Outstanding Amounts Features:**
+- Always handle empty states (no outstanding amounts)
+- Implement proper date calculations for overdue status
+- Use consistent currency formatting (Indian Rupees)
+- Provide clear payment action feedback
+
+#### **Social Media Integration Features:**
+- Handle OAuth flows securely
+- Implement proper token management
+- Provide clear connection status feedback
+- Handle platform-specific errors gracefully
+
+#### **AI Recommendation Features:**
+- Implement proper loading states during AI processing
+- Handle AI service failures gracefully
+- Provide fallback recommendations
+- Cache recommendations to avoid repeated API calls
+
+---
+
+## 📊 Testing Standards for New Features
+
+### **Component Testing for New Features:**
 ```javascript
-// ✅ Good: Proper error handling
-const EmailManager = () => {
-  const [error, setError] = useState(null);
+// ✅ Good: Outstanding Amounts component test
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { OutstandingAmountsTab } from './OutstandingAmountsTab';
+
+test('should display total outstanding amount correctly', () => {
+  const mockCaseData = {
+    outstandingAmounts: [
+      { amount: 15000, period: 'March 2024', dueDate: '2024-03-15' },
+      { amount: 18500, period: 'April 2024', dueDate: '2024-04-15' }
+    ]
+  };
+
+  render(<OutstandingAmountsTab caseData={mockCaseData} />);
   
-  const handleEmailAction = async (action) => {
+  expect(screen.getByText('₹33,500')).toBeInTheDocument();
+});
+
+test('should handle payment action correctly', async () => {
+  const mockOnPayment = jest.fn();
+  const mockCaseData = { outstandingAmounts: [...] };
+
+  render(<OutstandingAmountsTab caseData={mockCaseData} onPayment={mockOnPayment} />);
+  
+  const payButton = screen.getByText('Pay Now');
+  fireEvent.click(payButton);
+  
+  await waitFor(() => {
+    expect(mockOnPayment).toHaveBeenCalled();
+  });
+});
+```
+
+---
+
+## 🔒 Security Guidelines for New Features
+
+### **Payment Security (Outstanding Amounts):**
+1. **PCI Compliance** - Never store payment card data
+2. **Secure Transmission** - All payment data must be encrypted
+3. **Input Validation** - Validate all payment amounts and data
+4. **Audit Logging** - Log all payment attempts and results
+
+### **Social Media Integration Security:**
+1. **OAuth Security** - Implement proper OAuth flows
+2. **Token Management** - Secure storage and rotation of tokens
+3. **Data Privacy** - Minimal data collection from social platforms
+4. **Platform Compliance** - Follow platform-specific security guidelines
+
+### **AI Integration Security:**
+1. **Data Sanitization** - Sanitize customer data before AI processing
+2. **API Key Security** - Secure storage of AI service API keys
+3. **Rate Limiting** - Implement proper rate limiting for AI calls
+4. **Response Validation** - Validate AI responses before displaying
+
+---
+
+## 📝 Documentation Standards for New Features
+
+### **Code Documentation for New Features:**
+```javascript
+/**
+ * Processes outstanding amount payments and updates case status
+ * @param {string} caseId - The case ID containing outstanding amounts
+ * @param {Object} paymentData - Payment information including amount and method
+ * @param {number} paymentData.amount - Amount to be paid
+ * @param {string} paymentData.method - Payment method (UPI, Card, Net Banking)
+ * @param {string} paymentData.installmentId - Specific installment ID
+ * @returns {Promise<Object>} Payment processing result with status and transaction ID
+ */
+const processOutstandingPayment = async (caseId, paymentData) => {
+  // Implementation with proper error handling
+};
+
+/**
+ * Connects to social media platform and stores connection details
+ * @param {string} platform - Platform name (facebook, twitter, linkedin, etc.)
+ * @param {Object} credentials - Platform-specific credentials
+ * @returns {Promise<Object>} Connection result with status and timestamp
+ */
+const connectSocialMediaPlatform = async (platform, credentials) => {
+  // Implementation with OAuth handling
+};
+```
+
+---
+
+## 🌍 Internationalization (i18n) for New Features
+
+### **i18n Implementation for New Features:**
+```javascript
+// ✅ Good: Proper i18n for Outstanding Amounts
+import { useTranslation } from 'react-i18next';
+
+const OutstandingAmountsTab = () => {
+  const { t } = useTranslation();
+  
+  return (
+    <Typography variant="h6">
+      {t('outstandingAmounts.title')} 
+    </Typography>
+  );
+};
+
+// Translation keys structure
+// en/common.json
+{
+  "outstandingAmounts": {
+    "title": "Outstanding Amounts",
+    "totalOutstanding": "Total Outstanding",
+    "payNow": "Pay Now",
+    "overdue": "{{days}} days overdue",
+    "upcoming": "Due in {{days}} days"
+  },
+  "socialMedia": {
+    "integrations": "Social Media Integrations",
+    "connect": "Connect",
+    "connected": "Connected",
+    "verify": "Verify Connection"
+  },
+  "aiRecommendations": {
+    "title": "AI Policy Recommendations",
+    "generating": "Generating recommendations...",
+    "noRecommendations": "No recommendations available"
+  }
+}
+```
+
+---
+
+## 🚨 Error Handling for New Features
+
+### **Outstanding Amounts Error Handling:**
+```javascript
+// ✅ Good: Comprehensive error handling
+const OutstandingAmountsManager = () => {
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  
+  const handlePayment = async (installmentId) => {
+    setLoading(true);
+    setError(null);
+    
     try {
-      setError(null);
-      await performEmailAction(action);
+      const result = await processPayment(installmentId);
+      setSnackbar({
+        open: true,
+        message: t('payment.success'),
+        severity: 'success'
+      });
     } catch (err) {
-      setError('Failed to perform action. Please try again.');
-      // In development only:
+      setError(t('payment.error'));
       if (process.env.NODE_ENV === 'development') {
-        console.error('Email action error:', err);
+        console.error('Payment processing error:', err);
       }
+    } finally {
+      setLoading(false);
     }
   };
   
   if (error) {
-    return <Alert severity="error">{error}</Alert>;
+    return (
+      <Alert severity="error" sx={{ mb: 2 }}>
+        {error}
+        <Button onClick={() => setError(null)}>
+          {t('common.retry')}
+        </Button>
+      </Alert>
+    );
   }
   
   // Component JSX
@@ -349,42 +554,34 @@ const EmailManager = () => {
 
 ---
 
-## 🔄 Version Control
+## 📈 Continuous Improvement for New Features
 
-### **Git Workflow:**
-1. **Feature Branches** - Create feature branches for new development
-2. **Meaningful Commits** - Write descriptive commit messages
-3. **Small Commits** - Make frequent, small commits
-4. **Code Review** - All changes must be reviewed before merging
+### **Regular Maintenance for New Features:**
+1. **Performance Monitoring** - Monitor Outstanding Amounts calculation performance
+2. **User Feedback** - Collect feedback on new features
+3. **Error Tracking** - Monitor error rates for new features
+4. **Usage Analytics** - Track feature adoption and usage patterns
 
-### **Commit Message Format:**
-```
-feat: add email filtering with search functionality
-fix: resolve ESLint warnings in TemplateManager component
-refactor: optimize React hooks in Email component
-docs: update development guidelines with ESLint standards
-```
-
----
-
-## 📈 Continuous Improvement
-
-### **Regular Maintenance:**
-1. **ESLint Audits** - Weekly ESLint checks to prevent warning accumulation
-2. **Performance Reviews** - Monthly performance analysis and optimization
-3. **Dependency Updates** - Regular updates with security patches
-4. **Code Reviews** - Continuous peer review and knowledge sharing
-
-### **Quality Metrics Tracking:**
-- **ESLint Warnings:** Target = 0 (currently achieved)
-- **Bundle Size:** Monitor and optimize regularly
-- **Performance Score:** Maintain 90+ Lighthouse score
-- **Accessibility Score:** Maintain 95+ accessibility score
+### **Quality Metrics Tracking for New Features:**
+- **Outstanding Amounts**: Payment success rate, error rate, user engagement
+- **Social Media Integrations**: Connection success rate, verification rate
+- **AI Recommendations**: Recommendation accuracy, user acceptance rate
+- **Overall**: Feature adoption rate, user satisfaction scores
 
 ---
 
 ## ✅ Conclusion
 
-These guidelines ensure that the Renewal Frontend application maintains its high code quality standards and continues to be a maintainable, performant, and user-friendly application. All developers should follow these guidelines to contribute effectively to the project.
+These enhanced development guidelines ensure that all new features including Outstanding Amounts Management, Social Media Integrations, AI Policy Recommendations, and Advanced Analytics maintain the same high standards established during the ESLint cleanup. All developers should follow these guidelines to contribute effectively to the project while maintaining code quality, performance, and user experience.
 
-**Remember:** The goal is to maintain the current **zero ESLint warnings** status while building new features that are performant, accessible, and culturally appropriate for the Indian market. 
+**Remember:** The goal is to maintain the current **zero ESLint warnings** status while building new features that are performant, accessible, secure, and culturally appropriate for the Indian market.
+
+**New Feature Checklist:**
+- [ ] Follows established component patterns
+- [ ] Implements proper error handling and loading states
+- [ ] Uses consistent UI/UX patterns
+- [ ] Includes comprehensive testing
+- [ ] Maintains ESLint compliance
+- [ ] Implements proper security measures
+- [ ] Includes i18n support
+- [ ] Documents all new functionality 

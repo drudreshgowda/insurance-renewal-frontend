@@ -3,6 +3,9 @@
 ## Overview
 This document provides a comprehensive list of all third-party API services required for the Intelipro Insurance Policy Renewal System, including configuration details, costs, implementation priorities, and integration specifications. This guide serves as the definitive reference for external service integrations.
 
+**Last Updated:** January 2025  
+**Version:** 2.1 (includes Outstanding Amounts, Social Media Integrations, and Enhanced Analytics)
+
 ## 🔗 Required API Integrations
 
 ### 1. **Multi-Channel Communication Services**
@@ -249,6 +252,105 @@ OPENAI_API_KEY=your_api_key
 - Vendor performance review
 - Contract and pricing review
 - Technology stack evaluation
+
+---
+
+## 🆕 New API Requirements (January 2025)
+
+### Outstanding Amounts & Payment Integration
+**Priority**: ⭐ **HIGH PRIORITY**
+
+#### Payment Gateway Integration
+- **Razorpay API** (Recommended for India)
+  - **Base URL**: `https://api.razorpay.com/v1`
+  - **Features**: UPI, Cards, Net Banking, Wallets
+  - **Cost**: 2% per transaction
+  - **Endpoints**:
+    - `POST /orders` - Create payment orders
+    - `GET /payments/{id}` - Payment status
+    - `POST /payments/{id}/capture` - Capture payments
+
+#### Outstanding Amounts API Endpoints
+- `GET /api/cases/{caseId}/outstanding-amounts` - Fetch outstanding amounts
+- `POST /api/cases/{caseId}/payments` - Process payments
+- `PUT /api/cases/{caseId}/outstanding-amounts/{id}` - Update installment status
+- `GET /api/cases/{caseId}/payment-history` - Payment history
+
+### Social Media Platform APIs
+**Priority**: 🟡 **MEDIUM PRIORITY**
+
+#### Platform Integration Endpoints
+- **Facebook Graph API**: `https://graph.facebook.com/v18.0`
+- **Twitter API v2**: `https://api.twitter.com/2`
+- **LinkedIn API**: `https://api.linkedin.com/v2`
+- **Telegram Bot API**: `https://api.telegram.org/bot{token}`
+- **WeChat API**: Regional implementation required
+
+#### Integration Management Endpoints
+- `POST /api/integrations/social-media/connect` - Connect platform
+- `GET /api/integrations/social-media/status` - Connection status
+- `POST /api/integrations/social-media/verify` - Verify customer presence
+- `DELETE /api/integrations/social-media/{platform}` - Disconnect platform
+
+### Enhanced Analytics & Management APIs
+**Priority**: 🟡 **MEDIUM PRIORITY**
+
+#### Channel Management Endpoints
+- `GET /api/channels` - List all channels
+- `POST /api/channels` - Create new channel
+- `PUT /api/channels/{id}` - Update channel
+- `DELETE /api/channels/{id}` - Delete channel
+- `GET /api/channels/{id}/performance` - Channel analytics
+
+#### Hierarchy Management Endpoints
+- `GET /api/hierarchy` - Organization structure
+- `POST /api/hierarchy/nodes` - Create hierarchy node
+- `PUT /api/hierarchy/nodes/{id}` - Update node
+- `GET /api/hierarchy/{nodeId}/performance` - Node performance
+- `GET /api/hierarchy/{nodeId}/members` - Team members
+
+#### AI Recommendations Endpoints
+- `POST /api/ai/policy-recommendations` - Generate recommendations
+- `GET /api/customers/{id}/profile` - Enhanced customer profile
+- `POST /api/ai/risk-assessment` - Risk profile analysis
+
+### Vendor & Communication Analytics
+**Priority**: 🟡 **MEDIUM PRIORITY**
+
+#### Vendor Analytics Endpoints
+- `GET /api/vendors/communications` - Vendor communication stats
+- `GET /api/communications/delivery-status` - Delivery tracking
+- `POST /api/communications/bulk-status` - Bulk delivery status
+- `GET /api/vendors/{id}/performance` - Vendor performance metrics
+
+---
+
+## 📊 Implementation Priority Matrix (Updated)
+
+### Phase 1 - Critical (Immediate)
+1. Outstanding Amounts & Payment APIs
+2. Enhanced Case Management APIs
+3. Customer Profile Enhancement APIs
+
+### Phase 2 - Important (Next 30 days)
+4. Social Media Integration APIs
+5. Channel & Hierarchy Management APIs
+6. AI Recommendations APIs
+
+### Phase 3 - Enhancement (Next 60 days)
+7. Advanced Analytics APIs
+8. Vendor Communication APIs
+9. Performance Monitoring APIs
+
+---
+
+## 🔐 Security Considerations (Updated)
+
+### New Security Requirements
+- **Payment Security**: PCI DSS compliance for payment processing
+- **Social Media OAuth**: Secure token management for platform connections
+- **Data Privacy**: Enhanced GDPR compliance for customer profiling
+- **API Rate Limiting**: Implement rate limiting for AI recommendation APIs
 
 ---
 

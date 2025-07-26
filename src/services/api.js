@@ -204,6 +204,56 @@ export const getCaseById = async (caseId) => {
               details: 'Case assigned to agent Priya Patel',
               user: 'System'
             }
+          ],
+          outstandingAmounts: [
+            {
+              period: 'March 2024',
+              amount: 15000,
+              dueDate: '2024-03-15',
+              description: 'Premium installment for March 2024 - Auto Insurance'
+            },
+            {
+              period: 'April 2024',
+              amount: 15000,
+              dueDate: '2024-04-15',
+              description: 'Premium installment for April 2024 - Auto Insurance'
+            },
+            {
+              period: 'May 2024',
+              amount: 15000,
+              dueDate: '2024-05-15',
+              description: 'Premium installment for May 2024 - Auto Insurance'
+            },
+            {
+              period: 'June 2024',
+              amount: 15000,
+              dueDate: '2024-06-15',
+              description: 'Premium installment for June 2024 - Auto Insurance'
+            },
+            {
+              period: 'July 2024',
+              amount: 15000,
+              dueDate: '2024-07-15',
+              description: 'Premium installment for July 2024 - Auto Insurance'
+            },
+            {
+              period: 'August 2024',
+              amount: 18500,
+              dueDate: '2024-08-15',
+              description: 'Premium installment for August 2024 - Auto Insurance (Rate Increase)'
+            },
+            {
+              period: 'September 2024',
+              amount: 18500,
+              dueDate: '2024-09-15',
+              description: 'Premium installment for September 2024 - Auto Insurance'
+            },
+            {
+              period: 'October 2024',
+              amount: 18500,
+              dueDate: '2024-10-15',
+              description: 'Premium installment for October 2024 - Auto Insurance'
+            }
           ]
         },
         {
@@ -563,6 +613,38 @@ export const getCaseById = async (caseId) => {
               action: 'Processing',
               details: 'Agent reviewing family medical history',
               user: 'Priya Sharma'
+            }
+          ],
+          outstandingAmounts: [
+            {
+              period: 'Q1 2024 (Jan-Mar)',
+              amount: 46250,
+              dueDate: '2024-03-31',
+              description: 'Quarterly premium for family health insurance - Q1 2024'
+            },
+            {
+              period: 'Q2 2024 (Apr-Jun)',
+              amount: 46250,
+              dueDate: '2024-06-30',
+              description: 'Quarterly premium for family health insurance - Q2 2024'
+            },
+            {
+              period: 'Q3 2024 (Jul-Sep)',
+              amount: 48500,
+              dueDate: '2024-09-30',
+              description: 'Quarterly premium for family health insurance - Q3 2024 (Premium Adjustment)'
+            },
+            {
+              period: 'Q4 2024 (Oct-Dec)',
+              amount: 48500,
+              dueDate: '2024-12-31',
+              description: 'Quarterly premium for family health insurance - Q4 2024'
+            },
+            {
+              period: 'Q1 2025 (Jan-Mar)',
+              amount: 51000,
+              dueDate: '2025-03-31',
+              description: 'Quarterly premium for family health insurance - Q1 2025 (Rate Increase)'
             }
           ]
         }

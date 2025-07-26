@@ -1,8 +1,203 @@
 # Renewal Frontend - Updates Summary
 
-## 🚀 Latest Major Updates (December 2024)
+## 🚀 Latest Major Updates (January 2025)
 
-### **🧹 Comprehensive ESLint Cleanup & Code Quality Improvements**
+### **💰 Outstanding Amounts Management System**
+**Status:** ✅ **COMPLETED**
+
+#### **Overview:**
+- **Comprehensive Outstanding Amounts Tracking** for policy cases
+- **Dual View Support** - Both tabbed and consolidated view implementations
+- **Scrollable Interface** with custom styling showing 3 cards at a time
+- **Interactive Payment Management** with individual and bulk payment options
+- **Real-time Status Indicators** for overdue and upcoming payments
+
+#### **Key Features:**
+
+##### **Outstanding Amounts Tab (CaseDetails.jsx):**
+- **Consolidated Summary Card:** Total outstanding amount, installment count, date ranges, and average amounts
+- **Detailed Installment List:** Period-wise breakdown with amounts, due dates, and status indicators
+- **Payment Actions:** Individual "Pay Now" buttons and bulk payment options
+- **Visual Indicators:** Red borders and warning icons for overdue amounts
+- **Reminder System:** Notification buttons for payment reminders
+
+##### **Consolidated View Integration:**
+- **Consistent Design Pattern:** Matches other consolidated view sections with unified card styling
+- **Summary Metrics Grid:** 4-column layout showing key statistics with color-coded backgrounds
+- **Responsive Layout:** Adapts to different screen sizes with proper grid breakpoints
+- **Hover Effects:** Consistent animations and transitions matching the overall design
+
+##### **Technical Implementation:**
+- **Custom Scrollbar Styling:** Professional scrollable container with 400px height
+- **Typography Consistency:** All summary values use `h4` variant for uniform sizing
+- **Status Calculation:** Dynamic overdue/upcoming status based on current date
+- **Interactive Elements:** Payment buttons, reminders, and bulk actions with snackbar feedback
+
+#### **UI/UX Enhancements:**
+- **Material-UI Integration:** Consistent with existing design system
+- **Color-coded Status:** Error (red) for overdue, warning (orange) for upcoming
+- **Empty State Handling:** Success message when no outstanding amounts exist
+- **Accessibility:** Proper ARIA labels and keyboard navigation support
+
+#### **Mock Data Integration:**
+- **Realistic Scenarios:** Added outstanding amounts data for CASE-001 (Auto Insurance) and CASE-004 (Health Insurance)
+- **Varied Payment Patterns:** Monthly and quarterly payment schedules
+- **Rate Adjustments:** Realistic premium increases over time
+- **Comprehensive Descriptions:** Detailed payment descriptions for each installment
+
+---
+
+### **🎯 Settings Page - Social Media Integrations**
+**Status:** ✅ **COMPLETED**
+
+#### **Overview:**
+- **New "Integrations" Tab** added to Settings page
+- **Social Media Platform Connections** for customer engagement
+- **Verification System** with date/time stamps
+- **Multi-platform Support** including WeChat, LINE, Telegram, Facebook, Twitter, Instagram, LinkedIn
+
+#### **Key Features:**
+
+##### **Integration Management:**
+- **Platform Cards:** Individual cards for each social media platform
+- **Connection Status:** Visual indicators showing connected/disconnected state
+- **Verification Process:** Mock verification system with phone number and email validation
+- **Date Stamps:** Timestamp tracking for when connections were established
+- **Modal Interface:** Separate dialogs for connection and verification processes
+
+##### **Supported Platforms:**
+- **Primary Messaging:** WhatsApp, Telegram, WeChat, LINE
+- **Social Networks:** Facebook, Twitter, Instagram, LinkedIn
+- **Professional:** LinkedIn for business connections
+- **Regional Focus:** WeChat and LINE for international customer base
+
+#### **Technical Implementation:**
+- **Tab System Integration:** Seamlessly integrated with existing settings tabs
+- **State Management:** Proper React state handling for connection status
+- **Mock Verification:** Simulated verification process with realistic delays
+- **Icon Integration:** Platform-specific icons from Material-UI and custom icons
+
+---
+
+### **📊 Enhanced Policy Timeline Features**
+**Status:** ✅ **COMPLETED**
+
+#### **Overview:**
+- **Comprehensive Customer Profiling** with AI-driven insights
+- **Financial and Demographic Data** integration
+- **AI-Powered Policy Recommendations** based on customer profile
+- **Enhanced UI Alignment** fixes for better user experience
+
+#### **Customer Profile Enhancements:**
+
+##### **Financial Profile:**
+- **Annual Income Tracking:** Income data with capture date
+- **Policy Capacity Analysis:** Maximum vs utilized policy capacity
+- **Investment Preferences:** ULIP, Term, and other policy type preferences
+- **Risk Profile Assessment:** Safe investor, Medium risk, High risk taker categories
+
+##### **Demographics & Assets:**
+- **Vehicle Ownership:** Cars and two-wheelers with details
+- **Residence Information:** Home ownership status (owned/rented)
+- **Property Type:** Villa/Apartment categorization
+- **Location Rating:** Good, Average, Low location assessment
+
+##### **AI-Powered Recommendations:**
+- **Unique Customer Analysis:** Individual-based recommendations, not generic personas
+- **Multi-factor Algorithm:** Considers income, age, family history, vehicle ownership, risk profile
+- **Dynamic Suggestions:** Real-time policy recommendations based on customer data
+- **Contextual Insights:** Tailored advice for each customer's specific situation
+
+##### **Family & Medical History:**
+- **Health History Tracking:** Family medical history for risk assessment
+- **Dependent Information:** Family structure and dependent count
+- **Medical Conditions:** Relevant health information for policy recommendations
+
+#### **UI/UX Improvements:**
+- **Tab Alignment Fixes:** Resolved blue underline misalignment on initial page load
+- **Responsive Design:** Better mobile and tablet compatibility
+- **Visual Hierarchy:** Improved information organization and readability
+- **Performance Optimization:** Reduced re-renders and improved loading times
+
+---
+
+### **💼 Billing Page Enhancements**
+**Status:** ✅ **COMPLETED**
+
+#### **Overview:**
+- **Quick Edit Functionality** for invoice receivable information
+- **Vendor Communication Analytics** with detailed statistics
+- **Delivery Status Tracking** for individual cases and bulk campaigns
+- **Enhanced Invoice Management** with comprehensive editing capabilities
+
+#### **Key Features:**
+
+##### **Quick Edit System:**
+- **Invoice Receivables:** Edit receivable information directly from invoice table
+- **Modal Interface:** User-friendly dialog for editing receivable details
+- **Real-time Updates:** Immediate reflection of changes in the invoice list
+- **Form Validation:** Proper input validation and error handling
+
+##### **Vendor Communication Analytics:**
+- **Vendor Statistics:** Cards showing communication counts per vendor
+- **Performance Metrics:** Success rates and cost analysis per vendor
+- **Detailed Tables:** Comprehensive vendor communication breakdown
+- **Visual Indicators:** Color-coded performance indicators
+
+##### **Delivery Status Tracking:**
+- **Individual Case View:** Detailed table with status, attempts, and error tracking
+- **Bulk Campaign View:** Progress bars and summary cards for campaign performance
+- **Toggle Views:** Switch between individual and bulk view options
+- **Status Categories:** Delivered, Failed, Pending, In Progress tracking
+
+---
+
+### **🏢 Dashboard - Channel & Hierarchy Management**
+**Status:** ✅ **COMPLETED**
+
+#### **Overview:**
+- **Channel Management System** for customer acquisition channels
+- **Organizational Hierarchy Management** with performance tracking
+- **Advanced Analytics** with interactive charts and performance metrics
+- **Comprehensive Management Dialogs** for creating and editing channels/hierarchy
+
+#### **Channel Management:**
+
+##### **Channel Operations:**
+- **Create/Edit/Delete:** Full CRUD operations for channels
+- **Channel Types:** Online, Mobile, Offline, Phone, Agent channels
+- **Performance Tracking:** Efficiency, conversion rates, cost per lead
+- **Budget Management:** Budget allocation and utilization tracking
+
+##### **Channel Analytics:**
+- **Performance Comparison:** Bar charts comparing efficiency vs cost
+- **Revenue Tracking:** Channel-wise revenue generation
+- **Capacity Management:** Maximum capacity vs current utilization
+- **Manager Assignment:** Channel manager tracking and performance
+
+#### **Hierarchy Management:**
+
+##### **Organizational Structure:**
+- **Multi-level Hierarchy:** Region → State → Branch → Department → Team
+- **Node Management:** Create, edit, delete organizational nodes
+- **Manager Assignment:** Hierarchy manager tracking
+- **Budget Allocation:** Budget distribution across organizational levels
+
+##### **Performance Analytics:**
+- **Efficiency Metrics:** Performance tracking across hierarchy levels
+- **Target Achievement:** Goal vs actual performance comparison
+- **Budget Utilization:** Financial performance monitoring
+- **Radial Charts:** Visual representation of regional performance
+
+#### **Advanced Features:**
+- **Interactive Dialogs:** Comprehensive forms for channel and hierarchy management
+- **Tree View:** Expandable hierarchy tree with performance indicators
+- **Team Member Tracking:** Individual team member performance within hierarchy
+- **Settings Management:** Channel-specific settings like auto-assignment, priority, working hours
+
+---
+
+## 🧹 Comprehensive ESLint Cleanup & Code Quality Improvements
 **Status:** ✅ **COMPLETED**
 
 #### **Overview:**

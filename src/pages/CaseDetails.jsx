@@ -85,7 +85,12 @@ import {
   StarRate as StarRateIcon,
   Assessment as AssessmentIcon,
   Lightbulb as LightbulbIcon,
-  CheckCircle as CheckCircleIcon
+  CheckCircle as CheckCircleIcon,
+  MonetizationOn as MonetizationOnIcon,
+  Receipt as ReceiptIcon,
+  Warning as WarningIcon,
+  TrendingUp as TrendingUpIcon,
+  Schedule as ScheduleIcon
 } from '@mui/icons-material';
 import { useSettings } from '../context/SettingsContext';
 import { useTheme } from '@mui/material/styles';
@@ -576,7 +581,8 @@ const CaseDetails = () => {
               <Tab icon={<LightbulbIcon />} label="Insights" {...a11yProps(3)} />
               <Tab icon={<AssessmentIcon />} label="Analytics" {...a11yProps(4)} />
               <Tab icon={<StarRateIcon />} label="Offers" {...a11yProps(5)} />
-              <Tab icon={<HistoryIcon />} label="History & Timeline" {...a11yProps(6)} />
+              <Tab icon={<MonetizationOnIcon />} label="Outstanding Amounts" {...a11yProps(6)} />
+              <Tab icon={<HistoryIcon />} label="History & Timeline" {...a11yProps(7)} />
             </Tabs>
           </Box>
         )}
@@ -3585,6 +3591,251 @@ const CaseDetails = () => {
               </Card>
             </Grow>
           </Grid>
+
+          {/* Outstanding Amounts Section - Consolidated View */}
+          <Grid item xs={12}>
+            <Grow in={loaded} timeout={600}>
+              <Card 
+                elevation={0}
+                sx={{ 
+                  borderRadius: 3,
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
+                  overflow: 'visible',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 12px 32px rgba(0,0,0,0.1)'
+                  }
+                }}
+              >
+                <CardContent sx={{ p: 3 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                    <MonetizationOnIcon sx={{ mr: 1, color: theme.palette.error.main }} />
+                    <Typography variant="h6" fontWeight="600">Outstanding Amounts</Typography>
+                  </Box>
+                  <Divider sx={{ mb: 3 }} />
+                  
+                  {/* Summary Section */}
+                  <Grid container spacing={3} sx={{ mb: 4 }}>
+                    <Grid item xs={12} md={3}>
+                      <Box sx={{ textAlign: 'center', p: 2, bgcolor: alpha(theme.palette.error.main, 0.05), borderRadius: 2 }}>
+                        <Typography variant="h4" fontWeight="700" color="error.main">
+                          ₹{caseData.outstandingAmounts?.reduce((total, amount) => total + amount.amount, 0)?.toLocaleString('en-IN') || '0'}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Total Outstanding
+                        </Typography>
+                      </Box>
+                    </Grid>
+                                         <Grid item xs={12} md={3}>
+                       <Box sx={{ textAlign: 'center', p: 2, bgcolor: alpha(theme.palette.warning.main, 0.05), borderRadius: 2 }}>
+                         <Typography variant="h4" fontWeight="700" color="warning.main">
+                           {caseData.outstandingAmounts?.length || 0}
+                         </Typography>
+                         <Typography variant="body2" color="text.secondary">
+                           Pending Installments
+                         </Typography>
+                       </Box>
+                     </Grid>
+                     <Grid item xs={12} md={3}>
+                       <Box sx={{ textAlign: 'center', p: 2, bgcolor: alpha(theme.palette.info.main, 0.05), borderRadius: 2 }}>
+                         <Typography variant="h4" fontWeight="700" color="info.main">
+                           ₹{caseData.outstandingAmounts?.length > 0 ? 
+                             Math.round(caseData.outstandingAmounts.reduce((total, amount) => total + amount.amount, 0) / caseData.outstandingAmounts.length).toLocaleString('en-IN') : '0'}
+                         </Typography>
+                         <Typography variant="body2" color="text.secondary">
+                           Average Amount
+                         </Typography>
+                       </Box>
+                     </Grid>
+                    <Grid item xs={12} md={3}>
+                      <Stack spacing={1}>
+                        <Button
+                          fullWidth
+                          variant="contained"
+                          color="error"
+                          startIcon={<PaymentsIcon />}
+                          sx={{ borderRadius: 2 }}
+                          onClick={() => {
+                            setSnackbar({
+                              open: true,
+                              message: 'Payment portal functionality would be implemented here',
+                              severity: 'info'
+                            });
+                          }}
+                        >
+                          Pay All Outstanding
+                        </Button>
+                        <Button
+                          fullWidth
+                          variant="outlined"
+                          color="secondary"
+                          startIcon={<ScheduleIcon />}
+                          sx={{ borderRadius: 2 }}
+                          onClick={() => {
+                            setSnackbar({
+                              open: true,
+                              message: 'Payment plan setup functionality would be implemented here',
+                              severity: 'info'
+                            });
+                          }}
+                        >
+                          Setup Payment Plan
+                        </Button>
+                      </Stack>
+                    </Grid>
+                  </Grid>
+
+                  {/* Outstanding Installments List */}
+                  <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                    <ReceiptIcon fontSize="small" sx={{ mr: 1 }} /> Outstanding Installments
+                  </Typography>
+                  
+                  <Box
+                    sx={{
+                      maxHeight: '400px',
+                      overflowY: 'auto',
+                      overflowX: 'hidden',
+                      pr: 1,
+                      '&::-webkit-scrollbar': {
+                        width: '8px',
+                      },
+                      '&::-webkit-scrollbar-track': {
+                        background: alpha(theme.palette.divider, 0.1),
+                        borderRadius: '4px',
+                      },
+                      '&::-webkit-scrollbar-thumb': {
+                        background: alpha(theme.palette.primary.main, 0.3),
+                        borderRadius: '4px',
+                        '&:hover': {
+                          background: alpha(theme.palette.primary.main, 0.5),
+                        },
+                      },
+                    }}
+                  >
+                    <Stack spacing={2}>
+                      {caseData.outstandingAmounts?.map((outstandingAmount, index) => {
+                        const daysOverdue = Math.floor((new Date() - new Date(outstandingAmount.dueDate)) / (1000 * 60 * 60 * 24));
+                        const isOverdue = daysOverdue > 0;
+                        
+                        return (
+                          <Card 
+                            key={index}
+                            elevation={0}
+                            sx={{ 
+                              border: `1px solid ${isOverdue ? theme.palette.error.main : theme.palette.divider}`,
+                              borderRadius: 2,
+                              bgcolor: isOverdue ? alpha(theme.palette.error.main, 0.02) : 'background.paper',
+                              transition: 'all 0.2s ease',
+                              minHeight: '100px',
+                              '&:hover': {
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                                transform: 'translateY(-2px)'
+                              }
+                            }}
+                          >
+                            <CardContent sx={{ p: 2.5 }}>
+                              <Grid container spacing={2} alignItems="center">
+                                <Grid item xs={12} sm={2}>
+                                  <Typography variant="subtitle2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                                    PERIOD
+                                  </Typography>
+                                  <Typography variant="body1" fontWeight="600">
+                                    {outstandingAmount.period}
+                                  </Typography>
+                                </Grid>
+                                <Grid item xs={12} sm={2}>
+                                  <Typography variant="subtitle2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                                    AMOUNT
+                                  </Typography>
+                                  <Typography variant="h6" fontWeight="700" color={isOverdue ? 'error.main' : 'primary.main'}>
+                                    ₹{outstandingAmount.amount.toLocaleString('en-IN')}
+                                  </Typography>
+                                </Grid>
+                                <Grid item xs={12} sm={2}>
+                                  <Typography variant="subtitle2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                                    DUE DATE
+                                  </Typography>
+                                  <Typography variant="body2" fontWeight="600">
+                                    {new Date(outstandingAmount.dueDate).toLocaleDateString('en-IN')}
+                                  </Typography>
+                                </Grid>
+                                <Grid item xs={12} sm={3}>
+                                  <Typography variant="subtitle2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                                    STATUS
+                                  </Typography>
+                                  <Chip 
+                                    label={isOverdue ? `${daysOverdue} days overdue` : `Due in ${Math.abs(daysOverdue)} days`}
+                                    color={isOverdue ? 'error' : 'warning'}
+                                    size="small"
+                                    icon={isOverdue ? <WarningIcon /> : <ScheduleIcon />}
+                                    sx={{ fontSize: '0.7rem' }}
+                                  />
+                                </Grid>
+                                <Grid item xs={12} sm={3}>
+                                  <Stack direction="row" spacing={1} justifyContent="flex-end">
+                                    <Button
+                                      size="small"
+                                      variant="outlined"
+                                      color="primary"
+                                      startIcon={<PaymentsIcon />}
+                                      sx={{ fontSize: '0.75rem' }}
+                                      onClick={() => {
+                                        setSnackbar({
+                                          open: true,
+                                          message: `Payment for ${outstandingAmount.period} - ₹${outstandingAmount.amount.toLocaleString('en-IN')}`,
+                                          severity: 'info'
+                                        });
+                                      }}
+                                    >
+                                      Pay Now
+                                    </Button>
+                                    <IconButton 
+                                      size="small"
+                                      onClick={() => {
+                                        setSnackbar({
+                                          open: true,
+                                          message: `Reminder sent for ${outstandingAmount.period}`,
+                                          severity: 'success'
+                                        });
+                                      }}
+                                    >
+                                      <NotificationsIcon fontSize="small" />
+                                    </IconButton>
+                                  </Stack>
+                                </Grid>
+                              </Grid>
+                              
+                              {outstandingAmount.description && (
+                                <Box sx={{ mt: 2, pt: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
+                                  <Typography variant="body2" color="text.secondary">
+                                    <DescriptionIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'middle' }} />
+                                    {outstandingAmount.description}
+                                  </Typography>
+                                </Box>
+                              )}
+                            </CardContent>
+                          </Card>
+                        );
+                      }) || (
+                        <Box sx={{ textAlign: 'center', py: 4 }}>
+                          <Avatar sx={{ bgcolor: 'success.main', mx: 'auto', mb: 2, width: 64, height: 64 }}>
+                            <CheckCircleIcon sx={{ fontSize: 32 }} />
+                          </Avatar>
+                          <Typography variant="h6" fontWeight="600" color="success.main">
+                            No Outstanding Amounts
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            All payments are up to date
+                          </Typography>
+                        </Box>
+                      )}
+                    </Stack>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grow>
+          </Grid>
         </Grid>
         ) : (
           // Tab-based View
@@ -6455,8 +6706,334 @@ const CaseDetails = () => {
               </Grid>
             </TabPanel>
 
-            {/* Tab 6: History & Timeline */}
+            {/* Tab 6: Outstanding Amounts */}
             <TabPanel value={currentTab} index={6}>
+              <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>Outstanding Amounts</Typography>
+              <Grid container spacing={3}>
+                {/* Outstanding Amounts Summary */}
+                <Grid item xs={12} lg={4}>
+                  <Grow in={loaded} timeout={400}>
+                    <Card 
+                      elevation={0}
+                      sx={{ 
+                        height: '100%', 
+                        borderRadius: 3,
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
+                        border: `2px solid ${alpha(theme.palette.error.main, 0.2)}`,
+                        transition: 'transform 0.2s, box-shadow 0.2s',
+                        '&:hover': {
+                          transform: 'translateY(-4px)',
+                          boxShadow: '0 12px 32px rgba(0,0,0,0.1)'
+                        }
+                      }}
+                    >
+                      <CardContent sx={{ p: 3 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                          <Avatar sx={{ bgcolor: theme.palette.error.main, mr: 2, width: 48, height: 48 }}>
+                            <WarningIcon sx={{ fontSize: 28 }} />
+                          </Avatar>
+                          <Box>
+                            <Typography variant="h6" fontWeight="600" color="error.main">
+                              Total Outstanding
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              Consolidated Amount
+                            </Typography>
+                          </Box>
+                        </Box>
+                        
+                        <Box sx={{ textAlign: 'center', py: 2, bgcolor: alpha(theme.palette.error.main, 0.05), borderRadius: 2, mb: 3 }}>
+                          <Typography variant="h3" fontWeight="700" color="error.main">
+                            ₹{caseData.outstandingAmounts?.reduce((total, amount) => total + amount.amount, 0)?.toLocaleString('en-IN') || '0'}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                            Across {caseData.outstandingAmounts?.length || 0} installments
+                          </Typography>
+                        </Box>
+
+                        <Divider sx={{ mb: 2 }} />
+                        
+                        <Stack spacing={2}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <Typography variant="body2" color="text.secondary">Oldest Due:</Typography>
+                            <Typography variant="body2" fontWeight="600">
+                              {caseData.outstandingAmounts?.length > 0 ? 
+                                new Date(Math.min(...caseData.outstandingAmounts.map(a => new Date(a.dueDate)))).toLocaleDateString('en-IN') : 'N/A'}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <Typography variant="body2" color="text.secondary">Latest Due:</Typography>
+                            <Typography variant="body2" fontWeight="600">
+                              {caseData.outstandingAmounts?.length > 0 ? 
+                                new Date(Math.max(...caseData.outstandingAmounts.map(a => new Date(a.dueDate)))).toLocaleDateString('en-IN') : 'N/A'}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <Typography variant="body2" color="text.secondary">Average Amount:</Typography>
+                            <Typography variant="body2" fontWeight="600">
+                              ₹{caseData.outstandingAmounts?.length > 0 ? 
+                                Math.round(caseData.outstandingAmounts.reduce((total, amount) => total + amount.amount, 0) / caseData.outstandingAmounts.length).toLocaleString('en-IN') : '0'}
+                            </Typography>
+                          </Box>
+                        </Stack>
+
+                        <Button
+                          fullWidth
+                          variant="contained"
+                          color="error"
+                          startIcon={<PaymentsIcon />}
+                          sx={{ mt: 3, borderRadius: 2 }}
+                          onClick={() => {
+                            // Handle payment action
+                            setSnackbar({
+                              open: true,
+                              message: 'Payment portal functionality would be implemented here',
+                              severity: 'info'
+                            });
+                          }}
+                        >
+                          Initiate Payment
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </Grow>
+                </Grid>
+
+                {/* Outstanding Amounts List */}
+                <Grid item xs={12} lg={8}>
+                  <Grow in={loaded} timeout={600}>
+                    <Card 
+                      elevation={0}
+                      sx={{ 
+                        height: '100%', 
+                        borderRadius: 3,
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
+                        overflow: 'visible'
+                      }}
+                    >
+                      <CardContent sx={{ p: 3 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <Avatar sx={{ bgcolor: theme.palette.primary.main, mr: 2 }}>
+                              <ReceiptIcon />
+                            </Avatar>
+                            <Box>
+                              <Typography variant="h6" fontWeight="600">
+                                Outstanding Installments
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                Detailed breakdown by period
+                              </Typography>
+                            </Box>
+                          </Box>
+                          <Chip 
+                            label={`${caseData.outstandingAmounts?.length || 0} Pending`}
+                            color="error"
+                            variant="outlined"
+                          />
+                        </Box>
+
+                        <Box
+                          sx={{
+                            maxHeight: '400px', // Height to show approximately 3 cards
+                            overflowY: 'auto',
+                            overflowX: 'hidden',
+                            pr: 1, // Add padding for scrollbar
+                            '&::-webkit-scrollbar': {
+                              width: '8px',
+                            },
+                            '&::-webkit-scrollbar-track': {
+                              background: alpha(theme.palette.divider, 0.1),
+                              borderRadius: '4px',
+                            },
+                            '&::-webkit-scrollbar-thumb': {
+                              background: alpha(theme.palette.primary.main, 0.3),
+                              borderRadius: '4px',
+                              '&:hover': {
+                                background: alpha(theme.palette.primary.main, 0.5),
+                              },
+                            },
+                          }}
+                        >
+                          <Stack spacing={2}>
+                            {caseData.outstandingAmounts?.map((outstandingAmount, index) => {
+                            const daysOverdue = Math.floor((new Date() - new Date(outstandingAmount.dueDate)) / (1000 * 60 * 60 * 24));
+                            const isOverdue = daysOverdue > 0;
+                            
+                            return (
+                                                              <Card 
+                                  key={index}
+                                  elevation={0}
+                                  sx={{ 
+                                    border: `1px solid ${isOverdue ? theme.palette.error.main : theme.palette.divider}`,
+                                    borderRadius: 2,
+                                    bgcolor: isOverdue ? alpha(theme.palette.error.main, 0.02) : 'background.paper',
+                                    transition: 'all 0.2s ease',
+                                    minHeight: '120px', // Ensure consistent card height for better scrolling
+                                    '&:hover': {
+                                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                                      transform: 'translateY(-2px)'
+                                    }
+                                  }}
+                                >
+                                <CardContent sx={{ p: 2.5 }}>
+                                  <Grid container spacing={2} alignItems="center">
+                                    <Grid item xs={12} sm={3}>
+                                      <Box>
+                                        <Typography variant="subtitle2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                                          PERIOD
+                                        </Typography>
+                                        <Typography variant="body1" fontWeight="600">
+                                          {outstandingAmount.period}
+                                        </Typography>
+                                      </Box>
+                                    </Grid>
+                                    <Grid item xs={12} sm={2}>
+                                      <Box>
+                                        <Typography variant="subtitle2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                                          AMOUNT
+                                        </Typography>
+                                        <Typography variant="h6" fontWeight="700" color={isOverdue ? 'error.main' : 'primary.main'}>
+                                          ₹{outstandingAmount.amount.toLocaleString('en-IN')}
+                                        </Typography>
+                                      </Box>
+                                    </Grid>
+                                    <Grid item xs={12} sm={2}>
+                                      <Box>
+                                        <Typography variant="subtitle2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                                          DUE DATE
+                                        </Typography>
+                                        <Typography variant="body2" fontWeight="600">
+                                          {new Date(outstandingAmount.dueDate).toLocaleDateString('en-IN')}
+                                        </Typography>
+                                      </Box>
+                                    </Grid>
+                                    <Grid item xs={12} sm={2}>
+                                      <Box>
+                                        <Typography variant="subtitle2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                                          STATUS
+                                        </Typography>
+                                        <Chip 
+                                          label={isOverdue ? `${daysOverdue} days overdue` : `Due in ${Math.abs(daysOverdue)} days`}
+                                          color={isOverdue ? 'error' : 'warning'}
+                                          size="small"
+                                          icon={isOverdue ? <WarningIcon /> : <ScheduleIcon />}
+                                          sx={{ fontSize: '0.7rem' }}
+                                        />
+                                      </Box>
+                                    </Grid>
+                                    <Grid item xs={12} sm={3}>
+                                      <Stack direction="row" spacing={1}>
+                                        <Button
+                                          size="small"
+                                          variant="outlined"
+                                          color="primary"
+                                          startIcon={<PaymentsIcon />}
+                                          sx={{ fontSize: '0.75rem' }}
+                                          onClick={() => {
+                                            setSnackbar({
+                                              open: true,
+                                              message: `Payment for ${outstandingAmount.period} - ₹${outstandingAmount.amount.toLocaleString('en-IN')}`,
+                                              severity: 'info'
+                                            });
+                                          }}
+                                        >
+                                          Pay Now
+                                        </Button>
+                                        <IconButton 
+                                          size="small"
+                                          onClick={() => {
+                                            setSnackbar({
+                                              open: true,
+                                              message: `Reminder sent for ${outstandingAmount.period}`,
+                                              severity: 'success'
+                                            });
+                                          }}
+                                        >
+                                          <NotificationsIcon fontSize="small" />
+                                        </IconButton>
+                                      </Stack>
+                                    </Grid>
+                                  </Grid>
+                                  
+                                  {outstandingAmount.description && (
+                                    <Box sx={{ mt: 2, pt: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
+                                      <Typography variant="body2" color="text.secondary">
+                                        <DescriptionIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'middle' }} />
+                                        {outstandingAmount.description}
+                                      </Typography>
+                                    </Box>
+                                  )}
+                                </CardContent>
+                              </Card>
+                            );
+                          }) || (
+                            <Box sx={{ textAlign: 'center', py: 4 }}>
+                              <Avatar sx={{ bgcolor: 'success.main', mx: 'auto', mb: 2, width: 64, height: 64 }}>
+                                <CheckCircleIcon sx={{ fontSize: 32 }} />
+                              </Avatar>
+                              <Typography variant="h6" fontWeight="600" color="success.main">
+                                No Outstanding Amounts
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                All payments are up to date
+                              </Typography>
+                            </Box>
+                          )}
+                          </Stack>
+                        </Box>
+
+                        {caseData.outstandingAmounts && caseData.outstandingAmounts.length > 0 && (
+                          <Box sx={{ mt: 3, pt: 3, borderTop: `1px solid ${theme.palette.divider}` }}>
+                            <Grid container spacing={2}>
+                              <Grid item xs={12} sm={6}>
+                                <Button
+                                  fullWidth
+                                  variant="contained"
+                                  color="primary"
+                                  startIcon={<PaymentsIcon />}
+                                  sx={{ borderRadius: 2 }}
+                                  onClick={() => {
+                                    setSnackbar({
+                                      open: true,
+                                      message: 'Bulk payment functionality would be implemented here',
+                                      severity: 'info'
+                                    });
+                                  }}
+                                >
+                                  Pay All Outstanding
+                                </Button>
+                              </Grid>
+                              <Grid item xs={12} sm={6}>
+                                <Button
+                                  fullWidth
+                                  variant="outlined"
+                                  color="secondary"
+                                  startIcon={<ScheduleIcon />}
+                                  sx={{ borderRadius: 2 }}
+                                  onClick={() => {
+                                    setSnackbar({
+                                      open: true,
+                                      message: 'Payment plan setup functionality would be implemented here',
+                                      severity: 'info'
+                                    });
+                                  }}
+                                >
+                                  Setup Payment Plan
+                                </Button>
+                              </Grid>
+                            </Grid>
+                          </Box>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </Grow>
+                </Grid>
+              </Grid>
+            </TabPanel>
+
+            {/* Tab 7: History & Timeline */}
+            <TabPanel value={currentTab} index={7}>
               <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>History & Timeline</Typography>
               <Grid container spacing={3}>
                 {/* Case Flow */}

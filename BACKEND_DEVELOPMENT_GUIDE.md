@@ -1,7 +1,7 @@
 # Intelipro Insurance Policy Renewal Management System - Backend Development Guide
 
-**Version:** 2.0  
-**Last Updated:** January 2024  
+**Version:** 2.1  
+**Last Updated:** January 2025  
 **Target Architecture:** Microservices with API Gateway
 
 ## Table of Contents
@@ -22,8 +22,13 @@
 The Intelipro Insurance Policy Renewal Management System is a comprehensive platform for managing insurance policy renewals, customer communications, multi-channel campaign management, email automation, surveys, claims processing, and real-time analytics. The system supports advanced upload workflows with integrated campaign creation, multi-channel communication (Email, WhatsApp, SMS), and sophisticated user management.
 
 ### Current Frontend Implementation Status
-The frontend application is fully implemented with the following features:
+The frontend application is fully implemented with the following enhanced features:
 - **30+ Pages**: Complete UI implementation including Dashboard, Upload, Campaigns, Case Management, Email Management, Settings, and User Management
+- **Outstanding Amounts Management**: Complete payment tracking system with dual view support
+- **Social Media Integrations**: Multi-platform customer engagement capabilities
+- **AI-Powered Policy Recommendations**: Enhanced customer profiling with intelligent recommendations
+- **Channel & Hierarchy Management**: Advanced organizational management systems
+- **Enhanced Analytics**: Comprehensive billing, vendor, and delivery status tracking
 - **React 18**: Modern React application with hooks, context, and Material-UI components
 - **Advanced Upload System**: Multi-file upload with progress tracking and campaign integration
 - **Multi-Channel Campaigns**: Email, WhatsApp, and SMS campaign management
@@ -135,6 +140,42 @@ The frontend application is fully implemented with the following features:
 - In-app notifications
 - Push notifications
 - Notification preferences
+
+#### 11. Outstanding Amounts & Payment Service (NEW - January 2025)
+- Outstanding amounts tracking and calculation
+- Payment processing integration (Razorpay/Stripe)
+- Installment management and scheduling
+- Payment history and audit trails
+- Overdue calculations and notifications
+- Bulk payment processing capabilities
+
+#### 12. Social Media Integration Service (NEW - January 2025)
+- Multi-platform social media connections (Facebook, Twitter, LinkedIn, Telegram)
+- OAuth flow management and token handling
+- Customer presence verification across platforms
+- Platform-specific API integrations
+- Connection status monitoring and management
+
+#### 13. AI Recommendations Service (NEW - January 2025)
+- Customer profiling and risk assessment
+- AI-powered policy recommendations
+- Machine learning model integration
+- Personalized recommendation generation
+- Recommendation tracking and effectiveness analysis
+
+#### 14. Channel & Hierarchy Management Service (NEW - January 2025)
+- Organizational structure management
+- Channel performance tracking and analytics
+- Hierarchy node management (Region → State → Branch → Department → Team)
+- Performance metrics and KPI tracking
+- Budget allocation and utilization monitoring
+
+#### 15. Enhanced Analytics Service (NEW - January 2025)
+- Vendor communication analytics
+- Delivery status tracking across all channels
+- Advanced reporting and dashboard capabilities
+- Performance comparison and trend analysis
+- Custom analytics and metric generation
 
 ## Database Schema
 
@@ -540,6 +581,156 @@ CREATE TABLE ai_settings (
     knowledge_base JSONB,
     fallback_enabled BOOLEAN DEFAULT TRUE,
     fallback_message TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### Outstanding Amounts Table (NEW - January 2025)
+```sql
+CREATE TABLE outstanding_amounts (
+    id SERIAL PRIMARY KEY,
+    case_id INTEGER REFERENCES renewal_cases(id),
+    policy_id INTEGER REFERENCES policies(id),
+    period VARCHAR(50) NOT NULL,
+    amount DECIMAL(12,2) NOT NULL,
+    due_date DATE NOT NULL,
+    status VARCHAR(20) DEFAULT 'pending', -- 'pending', 'paid', 'overdue', 'partial'
+    description TEXT,
+    payment_method VARCHAR(50),
+    paid_amount DECIMAL(12,2) DEFAULT 0,
+    paid_date TIMESTAMP,
+    payment_reference VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### Social Media Integrations Table (NEW - January 2025)
+```sql
+CREATE TABLE social_media_integrations (
+    id SERIAL PRIMARY KEY,
+    customer_id INTEGER REFERENCES customers(id),
+    platform VARCHAR(50) NOT NULL, -- 'facebook', 'twitter', 'linkedin', 'telegram', 'wechat'
+    platform_user_id VARCHAR(255),
+    platform_username VARCHAR(255),
+    connection_status VARCHAR(20) DEFAULT 'disconnected', -- 'connected', 'disconnected', 'pending', 'expired'
+    access_token_encrypted VARCHAR(1000),
+    refresh_token_encrypted VARCHAR(1000),
+    token_expires_at TIMESTAMP,
+    verification_status VARCHAR(20) DEFAULT 'unverified', -- 'verified', 'unverified', 'failed'
+    verification_data JSONB,
+    connected_at TIMESTAMP,
+    last_verified_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### Customer Profiles Table (Enhanced - January 2025)
+```sql
+CREATE TABLE customer_profiles (
+    id SERIAL PRIMARY KEY,
+    customer_id INTEGER REFERENCES customers(id),
+    annual_income DECIMAL(15,2),
+    income_capture_date DATE,
+    vehicles JSONB, -- [{"type": "car", "model": "Honda City", "year": 2020}]
+    residence_type VARCHAR(20), -- 'owned', 'rented'
+    property_type VARCHAR(20), -- 'villa', 'apartment'
+    location_rating VARCHAR(10), -- 'good', 'average', 'low'
+    risk_profile VARCHAR(20), -- 'safe', 'medium', 'high'
+    policy_preferences JSONB, -- {"ulip": true, "term": true, "traditional": false}
+    family_history JSONB, -- Medical and family history data
+    policy_capacity JSONB, -- {"max_capacity": 500000, "utilized": 200000}
+    ai_recommendations JSONB, -- Stored AI recommendations
+    last_profile_update TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### Channels Table (NEW - January 2025)
+```sql
+CREATE TABLE channels (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    type VARCHAR(50) NOT NULL, -- 'online', 'mobile', 'offline', 'phone', 'agent'
+    status VARCHAR(20) DEFAULT 'active', -- 'active', 'inactive', 'maintenance'
+    description TEXT,
+    target_audience TEXT,
+    cost_per_lead DECIMAL(10,2),
+    conversion_rate DECIMAL(5,2),
+    manager_id INTEGER REFERENCES users(id),
+    budget DECIMAL(15,2),
+    current_cases INTEGER DEFAULT 0,
+    renewed_cases INTEGER DEFAULT 0,
+    revenue DECIMAL(15,2) DEFAULT 0,
+    settings JSONB, -- Channel-specific settings
+    performance_metrics JSONB, -- Efficiency, satisfaction, response time
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### Organizational Hierarchy Table (NEW - January 2025)
+```sql
+CREATE TABLE organizational_hierarchy (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    type VARCHAR(50) NOT NULL, -- 'region', 'state', 'branch', 'department', 'team'
+    parent_id INTEGER REFERENCES organizational_hierarchy(id),
+    manager_id INTEGER REFERENCES users(id),
+    manager_name VARCHAR(255),
+    description TEXT,
+    budget DECIMAL(15,2),
+    target_cases INTEGER,
+    current_cases INTEGER DEFAULT 0,
+    renewed_cases INTEGER DEFAULT 0,
+    revenue DECIMAL(15,2) DEFAULT 0,
+    status VARCHAR(20) DEFAULT 'active', -- 'active', 'inactive', 'restructuring'
+    performance_metrics JSONB, -- Efficiency, budget utilization, target achievement
+    team_members JSONB, -- For team-level nodes
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### Vendor Communications Table (NEW - January 2025)
+```sql
+CREATE TABLE vendor_communications (
+    id SERIAL PRIMARY KEY,
+    vendor_name VARCHAR(255) NOT NULL,
+    communication_type VARCHAR(50) NOT NULL, -- 'email', 'sms', 'whatsapp', 'call'
+    total_communications INTEGER DEFAULT 0,
+    successful_communications INTEGER DEFAULT 0,
+    failed_communications INTEGER DEFAULT 0,
+    success_rate DECIMAL(5,2),
+    total_cost DECIMAL(12,2),
+    average_cost_per_communication DECIMAL(8,2),
+    performance_rating DECIMAL(3,2),
+    last_communication_date TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### Communication Delivery Status Table (NEW - January 2025)
+```sql
+CREATE TABLE communication_delivery_status (
+    id SERIAL PRIMARY KEY,
+    case_id INTEGER REFERENCES renewal_cases(id),
+    campaign_id INTEGER REFERENCES campaigns(id),
+    communication_type VARCHAR(50) NOT NULL,
+    recipient_contact VARCHAR(255) NOT NULL,
+    status VARCHAR(50) DEFAULT 'pending', -- 'pending', 'sent', 'delivered', 'failed', 'opened', 'clicked'
+    attempts INTEGER DEFAULT 0,
+    last_attempt_at TIMESTAMP,
+    delivered_at TIMESTAMP,
+    opened_at TIMESTAMP,
+    clicked_at TIMESTAMP,
+    error_message TEXT,
+    vendor_name VARCHAR(255),
+    cost DECIMAL(8,2),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

@@ -1,13 +1,13 @@
 ﻿# Database Documentation - Intelipro Insurance Policy Renewal System
 
-**Version:** 2.0  
-**Last Updated:** January 2024  
+**Version:** 2.1  
+**Last Updated:** January 2025  
 **Database Engine:** PostgreSQL 14+  
 **Architecture:** Primary Database + Redis Cache
 
 ## Overview
 
-The database is designed to support a comprehensive insurance policy renewal management system with advanced features including multi-channel campaigns, real-time analytics, case management, and user administration.
+The database is designed to support a comprehensive insurance policy renewal management system with advanced features including multi-channel campaigns, real-time analytics, case management, user administration, outstanding amounts tracking, social media integrations, AI-powered recommendations, and organizational hierarchy management.
 
 ## Core Tables
 
@@ -59,6 +59,22 @@ The database is designed to support a comprehensive insurance policy renewal man
 ### 11. Audit and Compliance
 - **audit_logs**: Complete system audit trail
 - **data_retention_policies**: Data retention management
+
+### 12. Outstanding Amounts Management (NEW - January 2025)
+- **outstanding_amounts**: Payment tracking and installment management
+- **customer_profiles**: Enhanced customer profiling with AI insights
+
+### 13. Social Media Integration (NEW - January 2025)
+- **social_media_integrations**: Multi-platform social media connections
+- **platform_verifications**: Customer presence verification
+
+### 14. Organizational Management (NEW - January 2025)
+- **channels**: Customer acquisition channel management
+- **organizational_hierarchy**: Multi-level organizational structure
+
+### 15. Enhanced Analytics (NEW - January 2025)
+- **vendor_communications**: Vendor performance tracking
+- **communication_delivery_status**: Delivery status across all channels
 
 ## Setup Instructions
 
