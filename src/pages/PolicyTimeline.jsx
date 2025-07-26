@@ -57,7 +57,24 @@ import {
   Language as LanguageIcon,
   CalendarToday as CalendarTodayIcon,
   Pending as PendingIcon,
-  Person as PersonIcon
+  Person as PersonIcon,
+  Home as HomeIcon,
+  DirectionsCar as DirectionsCarIcon,
+  TwoWheeler as TwoWheelerIcon,
+  TrendingUp as TrendingUpIcon,
+  TrendingDown as TrendingDownIcon,
+  TrendingFlat as TrendingFlatIcon,
+  Family as FamilyIcon,
+  LocalHospital as LocalHospitalIcon,
+  Security as SecurityIcon,
+  Apartment as ApartmentIcon,
+  Villa as VillaIcon,
+  LocationOn as LocationOnIcon,
+  MonetizationOn as MonetizationOnIcon,
+  Psychology as PsychologyIcon,
+  Recommend as RecommendIcon,
+  Assessment as AssessmentIcon,
+  HealthAndSafety as HealthAndSafetyIcon
 } from '@mui/icons-material';
 import { useLocation } from 'react-router-dom';
 
@@ -83,6 +100,117 @@ const PolicyTimeline = () => {
   const mockPolicyData = useMemo(() => ({
     customerId: customerIdFromUrl || "CUST-12345",
     customerName: customerNameFromUrl || "Arjun Sharma",
+    // Enhanced Customer Profile
+    customerProfile: {
+      annualIncome: {
+        amount: 1250000,
+        currency: 'INR',
+        dateCaptured: '2024-01-15',
+        source: 'Self-declared',
+        lastUpdated: '2024-01-15'
+      },
+      demographics: {
+        age: 34,
+        gender: 'Male',
+        maritalStatus: 'Married',
+        dependents: 2,
+        occupation: 'Software Engineer',
+        employer: 'Tech Solutions Pvt Ltd'
+      },
+      location: {
+        city: 'Pune',
+        state: 'Maharashtra',
+        pincode: '411001',
+        residentialArea: 'Koregaon Park',
+        areaRating: 'good', // good, average, low
+        coordinates: { lat: 18.5204, lng: 73.8567 }
+      },
+      residence: {
+        ownership: 'owned', // owned, rented
+        type: 'apartment', // villa, apartment, independent_house, row_house
+        builtUpArea: 1200,
+        ageOfProperty: 8,
+        securityFeatures: ['CCTV', 'Security Guard', 'Gated Community'],
+        parkingType: 'Covered'
+      },
+      vehicles: [
+        {
+          type: 'Car',
+          make: 'Honda',
+          model: 'City',
+          year: 2020,
+          registrationNumber: 'MH12AB1234',
+          fuelType: 'Petrol',
+          cc: 1498,
+          currentValue: 850000
+        },
+        {
+          type: 'Two Wheeler',
+          make: 'Honda',
+          model: 'Activa 6G',
+          year: 2022,
+          registrationNumber: 'MH12CD5678',
+          fuelType: 'Petrol',
+          cc: 109,
+          currentValue: 75000
+        }
+      ],
+      riskProfile: {
+        category: 'medium', // safe, medium, high
+        riskTolerance: 6, // Scale of 1-10
+        investmentHorizon: 'long_term', // short_term, medium_term, long_term
+        previousClaims: 1,
+        drivingRecord: 'clean',
+        healthConditions: 'minor', // none, minor, major
+        lifestyle: 'active' // sedentary, moderate, active
+      },
+      policyPreferences: {
+        preferredTypes: ['Term Life', 'Health Insurance', 'Motor Insurance'],
+        avoidedTypes: ['ULIP'],
+        preferredPremiumFrequency: 'annual',
+        maxBudget: 150000,
+        priorityFeatures: ['High Coverage', 'Quick Claim Settlement', 'Cashless Benefits']
+      },
+      familyHistory: {
+        medicalHistory: {
+          diabetes: { present: true, relation: 'Father', ageOfOnset: 55 },
+          heartDisease: { present: false, relation: null, ageOfOnset: null },
+          cancer: { present: false, relation: null, ageOfOnset: null },
+          hypertension: { present: true, relation: 'Mother', ageOfOnset: 48 }
+        },
+        lifeExpectancy: 78,
+        geneticRiskFactors: ['Type 2 Diabetes', 'Hypertension']
+      },
+      otherPolicies: [
+        {
+          policyNumber: 'EXT-HDFC-789',
+          policyType: 'Home Loan Insurance',
+          provider: 'HDFC Life',
+          source: 'Bank Channel',
+          premium: 25000,
+          coverage: 5000000,
+          startDate: '2019-03-15',
+          status: 'Active'
+        },
+        {
+          policyNumber: 'EXT-ICICI-456',
+          policyType: 'Personal Accident',
+          provider: 'ICICI Lombard',
+          source: 'Online Portal',
+          premium: 3500,
+          coverage: 500000,
+          startDate: '2021-07-20',
+          status: 'Active'
+        }
+      ],
+      policyCapacity: {
+        maxRecommended: 8,
+        currentlyHeld: 4,
+        utilizationPercentage: 50,
+        availableCapacity: 4,
+        recommendedNextPolicy: 'Critical Illness'
+      }
+    },
     policies: [
       {
         policyId: "POL-VEHICLE-987",
@@ -393,10 +521,95 @@ const PolicyTimeline = () => {
         observations.push(`There are ${eventTypeCounts.payment} payment-related events recorded.`);
       }
 
+      // AI Policy Recommendations based on customer profile
+      const generatePolicyRecommendations = () => {
+        const profile = policyData.customerProfile;
+        const recommendations = [];
+
+        // Income-based recommendations
+        if (profile.annualIncome.amount > 1000000) {
+          if (!policyData.policies.find(p => p.policyType.includes('Critical Illness'))) {
+            recommendations.push({
+              type: 'Critical Illness Insurance',
+              priority: 'High',
+              reason: 'High income bracket - should protect against critical illness',
+              suggestedCoverage: profile.annualIncome.amount * 5,
+              estimatedPremium: profile.annualIncome.amount * 0.015
+            });
+          }
+        }
+
+        // Family history-based recommendations
+        if (profile.familyHistory.medicalHistory.diabetes.present || profile.familyHistory.medicalHistory.hypertension.present) {
+          if (!policyData.policies.find(p => p.policyType.includes('Health'))) {
+            recommendations.push({
+              type: 'Comprehensive Health Insurance',
+              priority: 'Critical',
+              reason: 'Family history of diabetes and hypertension requires comprehensive health coverage',
+              suggestedCoverage: 1000000,
+              estimatedPremium: 35000
+            });
+          }
+        }
+
+        // Vehicle-based recommendations
+        if (profile.vehicles.length > 0 && !policyData.policies.find(p => p.policyType.includes('Vehicle'))) {
+          recommendations.push({
+            type: 'Motor Insurance',
+            priority: 'High',
+            reason: 'Vehicle ownership requires mandatory motor insurance',
+            suggestedCoverage: profile.vehicles.reduce((sum, v) => sum + v.currentValue, 0),
+            estimatedPremium: 15000
+          });
+        }
+
+        // Home-based recommendations
+        if (profile.residence.ownership === 'owned' && !policyData.policies.find(p => p.policyType.includes('Home'))) {
+          recommendations.push({
+            type: 'Home Insurance',
+            priority: 'Medium',
+            reason: 'Property ownership in good area requires home insurance protection',
+            suggestedCoverage: profile.residence.builtUpArea * 3000,
+            estimatedPremium: 8000
+          });
+        }
+
+        // Risk profile-based recommendations
+        if (profile.riskProfile.category === 'safe' && profile.riskProfile.investmentHorizon === 'long_term') {
+          if (profile.policyPreferences.avoidedTypes.includes('ULIP')) {
+            recommendations.push({
+              type: 'Term Life Insurance',
+              priority: 'High',
+              reason: 'Conservative investor profile - term life provides maximum coverage at lowest cost',
+              suggestedCoverage: profile.annualIncome.amount * 10,
+              estimatedPremium: profile.annualIncome.amount * 0.008
+            });
+          }
+        }
+
+        // Age and dependents-based recommendations
+        if (profile.demographics.dependents > 0 && profile.demographics.age < 40) {
+          if (!policyData.policies.find(p => p.policyType.includes('Child'))) {
+            recommendations.push({
+              type: 'Child Education Plan',
+              priority: 'Medium',
+              reason: 'Young parent with dependents should secure children\'s education future',
+              suggestedCoverage: 2000000,
+              estimatedPremium: 50000
+            });
+          }
+        }
+
+        return recommendations.slice(0, 3); // Top 3 recommendations
+      };
+
+      const policyRecommendations = generatePolicyRecommendations();
+
       setAiSummary({
         claimLikelihood,
         customerProfile,
-        observations: observations.join(" ")
+        observations: observations.join(" "),
+        policyRecommendations
       });
     }
   }, [policyData]);
@@ -630,101 +843,374 @@ const PolicyTimeline = () => {
           </Card>
         </Grow>
         
-        {/* Customer Summary Card */}
-        {customerSummary && (
+        {/* Enhanced Customer Profile */}
+        {policyData?.customerProfile && (
           <Grow in={loaded} timeout={600}>
-            <Card sx={{ mb: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.05)', borderRadius: 3 }}>
-              <CardContent>
-                <Typography variant="h5" fontWeight="600" sx={{ mb: 2 }}>
-                  Customer Overview
-                </Typography>
-                <Grid container spacing={3}>
-                  <Grid item xs={12} sm={6} md={3}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                      <Typography variant="body2" color="text.secondary">Total Policies</Typography>
-                      <Typography variant="h6" fontWeight="600" color="primary.main">{customerSummary.totalPolicies}</Typography>
+            <Grid container spacing={3} sx={{ mb: 4 }}>
+              {/* Financial Profile */}
+              <Grid item xs={12} md={6}>
+                <Card sx={{ height: '100%', boxShadow: '0 8px 24px rgba(0,0,0,0.05)', borderRadius: 3 }}>
+                  <CardContent sx={{ p: 3 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <MonetizationOnIcon sx={{ mr: 1, color: theme.palette.success.main }} />
+                      <Typography variant="h6" fontWeight="600">Financial Profile</Typography>
                     </Box>
-                  </Grid>
-                  <Grid item xs={12} sm={6} md={3}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                      <Typography variant="body2" color="text.secondary">Total Events</Typography>
-                      <Typography variant="h6" fontWeight="600" color="info.main">{customerSummary.totalEvents}</Typography>
+                    <Divider sx={{ mb: 2 }} />
+                    
+                    <Box sx={{ mb: 3 }}>
+                      <Typography variant="body2" color="text.secondary">Annual Income</Typography>
+                      <Typography variant="h5" fontWeight="600" color="success.main">
+                        ₹{policyData.customerProfile.annualIncome.amount.toLocaleString()}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Captured on {formatDate(policyData.customerProfile.annualIncome.dateCaptured)} 
+                        • {policyData.customerProfile.annualIncome.source}
+                      </Typography>
                     </Box>
-                  </Grid>
-                  <Grid item xs={12} sm={6} md={3}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                      <Typography variant="body2" color="text.secondary">Customer Since</Typography>
-                      <Typography variant="h6" fontWeight="600" color="success.main">{formatDate(customerSummary.earliestStartDate)}</Typography>
+
+                    <Box sx={{ mb: 3 }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Policy Capacity Utilization</Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+                        <Box sx={{ flex: 1, bgcolor: 'grey.200', borderRadius: 1, height: 8 }}>
+                          <Box 
+                            sx={{ 
+                              width: `${policyData.customerProfile.policyCapacity.utilizationPercentage}%`,
+                              height: '100%',
+                              bgcolor: 'primary.main',
+                              borderRadius: 1
+                            }} 
+                          />
+                        </Box>
+                        <Typography variant="body2" fontWeight="600">
+                          {policyData.customerProfile.policyCapacity.utilizationPercentage}%
+                        </Typography>
+                      </Box>
+                      <Typography variant="caption" color="text.secondary">
+                        {policyData.customerProfile.policyCapacity.currentlyHeld} of {policyData.customerProfile.policyCapacity.maxRecommended} recommended policies
+                      </Typography>
                     </Box>
-                  </Grid>
-                  <Grid item xs={12} sm={6} md={3}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                      <Typography variant="body2" color="text.secondary">Tenure</Typography>
-                      <Typography variant="h6" fontWeight="600" color="warning.main">{customerSummary.customerTenureYears} Years</Typography>
-                    </Box>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Divider sx={{ my: 2 }} />
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Event Type Breakdown:</Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      {Object.entries(customerSummary.eventTypeCounts).map(([type, count]) => (
-                        <Chip
-                          key={type}
-                          label={`${type.charAt(0).toUpperCase() + type.slice(1)}: ${count}`}
+
+                    <Box>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Risk Profile</Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {policyData.customerProfile.riskProfile.category === 'safe' && <TrendingDownIcon color="success" />}
+                        {policyData.customerProfile.riskProfile.category === 'medium' && <TrendingFlatIcon color="warning" />}
+                        {policyData.customerProfile.riskProfile.category === 'high' && <TrendingUpIcon color="error" />}
+                        <Chip 
+                          label={`${policyData.customerProfile.riskProfile.category.charAt(0).toUpperCase() + policyData.customerProfile.riskProfile.category.slice(1)} Risk`}
+                          color={
+                            policyData.customerProfile.riskProfile.category === 'safe' ? 'success' : 
+                            policyData.customerProfile.riskProfile.category === 'medium' ? 'warning' : 'error'
+                          }
                           size="small"
-                          icon={getEventIcon(type)}
-                          color={getEventColor(type)}
-                          sx={{ fontWeight: 500 }}
                         />
+                        <Typography variant="body2" color="text.secondary">
+                          Tolerance: {policyData.customerProfile.riskProfile.riskTolerance}/10
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              {/* Location & Assets */}
+              <Grid item xs={12} md={6}>
+                <Card sx={{ height: '100%', boxShadow: '0 8px 24px rgba(0,0,0,0.05)', borderRadius: 3 }}>
+                  <CardContent sx={{ p: 3 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <LocationOnIcon sx={{ mr: 1, color: theme.palette.info.main }} />
+                      <Typography variant="h6" fontWeight="600">Location & Assets</Typography>
+                    </Box>
+                    <Divider sx={{ mb: 2 }} />
+                    
+                    {/* Location */}
+                    <Box sx={{ mb: 3 }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Residence</Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                        {policyData.customerProfile.residence.type === 'apartment' && <ApartmentIcon color="primary" />}
+                        {policyData.customerProfile.residence.type === 'villa' && <VillaIcon color="primary" />}
+                        <Typography variant="body1" fontWeight="500">
+                          {policyData.customerProfile.residence.type.charAt(0).toUpperCase() + policyData.customerProfile.residence.type.slice(1)} 
+                          ({policyData.customerProfile.residence.ownership === 'owned' ? 'Owned' : 'Rented'})
+                        </Typography>
+                      </Box>
+                      <Typography variant="body2" color="text.secondary">
+                        {policyData.customerProfile.location.residentialArea}, {policyData.customerProfile.location.city}
+                      </Typography>
+                      <Chip 
+                        label={`${policyData.customerProfile.location.areaRating.charAt(0).toUpperCase() + policyData.customerProfile.location.areaRating.slice(1)} Area`}
+                        color={
+                          policyData.customerProfile.location.areaRating === 'good' ? 'success' : 
+                          policyData.customerProfile.location.areaRating === 'average' ? 'warning' : 'error'
+                        }
+                        size="small"
+                        sx={{ mt: 1 }}
+                      />
+                    </Box>
+
+                    {/* Vehicles */}
+                    <Box>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Vehicles Owned</Typography>
+                      {policyData.customerProfile.vehicles.map((vehicle, index) => (
+                        <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                          {vehicle.type === 'Car' && <DirectionsCarIcon color="primary" />}
+                          {vehicle.type === 'Two Wheeler' && <TwoWheelerIcon color="secondary" />}
+                          <Box>
+                            <Typography variant="body2" fontWeight="500">
+                              {vehicle.make} {vehicle.model} ({vehicle.year})
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              Value: ₹{vehicle.currentValue.toLocaleString()}
+                            </Typography>
+                          </Box>
+                        </Box>
                       ))}
                     </Box>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                      <Typography variant="body2" color="text.secondary">Combined Annual Premium</Typography>
-                      <Typography variant="h6" fontWeight="600" color="secondary.main">₹{customerSummary.totalCurrentPremium.toFixed(2)}</Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              {/* Policy Preferences */}
+              <Grid item xs={12} md={6}>
+                <Card sx={{ height: '100%', boxShadow: '0 8px 24px rgba(0,0,0,0.05)', borderRadius: 3 }}>
+                  <CardContent sx={{ p: 3 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <AssessmentIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
+                      <Typography variant="h6" fontWeight="600">Policy Preferences</Typography>
                     </Box>
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
+                    <Divider sx={{ mb: 2 }} />
+                    
+                    <Box sx={{ mb: 3 }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Preferred Policy Types</Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        {policyData.customerProfile.policyPreferences.preferredTypes.map((type, index) => (
+                          <Chip key={index} label={type} color="success" size="small" variant="outlined" />
+                        ))}
+                      </Box>
+                    </Box>
+
+                    <Box sx={{ mb: 3 }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Avoided Types</Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        {policyData.customerProfile.policyPreferences.avoidedTypes.map((type, index) => (
+                          <Chip key={index} label={type} color="error" size="small" variant="outlined" />
+                        ))}
+                      </Box>
+                    </Box>
+
+                    <Box>
+                      <Typography variant="body2" color="text.secondary">Max Budget</Typography>
+                      <Typography variant="h6" fontWeight="600" color="primary.main">
+                        ₹{policyData.customerProfile.policyPreferences.maxBudget.toLocaleString()}
+                      </Typography>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              {/* Family History */}
+              <Grid item xs={12} md={6}>
+                <Card sx={{ height: '100%', boxShadow: '0 8px 24px rgba(0,0,0,0.05)', borderRadius: 3 }}>
+                  <CardContent sx={{ p: 3 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <HealthAndSafetyIcon sx={{ mr: 1, color: theme.palette.error.main }} />
+                      <Typography variant="h6" fontWeight="600">Family Medical History</Typography>
+                    </Box>
+                    <Divider sx={{ mb: 2 }} />
+                    
+                    <Box sx={{ mb: 3 }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Medical Conditions</Typography>
+                      {Object.entries(policyData.customerProfile.familyHistory.medicalHistory).map(([condition, data]) => (
+                        <Box key={condition} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                          <LocalHospitalIcon 
+                            color={data.present ? 'error' : 'disabled'} 
+                            sx={{ fontSize: 16 }} 
+                          />
+                          <Typography variant="body2" fontWeight="500">
+                            {condition.charAt(0).toUpperCase() + condition.slice(1).replace(/([A-Z])/g, ' $1')}
+                          </Typography>
+                          {data.present ? (
+                            <Chip 
+                              label={`${data.relation} (Age ${data.ageOfOnset})`} 
+                              color="error" 
+                              size="small" 
+                              variant="outlined" 
+                            />
+                          ) : (
+                            <Chip label="Not Present" color="success" size="small" variant="outlined" />
+                          )}
+                        </Box>
+                      ))}
+                    </Box>
+
+                    <Box>
+                      <Typography variant="body2" color="text.secondary">Life Expectancy</Typography>
+                      <Typography variant="h6" fontWeight="600" color="info.main">
+                        {policyData.customerProfile.familyHistory.lifeExpectancy} years
+                      </Typography>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              {/* Other Policies */}
+              <Grid item xs={12}>
+                <Card sx={{ boxShadow: '0 8px 24px rgba(0,0,0,0.05)', borderRadius: 3 }}>
+                  <CardContent sx={{ p: 3 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <SecurityIcon sx={{ mr: 1, color: theme.palette.secondary.main }} />
+                      <Typography variant="h6" fontWeight="600">Other Insurance Policies</Typography>
+                    </Box>
+                    <Divider sx={{ mb: 2 }} />
+                    
+                    <Grid container spacing={2}>
+                      {policyData.customerProfile.otherPolicies.map((policy, index) => (
+                        <Grid item xs={12} sm={6} md={4} key={index}>
+                          <Box 
+                            sx={{ 
+                              p: 2, 
+                              border: '1px solid', 
+                              borderColor: 'divider', 
+                              borderRadius: 2,
+                              bgcolor: alpha(theme.palette.secondary.main, 0.05)
+                            }}
+                          >
+                            <Typography variant="body2" fontWeight="600" sx={{ mb: 1 }}>
+                              {policy.policyType}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+                              {policy.policyNumber} • {policy.provider}
+                            </Typography>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                              <Typography variant="body2">Premium:</Typography>
+                              <Typography variant="body2" fontWeight="500">₹{policy.premium.toLocaleString()}</Typography>
+                            </Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                              <Typography variant="body2">Coverage:</Typography>
+                              <Typography variant="body2" fontWeight="500">₹{policy.coverage.toLocaleString()}</Typography>
+                            </Box>
+                            <Chip 
+                              label={policy.source} 
+                              size="small" 
+                              color={policy.source === 'Bank Channel' ? 'primary' : 'secondary'}
+                              variant="outlined"
+                            />
+                          </Box>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
           </Grow>
         )}
         
         {/* AI Powered Summary Card */}
         {aiSummary && (
           <Grow in={loaded} timeout={700}>
-            <Card sx={{ mb: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.05)', borderRadius: 3 }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <VerifiedUserIcon sx={{ fontSize: 30, color: 'primary.main', mr: 1.5 }} />
-                  <Typography variant="h5" fontWeight="600">
-                    AI-Powered Insights
-                  </Typography>
-                </Box>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body2" color="text.secondary">Claim Likelihood:</Typography>
-                    <Typography variant="h6" fontWeight="600" color={aiSummary.claimLikelihood === 'High' ? 'error.main' : aiSummary.claimLikelihood === 'Moderate' ? 'warning.main' : 'success.main'}>
-                      {aiSummary.claimLikelihood}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body2" color="text.secondary">Customer Profile:</Typography>
-                    <Typography variant="h6" fontWeight="600" color={aiSummary.customerProfile === 'Excellent' ? 'success.main' : aiSummary.customerProfile === 'Average' ? 'warning.main' : 'primary.main'}>
-                      {aiSummary.customerProfile}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Divider sx={{ my: 2 }} />
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Key Observations:</Typography>
-                    <Typography variant="body1" sx={{ lineHeight: 1.6 }}>
-                      {aiSummary.observations}
-                    </Typography>
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
+            <Grid container spacing={3} sx={{ mb: 4 }}>
+              {/* AI Insights */}
+              <Grid item xs={12} md={6}>
+                <Card sx={{ height: '100%', boxShadow: '0 8px 24px rgba(0,0,0,0.05)', borderRadius: 3 }}>
+                  <CardContent sx={{ p: 3 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <PsychologyIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
+                      <Typography variant="h6" fontWeight="600">AI Insights</Typography>
+                    </Box>
+                    <Divider sx={{ mb: 2 }} />
+                    
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="body2" color="text.secondary">Claim Likelihood:</Typography>
+                        <Typography variant="h6" fontWeight="600" color={aiSummary.claimLikelihood === 'High' ? 'error.main' : aiSummary.claimLikelihood === 'Moderate' ? 'warning.main' : 'success.main'}>
+                          {aiSummary.claimLikelihood}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="body2" color="text.secondary">Customer Profile:</Typography>
+                        <Typography variant="h6" fontWeight="600" color={aiSummary.customerProfile === 'Excellent' ? 'success.main' : aiSummary.customerProfile === 'Average' ? 'warning.main' : 'primary.main'}>
+                          {aiSummary.customerProfile}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12}>
+                        <Divider sx={{ my: 2 }} />
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Key Observations:</Typography>
+                        <Typography variant="body1" sx={{ lineHeight: 1.6, fontSize: '0.9rem' }}>
+                          {aiSummary.observations}
+                        </Typography>
+                      </Grid>
+                    </Grid>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              {/* AI Policy Recommendations */}
+              <Grid item xs={12} md={6}>
+                <Card sx={{ height: '100%', boxShadow: '0 8px 24px rgba(0,0,0,0.05)', borderRadius: 3 }}>
+                  <CardContent sx={{ p: 3 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <RecommendIcon sx={{ mr: 1, color: theme.palette.success.main }} />
+                      <Typography variant="h6" fontWeight="600">AI Policy Recommendations</Typography>
+                    </Box>
+                    <Divider sx={{ mb: 2 }} />
+                    
+                    {aiSummary.policyRecommendations && aiSummary.policyRecommendations.length > 0 ? (
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        {aiSummary.policyRecommendations.map((recommendation, index) => (
+                          <Box 
+                            key={index}
+                            sx={{ 
+                              p: 2, 
+                              border: '1px solid', 
+                              borderColor: recommendation.priority === 'Critical' ? 'error.main' : 
+                                          recommendation.priority === 'High' ? 'warning.main' : 'success.main',
+                              borderRadius: 2,
+                              bgcolor: alpha(
+                                recommendation.priority === 'Critical' ? theme.palette.error.main : 
+                                recommendation.priority === 'High' ? theme.palette.warning.main : theme.palette.success.main, 
+                                0.05
+                              )
+                            }}
+                          >
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                              <Typography variant="body2" fontWeight="600">
+                                {recommendation.type}
+                              </Typography>
+                              <Chip 
+                                label={recommendation.priority}
+                                color={
+                                  recommendation.priority === 'Critical' ? 'error' : 
+                                  recommendation.priority === 'High' ? 'warning' : 'success'
+                                }
+                                size="small"
+                              />
+                            </Box>
+                            <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+                              {recommendation.reason}
+                            </Typography>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <Typography variant="body2">
+                                Coverage: ₹{recommendation.suggestedCoverage.toLocaleString()}
+                              </Typography>
+                              <Typography variant="body2" color="primary.main" fontWeight="500">
+                                ~₹{recommendation.estimatedPremium.toLocaleString()}/year
+                              </Typography>
+                            </Box>
+                          </Box>
+                        ))}
+                      </Box>
+                    ) : (
+                      <Box sx={{ textAlign: 'center', py: 3 }}>
+                        <Typography variant="body2" color="text.secondary">
+                          No additional policy recommendations at this time. Current portfolio appears well-balanced.
+                        </Typography>
+                      </Box>
+                    )}
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
           </Grow>
         )}
 
