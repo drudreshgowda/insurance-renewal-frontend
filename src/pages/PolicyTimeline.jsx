@@ -19,17 +19,8 @@ import {
   alpha,
   Fade,
   Grow,
-  Zoom
 } from '@mui/material';
-import { 
-  Timeline,
-  TimelineItem,
-  TimelineSeparator,
-  TimelineConnector,
-  TimelineContent,
-  TimelineDot,
-  TimelineOppositeContent
-} from '@mui/lab';
+
 import { 
   Search as SearchIcon,
   Event as EventIcon,
@@ -58,13 +49,11 @@ import {
   CalendarToday as CalendarTodayIcon,
   Pending as PendingIcon,
   Person as PersonIcon,
-  Home as HomeIcon,
   DirectionsCar as DirectionsCarIcon,
   TwoWheeler as TwoWheelerIcon,
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
   TrendingFlat as TrendingFlatIcon,
-  Family as FamilyIcon,
   LocalHospital as LocalHospitalIcon,
   Security as SecurityIcon,
   Apartment as ApartmentIcon,
@@ -88,7 +77,7 @@ const PolicyTimeline = () => {
   const [filterType, setFilterType] = useState('all');
   const [tabValue, setTabValue] = useState(0);
   const [loaded, setLoaded] = useState(false);
-  const [customerSummary, setCustomerSummary] = useState(null);
+
   const [aiSummary, setAiSummary] = useState(null);
   
   // Extract customer data from URL parameters
@@ -460,17 +449,26 @@ const PolicyTimeline = () => {
     fetchPolicyData();
   }, [customerIdFromUrl, customerNameFromUrl, mockPolicyData]);
 
+  // Fix tab indicator alignment on mount
+  useEffect(() => {
+    if (policyData && policyData.policies && policyData.policies.length > 0) {
+      // Force tab indicator recalculation after component mounts
+      const timer = setTimeout(() => {
+        // Trigger a window resize event to force tabs to recalculate
+        window.dispatchEvent(new Event('resize'));
+      }, 50);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [policyData]);
+
   useEffect(() => {
     if (policyData) {
       const totalPolicies = policyData.policies.length;
-      let totalEvents = 0;
       const eventTypeCounts = {};
       let earliestStartDate = new Date(); // Initialize with a future date
-      let totalCurrentPremium = 0;
 
       policyData.policies.forEach(policy => {
-        totalEvents += policy.events.length;
-        totalCurrentPremium += policy.currentPremium;
         if (new Date(policy.startDate) < earliestStartDate) {
           earliestStartDate = new Date(policy.startDate);
         }
@@ -481,14 +479,7 @@ const PolicyTimeline = () => {
 
       const customerTenureYears = Math.floor((new Date() - earliestStartDate) / (365.25 * 24 * 60 * 60 * 1000));
 
-      setCustomerSummary({
-        totalPolicies,
-        totalEvents,
-        eventTypeCounts,
-        earliestStartDate: earliestStartDate.toISOString().split('T')[0],
-        customerTenureYears,
-        totalCurrentPremium
-      });
+
 
       // AI Summary Generation (Simulated)
       const numClaims = eventTypeCounts.claim || 0;
@@ -647,17 +638,7 @@ const PolicyTimeline = () => {
     }
   };
 
-  const getEventColor = (type) => {
-    switch (type) {
-      case 'policy_created': return 'primary';
-      case 'payment': return 'success';
-      case 'renewal': return 'warning';
-      case 'claim': return 'error';
-      case 'communication': return 'info';
-      case 'document': return 'secondary';
-      default: return 'primary';
-    }
-  };
+
 
   const getBrandColor = (type) => {
     switch (type) {
@@ -789,6 +770,7 @@ const PolicyTimeline = () => {
               {/* Policy Tabs */}
               <Box sx={{ mt: 3 }}>
                 <Tabs 
+                  key={`tabs-${policyData?.policies?.length || 0}`}
                   value={tabValue} 
                   onChange={handleTabChange}
                   variant="scrollable"
@@ -812,6 +794,7 @@ const PolicyTimeline = () => {
                     '& .MuiTabs-indicator': {
                       height: 3,
                       borderRadius: '3px 3px 0 0',
+                      transition: 'all 0.3s ease',
                     }
                   }}
                 >
@@ -1064,8 +1047,8 @@ const PolicyTimeline = () => {
                     <Divider sx={{ mb: 2 }} />
                     
                     <Grid container spacing={2}>
-                      {policyData.customerProfile.otherPolicies.map((policy, index) => (
-                        <Grid item xs={12} sm={6} md={4} key={index}>
+                      {policyData.customerProfile.otherPolicies.map((policy, _index) => (
+                        <Grid item xs={12} sm={6} md={4} key={_index}>
                           <Box 
                             sx={{ 
                               p: 2, 
@@ -1962,7 +1945,7 @@ const PolicyTimeline = () => {
                       }}
                     />
 
-                    {filteredEvents.map((event, index) => (
+                    {filteredEvents.map((event, _index) => (
                       <Box key={event.id} sx={{ position: 'relative', mb: 4 }}>
                         {/* Timeline Dot with Brand Colors */}
                         <Box
