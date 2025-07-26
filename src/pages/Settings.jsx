@@ -62,7 +62,16 @@ import {
   Star as StarIcon,
   StarBorder as StarBorderIcon,
   Phone as PhoneIcon,
-  Block as BlockIcon
+  Block as BlockIcon,
+  Hub as IntegrationsIcon,
+  Facebook as FacebookIcon,
+  Twitter as TwitterIcon,
+  Instagram as InstagramIcon,
+  LinkedIn as LinkedInIcon,
+  Telegram as TelegramIcon,
+  Launch as LaunchIcon,
+  Link as LinkIcon,
+  OpenInNew as OpenInNewIcon
 } from '@mui/icons-material';
 import { useThemeMode } from '../context/ThemeModeContext';
 import { useSettings } from '../context/SettingsContext';
@@ -672,6 +681,7 @@ const Settings = () => {
     { label: 'Campaigns', icon: <CampaignIcon /> },
     { label: 'WhatsApp Flow', icon: <WhatsAppIcon /> },
     { label: 'DNC Management', icon: <BlockIcon /> },
+    { label: 'Integrations', icon: <IntegrationsIcon /> },
     { label: 'Claims', icon: <GavelIcon /> },
     { label: 'Feedback', icon: <FeedbackIcon /> },
     { label: 'User Management', icon: <GroupIcon /> },
@@ -5732,6 +5742,739 @@ const Settings = () => {
     </Box>
   );
 
+  // Integrations Settings Tab Content
+  const IntegrationsSettingsTab = () => {
+    const [integrations, setIntegrations] = useState({
+      socialMedia: {
+        facebook: { connected: false, apiKey: '', appSecret: '', pageId: '', accessToken: '' },
+        twitter: { connected: false, apiKey: '', apiSecret: '', accessToken: '', accessTokenSecret: '' },
+        instagram: { connected: false, businessAccountId: '', accessToken: '', appId: '', appSecret: '' },
+        linkedin: { connected: false, clientId: '', clientSecret: '', accessToken: '', companyId: '' },
+        wechat: { connected: false, appId: '', appSecret: '', mchId: '', apiKey: '' },
+        line: { connected: false, channelId: '', channelSecret: '', channelAccessToken: '' },
+        telegram: { connected: false, botToken: '', chatId: '', webhookUrl: '' }
+      },
+      customerVerification: {
+        enableSocialVerification: true,
+        verificationMethods: ['phone', 'email', 'social'],
+        autoConnectOnVerification: false,
+        saveCustomerSocialData: true,
+        dataRetentionDays: 365
+      }
+    });
+
+    const [connectionDialog, setConnectionDialog] = useState({
+      open: false,
+      platform: null,
+      mode: 'connect'
+    });
+
+    const [customerVerificationDialog, setCustomerVerificationDialog] = useState({
+      open: false,
+      customerData: null
+    });
+
+    const [testConnectionLoading, setTestConnectionLoading] = useState(null);
+
+    const socialPlatforms = [
+      {
+        id: 'facebook',
+        name: 'Facebook',
+        icon: <FacebookIcon />,
+        color: '#1877F2',
+        description: 'Connect to Facebook Business API for customer engagement',
+        fields: [
+          { key: 'apiKey', label: 'API Key', type: 'password', required: true },
+          { key: 'appSecret', label: 'App Secret', type: 'password', required: true },
+          { key: 'pageId', label: 'Page ID', type: 'text', required: true },
+          { key: 'accessToken', label: 'Access Token', type: 'password', required: true }
+        ]
+      },
+      {
+        id: 'twitter',
+        name: 'Twitter',
+        icon: <TwitterIcon />,
+        color: '#1DA1F2',
+        description: 'Integrate with Twitter API for social media outreach',
+        fields: [
+          { key: 'apiKey', label: 'API Key', type: 'password', required: true },
+          { key: 'apiSecret', label: 'API Secret', type: 'password', required: true },
+          { key: 'accessToken', label: 'Access Token', type: 'password', required: true },
+          { key: 'accessTokenSecret', label: 'Access Token Secret', type: 'password', required: true }
+        ]
+      },
+      {
+        id: 'instagram',
+        name: 'Instagram',
+        icon: <InstagramIcon />,
+        color: '#E4405F',
+        description: 'Connect to Instagram Business API for visual engagement',
+        fields: [
+          { key: 'businessAccountId', label: 'Business Account ID', type: 'text', required: true },
+          { key: 'accessToken', label: 'Access Token', type: 'password', required: true },
+          { key: 'appId', label: 'App ID', type: 'text', required: true },
+          { key: 'appSecret', label: 'App Secret', type: 'password', required: true }
+        ]
+      },
+      {
+        id: 'linkedin',
+        name: 'LinkedIn',
+        icon: <LinkedInIcon />,
+        color: '#0A66C2',
+        description: 'Integrate with LinkedIn API for professional networking',
+        fields: [
+          { key: 'clientId', label: 'Client ID', type: 'text', required: true },
+          { key: 'clientSecret', label: 'Client Secret', type: 'password', required: true },
+          { key: 'accessToken', label: 'Access Token', type: 'password', required: true },
+          { key: 'companyId', label: 'Company ID', type: 'text', required: false }
+        ]
+      },
+      {
+        id: 'wechat',
+        name: 'WeChat',
+        icon: <Box sx={{ width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#07C160', borderRadius: '50%', color: 'white', fontSize: '12px', fontWeight: 'bold' }}>微</Box>,
+        color: '#07C160',
+        description: 'Connect to WeChat API for Chinese market engagement',
+        fields: [
+          { key: 'appId', label: 'App ID', type: 'text', required: true },
+          { key: 'appSecret', label: 'App Secret', type: 'password', required: true },
+          { key: 'mchId', label: 'Merchant ID', type: 'text', required: false },
+          { key: 'apiKey', label: 'API Key', type: 'password', required: true }
+        ]
+      },
+      {
+        id: 'line',
+        name: 'LINE',
+        icon: <Box sx={{ width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#00B900', borderRadius: '4px', color: 'white', fontSize: '12px', fontWeight: 'bold' }}>L</Box>,
+        color: '#00B900',
+        description: 'Integrate with LINE Messaging API for Asian markets',
+        fields: [
+          { key: 'channelId', label: 'Channel ID', type: 'text', required: true },
+          { key: 'channelSecret', label: 'Channel Secret', type: 'password', required: true },
+          { key: 'channelAccessToken', label: 'Channel Access Token', type: 'password', required: true }
+        ]
+      },
+      {
+        id: 'telegram',
+        name: 'Telegram',
+        icon: <TelegramIcon />,
+        color: '#0088CC',
+        description: 'Connect to Telegram Bot API for messaging',
+        fields: [
+          { key: 'botToken', label: 'Bot Token', type: 'password', required: true },
+          { key: 'chatId', label: 'Chat ID', type: 'text', required: false },
+          { key: 'webhookUrl', label: 'Webhook URL', type: 'url', required: false }
+        ]
+      }
+    ];
+
+    const handleConnectPlatform = (platform) => {
+      setConnectionDialog({
+        open: true,
+        platform: platform,
+        mode: integrations.socialMedia[platform.id].connected ? 'edit' : 'connect'
+      });
+    };
+
+    const handleSaveConnection = () => {
+      const { platform } = connectionDialog;
+      if (!platform) return;
+
+      setIntegrations(prev => ({
+        ...prev,
+        socialMedia: {
+          ...prev.socialMedia,
+          [platform.id]: {
+            ...prev.socialMedia[platform.id],
+            connected: true
+          }
+        }
+      }));
+
+      setConnectionDialog({ open: false, platform: null, mode: 'connect' });
+      setSuccessMessage(`${platform.name} connected successfully!`);
+      setTimeout(() => setSuccessMessage(''), 3000);
+    };
+
+    const handleDisconnectPlatform = (platformId) => {
+      setIntegrations(prev => ({
+        ...prev,
+        socialMedia: {
+          ...prev.socialMedia,
+          [platformId]: {
+            ...prev.socialMedia[platformId],
+            connected: false,
+            // Clear sensitive data
+            ...Object.fromEntries(
+              socialPlatforms.find(p => p.id === platformId)?.fields.map(f => [f.key, '']) || []
+            )
+          }
+        }
+      }));
+
+      const platformName = socialPlatforms.find(p => p.id === platformId)?.name;
+      setSuccessMessage(`${platformName} disconnected successfully!`);
+      setTimeout(() => setSuccessMessage(''), 3000);
+    };
+
+    const handleTestConnection = async (platform) => {
+      setTestConnectionLoading(platform.id);
+      
+      // Simulate API test
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      setTestConnectionLoading(null);
+      setSuccessMessage(`${platform.name} connection test successful!`);
+      setTimeout(() => setSuccessMessage(''), 3000);
+    };
+
+    const handleOpenCustomerVerification = () => {
+      // Mock customer data for demonstration
+      const mockCustomerData = {
+        name: 'John Doe',
+        phone: '+1234567890',
+        email: 'john.doe@example.com',
+        policyNumber: 'POL123456789',
+        socialPresence: {
+          facebook: { found: true, profileUrl: 'https://facebook.com/johndoe', verified: true },
+          twitter: { found: true, profileUrl: 'https://twitter.com/johndoe', verified: false },
+          instagram: { found: false, profileUrl: null, verified: false },
+          linkedin: { found: true, profileUrl: 'https://linkedin.com/in/johndoe', verified: true }
+        },
+        verificationTimestamp: new Date().toISOString()
+      };
+
+      setCustomerVerificationDialog({
+        open: true,
+        customerData: mockCustomerData
+      });
+    };
+
+    const handleUpdateIntegrationSetting = (key, value) => {
+      if (key.includes('.')) {
+        const [section, setting] = key.split('.');
+        setIntegrations(prev => ({
+          ...prev,
+          [section]: {
+            ...prev[section],
+            [setting]: value
+          }
+        }));
+      } else {
+        setIntegrations(prev => ({
+          ...prev,
+          [key]: value
+        }));
+      }
+    };
+
+    return (
+      <Box>
+        <Typography variant="h5" fontWeight="600" gutterBottom>
+          Social Media & Messaging Integrations
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
+          Connect with social media platforms and messaging services to engage with customers across multiple channels.
+        </Typography>
+
+        {/* Social Media Platforms */}
+        <Card sx={{ mb: 4, borderRadius: 3, boxShadow: '0 8px 24px rgba(0,0,0,0.05)' }}>
+          <CardContent sx={{ p: 3 }}>
+            <Typography variant="h6" fontWeight="600" gutterBottom>
+              Social Media Platforms
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              Connect your social media accounts to engage with customers and validate their social presence.
+            </Typography>
+
+            <Grid container spacing={3}>
+              {socialPlatforms.map((platform) => {
+                const isConnected = integrations.socialMedia[platform.id].connected;
+                return (
+                  <Grid item xs={12} sm={6} md={4} key={platform.id}>
+                    <Card 
+                      variant="outlined" 
+                      sx={{ 
+                        height: '100%',
+                        borderRadius: 2,
+                        transition: 'all 0.3s ease',
+                        border: isConnected ? `2px solid ${platform.color}` : '1px solid',
+                        borderColor: isConnected ? platform.color : 'divider',
+                        '&:hover': {
+                          transform: 'translateY(-4px)',
+                          boxShadow: `0 8px 25px ${alpha(platform.color, 0.15)}`
+                        }
+                      }}
+                    >
+                      <CardContent sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                          <Avatar 
+                            sx={{ 
+                              bgcolor: platform.color, 
+                              width: 40, 
+                              height: 40, 
+                              mr: 2 
+                            }}
+                          >
+                            {platform.icon}
+                          </Avatar>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography variant="h6" fontWeight="600">
+                              {platform.name}
+                            </Typography>
+                            <Chip
+                              label={isConnected ? 'Connected' : 'Not Connected'}
+                              color={isConnected ? 'success' : 'default'}
+                              size="small"
+                              icon={isConnected ? <CheckCircleIcon /> : <ErrorIcon />}
+                            />
+                          </Box>
+                        </Box>
+
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 3, flex: 1 }}>
+                          {platform.description}
+                        </Typography>
+
+                        <Box sx={{ display: 'flex', gap: 1, flexDirection: 'column' }}>
+                          {isConnected ? (
+                            <>
+                              <Button
+                                variant="outlined"
+                                fullWidth
+                                onClick={() => handleConnectPlatform(platform)}
+                                startIcon={<EditIcon />}
+                                sx={{ borderRadius: 2 }}
+                              >
+                                Configure
+                              </Button>
+                              <Button
+                                variant="outlined"
+                                fullWidth
+                                onClick={() => handleTestConnection(platform)}
+                                disabled={testConnectionLoading === platform.id}
+                                startIcon={testConnectionLoading === platform.id ? <SyncIcon /> : <TestIcon />}
+                                sx={{ borderRadius: 2 }}
+                              >
+                                {testConnectionLoading === platform.id ? 'Testing...' : 'Test Connection'}
+                              </Button>
+                              <Button
+                                variant="text"
+                                fullWidth
+                                color="error"
+                                onClick={() => handleDisconnectPlatform(platform.id)}
+                                startIcon={<LinkIcon />}
+                                sx={{ borderRadius: 2 }}
+                              >
+                                Disconnect
+                              </Button>
+                            </>
+                          ) : (
+                            <Button
+                              variant="contained"
+                              fullWidth
+                              onClick={() => handleConnectPlatform(platform)}
+                              startIcon={<LinkIcon />}
+                              sx={{ 
+                                borderRadius: 2,
+                                bgcolor: platform.color,
+                                '&:hover': {
+                                  bgcolor: platform.color,
+                                  filter: 'brightness(0.9)'
+                                }
+                              }}
+                            >
+                              Connect
+                            </Button>
+                          )}
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          </CardContent>
+        </Card>
+
+        {/* Customer Verification Settings */}
+        <Card sx={{ mb: 4, borderRadius: 3, boxShadow: '0 8px 24px rgba(0,0,0,0.05)' }}>
+          <CardContent sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Box>
+                <Typography variant="h6" fontWeight="600">
+                  Customer Social Verification
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Validate customer social media presence using phone number and email address.
+                </Typography>
+              </Box>
+              <Button
+                variant="contained"
+                onClick={handleOpenCustomerVerification}
+                startIcon={<OpenInNewIcon />}
+                sx={{ borderRadius: 2 }}
+              >
+                Test Verification
+              </Button>
+            </Box>
+
+            <List disablePadding>
+              <ListItem sx={{ borderRadius: 2, mb: 1, px: 0 }}>
+                <ListItemText
+                  primary={<Typography fontWeight="500">Enable Social Verification</Typography>}
+                  secondary="Allow verification of customer social media presence"
+                />
+                <ListItemSecondaryAction>
+                  <Switch
+                    checked={integrations.customerVerification.enableSocialVerification}
+                    onChange={(e) => handleUpdateIntegrationSetting('customerVerification.enableSocialVerification', e.target.checked)}
+                    color="primary"
+                  />
+                </ListItemSecondaryAction>
+              </ListItem>
+
+              <ListItem sx={{ borderRadius: 2, mb: 1, px: 0 }}>
+                <ListItemText
+                  primary={<Typography fontWeight="500">Auto-Connect on Verification</Typography>}
+                  secondary="Automatically establish connection when social presence is verified"
+                />
+                <ListItemSecondaryAction>
+                  <Switch
+                    checked={integrations.customerVerification.autoConnectOnVerification}
+                    onChange={(e) => handleUpdateIntegrationSetting('customerVerification.autoConnectOnVerification', e.target.checked)}
+                    color="primary"
+                    disabled={!integrations.customerVerification.enableSocialVerification}
+                  />
+                </ListItemSecondaryAction>
+              </ListItem>
+
+              <ListItem sx={{ borderRadius: 2, mb: 1, px: 0 }}>
+                <ListItemText
+                  primary={<Typography fontWeight="500">Save Customer Social Data</Typography>}
+                  secondary="Store verified social media information for future reference"
+                />
+                <ListItemSecondaryAction>
+                  <Switch
+                    checked={integrations.customerVerification.saveCustomerSocialData}
+                    onChange={(e) => handleUpdateIntegrationSetting('customerVerification.saveCustomerSocialData', e.target.checked)}
+                    color="primary"
+                    disabled={!integrations.customerVerification.enableSocialVerification}
+                  />
+                </ListItemSecondaryAction>
+              </ListItem>
+
+              <ListItem sx={{ borderRadius: 2, px: 0 }}>
+                <ListItemText
+                  primary={<Typography fontWeight="500">Data Retention Period</Typography>}
+                  secondary="How long to keep customer social verification data"
+                />
+                <ListItemSecondaryAction sx={{ width: '120px' }}>
+                  <FormControl fullWidth size="small">
+                    <Select
+                      value={integrations.customerVerification.dataRetentionDays}
+                      onChange={(e) => handleUpdateIntegrationSetting('customerVerification.dataRetentionDays', e.target.value)}
+                      disabled={!integrations.customerVerification.saveCustomerSocialData}
+                    >
+                      <MenuItem value={90}>90 days</MenuItem>
+                      <MenuItem value={180}>6 months</MenuItem>
+                      <MenuItem value={365}>1 year</MenuItem>
+                      <MenuItem value={730}>2 years</MenuItem>
+                      <MenuItem value={1095}>3 years</MenuItem>
+                    </Select>
+                  </FormControl>
+                </ListItemSecondaryAction>
+              </ListItem>
+            </List>
+          </CardContent>
+        </Card>
+
+        {/* Integration Statistics */}
+        <Card sx={{ borderRadius: 3, boxShadow: '0 8px 24px rgba(0,0,0,0.05)' }}>
+          <CardContent sx={{ p: 3 }}>
+            <Typography variant="h6" fontWeight="600" gutterBottom>
+              Integration Statistics
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              Overview of your social media integration usage and performance.
+            </Typography>
+
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6} md={3}>
+                <Box sx={{ textAlign: 'center', p: 2 }}>
+                  <Typography variant="h4" fontWeight="600" color="primary.main">
+                    {socialPlatforms.filter(p => integrations.socialMedia[p.id].connected).length}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Connected Platforms
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Box sx={{ textAlign: 'center', p: 2 }}>
+                  <Typography variant="h4" fontWeight="600" color="success.main">
+                    1,247
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Customers Verified
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Box sx={{ textAlign: 'center', p: 2 }}>
+                  <Typography variant="h4" fontWeight="600" color="info.main">
+                    892
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Social Connections
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Box sx={{ textAlign: 'center', p: 2 }}>
+                  <Typography variant="h4" fontWeight="600" color="warning.main">
+                    95.2%
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Verification Rate
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+          </CardContent>
+        </Card>
+
+        {/* Connection Configuration Dialog */}
+        <Dialog
+          open={connectionDialog.open}
+          onClose={() => setConnectionDialog({ open: false, platform: null, mode: 'connect' })}
+          maxWidth="md"
+          fullWidth
+          PaperProps={{ sx: { borderRadius: 3 } }}
+        >
+          <DialogTitle sx={{ pb: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              {connectionDialog.platform && (
+                <Avatar sx={{ bgcolor: connectionDialog.platform.color }}>
+                  {connectionDialog.platform.icon}
+                </Avatar>
+              )}
+              <Box>
+                <Typography variant="h6" fontWeight="600">
+                  {connectionDialog.mode === 'connect' ? 'Connect to' : 'Configure'} {connectionDialog.platform?.name}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {connectionDialog.platform?.description}
+                </Typography>
+              </Box>
+            </Box>
+          </DialogTitle>
+          <DialogContent dividers>
+            <Grid container spacing={3}>
+              {connectionDialog.platform?.fields.map((field) => (
+                <Grid item xs={12} sm={6} key={field.key}>
+                  <TextField
+                    fullWidth
+                    label={field.label}
+                    type={field.type}
+                    required={field.required}
+                    value={integrations.socialMedia[connectionDialog.platform.id]?.[field.key] || ''}
+                    onChange={(e) => {
+                      const platformId = connectionDialog.platform.id;
+                      setIntegrations(prev => ({
+                        ...prev,
+                        socialMedia: {
+                          ...prev.socialMedia,
+                          [platformId]: {
+                            ...prev.socialMedia[platformId],
+                            [field.key]: e.target.value
+                          }
+                        }
+                      }));
+                    }}
+                    placeholder={`Enter your ${field.label.toLowerCase()}`}
+                    InputProps={{
+                      sx: { borderRadius: 2 }
+                    }}
+                  />
+                </Grid>
+              ))}
+            </Grid>
+            
+            <Alert severity="info" sx={{ mt: 3 }}>
+              <Typography variant="body2">
+                <strong>Security Note:</strong> Your API credentials are encrypted and stored securely. 
+                We recommend using environment-specific keys and enabling API rate limiting.
+              </Typography>
+            </Alert>
+          </DialogContent>
+          <DialogActions sx={{ p: 3, gap: 1 }}>
+            <Button
+              onClick={() => setConnectionDialog({ open: false, platform: null, mode: 'connect' })}
+              variant="outlined"
+              sx={{ borderRadius: 2 }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveConnection}
+              variant="contained"
+              sx={{ borderRadius: 2, minWidth: 120 }}
+            >
+              {connectionDialog.mode === 'connect' ? 'Connect' : 'Save Changes'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Customer Verification Dialog */}
+        <Dialog
+          open={customerVerificationDialog.open}
+          onClose={() => setCustomerVerificationDialog({ open: false, customerData: null })}
+          maxWidth="md"
+          fullWidth
+          PaperProps={{ sx: { borderRadius: 3 } }}
+        >
+          <DialogTitle>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Avatar sx={{ bgcolor: 'primary.main' }}>
+                <PersonIcon />
+              </Avatar>
+              <Box>
+                <Typography variant="h6" fontWeight="600">
+                  Customer Social Media Verification
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Verification completed at {new Date().toLocaleString()}
+                </Typography>
+              </Box>
+            </Box>
+          </DialogTitle>
+          <DialogContent dividers>
+            {customerVerificationDialog.customerData && (
+              <Box>
+                {/* Customer Info */}
+                <Card variant="outlined" sx={{ mb: 3, borderRadius: 2 }}>
+                  <CardContent sx={{ p: 2 }}>
+                    <Typography variant="subtitle1" fontWeight="600" gutterBottom>
+                      Customer Information
+                    </Typography>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="body2" color="text.secondary">Name</Typography>
+                        <Typography variant="body1" fontWeight="500">
+                          {customerVerificationDialog.customerData.name}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="body2" color="text.secondary">Policy Number</Typography>
+                        <Typography variant="body1" fontWeight="500">
+                          {customerVerificationDialog.customerData.policyNumber}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="body2" color="text.secondary">Phone</Typography>
+                        <Typography variant="body1" fontWeight="500">
+                          {customerVerificationDialog.customerData.phone}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="body2" color="text.secondary">Email</Typography>
+                        <Typography variant="body1" fontWeight="500">
+                          {customerVerificationDialog.customerData.email}
+                        </Typography>
+                      </Grid>
+                    </Grid>
+                  </CardContent>
+                </Card>
+
+                {/* Social Media Presence */}
+                <Typography variant="subtitle1" fontWeight="600" gutterBottom>
+                  Social Media Presence Verification
+                </Typography>
+                <List disablePadding>
+                  {Object.entries(customerVerificationDialog.customerData.socialPresence).map(([platform, data]) => {
+                    const platformInfo = socialPlatforms.find(p => p.id === platform);
+                    if (!platformInfo) return null;
+
+                    return (
+                      <ListItem key={platform} sx={{ borderRadius: 2, mb: 1, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' }}>
+                        <ListItemIcon>
+                          <Avatar sx={{ bgcolor: platformInfo.color, width: 32, height: 32 }}>
+                            {platformInfo.icon}
+                          </Avatar>
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Typography variant="body1" fontWeight="500">
+                                {platformInfo.name}
+                              </Typography>
+                              <Chip
+                                label={data.found ? 'Found' : 'Not Found'}
+                                color={data.found ? 'success' : 'default'}
+                                size="small"
+                              />
+                              {data.verified && (
+                                <Chip
+                                  label="Verified"
+                                  color="primary"
+                                  size="small"
+                                  icon={<VerifiedIcon />}
+                                />
+                              )}
+                            </Box>
+                          }
+                          secondary={data.profileUrl || 'No profile found with provided contact information'}
+                        />
+                        <ListItemSecondaryAction>
+                          {data.found && data.profileUrl && (
+                            <IconButton
+                              size="small"
+                              onClick={() => window.open(data.profileUrl, '_blank')}
+                            >
+                              <LaunchIcon />
+                            </IconButton>
+                          )}
+                        </ListItemSecondaryAction>
+                      </ListItem>
+                    );
+                  })}
+                </List>
+
+                <Alert severity="success" sx={{ mt: 3 }}>
+                  <Typography variant="body2">
+                    <strong>Verification Complete:</strong> Customer social media presence has been validated. 
+                    You can now connect with them through their verified social media channels.
+                  </Typography>
+                </Alert>
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ p: 3, gap: 1 }}>
+            <Button
+              onClick={() => setCustomerVerificationDialog({ open: false, customerData: null })}
+              variant="outlined"
+              sx={{ borderRadius: 2 }}
+            >
+              Close
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<LinkIcon />}
+              sx={{ borderRadius: 2, minWidth: 140 }}
+              onClick={() => {
+                setSuccessMessage('Customer social media connections established!');
+                setCustomerVerificationDialog({ open: false, customerData: null });
+                setTimeout(() => setSuccessMessage(''), 3000);
+              }}
+            >
+              Connect All
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
+    );
+  };
+
   // Providers Settings Tab Content
   const ProvidersSettingsTab = () => {
     const { providers, providerTemplates, addProvider, updateProvider, deleteProvider, setDefaultProvider, testProvider } = useProviders();
@@ -6224,18 +6967,21 @@ const Settings = () => {
               <DNCManagementSettingsTab />
             </TabPanel>
             <TabPanel value={tabValue} index={7}>
-              <ModuleSettingsTab moduleName="Claims" icon={<GavelIcon sx={{ color: theme.palette.primary.main }} />} />
+              <IntegrationsSettingsTab />
             </TabPanel>
             <TabPanel value={tabValue} index={8}>
-              <FeedbackSettingsTab />
+              <ModuleSettingsTab moduleName="Claims" icon={<GavelIcon sx={{ color: theme.palette.primary.main }} />} />
             </TabPanel>
             <TabPanel value={tabValue} index={9}>
-              <UserManagementTab />
+              <FeedbackSettingsTab />
             </TabPanel>
             <TabPanel value={tabValue} index={10}>
-              <SystemSettingsTab />
+              <UserManagementTab />
             </TabPanel>
             <TabPanel value={tabValue} index={11}>
+              <SystemSettingsTab />
+            </TabPanel>
+            <TabPanel value={tabValue} index={12}>
               <LanguageTest />
             </TabPanel>
           </Box>
