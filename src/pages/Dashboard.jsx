@@ -2,14 +2,20 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Grid, Paper, Typography, Box, Card, CardContent, 
   FormControl, InputLabel, Select, MenuItem, alpha, useTheme,
-  Fade, Grow, Chip, IconButton, Button, Collapse, Divider
+  Fade, Grow, Chip, IconButton, Button, Collapse, Divider,
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Dialog, DialogTitle, DialogContent, DialogActions, TextField,
+  Switch, FormControlLabel, List, ListItem, ListItemText, ListItemIcon,
+  ListItemSecondaryAction, Avatar, Accordion, AccordionSummary, AccordionDetails,
+  Tabs, Tab, Badge, Tooltip, LinearProgress
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, 
-  Tooltip, Legend, ResponsiveContainer, AreaChart, Area, LineChart, Line, PieChart, Pie, Cell
+  Tooltip as RechartsTooltip, Legend, ResponsiveContainer, AreaChart, Area, LineChart, Line, PieChart, Pie, Cell,
+  TreeMap, Sankey, RadialBarChart, RadialBar
 } from 'recharts';
 import { fetchDashboardStats, fetchTrendData, fetchBatchStatus, fetchTeams, fetchTeamMembers } from '../services/api';
 import { 
@@ -37,7 +43,26 @@ import {
   Person as MemberIcon,
   FileDownload as ExportIcon,
   ExpandMore as ExpandMoreIcon,
-  ExpandLess as ExpandLessIcon
+  ExpandLess as ExpandLessIcon,
+  AccountTree as HierarchyIcon,
+  Business as BusinessIcon,
+  Settings as SettingsIcon,
+  Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Save as SaveIcon,
+  Cancel as CancelIcon,
+  SupervisorAccount as ManagerIcon,
+  GroupWork as DepartmentIcon,
+  Store as BranchIcon,
+  Public as RegionIcon,
+  Assessment as AnalyticsIcon,
+  Speed as PerformanceIcon,
+  TrendingUp as TrendingUpIcon,
+  TrendingDown as TrendingDownIcon,
+  Remove as RemoveIcon,
+  CheckCircle as CheckCircleIcon,
+  Warning as WarningIcon
 } from '@mui/icons-material';
 
 const Dashboard = () => {
@@ -95,6 +120,57 @@ const Dashboard = () => {
   
   // Campaign data state
   const [campaignData, setCampaignData] = useState([]);
+  
+  // Channel and Hierarchy Management states
+  const [activeManagementTab, setActiveManagementTab] = useState(0);
+  const [channelManagementExpanded, setChannelManagementExpanded] = useState(false);
+  const [hierarchyManagementExpanded, setHierarchyManagementExpanded] = useState(false);
+  
+  // Channel Management states
+  const [channels, setChannels] = useState([]);
+  const [channelDialog, setChannelDialog] = useState({
+    open: false,
+    mode: 'create', // 'create', 'edit'
+    channelData: {
+      id: '',
+      name: '',
+      type: 'online',
+      status: 'active',
+      description: '',
+      targetAudience: '',
+      costPerLead: 0,
+      conversionRate: 0,
+      manager: '',
+      budget: 0,
+      settings: {
+        autoAssignment: true,
+        priority: 'medium',
+        workingHours: '9-18',
+        maxCapacity: 100
+      }
+    }
+  });
+  
+  // Hierarchy Management states
+  const [hierarchyData, setHierarchyData] = useState([]);
+  const [hierarchyDialog, setHierarchyDialog] = useState({
+    open: false,
+    mode: 'create', // 'create', 'edit'
+    nodeData: {
+      id: '',
+      name: '',
+      type: 'department', // 'region', 'state', 'branch', 'department', 'team'
+      parentId: '',
+      managerId: '',
+      description: '',
+      budget: 0,
+      targetCases: 0,
+      status: 'active'
+    }
+  });
+  
+  const [channelPerformanceData, setChannelPerformanceData] = useState([]);
+  const [hierarchyPerformanceData, setHierarchyPerformanceData] = useState([]);
 
   // Memoize the loadDashboardData function to avoid recreating it on every render
   const loadDashboardData = useCallback(async () => {
@@ -260,7 +336,7 @@ const Dashboard = () => {
     setTrendData(mockTrendData);
     
     // Mock data for new charts
-    const mockChannelData = [
+    const mockChannelChartData = [
       { name: 'Online Portal', value: 45, color: '#8884d8' },
       { name: 'Mobile App', value: 30, color: '#82ca9d' },
       { name: 'Branch Office', value: 15, color: '#ffc658' },
@@ -307,7 +383,7 @@ const Dashboard = () => {
       { channel: 'Phone Call', costPerRenewal: 80, volume: 250, totalCost: 20000 }
     ];
 
-    setChannelData(mockChannelData);
+    setChannelData(mockChannelChartData);
     setRegionData(mockRegionData);
     setManagerData(mockManagerData);
     setCommunicationData(mockCommunicationData);
@@ -443,6 +519,276 @@ const Dashboard = () => {
     
     setCampaignData(mockCampaignData);
 
+    // Mock Channel Management Data
+    const mockChannelData = [
+      {
+        id: 'ch-001',
+        name: 'Online Portal',
+        type: 'online',
+        status: 'active',
+        description: 'Web-based customer portal for policy renewals',
+        targetAudience: 'Tech-savvy customers',
+        costPerLead: 45,
+        conversionRate: 68.5,
+        manager: 'Rajesh Kumar',
+        budget: 500000,
+        currentCases: 1250,
+        renewedCases: 856,
+        revenue: 12450000,
+        settings: {
+          autoAssignment: true,
+          priority: 'high',
+          workingHours: '24/7',
+          maxCapacity: 2000
+        },
+        performance: {
+          efficiency: 85.2,
+          customerSatisfaction: 4.3,
+          avgResponseTime: 2.5
+        }
+      },
+      {
+        id: 'ch-002',
+        name: 'Mobile Application',
+        type: 'mobile',
+        status: 'active',
+        description: 'Mobile app for on-the-go policy management',
+        targetAudience: 'Mobile-first users',
+        costPerLead: 35,
+        conversionRate: 72.3,
+        manager: 'Priya Sharma',
+        budget: 350000,
+        currentCases: 890,
+        renewedCases: 644,
+        revenue: 8960000,
+        settings: {
+          autoAssignment: true,
+          priority: 'high',
+          workingHours: '24/7',
+          maxCapacity: 1500
+        },
+        performance: {
+          efficiency: 88.7,
+          customerSatisfaction: 4.5,
+          avgResponseTime: 1.8
+        }
+      },
+      {
+        id: 'ch-003',
+        name: 'Branch Network',
+        type: 'offline',
+        status: 'active',
+        description: 'Physical branch offices for in-person service',
+        targetAudience: 'Traditional customers',
+        costPerLead: 120,
+        conversionRate: 78.9,
+        manager: 'Amit Patel',
+        budget: 800000,
+        currentCases: 650,
+        renewedCases: 513,
+        revenue: 7150000,
+        settings: {
+          autoAssignment: false,
+          priority: 'medium',
+          workingHours: '9-18',
+          maxCapacity: 800
+        },
+        performance: {
+          efficiency: 79.2,
+          customerSatisfaction: 4.7,
+          avgResponseTime: 15.2
+        }
+      },
+      {
+        id: 'ch-004',
+        name: 'Call Center',
+        type: 'phone',
+        status: 'active',
+        description: 'Telephone-based customer support and renewals',
+        targetAudience: 'All customer segments',
+        costPerLead: 80,
+        conversionRate: 65.4,
+        manager: 'Sunita Verma',
+        budget: 600000,
+        currentCases: 1100,
+        renewedCases: 719,
+        revenue: 9570000,
+        settings: {
+          autoAssignment: true,
+          priority: 'medium',
+          workingHours: '8-20',
+          maxCapacity: 1200
+        },
+        performance: {
+          efficiency: 76.8,
+          customerSatisfaction: 4.1,
+          avgResponseTime: 8.5
+        }
+      },
+      {
+        id: 'ch-005',
+        name: 'Agent Network',
+        type: 'agent',
+        status: 'active',
+        description: 'Field agents for personalized customer service',
+        targetAudience: 'High-value customers',
+        costPerLead: 200,
+        conversionRate: 82.1,
+        manager: 'Vikash Singh',
+        budget: 450000,
+        currentCases: 380,
+        renewedCases: 312,
+        revenue: 5320000,
+        settings: {
+          autoAssignment: false,
+          priority: 'high',
+          workingHours: '10-19',
+          maxCapacity: 500
+        },
+        performance: {
+          efficiency: 92.3,
+          customerSatisfaction: 4.8,
+          avgResponseTime: 24.0
+        }
+      }
+    ];
+
+    // Mock Hierarchy Data
+    const mockHierarchyData = [
+      {
+        id: 'reg-001',
+        name: 'North Region',
+        type: 'region',
+        parentId: null,
+        managerId: 'mgr-001',
+        managerName: 'Rajesh Kumar',
+        description: 'Northern India operations',
+        budget: 5000000,
+        targetCases: 2500,
+        currentCases: 2350,
+        renewedCases: 2021,
+        revenue: 28350000,
+        status: 'active',
+        children: ['st-001', 'st-002'],
+        performance: {
+          efficiency: 86.0,
+          budgetUtilization: 78.5,
+          targetAchievement: 94.0
+        }
+      },
+      {
+        id: 'st-001',
+        name: 'Delhi State',
+        type: 'state',
+        parentId: 'reg-001',
+        managerId: 'mgr-002',
+        managerName: 'Priya Sharma',
+        description: 'Delhi state operations',
+        budget: 2500000,
+        targetCases: 1200,
+        currentCases: 1150,
+        renewedCases: 1012,
+        revenue: 14200000,
+        status: 'active',
+        children: ['br-001', 'br-002'],
+        performance: {
+          efficiency: 88.0,
+          budgetUtilization: 82.3,
+          targetAchievement: 95.8
+        }
+      },
+      {
+        id: 'br-001',
+        name: 'Connaught Place Branch',
+        type: 'branch',
+        parentId: 'st-001',
+        managerId: 'mgr-003',
+        managerName: 'Amit Patel',
+        description: 'Central Delhi branch office',
+        budget: 1200000,
+        targetCases: 600,
+        currentCases: 580,
+        renewedCases: 522,
+        revenue: 7320000,
+        status: 'active',
+        children: ['dp-001', 'dp-002'],
+        performance: {
+          efficiency: 90.0,
+          budgetUtilization: 85.7,
+          targetAchievement: 96.7
+        }
+      },
+      {
+        id: 'dp-001',
+        name: 'Renewals Department',
+        type: 'department',
+        parentId: 'br-001',
+        managerId: 'mgr-004',
+        managerName: 'Sunita Verma',
+        description: 'Policy renewal processing department',
+        budget: 600000,
+        targetCases: 300,
+        currentCases: 290,
+        renewedCases: 267,
+        revenue: 3750000,
+        status: 'active',
+        children: ['tm-001', 'tm-002'],
+        performance: {
+          efficiency: 92.1,
+          budgetUtilization: 88.2,
+          targetAchievement: 96.7
+        }
+      },
+      {
+        id: 'tm-001',
+        name: 'Senior Renewal Team',
+        type: 'team',
+        parentId: 'dp-001',
+        managerId: 'mgr-005',
+        managerName: 'Vikash Singh',
+        description: 'Senior team handling complex renewals',
+        budget: 300000,
+        targetCases: 150,
+        currentCases: 145,
+        renewedCases: 138,
+        revenue: 1950000,
+        status: 'active',
+        children: [],
+        teamMembers: [
+          { id: 'emp-001', name: 'Ravi Kumar', role: 'Senior Executive', cases: 48, renewed: 45 },
+          { id: 'emp-002', name: 'Neha Singh', role: 'Senior Executive', cases: 47, renewed: 46 },
+          { id: 'emp-003', name: 'Arjun Patel', role: 'Executive', cases: 50, renewed: 47 }
+        ],
+        performance: {
+          efficiency: 95.2,
+          budgetUtilization: 92.1,
+          targetAchievement: 96.7
+        }
+      }
+    ];
+
+    // Mock Channel Performance Data
+    const mockChannelPerformanceData = [
+      { channel: 'Online Portal', efficiency: 85.2, cost: 45, conversion: 68.5, satisfaction: 4.3 },
+      { channel: 'Mobile App', efficiency: 88.7, cost: 35, conversion: 72.3, satisfaction: 4.5 },
+      { channel: 'Branch Network', efficiency: 79.2, cost: 120, conversion: 78.9, satisfaction: 4.7 },
+      { channel: 'Call Center', efficiency: 76.8, cost: 80, conversion: 65.4, satisfaction: 4.1 },
+      { channel: 'Agent Network', efficiency: 92.3, cost: 200, conversion: 82.1, satisfaction: 4.8 }
+    ];
+
+    // Mock Hierarchy Performance Data
+    const mockHierarchyPerformanceData = [
+      { name: 'North Region', level: 'Region', efficiency: 86.0, budget: 78.5, target: 94.0, revenue: 28350000 },
+      { name: 'West Region', level: 'Region', efficiency: 82.3, budget: 85.2, target: 91.5, revenue: 25680000 },
+      { name: 'South Region', level: 'Region', efficiency: 89.1, budget: 79.8, target: 96.2, revenue: 31240000 },
+      { name: 'East Region', level: 'Region', efficiency: 84.7, budget: 82.1, target: 88.9, revenue: 22150000 }
+    ];
+
+    setChannels(mockChannelData);
+    setHierarchyData(mockHierarchyData);
+    setChannelPerformanceData(mockChannelPerformanceData);
+    setHierarchyPerformanceData(mockHierarchyPerformanceData);
+
     // Set loaded state for animations
     const loadedTimer = setTimeout(() => {
       setLoaded(true);
@@ -454,6 +800,144 @@ const Dashboard = () => {
       clearTimeout(loadedTimer);
     };
   }, [loadDashboardData]); // Include the memoized function in dependencies
+
+  // Channel Management Handlers
+  const handleChannelCreate = () => {
+    setChannelDialog({
+      open: true,
+      mode: 'create',
+      channelData: {
+        id: '',
+        name: '',
+        type: 'online',
+        status: 'active',
+        description: '',
+        targetAudience: '',
+        costPerLead: 0,
+        conversionRate: 0,
+        manager: '',
+        budget: 0,
+        settings: {
+          autoAssignment: true,
+          priority: 'medium',
+          workingHours: '9-18',
+          maxCapacity: 100
+        }
+      }
+    });
+  };
+
+  const handleChannelEdit = (channel) => {
+    setChannelDialog({
+      open: true,
+      mode: 'edit',
+      channelData: { ...channel }
+    });
+  };
+
+  const handleChannelSave = () => {
+    if (channelDialog.mode === 'create') {
+      const newChannel = {
+        ...channelDialog.channelData,
+        id: `ch-${Date.now()}`,
+        currentCases: 0,
+        renewedCases: 0,
+        revenue: 0,
+        performance: {
+          efficiency: 0,
+          customerSatisfaction: 0,
+          avgResponseTime: 0
+        }
+      };
+      setChannels(prev => [...prev, newChannel]);
+    } else {
+      setChannels(prev => prev.map(ch => 
+        ch.id === channelDialog.channelData.id ? channelDialog.channelData : ch
+      ));
+    }
+    setChannelDialog({ open: false, mode: 'create', channelData: {} });
+  };
+
+  const handleChannelDelete = (channelId) => {
+    setChannels(prev => prev.filter(ch => ch.id !== channelId));
+  };
+
+  // Hierarchy Management Handlers
+  const handleHierarchyCreate = () => {
+    setHierarchyDialog({
+      open: true,
+      mode: 'create',
+      nodeData: {
+        id: '',
+        name: '',
+        type: 'department',
+        parentId: '',
+        managerId: '',
+        description: '',
+        budget: 0,
+        targetCases: 0,
+        status: 'active'
+      }
+    });
+  };
+
+  const handleHierarchyEdit = (node) => {
+    setHierarchyDialog({
+      open: true,
+      mode: 'edit',
+      nodeData: { ...node }
+    });
+  };
+
+  const handleHierarchySave = () => {
+    if (hierarchyDialog.mode === 'create') {
+      const newNode = {
+        ...hierarchyDialog.nodeData,
+        id: `node-${Date.now()}`,
+        currentCases: 0,
+        renewedCases: 0,
+        revenue: 0,
+        children: [],
+        performance: {
+          efficiency: 0,
+          budgetUtilization: 0,
+          targetAchievement: 0
+        }
+      };
+      setHierarchyData(prev => [...prev, newNode]);
+    } else {
+      setHierarchyData(prev => prev.map(node => 
+        node.id === hierarchyDialog.nodeData.id ? hierarchyDialog.nodeData : node
+      ));
+    }
+    setHierarchyDialog({ open: false, mode: 'create', nodeData: {} });
+  };
+
+  const handleHierarchyDelete = (nodeId) => {
+    setHierarchyData(prev => prev.filter(node => node.id !== nodeId));
+  };
+
+  const getChannelTypeIcon = (type) => {
+    switch (type) {
+      case 'online': return <ChannelIcon />;
+      case 'mobile': return <PhoneIcon />;
+      case 'offline': return <BranchIcon />;
+      case 'phone': return <PhoneIcon />;
+      case 'agent': return <PersonIcon />;
+      default: return <BusinessIcon />;
+    }
+  };
+
+  const getHierarchyTypeIcon = (type) => {
+    switch (type) {
+      case 'region': return <RegionIcon />;
+      case 'state': return <LocationIcon />;
+      case 'branch': return <BranchIcon />;
+      case 'department': return <DepartmentIcon />;
+      case 'team': return <TeamIcon />;
+      default: return <HierarchyIcon />;
+    }
+  };
 
   const StatCard = ({ title, value, color, icon, index, isCurrency }) => {
     // Create a gradient background
@@ -980,6 +1464,572 @@ const Dashboard = () => {
             </Collapse>
           </CardContent>
         </Card>
+
+        {/* Channel and Hierarchy Management Section */}
+        <Card sx={{ mb: 4, boxShadow: 'none', border: `1px solid ${alpha(theme.palette.secondary.main, 0.2)}` }}>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+              <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <SettingsIcon color="secondary" />
+                Channel & Hierarchy Management
+              </Typography>
+              <Tabs
+                value={activeManagementTab}
+                onChange={(e, newValue) => setActiveManagementTab(newValue)}
+                variant="scrollable"
+                scrollButtons="auto"
+                sx={{
+                  '& .MuiTab-root': {
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    minWidth: 120
+                  }
+                }}
+              >
+                <Tab icon={<ChannelIcon />} label="Channels" />
+                <Tab icon={<HierarchyIcon />} label="Hierarchy" />
+                <Tab icon={<AnalyticsIcon />} label="Analytics" />
+              </Tabs>
+            </Box>
+
+            {activeManagementTab === 0 && (
+              <Collapse in={true} timeout="auto">
+                <Divider sx={{ mb: 3 }} />
+                
+                {/* Channel Management Header */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                  <Box>
+                    <Typography variant="h6" fontWeight="600">
+                      Channel Management
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Manage and monitor all customer acquisition channels
+                    </Typography>
+                  </Box>
+                  <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={handleChannelCreate}
+                    sx={{ borderRadius: 2, fontWeight: 600 }}
+                  >
+                    Add Channel
+                  </Button>
+                </Box>
+
+                {/* Channel Cards */}
+                <Grid container spacing={3} sx={{ mb: 4 }}>
+                  {channels.map((channel, index) => (
+                    <Grid item xs={12} md={6} lg={4} key={channel.id}>
+                      <Grow in={loaded} timeout={(index + 1) * 200}>
+                        <Card sx={{ 
+                          height: '100%',
+                          borderRadius: 3,
+                          boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                          border: `1px solid ${theme.palette.divider}`,
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            transform: 'translateY(-4px)',
+                            boxShadow: '0 8px 25px rgba(0,0,0,0.15)'
+                          }
+                        }}>
+                          <CardContent sx={{ p: 3 }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                <Avatar sx={{ 
+                                  bgcolor: channel.status === 'active' ? 'success.main' : 'warning.main',
+                                  width: 40,
+                                  height: 40
+                                }}>
+                                  {getChannelTypeIcon(channel.type)}
+                                </Avatar>
+                                <Box>
+                                  <Typography variant="h6" fontWeight="600">
+                                    {channel.name}
+                                  </Typography>
+                                  <Chip 
+                                    label={channel.status} 
+                                    color={channel.status === 'active' ? 'success' : 'warning'}
+                                    size="small"
+                                    sx={{ textTransform: 'capitalize' }}
+                                  />
+                                </Box>
+                              </Box>
+                              <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                <IconButton size="small" onClick={() => handleChannelEdit(channel)}>
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                                <IconButton size="small" color="error" onClick={() => handleChannelDelete(channel.id)}>
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </Box>
+                            </Box>
+
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                              {channel.description}
+                            </Typography>
+
+                            <Box sx={{ mb: 2 }}>
+                              <Typography variant="body2" color="text.secondary">Manager</Typography>
+                              <Typography variant="body1" fontWeight="500">{channel.manager}</Typography>
+                            </Box>
+
+                            <Grid container spacing={2} sx={{ mb: 2 }}>
+                              <Grid item xs={6}>
+                                <Box sx={{ textAlign: 'center', p: 1.5, bgcolor: 'background.default', borderRadius: 2 }}>
+                                  <Typography variant="h6" fontWeight="600" color="primary.main">
+                                    {channel.currentCases}
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary">
+                                    Current Cases
+                                  </Typography>
+                                </Box>
+                              </Grid>
+                              <Grid item xs={6}>
+                                <Box sx={{ textAlign: 'center', p: 1.5, bgcolor: 'background.default', borderRadius: 2 }}>
+                                  <Typography variant="h6" fontWeight="600" color="success.main">
+                                    {channel.renewedCases}
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary">
+                                    Renewed
+                                  </Typography>
+                                </Box>
+                              </Grid>
+                            </Grid>
+
+                            <Box sx={{ mb: 2 }}>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                <Typography variant="body2">Conversion Rate</Typography>
+                                <Typography variant="body2" fontWeight="600">{channel.conversionRate}%</Typography>
+                              </Box>
+                              <LinearProgress 
+                                variant="determinate" 
+                                value={channel.conversionRate}
+                                sx={{ height: 6, borderRadius: 3 }}
+                              />
+                            </Box>
+
+                            <Divider sx={{ mb: 2 }} />
+
+                            <Grid container spacing={1}>
+                              <Grid item xs={4}>
+                                <Box sx={{ textAlign: 'center' }}>
+                                  <Typography variant="body2" fontWeight="600">₹{channel.costPerLead}</Typography>
+                                  <Typography variant="caption" color="text.secondary">Cost/Lead</Typography>
+                                </Box>
+                              </Grid>
+                              <Grid item xs={4}>
+                                <Box sx={{ textAlign: 'center' }}>
+                                  <Typography variant="body2" fontWeight="600">{channel.performance?.efficiency || 0}%</Typography>
+                                  <Typography variant="caption" color="text.secondary">Efficiency</Typography>
+                                </Box>
+                              </Grid>
+                              <Grid item xs={4}>
+                                <Box sx={{ textAlign: 'center' }}>
+                                  <Typography variant="body2" fontWeight="600">₹{(channel.revenue / 100000).toFixed(1)}L</Typography>
+                                  <Typography variant="caption" color="text.secondary">Revenue</Typography>
+                                </Box>
+                              </Grid>
+                            </Grid>
+                          </CardContent>
+                        </Card>
+                      </Grow>
+                    </Grid>
+                  ))}
+                </Grid>
+
+                {/* Channel Performance Summary */}
+                <Typography variant="h6" fontWeight="600" sx={{ mb: 2 }}>
+                  Channel Performance Summary
+                </Typography>
+                <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2 }}>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell><Typography fontWeight="600">Channel</Typography></TableCell>
+                        <TableCell align="center"><Typography fontWeight="600">Type</Typography></TableCell>
+                        <TableCell align="center"><Typography fontWeight="600">Cases</Typography></TableCell>
+                        <TableCell align="center"><Typography fontWeight="600">Conversion</Typography></TableCell>
+                        <TableCell align="center"><Typography fontWeight="600">Efficiency</Typography></TableCell>
+                        <TableCell align="right"><Typography fontWeight="600">Revenue</Typography></TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {channels.map((channel) => (
+                        <TableRow key={channel.id}>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                              <Avatar sx={{ bgcolor: 'primary.main', width: 32, height: 32 }}>
+                                {getChannelTypeIcon(channel.type)}
+                              </Avatar>
+                              <Box>
+                                <Typography variant="body2" fontWeight="600">{channel.name}</Typography>
+                                <Typography variant="caption" color="text.secondary">{channel.manager}</Typography>
+                              </Box>
+                            </Box>
+                          </TableCell>
+                          <TableCell align="center">
+                            <Chip 
+                              label={channel.type} 
+                              size="small" 
+                              variant="outlined"
+                              sx={{ textTransform: 'capitalize' }}
+                            />
+                          </TableCell>
+                          <TableCell align="center">
+                            <Typography variant="body2">{channel.currentCases}</Typography>
+                          </TableCell>
+                          <TableCell align="center">
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                              <Typography variant="body2" fontWeight="600">{channel.conversionRate}%</Typography>
+                              {channel.conversionRate >= 70 ? 
+                                <TrendingUpIcon fontSize="small" color="success" /> : 
+                                <TrendingDownIcon fontSize="small" color="error" />
+                              }
+                            </Box>
+                          </TableCell>
+                          <TableCell align="center">
+                            <Typography variant="body2" fontWeight="600">
+                              {channel.performance?.efficiency || 0}%
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography variant="body2" fontWeight="600" color="primary.main">
+                              ₹{(channel.revenue / 100000).toFixed(1)}L
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Collapse>
+            )}
+
+            {activeManagementTab === 1 && (
+              <Collapse in={true} timeout="auto">
+                <Divider sx={{ mb: 3 }} />
+                
+                {/* Hierarchy Management Header */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                  <Box>
+                    <Typography variant="h6" fontWeight="600">
+                      Organizational Hierarchy
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Manage organizational structure and reporting hierarchy
+                    </Typography>
+                  </Box>
+                  <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={handleHierarchyCreate}
+                    sx={{ borderRadius: 2, fontWeight: 600 }}
+                  >
+                    Add Node
+                  </Button>
+                </Box>
+
+                {/* Hierarchy Tree View */}
+                <Grid container spacing={3} sx={{ mb: 4 }}>
+                  {hierarchyData.filter(node => !node.parentId).map((rootNode, index) => (
+                    <Grid item xs={12} key={rootNode.id}>
+                      <Grow in={loaded} timeout={(index + 1) * 200}>
+                        <Accordion 
+                          defaultExpanded
+                          sx={{ 
+                            borderRadius: 2,
+                            boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                            '&:before': { display: 'none' }
+                          }}
+                        >
+                          <AccordionSummary 
+                            expandIcon={<ExpandMoreIcon />}
+                            sx={{ 
+                              bgcolor: alpha(theme.palette.primary.main, 0.05),
+                              borderRadius: '8px 8px 0 0'
+                            }}
+                          >
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+                              <Avatar sx={{ bgcolor: 'primary.main', width: 40, height: 40 }}>
+                                {getHierarchyTypeIcon(rootNode.type)}
+                              </Avatar>
+                              <Box sx={{ flex: 1 }}>
+                                <Typography variant="h6" fontWeight="600">{rootNode.name}</Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                  {rootNode.type.charAt(0).toUpperCase() + rootNode.type.slice(1)} • {rootNode.managerName}
+                                </Typography>
+                              </Box>
+                              <Box sx={{ display: 'flex', gap: 2, mr: 2 }}>
+                                <Box sx={{ textAlign: 'center' }}>
+                                  <Typography variant="h6" fontWeight="600" color="primary.main">
+                                    {rootNode.currentCases}
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary">Cases</Typography>
+                                </Box>
+                                <Box sx={{ textAlign: 'center' }}>
+                                  <Typography variant="h6" fontWeight="600" color="success.main">
+                                    {rootNode.performance?.efficiency || 0}%
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary">Efficiency</Typography>
+                                </Box>
+                                <Box sx={{ textAlign: 'center' }}>
+                                  <Typography variant="h6" fontWeight="600" color="info.main">
+                                    ₹{(rootNode.revenue / 1000000).toFixed(1)}M
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary">Revenue</Typography>
+                                </Box>
+                              </Box>
+                              <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleHierarchyEdit(rootNode); }}>
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                                <IconButton size="small" color="error" onClick={(e) => { e.stopPropagation(); handleHierarchyDelete(rootNode.id); }}>
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </Box>
+                            </Box>
+                          </AccordionSummary>
+                          <AccordionDetails sx={{ p: 3 }}>
+                            {/* Child Nodes */}
+                            <Grid container spacing={2}>
+                              {hierarchyData.filter(node => node.parentId === rootNode.id).map((childNode) => (
+                                <Grid item xs={12} md={6} lg={4} key={childNode.id}>
+                                  <Card sx={{ 
+                                    border: `1px solid ${theme.palette.divider}`,
+                                    borderRadius: 2,
+                                    transition: 'all 0.3s ease',
+                                    '&:hover': {
+                                      transform: 'translateY(-2px)',
+                                      boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+                                    }
+                                  }}>
+                                    <CardContent sx={{ p: 2 }}>
+                                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                          <Avatar sx={{ 
+                                            bgcolor: 'secondary.main', 
+                                            width: 32, 
+                                            height: 32 
+                                          }}>
+                                            {getHierarchyTypeIcon(childNode.type)}
+                                          </Avatar>
+                                          <Box>
+                                            <Typography variant="subtitle2" fontWeight="600">
+                                              {childNode.name}
+                                            </Typography>
+                                            <Typography variant="caption" color="text.secondary">
+                                              {childNode.managerName}
+                                            </Typography>
+                                          </Box>
+                                        </Box>
+                                        <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                          <IconButton size="small" onClick={() => handleHierarchyEdit(childNode)}>
+                                            <EditIcon fontSize="small" />
+                                          </IconButton>
+                                          <IconButton size="small" color="error" onClick={() => handleHierarchyDelete(childNode.id)}>
+                                            <DeleteIcon fontSize="small" />
+                                          </IconButton>
+                                        </Box>
+                                      </Box>
+
+                                      <Grid container spacing={1}>
+                                        <Grid item xs={4}>
+                                          <Box sx={{ textAlign: 'center' }}>
+                                            <Typography variant="body2" fontWeight="600">{childNode.currentCases}</Typography>
+                                            <Typography variant="caption" color="text.secondary">Cases</Typography>
+                                          </Box>
+                                        </Grid>
+                                        <Grid item xs={4}>
+                                          <Box sx={{ textAlign: 'center' }}>
+                                            <Typography variant="body2" fontWeight="600">{childNode.performance?.efficiency || 0}%</Typography>
+                                            <Typography variant="caption" color="text.secondary">Efficiency</Typography>
+                                          </Box>
+                                        </Grid>
+                                        <Grid item xs={4}>
+                                          <Box sx={{ textAlign: 'center' }}>
+                                            <Typography variant="body2" fontWeight="600">₹{(childNode.revenue / 100000).toFixed(1)}L</Typography>
+                                            <Typography variant="caption" color="text.secondary">Revenue</Typography>
+                                          </Box>
+                                        </Grid>
+                                      </Grid>
+
+                                      {childNode.teamMembers && (
+                                        <Box sx={{ mt: 2, pt: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
+                                          <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+                                            Team Members ({childNode.teamMembers.length})
+                                          </Typography>
+                                          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                                            {childNode.teamMembers.slice(0, 3).map((member) => (
+                                              <Tooltip key={member.id} title={`${member.name} - ${member.role}`}>
+                                                <Avatar sx={{ width: 24, height: 24, fontSize: '0.75rem' }}>
+                                                  {member.name.charAt(0)}
+                                                </Avatar>
+                                              </Tooltip>
+                                            ))}
+                                            {childNode.teamMembers.length > 3 && (
+                                              <Avatar sx={{ width: 24, height: 24, fontSize: '0.6rem', bgcolor: 'text.secondary' }}>
+                                                +{childNode.teamMembers.length - 3}
+                                              </Avatar>
+                                            )}
+                                          </Box>
+                                        </Box>
+                                      )}
+                                    </CardContent>
+                                  </Card>
+                                </Grid>
+                              ))}
+                            </Grid>
+                          </AccordionDetails>
+                        </Accordion>
+                      </Grow>
+                    </Grid>
+                  ))}
+                </Grid>
+
+                {/* Hierarchy Performance Summary */}
+                <Typography variant="h6" fontWeight="600" sx={{ mb: 2 }}>
+                  Hierarchy Performance Summary
+                </Typography>
+                <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2 }}>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell><Typography fontWeight="600">Unit</Typography></TableCell>
+                        <TableCell align="center"><Typography fontWeight="600">Level</Typography></TableCell>
+                        <TableCell align="center"><Typography fontWeight="600">Manager</Typography></TableCell>
+                        <TableCell align="center"><Typography fontWeight="600">Cases</Typography></TableCell>
+                        <TableCell align="center"><Typography fontWeight="600">Efficiency</Typography></TableCell>
+                        <TableCell align="center"><Typography fontWeight="600">Budget Util.</Typography></TableCell>
+                        <TableCell align="right"><Typography fontWeight="600">Revenue</Typography></TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {hierarchyData.map((node) => (
+                        <TableRow key={node.id}>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                              <Avatar sx={{ bgcolor: 'primary.main', width: 32, height: 32 }}>
+                                {getHierarchyTypeIcon(node.type)}
+                              </Avatar>
+                              <Typography variant="body2" fontWeight="600">{node.name}</Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell align="center">
+                            <Chip 
+                              label={node.type} 
+                              size="small" 
+                              variant="outlined"
+                              sx={{ textTransform: 'capitalize' }}
+                            />
+                          </TableCell>
+                          <TableCell align="center">
+                            <Typography variant="body2">{node.managerName}</Typography>
+                          </TableCell>
+                          <TableCell align="center">
+                            <Typography variant="body2">{node.currentCases}</Typography>
+                          </TableCell>
+                          <TableCell align="center">
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                              <Typography variant="body2" fontWeight="600">{node.performance?.efficiency || 0}%</Typography>
+                              {(node.performance?.efficiency || 0) >= 85 ? 
+                                <CheckCircleIcon fontSize="small" color="success" /> : 
+                                <WarningIcon fontSize="small" color="warning" />
+                              }
+                            </Box>
+                          </TableCell>
+                          <TableCell align="center">
+                            <Typography variant="body2" fontWeight="600">
+                              {node.performance?.budgetUtilization || 0}%
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography variant="body2" fontWeight="600" color="primary.main">
+                              ₹{(node.revenue / 100000).toFixed(1)}L
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Collapse>
+            )}
+
+            {activeManagementTab === 2 && (
+              <Collapse in={true} timeout="auto">
+                <Divider sx={{ mb: 3 }} />
+                
+                {/* Analytics Tab */}
+                <Typography variant="h6" fontWeight="600" sx={{ mb: 3 }}>
+                  Channel & Hierarchy Analytics
+                </Typography>
+
+                <Grid container spacing={3}>
+                  {/* Channel Performance Chart */}
+                  <Grid item xs={12} lg={6}>
+                    <Paper sx={{ p: 3, height: 400, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+                      <Typography variant="h6" gutterBottom fontWeight="600">
+                        Channel Performance Comparison
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                        Efficiency vs Cost analysis across channels
+                      </Typography>
+                      <ResponsiveContainer width="100%" height="85%">
+                        <BarChart data={channelPerformanceData}>
+                          <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                          <XAxis dataKey="channel" angle={-45} textAnchor="end" height={80} />
+                          <YAxis yAxisId="left" />
+                          <YAxis yAxisId="right" orientation="right" />
+                                              <RechartsTooltip 
+                      contentStyle={{ 
+                        backgroundColor: theme.palette.mode === 'dark' ? '#2a2a2a' : '#fff',
+                        borderRadius: 8,
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                      }} 
+                    />
+                          <Legend />
+                          <Bar yAxisId="left" dataKey="efficiency" fill={alpha(theme.palette.primary.main, 0.8)} name="Efficiency %" />
+                          <Bar yAxisId="right" dataKey="cost" fill={alpha(theme.palette.error.main, 0.8)} name="Cost per Lead (₹)" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </Paper>
+                  </Grid>
+
+                  {/* Hierarchy Performance Chart */}
+                  <Grid item xs={12} lg={6}>
+                    <Paper sx={{ p: 3, height: 400, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+                      <Typography variant="h6" gutterBottom fontWeight="600">
+                        Regional Performance Overview
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                        Performance metrics across different regions
+                      </Typography>
+                      <ResponsiveContainer width="100%" height="85%">
+                        <RadialBarChart data={hierarchyPerformanceData} innerRadius="20%" outerRadius="80%">
+                          <RadialBar 
+                            dataKey="efficiency" 
+                            cornerRadius={10} 
+                            fill={theme.palette.primary.main}
+                            label={{ position: 'insideStart', fill: '#fff' }}
+                          />
+                          <RechartsTooltip 
+                            formatter={(value) => [`${value}%`, 'Efficiency']}
+                            contentStyle={{ 
+                              backgroundColor: theme.palette.mode === 'dark' ? '#2a2a2a' : '#fff',
+                              borderRadius: 8,
+                              boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                            }}
+                          />
+                          <Legend />
+                        </RadialBarChart>
+                      </ResponsiveContainer>
+                    </Paper>
+                  </Grid>
+                </Grid>
+              </Collapse>
+            )}
+          </CardContent>
+        </Card>
         
         {/* Stats Cards */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -1066,7 +2116,7 @@ const Dashboard = () => {
                     <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
                     <XAxis dataKey="name" />
                     <YAxis />
-                    <Tooltip 
+                    <RechartsTooltip 
                       contentStyle={{ 
                         backgroundColor: theme.palette.mode === 'dark' ? '#2a2a2a' : '#fff',
                         borderRadius: 8,
@@ -1112,7 +2162,7 @@ const Dashboard = () => {
                     <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
                     <XAxis dataKey="name" />
                     <YAxis domain={[0, 1]} tickFormatter={(tick) => `${(tick * 100).toFixed(0)}%`} />
-                    <Tooltip 
+                    <RechartsTooltip 
                       formatter={(value) => `${(value * 100).toFixed(2)}%`} 
                       contentStyle={{ 
                         backgroundColor: theme.palette.mode === 'dark' ? '#2a2a2a' : '#fff',
@@ -1183,7 +2233,7 @@ const Dashboard = () => {
                         width={150}
                         tick={{ fontSize: 12 }}
                       />
-                      <Tooltip 
+                      <RechartsTooltip 
                         contentStyle={{ 
                           backgroundColor: theme.palette.mode === 'dark' ? '#2a2a2a' : '#fff',
                           borderRadius: 8,
@@ -1270,7 +2320,7 @@ const Dashboard = () => {
                       <YAxis 
                         tickFormatter={(value) => `₹${(value / 100000).toFixed(1)}L`}
                       />
-                      <Tooltip 
+                      <RechartsTooltip 
                         formatter={(value) => new Intl.NumberFormat('en-IN', { 
                           style: 'currency', 
                           currency: 'INR',
@@ -1343,7 +2393,7 @@ const Dashboard = () => {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value) => `${value}%`} />
+                    <RechartsTooltip formatter={(value) => `${value}%`} />
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
@@ -1373,7 +2423,7 @@ const Dashboard = () => {
                       fontSize={10}
                     />
                     <YAxis />
-                    <Tooltip 
+                    <RechartsTooltip 
                       formatter={(value, name) => [value, name]}
                       labelFormatter={(label) => {
                         const item = regionData.find(r => r.branch === label);
@@ -1411,7 +2461,7 @@ const Dashboard = () => {
                     <XAxis dataKey="type" />
                     <YAxis yAxisId="left" />
                     <YAxis yAxisId="right" orientation="right" domain={[80, 90]} />
-                    <Tooltip 
+                    <RechartsTooltip 
                       formatter={(value, name) => {
                         if (name === 'Efficiency') return [`${value}%`, name];
                         return [value, name];
@@ -1449,7 +2499,7 @@ const Dashboard = () => {
                     <XAxis dataKey="mode" />
                     <YAxis yAxisId="left" />
                     <YAxis yAxisId="right" orientation="right" />
-                    <Tooltip 
+                    <RechartsTooltip 
                       formatter={(value, name) => {
                         if (name === 'Success Rate') return [`${value}%`, name];
                         if (name === 'Cost per Contact') return [`₹${value}`, name];
@@ -1498,7 +2548,7 @@ const Dashboard = () => {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip 
+                    <RechartsTooltip 
                       formatter={(value, name, props) => [
                         `${value}% (₹${new Intl.NumberFormat('en-IN').format(props.payload.amount)})`,
                         'Share'
@@ -1528,7 +2578,7 @@ const Dashboard = () => {
                     <XAxis dataKey="channel" angle={-45} textAnchor="end" height={80} />
                     <YAxis yAxisId="left" />
                     <YAxis yAxisId="right" orientation="right" />
-                    <Tooltip 
+                    <RechartsTooltip 
                       formatter={(value, name) => {
                         if (name === 'Cost per Renewal') return [`₹${value}`, name];
                         if (name === 'Total Cost') return [`₹${new Intl.NumberFormat('en-IN').format(value)}`, name];
@@ -1583,7 +2633,7 @@ const Dashboard = () => {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value, name) => [`${value}%`, name]} />
+                    <RechartsTooltip formatter={(value, name) => [`${value}%`, name]} />
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
@@ -1606,7 +2656,7 @@ const Dashboard = () => {
                     <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
                     <XAxis dataKey="month" />
                     <YAxis />
-                    <Tooltip 
+                    <RechartsTooltip 
                       contentStyle={{ 
                         backgroundColor: theme.palette.mode === 'dark' ? '#2a2a2a' : '#fff',
                         borderRadius: 8,
@@ -1643,7 +2693,7 @@ const Dashboard = () => {
                     <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
                     <XAxis type="number" />
                     <YAxis dataKey="category" type="category" width={120} />
-                    <Tooltip 
+                    <RechartsTooltip 
                       formatter={(value, name) => [value, name]}
                       contentStyle={{ 
                         backgroundColor: theme.palette.mode === 'dark' ? '#2a2a2a' : '#fff',
@@ -1683,7 +2733,7 @@ const Dashboard = () => {
                     <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
                     <XAxis dataKey="policyType" angle={-45} textAnchor="end" height={80} />
                     <YAxis />
-                    <Tooltip 
+                    <RechartsTooltip 
                       contentStyle={{ 
                         backgroundColor: theme.palette.mode === 'dark' ? '#2a2a2a' : '#fff',
                         borderRadius: 8,
@@ -1726,7 +2776,7 @@ const Dashboard = () => {
                     <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
                     <XAxis dataKey="channel" angle={-45} textAnchor="end" height={80} />
                     <YAxis />
-                    <Tooltip 
+                    <RechartsTooltip 
                       formatter={(value, name) => [`₹${(value/100000).toFixed(1)}L`, name]}
                       contentStyle={{ 
                         backgroundColor: theme.palette.mode === 'dark' ? '#2a2a2a' : '#fff',
@@ -1779,7 +2829,7 @@ const Dashboard = () => {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip 
+                    <RechartsTooltip 
                       formatter={(value, name) => [`${value}%`, name]}
                       contentStyle={{ 
                         backgroundColor: theme.palette.mode === 'dark' ? '#2a2a2a' : '#fff',
@@ -2026,6 +3076,395 @@ const Dashboard = () => {
             </Grow>
           </Grid>
         </Grid>
+
+        {/* Channel Management Dialog */}
+        <Dialog
+          open={channelDialog.open}
+          onClose={() => setChannelDialog({ open: false, mode: 'create', channelData: {} })}
+          maxWidth="md"
+          fullWidth
+          PaperProps={{ sx: { borderRadius: 3 } }}
+        >
+          <DialogTitle>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Avatar sx={{ bgcolor: 'primary.main' }}>
+                <ChannelIcon />
+              </Avatar>
+              <Box>
+                <Typography variant="h6" fontWeight="600">
+                  {channelDialog.mode === 'create' ? 'Create New Channel' : 'Edit Channel'}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Configure channel settings and parameters
+                </Typography>
+              </Box>
+            </Box>
+          </DialogTitle>
+          <DialogContent dividers>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Channel Name"
+                  value={channelDialog.channelData.name || ''}
+                  onChange={(e) => setChannelDialog(prev => ({
+                    ...prev,
+                    channelData: { ...prev.channelData, name: e.target.value }
+                  }))}
+                  placeholder="e.g., Online Portal"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Channel Type</InputLabel>
+                  <Select
+                    value={channelDialog.channelData.type || 'online'}
+                    onChange={(e) => setChannelDialog(prev => ({
+                      ...prev,
+                      channelData: { ...prev.channelData, type: e.target.value }
+                    }))}
+                    label="Channel Type"
+                  >
+                    <MenuItem value="online">Online</MenuItem>
+                    <MenuItem value="mobile">Mobile</MenuItem>
+                    <MenuItem value="offline">Offline</MenuItem>
+                    <MenuItem value="phone">Phone</MenuItem>
+                    <MenuItem value="agent">Agent</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Description"
+                  value={channelDialog.channelData.description || ''}
+                  onChange={(e) => setChannelDialog(prev => ({
+                    ...prev,
+                    channelData: { ...prev.channelData, description: e.target.value }
+                  }))}
+                  multiline
+                  rows={2}
+                  placeholder="Brief description of the channel"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Target Audience"
+                  value={channelDialog.channelData.targetAudience || ''}
+                  onChange={(e) => setChannelDialog(prev => ({
+                    ...prev,
+                    channelData: { ...prev.channelData, targetAudience: e.target.value }
+                  }))}
+                  placeholder="e.g., Tech-savvy customers"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Manager"
+                  value={channelDialog.channelData.manager || ''}
+                  onChange={(e) => setChannelDialog(prev => ({
+                    ...prev,
+                    channelData: { ...prev.channelData, manager: e.target.value }
+                  }))}
+                  placeholder="Channel manager name"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Cost per Lead (₹)"
+                  type="number"
+                  value={channelDialog.channelData.costPerLead || 0}
+                  onChange={(e) => setChannelDialog(prev => ({
+                    ...prev,
+                    channelData: { ...prev.channelData, costPerLead: Number(e.target.value) }
+                  }))}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Budget (₹)"
+                  type="number"
+                  value={channelDialog.channelData.budget || 0}
+                  onChange={(e) => setChannelDialog(prev => ({
+                    ...prev,
+                    channelData: { ...prev.channelData, budget: Number(e.target.value) }
+                  }))}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Status</InputLabel>
+                  <Select
+                    value={channelDialog.channelData.status || 'active'}
+                    onChange={(e) => setChannelDialog(prev => ({
+                      ...prev,
+                      channelData: { ...prev.channelData, status: e.target.value }
+                    }))}
+                    label="Status"
+                  >
+                    <MenuItem value="active">Active</MenuItem>
+                    <MenuItem value="inactive">Inactive</MenuItem>
+                    <MenuItem value="maintenance">Maintenance</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Priority</InputLabel>
+                  <Select
+                    value={channelDialog.channelData.settings?.priority || 'medium'}
+                    onChange={(e) => setChannelDialog(prev => ({
+                      ...prev,
+                      channelData: { 
+                        ...prev.channelData, 
+                        settings: { ...prev.channelData.settings, priority: e.target.value }
+                      }
+                    }))}
+                    label="Priority"
+                  >
+                    <MenuItem value="low">Low</MenuItem>
+                    <MenuItem value="medium">Medium</MenuItem>
+                    <MenuItem value="high">High</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Working Hours"
+                  value={channelDialog.channelData.settings?.workingHours || '9-18'}
+                  onChange={(e) => setChannelDialog(prev => ({
+                    ...prev,
+                    channelData: { 
+                      ...prev.channelData, 
+                      settings: { ...prev.channelData.settings, workingHours: e.target.value }
+                    }
+                  }))}
+                  placeholder="e.g., 9-18 or 24/7"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Max Capacity"
+                  type="number"
+                  value={channelDialog.channelData.settings?.maxCapacity || 100}
+                  onChange={(e) => setChannelDialog(prev => ({
+                    ...prev,
+                    channelData: { 
+                      ...prev.channelData, 
+                      settings: { ...prev.channelData.settings, maxCapacity: Number(e.target.value) }
+                    }
+                  }))}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={channelDialog.channelData.settings?.autoAssignment || false}
+                      onChange={(e) => setChannelDialog(prev => ({
+                        ...prev,
+                        channelData: { 
+                          ...prev.channelData, 
+                          settings: { ...prev.channelData.settings, autoAssignment: e.target.checked }
+                        }
+                      }))}
+                    />
+                  }
+                  label="Enable Auto Assignment"
+                />
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions sx={{ p: 3, gap: 1 }}>
+            <Button
+              onClick={() => setChannelDialog({ open: false, mode: 'create', channelData: {} })}
+              variant="outlined"
+              startIcon={<CancelIcon />}
+              sx={{ borderRadius: 2 }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleChannelSave}
+              variant="contained"
+              startIcon={<SaveIcon />}
+              sx={{ borderRadius: 2, minWidth: 120 }}
+            >
+              {channelDialog.mode === 'create' ? 'Create Channel' : 'Save Changes'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Hierarchy Management Dialog */}
+        <Dialog
+          open={hierarchyDialog.open}
+          onClose={() => setHierarchyDialog({ open: false, mode: 'create', nodeData: {} })}
+          maxWidth="md"
+          fullWidth
+          PaperProps={{ sx: { borderRadius: 3 } }}
+        >
+          <DialogTitle>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Avatar sx={{ bgcolor: 'secondary.main' }}>
+                <HierarchyIcon />
+              </Avatar>
+              <Box>
+                <Typography variant="h6" fontWeight="600">
+                  {hierarchyDialog.mode === 'create' ? 'Create Hierarchy Node' : 'Edit Hierarchy Node'}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Configure organizational unit details
+                </Typography>
+              </Box>
+            </Box>
+          </DialogTitle>
+          <DialogContent dividers>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Unit Name"
+                  value={hierarchyDialog.nodeData.name || ''}
+                  onChange={(e) => setHierarchyDialog(prev => ({
+                    ...prev,
+                    nodeData: { ...prev.nodeData, name: e.target.value }
+                  }))}
+                  placeholder="e.g., North Region"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Unit Type</InputLabel>
+                  <Select
+                    value={hierarchyDialog.nodeData.type || 'department'}
+                    onChange={(e) => setHierarchyDialog(prev => ({
+                      ...prev,
+                      nodeData: { ...prev.nodeData, type: e.target.value }
+                    }))}
+                    label="Unit Type"
+                  >
+                    <MenuItem value="region">Region</MenuItem>
+                    <MenuItem value="state">State</MenuItem>
+                    <MenuItem value="branch">Branch</MenuItem>
+                    <MenuItem value="department">Department</MenuItem>
+                    <MenuItem value="team">Team</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Description"
+                  value={hierarchyDialog.nodeData.description || ''}
+                  onChange={(e) => setHierarchyDialog(prev => ({
+                    ...prev,
+                    nodeData: { ...prev.nodeData, description: e.target.value }
+                  }))}
+                  multiline
+                  rows={2}
+                  placeholder="Brief description of the organizational unit"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Parent Unit</InputLabel>
+                  <Select
+                    value={hierarchyDialog.nodeData.parentId || ''}
+                    onChange={(e) => setHierarchyDialog(prev => ({
+                      ...prev,
+                      nodeData: { ...prev.nodeData, parentId: e.target.value }
+                    }))}
+                    label="Parent Unit"
+                  >
+                    <MenuItem value="">None (Root Level)</MenuItem>
+                    {hierarchyData.map((node) => (
+                      <MenuItem key={node.id} value={node.id}>
+                        {node.name} ({node.type})
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Manager ID"
+                  value={hierarchyDialog.nodeData.managerId || ''}
+                  onChange={(e) => setHierarchyDialog(prev => ({
+                    ...prev,
+                    nodeData: { ...prev.nodeData, managerId: e.target.value }
+                  }))}
+                  placeholder="Manager employee ID"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Budget (₹)"
+                  type="number"
+                  value={hierarchyDialog.nodeData.budget || 0}
+                  onChange={(e) => setHierarchyDialog(prev => ({
+                    ...prev,
+                    nodeData: { ...prev.nodeData, budget: Number(e.target.value) }
+                  }))}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Target Cases"
+                  type="number"
+                  value={hierarchyDialog.nodeData.targetCases || 0}
+                  onChange={(e) => setHierarchyDialog(prev => ({
+                    ...prev,
+                    nodeData: { ...prev.nodeData, targetCases: Number(e.target.value) }
+                  }))}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <FormControl fullWidth>
+                  <InputLabel>Status</InputLabel>
+                  <Select
+                    value={hierarchyDialog.nodeData.status || 'active'}
+                    onChange={(e) => setHierarchyDialog(prev => ({
+                      ...prev,
+                      nodeData: { ...prev.nodeData, status: e.target.value }
+                    }))}
+                    label="Status"
+                  >
+                    <MenuItem value="active">Active</MenuItem>
+                    <MenuItem value="inactive">Inactive</MenuItem>
+                    <MenuItem value="restructuring">Restructuring</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions sx={{ p: 3, gap: 1 }}>
+            <Button
+              onClick={() => setHierarchyDialog({ open: false, mode: 'create', nodeData: {} })}
+              variant="outlined"
+              startIcon={<CancelIcon />}
+              sx={{ borderRadius: 2 }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleHierarchySave}
+              variant="contained"
+              startIcon={<SaveIcon />}
+              sx={{ borderRadius: 2, minWidth: 120 }}
+            >
+              {hierarchyDialog.mode === 'create' ? 'Create Node' : 'Save Changes'}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </Fade>
   );
