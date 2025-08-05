@@ -96,8 +96,8 @@ const Layout = ({ children }) => {
   const [profileMenuAnchorEl, setProfileMenuAnchorEl] = useState(null);
   const [notificationsAnchorEl, setNotificationsAnchorEl] = useState(null);
   const [notificationsDialogOpen, setNotificationsDialogOpen] = useState(false);
-  const [renewalMenuOpen, setRenewalMenuOpen] = useState(true);
-  const [emailMenuOpen, setEmailMenuOpen] = useState(true);
+  const [renewalMenuOpen, setRenewalMenuOpen] = useState(false);
+  const [emailMenuOpen, setEmailMenuOpen] = useState(false);
   const [askAIOpen, setAskAIOpen] = useState(false);
   const [aiQuery, setAiQuery] = useState('');
   const [, setAiResponse] = useState('');

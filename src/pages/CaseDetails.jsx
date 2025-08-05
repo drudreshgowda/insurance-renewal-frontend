@@ -89,7 +89,7 @@ import {
   MonetizationOn as MonetizationOnIcon,
   Receipt as ReceiptIcon,
   Warning as WarningIcon,
-  TrendingUp as TrendingUpIcon,
+
   Schedule as ScheduleIcon
 } from '@mui/icons-material';
 import { useSettings } from '../context/SettingsContext';
