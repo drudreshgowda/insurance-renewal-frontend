@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }) => {
         permissions: [
           // Core Pages (excluding Renewals module - no cases, closed-cases, policy-timeline, logs)
           'dashboard', 'upload', 'claims',
-          'policy-servicing', 'new-business', 'medical-management',
+          'policy-servicing', 'new-business', 'medical-management', 'lead-management',
           // Email Pages
           'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
           // Marketing Pages
@@ -69,7 +69,7 @@ export const AuthProvider = ({ children }) => {
         permissions: [
           // Full access to all modules
           'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs', 'claims',
-          'policy-servicing', 'new-business', 'medical-management',
+          'policy-servicing', 'new-business', 'medical-management', 'lead-management',
           'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
           'campaigns', 'templates', 'feedback', 'survey-designer', 'whatsapp-flow',
           'renewal-email-manager', 'renewal-whatsapp-manager',

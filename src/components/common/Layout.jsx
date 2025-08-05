@@ -47,7 +47,8 @@ import {
   Close as CloseIcon,
   Build as PolicyServicingIcon,
   BusinessCenter as NewBusinessIcon,
-  LocalHospital as MedicalManagementIcon
+  LocalHospital as MedicalManagementIcon,
+  TrendingUp as LeadManagementIcon
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext.js';
 import { useThemeMode } from '../../context/ThemeModeContext.js';
@@ -385,6 +386,11 @@ Please provide a response specifically relevant to the ${pageContext.name} page 
         name: 'Billing',
         context: 'payment processing, collection rates, and financial management',
         focus: 'payment efficiency, collection optimization, and financial insights'
+      },
+      '/lead-management': {
+        name: 'Lead Management',
+        context: 'lead generation, qualification, assignment, and conversion tracking',
+        focus: 'lead quality, conversion optimization, and sales performance'
       }
     };
 
@@ -461,12 +467,13 @@ Please provide a response specifically relevant to the ${pageContext.name} page 
   const menuModules = {
     business: {
       items: [
+        { text: 'Lead Management', icon: <LeadManagementIcon />, path: '/lead-management', permission: 'lead-management' },
         { text: 'Claims', icon: <GavelIcon />, path: '/claims', permission: 'claims' },
         { text: 'Policy Servicing', icon: <PolicyServicingIcon />, path: '/policy-servicing', permission: 'policy-servicing' },
         { text: 'New Business', icon: <NewBusinessIcon />, path: '/new-business', permission: 'new-business' },
         { text: 'Medical Mgmt', icon: <MedicalManagementIcon />, path: '/medical-management', permission: 'medical-management' },
       ],
-      permissions: ['claims', 'policy-servicing', 'new-business', 'medical-management']
+      permissions: ['lead-management', 'claims', 'policy-servicing', 'new-business', 'medical-management']
     },
     marketing: {
       items: [

@@ -16,7 +16,7 @@ const mockUserPermissions = {
   'admin': [
     // Core Pages
     'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs', 'claims',
-    'policy-servicing', 'new-business', 'medical-management',
+    'policy-servicing', 'new-business', 'medical-management', 'lead-management',
     // Email Pages  
     'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
     // Marketing Pages
@@ -35,7 +35,7 @@ const mockUserPermissions = {
   'client_admin': [
     // Core Pages
     'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs', 'claims',
-    'policy-servicing', 'new-business', 'medical-management',
+    'policy-servicing', 'new-business', 'medical-management', 'lead-management',
     // Email Pages  
     'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
     // Marketing Pages
@@ -62,7 +62,7 @@ const mockUserPermissions = {
   'all_modules_manager': [
     // Core Pages (excluding Renewals module - no cases, closed-cases, policy-timeline, logs)
     'dashboard', 'upload', 'claims',
-    'policy-servicing', 'new-business', 'medical-management',
+    'policy-servicing', 'new-business', 'medical-management', 'lead-management',
     // Email Pages
     'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
     // Marketing Pages
@@ -170,6 +170,7 @@ export const PermissionsProvider = ({ children }) => {
       '/policy-servicing': 'policy-servicing',
       '/new-business': 'new-business',
       '/medical-management': 'medical-management',
+      '/lead-management': 'lead-management',
       '/whatsapp-flow': 'whatsapp-flow',
       '/renewals/email-manager': 'renewal-email-manager',
       '/renewals/whatsapp-manager': 'renewal-whatsapp-manager'
@@ -194,6 +195,7 @@ export const PermissionsProvider = ({ children }) => {
       { path: '/policy-servicing', permission: 'policy-servicing', name: 'Policy Servicing' },
       { path: '/new-business', permission: 'new-business', name: 'New Business' },
       { path: '/medical-management', permission: 'medical-management', name: 'Medical Management' },
+      { path: '/lead-management', permission: 'lead-management', name: 'Lead Management' },
       
       // Email Pages
       { path: '/emails', permission: 'emails', name: 'Email Inbox' },
@@ -248,7 +250,7 @@ export const PermissionsProvider = ({ children }) => {
   const permissionGroups = {
     renewals: ['cases', 'closed-cases', 'policy-timeline', 'logs', 'renewal-email-manager', 'renewal-whatsapp-manager'],
     email: ['emails', 'email-dashboard', 'email-analytics', 'bulk-email'],
-    business: ['claims', 'policy-servicing', 'new-business', 'medical-management'],
+    business: ['lead-management', 'claims', 'policy-servicing', 'new-business', 'medical-management'],
     marketing: ['campaigns', 'templates'],
     survey: ['feedback', 'survey-designer'],
     whatsapp: ['whatsapp-flow'],

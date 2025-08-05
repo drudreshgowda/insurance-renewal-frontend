@@ -33,6 +33,8 @@ import ClaimsHistory from './pages/ClaimsHistory';
 import PolicyServicing from './pages/PolicyServicing';
 import NewBusiness from './pages/NewBusiness';
 import MedicalManagement from './pages/MedicalManagement';
+import LeadManagement from './pages/LeadManagement';
+import LMSSettings from './pages/LMSSettings';
 import WhatsappFlow from './pages/WhatsappFlow';
 import RenewalEmailManager from './pages/RenewalEmailManager';
 import RenewalWhatsAppManager from './pages/RenewalWhatsAppManager';
@@ -460,6 +462,22 @@ function AppWithTheme() {
             <Route path="/survey-designer/:surveyId" element={
               <ProtectedRoute>
                 <SurveyDesigner />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/lead-management" element={
+              <ProtectedRoute requiredPermission="lead-management">
+                <Layout>
+                  <LeadManagement />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/lms-settings" element={
+              <ProtectedRoute requiredPermission="lead-management">
+                <Layout>
+                  <LMSSettings />
+                </Layout>
               </ProtectedRoute>
             } />
             
