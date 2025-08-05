@@ -219,6 +219,110 @@ const LeadManagement = () => {
         { type: 'email', date: '2025-01-14T10:15:00Z', subject: 'Term Insurance Options' }
       ],
       tags: ['individual', 'price-sensitive']
+    },
+    {
+      id: 'LD004',
+      name: 'Ananya Sharma',
+      email: 'ananya.sharma@outlook.com',
+      phone: '+91-9876543213',
+      company: 'Global Retail Ltd',
+      designation: 'Operations Director',
+      source: 'Email Campaign',
+      status: 'follow-up',
+      priority: 'high',
+      score: 78,
+      assignedTo: 'Priya Sharma',
+      assignedToId: 'AGT001',
+      createdAt: '2025-01-12T11:45:00Z',
+      lastContact: '2025-01-14T13:20:00Z',
+      nextFollowUp: '2025-01-16T15:30:00Z',
+      location: 'Delhi, NCR',
+      policyInterest: 'Group Health Insurance',
+      estimatedValue: 120000,
+      notes: 'Looking for employee benefits package for 50+ staff',
+      contactHistory: [
+        { type: 'call', date: '2025-01-14T13:20:00Z', duration: 22, outcome: 'very-interested' },
+        { type: 'email', date: '2025-01-13T09:45:00Z', subject: 'Group Insurance Quote' }
+      ],
+      tags: ['corporate', 'high-value', 'urgent']
+    },
+    {
+      id: 'LD005',
+      name: 'Vikram Malhotra',
+      email: 'vikram.malhotra@gmail.com',
+      phone: '+91-9876543214',
+      company: 'Self-employed',
+      designation: 'Financial Consultant',
+      source: 'Cold Calling',
+      status: 'new',
+      priority: 'medium',
+      score: 62,
+      assignedTo: 'Amit Singh',
+      assignedToId: 'AGT002',
+      createdAt: '2025-01-15T09:10:00Z',
+      lastContact: '2025-01-15T09:10:00Z',
+      nextFollowUp: '2025-01-17T10:00:00Z',
+      location: 'Chennai, Tamil Nadu',
+      policyInterest: 'Investment Plans',
+      estimatedValue: 35000,
+      notes: 'Interested in tax-saving investment options',
+      contactHistory: [
+        { type: 'call', date: '2025-01-15T09:10:00Z', duration: 8, outcome: 'interested' }
+      ],
+      tags: ['investment', 'tax-planning']
+    },
+    {
+      id: 'LD006',
+      name: 'Sunita Reddy',
+      email: 'sunita.reddy@techcorp.in',
+      phone: '+91-9876543215',
+      company: 'Tech Corporation',
+      designation: 'HR Manager',
+      source: 'Website',
+      status: 'qualified',
+      priority: 'high',
+      score: 88,
+      assignedTo: 'Neha Gupta',
+      assignedToId: 'AGT003',
+      createdAt: '2025-01-11T15:30:00Z',
+      lastContact: '2025-01-15T11:45:00Z',
+      nextFollowUp: '2025-01-16T14:00:00Z',
+      location: 'Hyderabad, Telangana',
+      policyInterest: 'Employee Benefits',
+      estimatedValue: 85000,
+      notes: 'Comprehensive employee benefits package for tech startup',
+      contactHistory: [
+        { type: 'meeting', date: '2025-01-15T11:45:00Z', duration: 45, outcome: 'proposal-requested' },
+        { type: 'email', date: '2025-01-13T16:20:00Z', subject: 'Meeting Request' },
+        { type: 'call', date: '2025-01-12T10:30:00Z', duration: 15, outcome: 'interested' }
+      ],
+      tags: ['corporate', 'high-value', 'hot-lead']
+    },
+    {
+      id: 'LD007',
+      name: 'Rahul Verma',
+      email: 'rahul.verma@gmail.com',
+      phone: '+91-9876543216',
+      company: 'Verma Enterprises',
+      designation: 'Business Owner',
+      source: 'Referral',
+      status: 'contacted',
+      priority: 'medium',
+      score: 70,
+      assignedTo: 'Priya Sharma',
+      assignedToId: 'AGT001',
+      createdAt: '2025-01-14T12:15:00Z',
+      lastContact: '2025-01-15T10:05:00Z',
+      nextFollowUp: '2025-01-18T11:00:00Z',
+      location: 'Ahmedabad, Gujarat',
+      policyInterest: 'Business Liability Insurance',
+      estimatedValue: 50000,
+      notes: 'Small business owner looking for liability coverage',
+      contactHistory: [
+        { type: 'whatsapp', date: '2025-01-15T10:05:00Z', message: 'Sent policy brochure' },
+        { type: 'call', date: '2025-01-14T14:30:00Z', duration: 10, outcome: 'follow-up-needed' }
+      ],
+      tags: ['small-business', 'referral']
     }
   ]);
 
@@ -819,7 +923,7 @@ const LeadManagement = () => {
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Box>
               <Typography variant="h4" fontWeight="700" gutterBottom>
-                Lead Management
+                
               </Typography>
               <Typography variant="body1" color="text.secondary">
                 Manage leads, track performance, and optimize conversion rates
@@ -1058,7 +1162,7 @@ const LeadManagement = () => {
                 <Box sx={{ mb: 3 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Typography variant="h6" fontWeight="600">
-                      Lead Management
+                      
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 1 }}>
                       <Button
