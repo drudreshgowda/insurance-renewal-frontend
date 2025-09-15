@@ -33,14 +33,10 @@ import {
   ExpandMore as ExpandMoreIcon,
   Notifications as NotificationsIcon,
   Timeline as TimelineIcon,
-  Close as CloseIcon,
-  Refresh as RefreshIcon
+  Close as CloseIcon
 } from '@mui/icons-material';
-import { deduplicateContacts } from '../services/api';
 import { UploadApI } from '../api/Upload';
 import { Snackbar } from '@mui/material';
-import { getDate } from 'date-fns';
-import { id } from 'date-fns/locale';
 
 //import Alert from '@mui/material/Alert';
 
@@ -144,11 +140,9 @@ const Upload = () => {
     setTemplatesError(null);
     
     try {
-      console.log("Starting template fetch...");
       const result = await UploadApI.GetTemplates();
       
       if (result.success) {
-        console.log("Templates API response:", result.data);
         
         // Handle different response formats
         let templates = [];
@@ -164,35 +158,18 @@ const Upload = () => {
                      [];
         }
         
-        console.log("Extracted templates:", templates);
-        console.log("Number of templates found:", templates.length);
-        
         if (templates.length > 0) {
           setDynamicTemplates(templates);
           setTemplatesError(null);
-          console.log(`Successfully loaded ${templates.length} templates from API`);
-          
-          // Log first few templates to see their structure
-          console.log('Sample templates:', templates.slice(0, 3).map(t => ({
-            id: t.id,
-            idType: typeof t.id,
-            name: t.template_name || t.name,
-            type: t.template_type || t.type || t.channel,
-            subject: t.subject,
-            content: t.template_content || t.content
-          })));
         } else {
-          console.warn("No templates found in API response");
           setTemplatesError("No templates found in API response");
           setDynamicTemplates([]);
         }
       } else {
-        console.error("Failed to fetch templates:", result.message);
         setTemplatesError(result.message || "Failed to fetch templates");
         setDynamicTemplates([]);
       }
     } catch (error) {
-      console.error("Error fetching templates:", error);
       setTemplatesError(error.message || "Network error while fetching templates");
       setDynamicTemplates([]);
     } finally {
@@ -261,7 +238,6 @@ const Upload = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (dynamicTemplates.length === 0 && !templatesLoading) {
-        console.log("No templates loaded, retrying...");
         fetchTemplates();
       }
     }, 2000); // Retry after 2 seconds if no templates loaded
@@ -285,7 +261,6 @@ const Upload = () => {
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
-      console.log("Selected file:", selectedFile);
       setFile(selectedFile);
     }
   };
@@ -349,18 +324,7 @@ const Upload = () => {
       const primaryChannel = campaignData.type[0];
       const selectedTemplateId = campaignData.template[primaryChannel];
       
-      console.log('Campaign data:', campaignData);
-      console.log('Primary channel:', primaryChannel);
-      console.log('Selected template ID:', selectedTemplateId);
-      console.log('Selected template ID type:', typeof selectedTemplateId);
-      console.log('Template object:', campaignData.template);
-      console.log('Available templates for channel:', getTemplatesForChannel(primaryChannel));
-      
-      // Log each template's ID and type
       const channelTemplates = getTemplatesForChannel(primaryChannel);
-      channelTemplates.forEach(template => {
-        console.log(`Template: ${template.template_name || template.name}, ID: ${template.id}, ID Type: ${typeof template.id}`);
-      });
       
       if (!selectedTemplateId) {
         setSnackbar({
@@ -374,8 +338,6 @@ const Upload = () => {
       // Handle different template ID formats
       let templateId;
       const isUsingFallbackTemplates = channelTemplates.some(t => typeof t.id === 'string' && t.id.includes('-'));
-      
-      console.log('Using fallback templates:', isUsingFallbackTemplates);
       
       if (isUsingFallbackTemplates) {
         // For fallback templates with string IDs, we need to map them to numeric IDs
@@ -392,7 +354,6 @@ const Upload = () => {
         };
         
         templateId = fallbackTemplateMap[selectedTemplateId];
-        console.log('Mapped fallback template ID:', selectedTemplateId, '->', templateId);
       } else {
         // For dynamic templates from API
         if (typeof selectedTemplateId === 'number') {
@@ -411,15 +372,7 @@ const Upload = () => {
         }
       }
       
-      console.log('Final template ID:', templateId, 'Type:', typeof templateId);
-      
       if (isNaN(templateId) || templateId <= 0) {
-        console.error('Template ID validation failed:', {
-          selectedTemplateId,
-          templateId,
-          isUsingFallbackTemplates,
-          channelTemplates: channelTemplates.map(t => ({ id: t.id, name: t.template_name || t.name }))
-        });
         
         setSnackbar({
           open: true,
@@ -492,7 +445,6 @@ const Upload = () => {
           : []
       };
   
-      console.log('Final Payload:', campaignPayload);
   
       const result = await UploadApI.Createcampaigns(campaignPayload);
   
@@ -528,7 +480,6 @@ const Upload = () => {
         });
         setActiveStep(0);
       } else {
-        console.error("Campaign creation failed:", result);
         setSnackbar({
           open: true,
           message: result.message || "Failed to create campaign.",
@@ -536,7 +487,6 @@ const Upload = () => {
         });
       }
     } catch (error) {
-      console.error("Campaign submit error:", error);
       setSnackbar({
         open: true,
         message: error.message || "An unexpected error occurred!",
@@ -547,7 +497,7 @@ const Upload = () => {
   
   
 
-  const handleCampaignAction = async (campaignId, action) => {
+  const handleCampaignAction = async (_campaignId, _action) => {
     // For now, just refresh the campaigns list from API
     // In a real implementation, you would call an API to update the campaign status
     await fetchActiveCampaigns();
@@ -584,12 +534,6 @@ const Upload = () => {
         return templateChannel === channel.toLowerCase();
       });
       
-      console.log(`Templates for ${channel}:`, channelTemplates.map(t => ({ 
-        id: t.id, 
-        name: t.template_name || t.name,
-        subject: t.subject,
-        content: t.template_content || t.content
-      })));
       
       // Return dynamic templates if found
       if (channelTemplates.length > 0) {
@@ -598,7 +542,6 @@ const Upload = () => {
     }
     
     // Fallback to static templates if no dynamic templates found
-    console.log(`Using fallback templates for ${channel}`);
     return templates[channel] || [];
   };
 
@@ -1458,7 +1401,6 @@ const Upload = () => {
                            value={campaignData.template[type] || ''}
                            label={`Select ${type.charAt(0).toUpperCase() + type.slice(1)} Template`}
                            onChange={(e) => {
-                             console.log(`Template selected for ${type}:`, e.target.value, 'Type:', typeof e.target.value);
                              setCampaignData(prev => ({ 
                                ...prev, 
                                template: { ...prev.template, [type]: e.target.value }

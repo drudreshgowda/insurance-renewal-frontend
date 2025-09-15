@@ -192,5 +192,4 @@ export const UploadApI = {
     }
   }
   
-
 };
