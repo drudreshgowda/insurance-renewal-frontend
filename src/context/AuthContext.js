@@ -1,8 +1,9 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import { useTranslation } from 'react-i18next';
+
+import React, { createContext, useState, useEffect, useContext } from "react";
+import { useTranslation } from "react-i18next";
+import { loginAPI } from "../api/login"; // adjust path if needed
 
 const AuthContext = createContext();
-
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
@@ -10,184 +11,102 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const { i18n } = useTranslation();
 
-  // Function to apply user language preference
+  // Apply language preference
   const applyUserLanguage = (user) => {
-    if (user && user.portalLanguage) {
-      i18n.changeLanguage(user.portalLanguage);
-      localStorage.setItem('userLanguagePreference', user.portalLanguage);
+    if (user && user.language) {
+      i18n.changeLanguage(user.language);
+      localStorage.setItem("userLanguagePreference", user.language);
     }
   };
 
-  // Mock function to get user data from backend (including language preference)
-  const getUserData = (email) => {
-    // In a real app, this would fetch user data from your backend
-    // For demo purposes, we'll simulate different users with different language preferences
-    const mockUsers = {
-      'rajesh@client.com': {
-        id: '1',
-        name: 'Rajesh Kumar',
-        email: 'rajesh@client.com',
-        role: 'renewals_specialist',
-        portalLanguage: 'en', // English preference
-        permissions: [
-          // Renewals Module Only
-          'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs',
-          // Personal Pages
-          'profile'
-        ]
-      },
-      'priya@client.com': {
-        id: '2',
-        name: 'Priya Sharma',
-        email: 'priya@client.com',
-        role: 'all_modules_manager',
-        portalLanguage: 'en', // English preference
-        permissions: [
-          // Core Pages (excluding Renewals module - no cases, closed-cases, policy-timeline, logs)
-          'dashboard', 'upload', 'claims',
-          'policy-servicing', 'new-business', 'medical-management', 'lead-management',
-          // Email Pages
-          'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
-          // Marketing Pages
-          'campaigns', 'templates',
-          // Survey Pages
-          'feedback', 'survey-designer',
-          // WhatsApp Pages
-          'whatsapp-flow',
-          // Admin Pages
-          'settings', 'billing', 'users',
-          // Personal Pages
-          'profile'
-        ]
-      },
-      'admin@client.com': {
-        id: '3',
-        name: 'Admin User',
-        email: 'admin@client.com',
-        role: 'admin',
-        portalLanguage: 'en', // English preference
-        permissions: [
-          // Full access to all modules
-          'dashboard', 'upload', 'cases', 'closed-cases', 'policy-timeline', 'logs', 'claims',
-          'policy-servicing', 'new-business', 'medical-management', 'lead-management',
-          'emails', 'email-dashboard', 'email-analytics', 'bulk-email',
-          'campaigns', 'templates', 'feedback', 'survey-designer', 'whatsapp-flow',
-          'renewal-email-manager', 'renewal-whatsapp-manager',
-          'settings', 'billing', 'users', 'profile'
-        ]
-      }
-    };
-    
-    return mockUsers[email] || {
-      id: '1',
-      name: 'Demo User',
-      email: email,
-      role: 'user',
-      portalLanguage: 'en' // Default to English
-    };
-  };
-
+  // Load existing session
   useEffect(() => {
-    // Check for existing session
     const checkAuthStatus = async () => {
       try {
-        // In a real app, this would verify the token with your backend
-        const token = localStorage.getItem('authToken');
-        
-        if (token) {
-          // In a real app, you would decode the token to get user email/id
-          // For demo, we'll use a stored email or default
-          const storedEmail = localStorage.getItem('userEmail') || 'admin@client.com';
-          const userData = getUserData(storedEmail);
-          setCurrentUser(userData);
-          applyUserLanguage(userData);
+        const token = localStorage.getItem("authToken");
+        const userEmail = localStorage.getItem("userEmail");
+
+        if (token && userEmail) {
+          // In a real app, validate token via backend
+          const storedUser = JSON.parse(localStorage.getItem("userData"));
+          if (storedUser) {
+            setCurrentUser(storedUser);
+            applyUserLanguage(storedUser);
+          }
         }
       } catch (error) {
-        console.error('Auth check failed:', error);
-        // Clear any invalid tokens
-        localStorage.removeItem('authToken');
+        console.error("Auth check failed:", error);
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("userEmail");
+        localStorage.removeItem("userData");
       } finally {
         setLoading(false);
       }
     };
-    
+
     checkAuthStatus();
   }, []);
 
-  const login = async (email, _password) => {
-    // In a real app, this would call your authentication API
-    // const response = await fetch('/api/auth/login', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ email, password })
-    // });
-    // const data = await response.json();
-    
-    // Mock successful login - just validate credentials
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        // In a real app, you would validate credentials here
-        // For demo, we'll just consider any login attempt successful
-        
-        const userData = getUserData(email);
-        
-        // For non-MFA logins, we need to set the token and user here
-        const savedSettings = localStorage.getItem('userSettings');
-        let mfaEnabled = false;
-        
-        if (savedSettings) {
-          try {
-            const settings = JSON.parse(savedSettings);
-            mfaEnabled = settings.mfaEnabled;
-                  } catch (error) {
-          // Failed to parse saved settings, using defaults
-        }
-        }
-        
-        // If MFA is not enabled, log the user in directly
-        if (!mfaEnabled) {
-          const mockToken = 'mock-jwt-token-' + Math.random().toString(36).substring(2);
-          localStorage.setItem('authToken', mockToken);
-          localStorage.setItem('userEmail', email); // Store email for session persistence
-          setCurrentUser(userData);
-          applyUserLanguage(userData);
-        }
-        
-        resolve({ success: true, user: userData });
-      }, 1000);
-    });
+  // Live API Login
+  const login = async (email, password) => {
+    try {
+      const response = await loginAPI.login({ email, password });
+
+      if (!response.success) {
+        return { success: false, message: response.message || "Login failed" };
+      }
+
+      const { access, refresh, user } = response.data;
+
+      //Special case: give sahina@gmail.com full permissions
+      if (user.email === "sahina@gmail.com") {
+        user.permissions = [
+          "dashboard", "upload", "cases", "closed-cases", "policy-timeline", "logs",
+          "claims", "policy-servicing", "new-business", "medical-management", "lead-management",
+          "emails", "email-dashboard", "email-analytics", "bulk-email",
+          "campaigns", "templates", "feedback", "survey-designer", "whatsapp-flow",
+          "renewal-email-manager", "renewal-whatsapp-manager",
+          "settings", "billing", "users", "profile"
+        ];
+        user.role = "admin";
+      }
+
+      // Save tokens + user
+      localStorage.setItem("authToken", access);
+      localStorage.setItem("refreshToken", refresh);
+      localStorage.setItem("userEmail", user.email);
+      localStorage.setItem("userData", JSON.stringify(user));
+
+      setCurrentUser(user);
+      applyUserLanguage(user);
+
+      return { success: true, user };
+    } catch (error) {
+      console.error("Login error:", error);
+      return { success: false, message: "An error occurred. Please try again." };
+    }
   };
 
-  // Function to verify MFA OTP
+  // (Optional) Verify OTP - replace with real API if you have one
   const verifyMfaOtp = async (otp) => {
     return new Promise((resolve) => {
       setTimeout(() => {
-        // In a real app, this would validate the OTP with your backend
-        // Here we just accept any 6-digit code as valid
         if (otp && otp.length === 6 && /^\d+$/.test(otp)) {
-          // OTP is valid, log the user in now
-          const mockToken = 'mock-jwt-token-' + Math.random().toString(36).substring(2);
-          localStorage.setItem('authToken', mockToken);
-          
-          // Note: userData would come from your backend in a real app
-          // Here we'll get it from the stored email
-          const storedEmail = localStorage.getItem('userEmail') || 'admin@client.com';
-          const userData = getUserData(storedEmail);
-          
-          setCurrentUser(userData);
-          applyUserLanguage(userData);
-          resolve({ success: true, user: userData });
+          resolve({ success: true });
         } else {
-          resolve({ success: false, message: 'Invalid OTP code. Please try again.' });
+          resolve({ success: false, message: "Invalid OTP code. Please try again." });
         }
-      }, 1000);
+      }, 800);
     });
   };
 
   const logout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userLanguagePreference');
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("userEmail");
+    localStorage.removeItem("userLanguagePreference");
+    localStorage.removeItem("userData");
     setCurrentUser(null);
   };
 
@@ -196,7 +115,7 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     isAuthenticated: !!currentUser,
-    verifyMfaOtp
+    verifyMfaOtp,
   };
 
   return (

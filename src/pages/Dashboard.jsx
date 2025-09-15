@@ -64,8 +64,136 @@ import {
   CheckCircle as CheckCircleIcon,
   Warning as WarningIcon
 } from '@mui/icons-material';
+import { channelAPI } from "../api/Renewal";
+import { hierarchyAPI } from "../api/Hierarchy";
+
+import { Snackbar } from '@mui/material';
+
+import Alert from '@mui/material/Alert';
 
 const Dashboard = () => {
+//live api call
+const [channels, setChannels] = useState([]);
+const [loading, setLoading] = useState(true);
+const [snackbar, setSnackbar] = useState({
+  open: false,
+  message: "",
+  severity: "success"
+});
+
+useEffect(() => {
+  const fetchChannels = async () => {
+    const result = await channelAPI.ChannelPerformanceSummary();
+    if (result.success) {
+      setChannels(result.data.results || []);
+    } else {
+      console.error(result.message);
+      setChannels([]);
+    }
+    setLoading(false);
+  };
+  fetchChannels();
+}, []);
+
+// const handleChannelSave = async () => {
+//   if (channelDialog.mode === 'create') {
+//     const newChannel = {
+//       name: channelDialog.channelData.name,
+//       channel_type: channelDialog.channelData.type,
+//       description: channelDialog.channelData.description,
+//       target_audience_name_input: channelDialog.channelData.targetAudience,
+//       manager_name: channelDialog.channelData.manager,
+//       cost_per_lead: channelDialog.channelData.costPerLead 
+//         ? channelDialog.channelData.costPerLead.toFixed(2) 
+//         : "0.00",
+//       budget: channelDialog.channelData.budget 
+//         ? channelDialog.channelData.budget.toFixed(2) 
+//         : "0.00",
+//       status: channelDialog.channelData.status,
+//       priority: channelDialog.channelData.settings?.priority,
+//       working_hours: channelDialog.channelData.settings?.workingHours,
+//       max_capacity: channelDialog.channelData.settings?.maxCapacity,
+//     };
+
+//     const result = await channelAPI.CreateChannel(newChannel);
+
+//     if (result.success) {
+//       const refresh = await channelAPI.ChannelPerformanceSummary();
+//       if (refresh.success) {
+//         setChannels(refresh.data.results || []);
+//       }
+
+//       setSnackbar({
+//         open: true,
+//         message: "Channel created successfully",
+//         severity: "success",
+//       });
+//     } else {
+//       setSnackbar({
+//         open: true,
+//         message: result.message,
+//         severity: "error",
+//       });
+//     }
+//   }
+
+//   setChannelDialog({ open: false, mode: "create", channelData: {} });
+// };
+
+
+
+const handleChannelSave = async () => {
+  const payload = {
+    name: channelDialog.channelData.name,
+    channel_type: channelDialog.channelData.type,
+    description: channelDialog.channelData.description,
+    target_audience_name_input: channelDialog.channelData.targetAudience,
+    manager_name: channelDialog.channelData.manager,
+    cost_per_lead: channelDialog.channelData.costPerLead 
+      ? channelDialog.channelData.costPerLead.toFixed(2) 
+      : "0.00",
+    budget: channelDialog.channelData.budget 
+      ? channelDialog.channelData.budget.toFixed(2) 
+      : "0.00",
+    status: channelDialog.channelData.status,
+    priority: channelDialog.channelData.settings?.priority,
+    working_hours: channelDialog.channelData.settings?.workingHours,
+    max_capacity: channelDialog.channelData.settings?.maxCapacity,
+  };
+
+  let result;
+  if (channelDialog.mode === "create") {
+    result = await channelAPI.CreateChannel(payload);
+  } else if (channelDialog.mode === "edit" && channelDialog.channelData.id) {
+    result = await channelAPI.UpdateChannel(channelDialog.channelData.id, payload);
+  }
+
+  if (result?.success) {
+    const refresh = await channelAPI.ChannelPerformanceSummary();
+    if (refresh.success) {
+      setChannels(refresh.data.results || []);
+    }
+
+    setSnackbar({
+      open: true,
+      message: channelDialog.mode === "create" 
+        ? "Channel created successfully" 
+        : "Channel updated successfully",
+      severity: "success",
+    });
+  } else {
+    setSnackbar({
+      open: true,
+      message: result?.message || "Something went wrong",
+      severity: "error",
+    });
+  }
+
+  setChannelDialog({ open: false, mode: "create", channelData: {} });
+};
+
+
+
   const theme = useTheme();
   const [stats, setStats] = useState({
     totalCases: 0,
@@ -127,7 +255,7 @@ const Dashboard = () => {
   const [hierarchyManagementExpanded, setHierarchyManagementExpanded] = useState(false);
   
   // Channel Management states
-  const [channels, setChannels] = useState([]);
+  //const [channels, setChannels] = useState([]);
   const [channelDialog, setChannelDialog] = useState({
     open: false,
     mode: 'create', // 'create', 'edit'
@@ -520,138 +648,138 @@ const Dashboard = () => {
     setCampaignData(mockCampaignData);
 
     // Mock Channel Management Data
-    const mockChannelData = [
-      {
-        id: 'ch-001',
-        name: 'Online Portal',
-        type: 'online',
-        status: 'active',
-        description: 'Web-based customer portal for policy renewals',
-        targetAudience: 'Tech-savvy customers',
-        costPerLead: 45,
-        conversionRate: 68.5,
-        manager: 'Rajesh Kumar',
-        budget: 500000,
-        currentCases: 1250,
-        renewedCases: 856,
-        revenue: 12450000,
-        settings: {
-          autoAssignment: true,
-          priority: 'high',
-          workingHours: '24/7',
-          maxCapacity: 2000
-        },
-        performance: {
-          efficiency: 85.2,
-          customerSatisfaction: 4.3,
-          avgResponseTime: 2.5
-        }
-      },
-      {
-        id: 'ch-002',
-        name: 'Mobile Application',
-        type: 'mobile',
-        status: 'active',
-        description: 'Mobile app for on-the-go policy management',
-        targetAudience: 'Mobile-first users',
-        costPerLead: 35,
-        conversionRate: 72.3,
-        manager: 'Priya Sharma',
-        budget: 350000,
-        currentCases: 890,
-        renewedCases: 644,
-        revenue: 8960000,
-        settings: {
-          autoAssignment: true,
-          priority: 'high',
-          workingHours: '24/7',
-          maxCapacity: 1500
-        },
-        performance: {
-          efficiency: 88.7,
-          customerSatisfaction: 4.5,
-          avgResponseTime: 1.8
-        }
-      },
-      {
-        id: 'ch-003',
-        name: 'Branch Network',
-        type: 'offline',
-        status: 'active',
-        description: 'Physical branch offices for in-person service',
-        targetAudience: 'Traditional customers',
-        costPerLead: 120,
-        conversionRate: 78.9,
-        manager: 'Amit Patel',
-        budget: 800000,
-        currentCases: 650,
-        renewedCases: 513,
-        revenue: 7150000,
-        settings: {
-          autoAssignment: false,
-          priority: 'medium',
-          workingHours: '9-18',
-          maxCapacity: 800
-        },
-        performance: {
-          efficiency: 79.2,
-          customerSatisfaction: 4.7,
-          avgResponseTime: 15.2
-        }
-      },
-      {
-        id: 'ch-004',
-        name: 'Call Center',
-        type: 'phone',
-        status: 'active',
-        description: 'Telephone-based customer support and renewals',
-        targetAudience: 'All customer segments',
-        costPerLead: 80,
-        conversionRate: 65.4,
-        manager: 'Sunita Verma',
-        budget: 600000,
-        currentCases: 1100,
-        renewedCases: 719,
-        revenue: 9570000,
-        settings: {
-          autoAssignment: true,
-          priority: 'medium',
-          workingHours: '8-20',
-          maxCapacity: 1200
-        },
-        performance: {
-          efficiency: 76.8,
-          customerSatisfaction: 4.1,
-          avgResponseTime: 8.5
-        }
-      },
-      {
-        id: 'ch-005',
-        name: 'Agent Network',
-        type: 'agent',
-        status: 'active',
-        description: 'Field agents for personalized customer service',
-        targetAudience: 'High-value customers',
-        costPerLead: 200,
-        conversionRate: 82.1,
-        manager: 'Vikash Singh',
-        budget: 450000,
-        currentCases: 380,
-        renewedCases: 312,
-        revenue: 5320000,
-        settings: {
-          autoAssignment: false,
-          priority: 'high',
-          workingHours: '10-19',
-          maxCapacity: 500
-        },
-        performance: {
-          efficiency: 92.3,
-          customerSatisfaction: 4.8,
-          avgResponseTime: 24.0
-        }
-      }
-    ];
+    // const mockChannelData = [
+    //   {
+    //     id: 'ch-001',
+    //     name: 'Online Portal',
+    //     type: 'online',
+    //     status: 'active',
+    //     description: 'Web-based customer portal for policy renewals',
+    //     targetAudience: 'Tech-savvy customers',
+    //     costPerLead: 45,
+    //     conversionRate: 68.5,
+    //     manager: 'Rajesh Kumar',
+    //     budget: 500000,
+    //     currentCases: 1250,
+    //     renewedCases: 856,
+    //     revenue: 12450000,
+    //     settings: {
+    //       autoAssignment: true,
+    //       priority: 'high',
+    //       workingHours: '24/7',
+    //       maxCapacity: 2000
+    //     },
+    //     performance: {
+    //       efficiency: 85.2,
+    //       customerSatisfaction: 4.3,
+    //       avgResponseTime: 2.5
+    //     }
+    //   },
+    //   {
+    //     id: 'ch-002',
+    //     name: 'Mobile Application',
+    //     type: 'mobile',
+    //     status: 'active',
+    //     description: 'Mobile app for on-the-go policy management',
+    //     targetAudience: 'Mobile-first users',
+    //     costPerLead: 35,
+    //     conversionRate: 72.3,
+    //     manager: 'Priya Sharma',
+    //     budget: 350000,
+    //     currentCases: 890,
+    //     renewedCases: 644,
+    //     revenue: 8960000,
+    //     settings: {
+    //       autoAssignment: true,
+    //       priority: 'high',
+    //       workingHours: '24/7',
+    //       maxCapacity: 1500
+    //     },
+    //     performance: {
+    //       efficiency: 88.7,
+    //       customerSatisfaction: 4.5,
+    //       avgResponseTime: 1.8
+    //     }
+    //   },
+    //   {
+    //     id: 'ch-003',
+    //     name: 'Branch Network',
+    //     type: 'offline',
+    //     status: 'active',
+    //     description: 'Physical branch offices for in-person service',
+    //     targetAudience: 'Traditional customers',
+    //     costPerLead: 120,
+    //     conversionRate: 78.9,
+    //     manager: 'Amit Patel',
+    //     budget: 800000,
+    //     currentCases: 650,
+    //     renewedCases: 513,
+    //     revenue: 7150000,
+    //     settings: {
+    //       autoAssignment: false,
+    //       priority: 'medium',
+    //       workingHours: '9-18',
+    //       maxCapacity: 800
+    //     },
+    //     performance: {
+    //       efficiency: 79.2,
+    //       customerSatisfaction: 4.7,
+    //       avgResponseTime: 15.2
+    //     }
+    //   },
+    //   {
+    //     id: 'ch-004',
+    //     name: 'Call Center',
+    //     type: 'phone',
+    //     status: 'active',
+    //     description: 'Telephone-based customer support and renewals',
+    //     targetAudience: 'All customer segments',
+    //     costPerLead: 80,
+    //     conversionRate: 65.4,
+    //     manager: 'Sunita Verma',
+    //     budget: 600000,
+    //     currentCases: 1100,
+    //     renewedCases: 719,
+    //     revenue: 9570000,
+    //     settings: {
+    //       autoAssignment: true,
+    //       priority: 'medium',
+    //       workingHours: '8-20',
+    //       maxCapacity: 1200
+    //     },
+    //     performance: {
+    //       efficiency: 76.8,
+    //       customerSatisfaction: 4.1,
+    //       avgResponseTime: 8.5
+    //     }
+    //   },
+    //   {
+    //     id: 'ch-005',
+    //     name: 'Agent Network',
+    //     type: 'agent',
+    //     status: 'active',
+    //     description: 'Field agents for personalized customer service',
+    //     targetAudience: 'High-value customers',
+    //     costPerLead: 200,
+    //     conversionRate: 82.1,
+    //     manager: 'Vikash Singh',
+    //     budget: 450000,
+    //     currentCases: 380,
+    //     renewedCases: 312,
+    //     revenue: 5320000,
+    //     settings: {
+    //       autoAssignment: false,
+    //       priority: 'high',
+    //       workingHours: '10-19',
+    //       maxCapacity: 500
+    //     },
+    //     performance: {
+    //       efficiency: 92.3,
+    //       customerSatisfaction: 4.8,
+    //       avgResponseTime: 24.0
+    //     }
+    //   }
+    // ];
 
     // Mock Hierarchy Data
     const mockHierarchyData = [
@@ -784,7 +912,7 @@ const Dashboard = () => {
       { name: 'East Region', level: 'Region', efficiency: 84.7, budget: 82.1, target: 88.9, revenue: 22150000 }
     ];
 
-    setChannels(mockChannelData);
+    //setChannels(mockChannelData);
     setHierarchyData(mockHierarchyData);
     setChannelPerformanceData(mockChannelPerformanceData);
     setHierarchyPerformanceData(mockHierarchyPerformanceData);
@@ -827,40 +955,79 @@ const Dashboard = () => {
     });
   };
 
-  const handleChannelEdit = (channel) => {
-    setChannelDialog({
-      open: true,
-      mode: 'edit',
-      channelData: { ...channel }
-    });
-  };
-
-  const handleChannelSave = () => {
-    if (channelDialog.mode === 'create') {
-      const newChannel = {
-        ...channelDialog.channelData,
-        id: `ch-${Date.now()}`,
-        currentCases: 0,
-        renewedCases: 0,
-        revenue: 0,
-        performance: {
-          efficiency: 0,
-          customerSatisfaction: 0,
-          avgResponseTime: 0
-        }
-      };
-      setChannels(prev => [...prev, newChannel]);
-    } else {
-      setChannels(prev => prev.map(ch => 
-        ch.id === channelDialog.channelData.id ? channelDialog.channelData : ch
-      ));
+  const handleChannelEdit = async (channelId) => {
+    try {
+      const result = await channelAPI.GetChannelById(channelId);
+      if (result.success) {
+        const data = result.data;
+        setChannelDialog({
+          open: true,
+          mode: 'edit',
+          channelData: {
+            id: data.id,
+            name: data.name,
+            type: data.channel_type,   // API has `channel_type`
+            description: data.description,
+            targetAudience: data.target_audience_name,
+            manager: data.manager_name,
+            costPerLead: Number(data.cost_per_lead),
+            budget: Number(data.budget),
+            status: data.status,
+            settings: {
+              priority: data.priority,
+              workingHours: data.working_hours,
+              maxCapacity: data.max_capacity,
+              autoAssignment: data.is_active, // mapped from is_active
+            },
+          },
+        });
+      } else {
+        console.error("Failed to fetch channel:", result.message);
+      }
+    } catch (error) {
+      console.error("Error in handleChannelEdit:", error);
     }
-    setChannelDialog({ open: false, mode: 'create', channelData: {} });
   };
+  
 
-  const handleChannelDelete = (channelId) => {
-    setChannels(prev => prev.filter(ch => ch.id !== channelId));
+ 
+
+  const handleChannelDelete = async (channelId) => {
+    try {
+      const result = await channelAPI.DeleteChannel(channelId);
+  
+      if (result.success) {
+        // refresh list from backend (recommended)
+        const refresh = await channelAPI.ChannelPerformanceSummary();
+        if (refresh.success) {
+          setChannels(refresh.data.results || []);
+        } else {
+          // fallback: remove locally if refresh fails
+          setChannels(prev => prev.filter(ch => ch.id !== channelId));
+        }
+  
+        setSnackbar({
+          open: true,
+          message: "Channel deleted successfully",
+          severity: "success",
+        });
+      } else {
+        setSnackbar({
+          open: true,
+          message: result.message || "Failed to delete channel",
+          severity: "error",
+        });
+      }
+    } catch (error) {
+      console.error("Delete error:", error);
+      setSnackbar({
+        open: true,
+        message: "Unexpected error occurred",
+        severity: "error",
+      });
+    }
   };
+  
 
   // Hierarchy Management Handlers
   const handleHierarchyCreate = () => {
@@ -889,29 +1056,48 @@ const Dashboard = () => {
     });
   };
 
-  const handleHierarchySave = () => {
-    if (hierarchyDialog.mode === 'create') {
-      const newNode = {
-        ...hierarchyDialog.nodeData,
-        id: `node-${Date.now()}`,
-        currentCases: 0,
-        renewedCases: 0,
-        revenue: 0,
-        children: [],
-        performance: {
-          efficiency: 0,
-          budgetUtilization: 0,
-          targetAchievement: 0
-        }
+  const handleHierarchySave = async () => {
+    if (hierarchyDialog.mode === "create") {
+      const payload = {
+        unit_name: hierarchyDialog.nodeData.name,
+        unit_type: hierarchyDialog.nodeData.type,
+        description: hierarchyDialog.nodeData.description,
+        parent_unit: hierarchyDialog.nodeData.parent_unit || null, // ✅ name not ID
+        manager_id: hierarchyDialog.nodeData.managerId,
+        budget: hierarchyDialog.nodeData.budget ? Number(hierarchyDialog.nodeData.budget) : 0,
+        target_cases: hierarchyDialog.nodeData.targetCases ? Number(hierarchyDialog.nodeData.targetCases) : 0,
+        status: hierarchyDialog.nodeData.status || "active",
       };
-      setHierarchyData(prev => [...prev, newNode]);
+  
+      const result = await hierarchyAPI.CreateUnit(payload);
+  
+      if (result.success) {
+        setHierarchyData((prev) => [...prev, result.data]);
+        setSnackbar({
+          open: true,
+          message: "Hierarchy unit created successfully",
+          severity: "success",
+        });
+      } else {
+        setSnackbar({
+          open: true,
+          message: result.message || "Failed to create hierarchy unit",
+          severity: "error",
+        });
+      }
     } else {
-      setHierarchyData(prev => prev.map(node => 
-        node.id === hierarchyDialog.nodeData.id ? hierarchyDialog.nodeData : node
-      ));
+      setHierarchyData((prev) =>
+        prev.map((node) =>
+          node.id === hierarchyDialog.nodeData.id ? hierarchyDialog.nodeData : node
+        )
+      );
     }
-    setHierarchyDialog({ open: false, mode: 'create', nodeData: {} });
+  
+    setHierarchyDialog({ open: false, mode: "create", nodeData: {} });
   };
+  
+  
+  
 
   const handleHierarchyDelete = (nodeId) => {
     setHierarchyData(prev => prev.filter(node => node.id !== nodeId));
@@ -1555,7 +1741,7 @@ const Dashboard = () => {
                                 </Box>
                               </Box>
                               <Box sx={{ display: 'flex', gap: 0.5 }}>
-                                <IconButton size="small" onClick={() => handleChannelEdit(channel)}>
+                                <IconButton size="small" onClick={() => handleChannelEdit(channel.id)}>
                                   <EditIcon fontSize="small" />
                                 </IconButton>
                                 <IconButton size="small" color="error" onClick={() => handleChannelDelete(channel.id)}>
@@ -1653,13 +1839,13 @@ const Dashboard = () => {
                         <TableCell align="right"><Typography fontWeight="600">Revenue</Typography></TableCell>
                       </TableRow>
                     </TableHead>
-                    <TableBody>
+                    {/* <TableBody>
                       {channels.map((channel) => (
                         <TableRow key={channel.id}>
                           <TableCell>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                               <Avatar sx={{ bgcolor: 'primary.main', width: 32, height: 32 }}>
-                                {getChannelTypeIcon(channel.type)}
+                                {getChannelTypeIcon(channel.channel_type)}
                               </Avatar>
                               <Box>
                                 <Typography variant="body2" fontWeight="600">{channel.name}</Typography>
@@ -1699,7 +1885,61 @@ const Dashboard = () => {
                           </TableCell>
                         </TableRow>
                       ))}
-                    </TableBody>
+                    </TableBody> */}
+
+<TableBody>
+  {channels.map((channel) => (
+    <TableRow key={channel.id}>
+      <TableCell>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Avatar sx={{ bgcolor: 'primary.main', width: 32, height: 32 }}>
+            {getChannelTypeIcon(channel.channel_type)}
+          </Avatar>
+          <Box>
+            <Typography variant="body2" fontWeight="600">
+              {channel.name}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {channel.manager_name} 
+            </Typography>
+          </Box>
+        </Box>
+      </TableCell>
+      <TableCell align="center">
+        <Chip
+          label={channel.channel_type} 
+          size="small"
+          variant="outlined"
+          sx={{ textTransform: 'capitalize' }}
+        />
+      </TableCell>
+
+      <TableCell align="center">
+        <Typography variant="body2">{channel.currentCases ?? 0}</Typography>
+      </TableCell>
+      <TableCell align="center">
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+          <Typography variant="body2" fontWeight="600">{channel.conversionRate ?? 0}%</Typography>
+          {(channel.conversionRate ?? 0) >= 70 ? 
+            <TrendingUpIcon fontSize="small" color="success" /> : 
+            <TrendingDownIcon fontSize="small" color="error" />
+          }
+        </Box>
+      </TableCell>
+      <TableCell align="center">
+        <Typography variant="body2" fontWeight="600">
+          {channel.performance?.efficiency || 0}%
+        </Typography>
+      </TableCell>
+      <TableCell align="right">
+        <Typography variant="body2" fontWeight="600" color="primary.main">
+          ₹{((channel.revenue ?? 0) / 100000).toFixed(1)}L
+        </Typography>
+      </TableCell>
+    </TableRow>
+  ))}
+</TableBody>
+
                   </Table>
                 </TableContainer>
               </Collapse>
@@ -3115,23 +3355,26 @@ const Dashboard = () => {
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Channel Type</InputLabel>
-                  <Select
-                    value={channelDialog.channelData.type || 'online'}
-                    onChange={(e) => setChannelDialog(prev => ({
-                      ...prev,
-                      channelData: { ...prev.channelData, type: e.target.value }
-                    }))}
-                    label="Channel Type"
-                  >
-                    <MenuItem value="online">Online</MenuItem>
-                    <MenuItem value="mobile">Mobile</MenuItem>
-                    <MenuItem value="offline">Offline</MenuItem>
-                    <MenuItem value="phone">Phone</MenuItem>
-                    <MenuItem value="agent">Agent</MenuItem>
-                  </Select>
-                </FormControl>
+              <FormControl fullWidth>
+  <InputLabel>Channel Type</InputLabel>
+  <Select
+    value={channelDialog.channelData.type || 'Online'}
+    onChange={(e) =>
+      setChannelDialog(prev => ({
+        ...prev,
+        channelData: { ...prev.channelData, type: e.target.value }
+      }))
+    }
+    label="Channel Type"
+  >
+    <MenuItem value="Online">Online</MenuItem>
+    <MenuItem value="Mobile">Mobile</MenuItem>
+    <MenuItem value="Offline">Offline</MenuItem>
+    <MenuItem value="Phone">Phone</MenuItem>
+    <MenuItem value="Agent">Agent</MenuItem>
+  </Select>
+</FormControl>
+
               </Grid>
               <Grid item xs={12}>
                 <TextField
@@ -3301,170 +3544,207 @@ const Dashboard = () => {
           </DialogActions>
         </Dialog>
 
+        <Snackbar
+  open={snackbar.open}
+  autoHideDuration={4000}
+  onClose={() => setSnackbar({ ...snackbar, open: false })}
+  anchorOrigin={{ vertical: "top", horizontal: "right" }}
+>
+  <Alert
+    onClose={() => setSnackbar({ ...snackbar, open: false })}
+    severity={snackbar.severity}
+    sx={{ width: "100%" }}
+  >
+    {snackbar.message}
+  </Alert>
+</Snackbar>
+
+
         {/* Hierarchy Management Dialog */}
-        <Dialog
-          open={hierarchyDialog.open}
-          onClose={() => setHierarchyDialog({ open: false, mode: 'create', nodeData: {} })}
-          maxWidth="md"
-          fullWidth
-          PaperProps={{ sx: { borderRadius: 3 } }}
-        >
-          <DialogTitle>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Avatar sx={{ bgcolor: 'secondary.main' }}>
-                <HierarchyIcon />
-              </Avatar>
-              <Box>
-                <Typography variant="h6" fontWeight="600">
-                  {hierarchyDialog.mode === 'create' ? 'Create Hierarchy Node' : 'Edit Hierarchy Node'}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Configure organizational unit details
-                </Typography>
+          <Dialog
+            open={hierarchyDialog.open}
+            onClose={() => setHierarchyDialog({ open: false, mode: 'create', nodeData: {} })}
+            maxWidth="md"
+            fullWidth
+            PaperProps={{ sx: { borderRadius: 3 } }}
+          >
+            <DialogTitle>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Avatar sx={{ bgcolor: 'secondary.main' }}>
+                  <HierarchyIcon />
+                </Avatar>
+                <Box>
+                  <Typography variant="h6" fontWeight="600">
+                    {hierarchyDialog.mode === 'create' ? 'Create Hierarchy Node' : 'Edit Hierarchy Node'}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Configure organizational unit details
+                  </Typography>
+                </Box>
               </Box>
-            </Box>
-          </DialogTitle>
-          <DialogContent dividers>
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Unit Name"
-                  value={hierarchyDialog.nodeData.name || ''}
-                  onChange={(e) => setHierarchyDialog(prev => ({
-                    ...prev,
-                    nodeData: { ...prev.nodeData, name: e.target.value }
-                  }))}
-                  placeholder="e.g., North Region"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Unit Type</InputLabel>
-                  <Select
-                    value={hierarchyDialog.nodeData.type || 'department'}
+            </DialogTitle>
+            <DialogContent dividers>
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Unit Name"
+                    value={hierarchyDialog.nodeData.name || ''}
                     onChange={(e) => setHierarchyDialog(prev => ({
                       ...prev,
-                      nodeData: { ...prev.nodeData, type: e.target.value }
+                      nodeData: { ...prev.nodeData, name: e.target.value }
                     }))}
-                    label="Unit Type"
-                  >
-                    <MenuItem value="region">Region</MenuItem>
-                    <MenuItem value="state">State</MenuItem>
-                    <MenuItem value="branch">Branch</MenuItem>
-                    <MenuItem value="department">Department</MenuItem>
-                    <MenuItem value="team">Team</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Description"
-                  value={hierarchyDialog.nodeData.description || ''}
-                  onChange={(e) => setHierarchyDialog(prev => ({
-                    ...prev,
-                    nodeData: { ...prev.nodeData, description: e.target.value }
-                  }))}
-                  multiline
-                  rows={2}
-                  placeholder="Brief description of the organizational unit"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Parent Unit</InputLabel>
-                  <Select
-                    value={hierarchyDialog.nodeData.parentId || ''}
+                    placeholder="e.g., North Region"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Unit Type</InputLabel>
+                    <Select
+                      value={hierarchyDialog.nodeData.type || 'department'}
+                      onChange={(e) => setHierarchyDialog(prev => ({
+                        ...prev,
+                        nodeData: { ...prev.nodeData, type: e.target.value }
+                      }))}
+                      label="Unit Type"
+                    >
+                      <MenuItem value="region">Region</MenuItem>
+                      <MenuItem value="state">State</MenuItem>
+                      <MenuItem value="branch">Branch</MenuItem>
+                      <MenuItem value="department">Department</MenuItem>
+                      <MenuItem value="team">Team</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Description"
+                    value={hierarchyDialog.nodeData.description || ''}
                     onChange={(e) => setHierarchyDialog(prev => ({
                       ...prev,
-                      nodeData: { ...prev.nodeData, parentId: e.target.value }
+                      nodeData: { ...prev.nodeData, description: e.target.value }
                     }))}
-                    label="Parent Unit"
-                  >
-                    <MenuItem value="">None (Root Level)</MenuItem>
-                    {hierarchyData.map((node) => (
-                      <MenuItem key={node.id} value={node.id}>
-                        {node.name} ({node.type})
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Manager ID"
-                  value={hierarchyDialog.nodeData.managerId || ''}
-                  onChange={(e) => setHierarchyDialog(prev => ({
-                    ...prev,
-                    nodeData: { ...prev.nodeData, managerId: e.target.value }
-                  }))}
-                  placeholder="Manager employee ID"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Budget (₹)"
-                  type="number"
-                  value={hierarchyDialog.nodeData.budget || 0}
-                  onChange={(e) => setHierarchyDialog(prev => ({
-                    ...prev,
-                    nodeData: { ...prev.nodeData, budget: Number(e.target.value) }
-                  }))}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Target Cases"
-                  type="number"
-                  value={hierarchyDialog.nodeData.targetCases || 0}
-                  onChange={(e) => setHierarchyDialog(prev => ({
-                    ...prev,
-                    nodeData: { ...prev.nodeData, targetCases: Number(e.target.value) }
-                  }))}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <FormControl fullWidth>
-                  <InputLabel>Status</InputLabel>
-                  <Select
-                    value={hierarchyDialog.nodeData.status || 'active'}
+                    multiline
+                    rows={2}
+                    placeholder="Brief description of the organizational unit"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  {/* <FormControl fullWidth>
+                    <InputLabel>Parent Unit</InputLabel>
+                    <Select
+                      value={hierarchyDialog.nodeData.parentId || ''}
+                      onChange={(e) => setHierarchyDialog(prev => ({
+                        ...prev,
+                        nodeData: { ...prev.nodeData, parentId: e.target.value }
+                      }))}
+                      label="Parent Unit"
+                    >
+                      <MenuItem value="">None (Root Level)</MenuItem>
+                      {hierarchyData.map((node) => (
+                        <MenuItem key={node.id} value={node.id}>
+                          {node.name} ({node.type})
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl> */}
+                  <FormControl fullWidth>
+  <InputLabel>Parent Unit</InputLabel>
+  <Select
+    value={hierarchyDialog.nodeData.parent_unit || ""}
+    onChange={(e) =>
+      setHierarchyDialog((prev) => ({
+        ...prev,
+        nodeData: { ...prev.nodeData, parent_unit: e.target.value },
+      }))
+    }
+    label="Parent Unit"
+  >
+    <MenuItem value="">None (Root Level)</MenuItem>
+    {hierarchyData.map((node) => (
+      <MenuItem key={node.id} value={node.name}>
+        {node.name} ({node.type})
+      </MenuItem>
+    ))}
+  </Select>
+</FormControl>
+
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Manager ID"
+                    value={hierarchyDialog.nodeData.managerId || ''}
                     onChange={(e) => setHierarchyDialog(prev => ({
                       ...prev,
-                      nodeData: { ...prev.nodeData, status: e.target.value }
+                      nodeData: { ...prev.nodeData, managerId: e.target.value }
                     }))}
-                    label="Status"
-                  >
-                    <MenuItem value="active">Active</MenuItem>
-                    <MenuItem value="inactive">Inactive</MenuItem>
-                    <MenuItem value="restructuring">Restructuring</MenuItem>
-                  </Select>
-                </FormControl>
+                    placeholder="Manager employee ID"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Budget (₹)"
+                    type="number"
+                    value={hierarchyDialog.nodeData.budget || 0}
+                    onChange={(e) => setHierarchyDialog(prev => ({
+                      ...prev,
+                      nodeData: { ...prev.nodeData, budget: Number(e.target.value) }
+                    }))}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Target Cases"
+                    type="number"
+                    value={hierarchyDialog.nodeData.targetCases || 0}
+                    onChange={(e) => setHierarchyDialog(prev => ({
+                      ...prev,
+                      nodeData: { ...prev.nodeData, targetCases: Number(e.target.value) }
+                    }))}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <FormControl fullWidth>
+                    <InputLabel>Status</InputLabel>
+                    <Select
+                      value={hierarchyDialog.nodeData.status || 'active'}
+                      onChange={(e) => setHierarchyDialog(prev => ({
+                        ...prev,
+                        nodeData: { ...prev.nodeData, status: e.target.value }
+                      }))}
+                      label="Status"
+                    >
+                      <MenuItem value="active">Active</MenuItem>
+                      <MenuItem value="inactive">Inactive</MenuItem>
+                      <MenuItem value="restructuring">Restructuring</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
               </Grid>
-            </Grid>
-          </DialogContent>
-          <DialogActions sx={{ p: 3, gap: 1 }}>
-            <Button
-              onClick={() => setHierarchyDialog({ open: false, mode: 'create', nodeData: {} })}
-              variant="outlined"
-              startIcon={<CancelIcon />}
-              sx={{ borderRadius: 2 }}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleHierarchySave}
-              variant="contained"
-              startIcon={<SaveIcon />}
-              sx={{ borderRadius: 2, minWidth: 120 }}
-            >
-              {hierarchyDialog.mode === 'create' ? 'Create Node' : 'Save Changes'}
-            </Button>
-          </DialogActions>
-        </Dialog>
+            </DialogContent>
+            <DialogActions sx={{ p: 3, gap: 1 }}>
+              <Button
+                onClick={() => setHierarchyDialog({ open: false, mode: 'create', nodeData: {} })}
+                variant="outlined"
+                startIcon={<CancelIcon />}
+                sx={{ borderRadius: 2 }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleHierarchySave}
+                variant="contained"
+                startIcon={<SaveIcon />}
+                sx={{ borderRadius: 2, minWidth: 120 }}
+              >
+                {hierarchyDialog.mode === 'create' ? 'Create Node' : 'Save Changes'}
+              </Button>
+            </DialogActions>
+          </Dialog>
       </Box>
     </Fade>
   );

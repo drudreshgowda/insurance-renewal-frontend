@@ -128,9 +128,76 @@ export const uploadPolicyData = async (file) => {
 
 // Case Tracking API calls
 export const getCaseById = async (caseId) => {
-  // In a real app, this would call the API
-  // return apiRequest(`/cases/${caseId}`);
-  
+  try {
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      throw new Error("No token found, please login first.");
+    }
+    
+    // Try the individual case endpoint first
+    try {
+      const apiUrl = `http://13.233.6.207:8000/api/case-tracking/cases/${caseId}/`;
+      
+      const response = await fetch(apiUrl, {
+        method: "GET",
+        mode: "cors",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        return data;
+      }
+    } catch (individualError) {
+      // Individual endpoint failed, continue to fallback
+    }
+    
+    // Fallback: Fetch from the list endpoint and filter by ID
+    const listResponse = await fetch('http://13.233.6.207:8000/api/case-tracking/cases/', {
+      method: "GET",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    
+    if (!listResponse.ok) {
+      throw new Error(`List API request failed: ${listResponse.status}`);
+    }
+    
+    const listData = await listResponse.json();
+    const rawData = listData.results || listData;
+    
+    const foundCase = rawData.find(item => {
+      const itemId = item.case_number || item.id;
+      // Try exact match first
+      if (itemId === caseId) return true;
+      // Try string comparison
+      if (String(itemId) === String(caseId)) return true;
+      // Try numeric comparison if both are numbers
+      if (!isNaN(itemId) && !isNaN(caseId) && Number(itemId) === Number(caseId)) return true;
+      return false;
+    });
+    
+    if (foundCase) {
+      return foundCase;
+    } else {
+      throw new Error(`Case with ID ${caseId} not found in the list`);
+    }
+    
+  } catch (error) {
+    console.error("Failed to fetch case details:", error);
+    throw new Error(`Failed to fetch case details: ${error.message}`);
+  }
+};
+
+// Keep the mock implementation as fallback (commented out)
+/*
+export const getCaseById = async (caseId) => {
   // Mock implementation
   return new Promise((resolve, reject) => {
     setTimeout(() => {
@@ -660,6 +727,7 @@ export const getCaseById = async (caseId) => {
     }, 800);
   });
 };
+*/
 
 export const fetchCases = async (_page, _rowsPerPage, _searchTerm, _statusFilter, _dateFilter, _agentFilter) => {
   // In a real app, this would call the API

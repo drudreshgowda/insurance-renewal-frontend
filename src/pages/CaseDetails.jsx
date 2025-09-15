@@ -153,26 +153,70 @@ const CaseDetails = () => {
   });
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
+  // Helper function to safely get the active step
+  const getActiveStep = () => {
+    if (!caseData.flowSteps || !Array.isArray(caseData.flowSteps) || !caseData.status) {
+      return 0;
+    }
+    const stepIndex = caseData.flowSteps.indexOf(caseData.status);
+    return stepIndex >= 0 ? stepIndex : 0;
+  };
+
   useEffect(() => {
     const fetchCaseDetails = async () => {
       setLoading(true);
+      setError(null);
       try {
+        console.log('Fetching case details for ID:', caseId);
+        
         // Import the API function to get case by ID
         const { getCaseById } = await import('../services/api');
         
         // Fetch case data using the caseId from URL parameters
         const caseData = await getCaseById(caseId);
+        console.log('Received case data:', caseData);
         
-        setCaseData(caseData);
+        // Ensure contactInfo exists with default values
+        const safeCaseData = {
+          ...caseData,
+          contactInfo: {
+            email: caseData.contactInfo?.email || caseData.customer?.email || '',
+            phone: caseData.contactInfo?.phone || caseData.customer_mobile || caseData.customer?.phone || ''
+          },
+          policyDetails: {
+            type: caseData.policyDetails?.type || caseData.product_name || '',
+            expiryDate: caseData.policyDetails?.expiryDate || caseData.policy?.end_date || '',
+            premium: caseData.policyDetails?.premium || parseFloat(caseData.policy?.premium_amount || 0),
+            renewalDate: caseData.policyDetails?.renewalDate || caseData.renewal_date || '',
+            sumAssured: caseData.policyDetails?.sumAssured || parseFloat(caseData.policy?.sum_assured || 0),
+            renewalAmount: caseData.policyDetails?.renewalAmount || parseFloat(caseData.renewal_amount || 0)
+          },
+          flowSteps: caseData.flowSteps || ['Uploaded', 'Validated', 'Assigned', 'In Progress'],
+          status: caseData.status || 'Uploaded',
+          comments: caseData.comments || [],
+          customerName: caseData.customerName || caseData.customer_name || 'Unknown Customer',
+          policyNumber: caseData.policyNumber || caseData.policy_number || 'N/A',
+          agent: caseData.agent || caseData.agent_name || 'Unassigned',
+          policyMembers: caseData.policyMembers || [],
+          history: caseData.history || [],
+          outstandingAmounts: caseData.outstandingAmounts || []
+        };
+        
+        setCaseData(safeCaseData);
       } catch (err) {
-        setError(`Failed to fetch case details: ${err.message}`);
         console.error('Error fetching case details:', err);
+        setError(`Failed to fetch case details: ${err.message}`);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCaseDetails();
+    if (caseId) {
+      fetchCaseDetails();
+    } else {
+      setError('No case ID provided');
+      setLoading(false);
+    }
   }, [caseId]);
 
   // Add loaded state for animations
@@ -309,7 +353,7 @@ const CaseDetails = () => {
   if (!caseData) {
     return (
       <Box sx={{ p: 3, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-        <Alert severity="warning" sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>Case not found</Alert>
+        <Alert severity="warning" sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>No case data available</Alert>
       </Box>
     );
   }
@@ -366,7 +410,7 @@ const CaseDetails = () => {
       const newHistoryEntry = {
         date: new Date().toISOString(),
         action: `${messageTypeText} Sent`,
-        details: `${messageTypeText} sent via ${selectedChannel.toUpperCase()} to ${caseData.contactInfo.email || caseData.contactInfo.phone}`,
+        details: `${messageTypeText} sent via ${selectedChannel.toUpperCase()} to ${caseData.contactInfo?.email || caseData.contactInfo?.phone || 'contact info'}`,
         user: 'Current User'
       };
       
@@ -626,10 +670,10 @@ const CaseDetails = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
                         <EmailIcon color="primary" />
-                        <Typography>{caseData.contactInfo.email}</Typography>
+                        <Typography>{caseData.contactInfo?.email || 'No email available'}</Typography>
                       </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        {verificationStatus.email.verified ? (
+                        {verificationStatus.email?.verified ? (
                           <Box sx={{ textAlign: 'right' }}>
                             <Chip 
                               label="Verified" 
@@ -638,18 +682,18 @@ const CaseDetails = () => {
                               icon={<CheckCircleIcon />}
                             />
                             <Typography variant="caption" color="text.secondary" display="block">
-                              Verified on {formatVerificationDate(verificationStatus.email.verifiedAt)}
+                              Verified on {formatVerificationDate(verificationStatus.email?.verifiedAt)}
                             </Typography>
                           </Box>
                         ) : (
                           <Button
                             size="small"
                             variant="outlined"
-                            onClick={() => handleVerification('email', caseData.contactInfo.email)}
-                            disabled={verificationStatus.email.verifying}
-                            startIcon={verificationStatus.email.verifying ? <CircularProgress size={16} /> : <VerifiedIcon />}
+                            onClick={() => handleVerification('email', caseData.contactInfo?.email)}
+                            disabled={verificationStatus.email?.verifying}
+                            startIcon={verificationStatus.email?.verifying ? <CircularProgress size={16} /> : <VerifiedIcon />}
                           >
-                            {verificationStatus.email.verifying ? 'Verifying...' : 'Verify'}
+                            {verificationStatus.email?.verifying ? 'Verifying...' : 'Verify'}
                           </Button>
                         )}
                       </Box>
@@ -1068,7 +1112,7 @@ const CaseDetails = () => {
                     <Divider sx={{ mb: 3 }} />
                     
                     <Grid container spacing={3}>
-                      {caseData.policyMembers.map((member, index) => (
+                      {(caseData.policyMembers || []).map((member, index) => (
                         <Grid item xs={12} md={6} lg={4} key={member.id}>
                           <Zoom in={loaded} timeout={600 + (index * 100)}>
                             <Card 
@@ -1938,7 +1982,7 @@ const CaseDetails = () => {
                   </Box>
                   <Divider sx={{ mb: 3 }} />
                   <Stepper 
-                    activeStep={caseData.flowSteps.indexOf(caseData.status)} 
+                    activeStep={getActiveStep()} 
                     alternativeLabel 
                     sx={{
                       '.MuiStepLabel-label': {
@@ -1947,7 +1991,7 @@ const CaseDetails = () => {
                       }
                     }}
                   >
-                    {caseData.flowSteps.map((label) => (
+                    {(caseData.flowSteps || []).map((label) => (
                       <Step key={label}>
                         <StepLabel>{label}</StepLabel>
                       </Step>
@@ -3437,7 +3481,7 @@ const CaseDetails = () => {
                     }}
                   >
                     <List>
-                      {caseData.history.map((event, index) => (
+                      {(caseData.history || []).map((event, index) => (
                         <React.Fragment key={event.date}>
                           {index > 0 && <Divider />}
                           <ListItem>
@@ -3547,8 +3591,8 @@ const CaseDetails = () => {
                         Journey Progress
                       </Typography>
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        {caseData.flowSteps.map((step, index) => {
-                          const isCompleted = caseData.flowSteps.indexOf(caseData.status) >= index;
+                        {(caseData.flowSteps || []).map((step, index) => {
+                          const isCompleted = getActiveStep() >= index;
                           return (
                             <Box 
                               key={step} 
@@ -3714,7 +3758,7 @@ const CaseDetails = () => {
                     }}
                   >
                     <Stack spacing={2}>
-                      {caseData.outstandingAmounts?.map((outstandingAmount, index) => {
+                      {(caseData.outstandingAmounts || []).map((outstandingAmount, index) => {
                         const daysOverdue = Math.floor((new Date() - new Date(outstandingAmount.dueDate)) / (1000 * 60 * 60 * 24));
                         const isOverdue = daysOverdue > 0;
                         
@@ -3879,10 +3923,10 @@ const CaseDetails = () => {
                           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
                               <EmailIcon color="primary" />
-                              <Typography>{caseData.contactInfo.email}</Typography>
+                              <Typography>{caseData.contactInfo?.email || 'No email available'}</Typography>
                             </Box>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              {verificationStatus.email.verified ? (
+                              {verificationStatus.email?.verified ? (
                                 <Box sx={{ textAlign: 'right' }}>
                                   <Chip 
                                     label="Verified" 
@@ -3891,18 +3935,18 @@ const CaseDetails = () => {
                                     icon={<CheckCircleIcon />}
                                   />
                                   <Typography variant="caption" color="text.secondary" display="block">
-                                    Verified on {formatVerificationDate(verificationStatus.email.verifiedAt)}
+                                    Verified on {formatVerificationDate(verificationStatus.email?.verifiedAt)}
                                   </Typography>
                                 </Box>
                               ) : (
                                 <Button
                                   size="small"
                                   variant="outlined"
-                                  onClick={() => handleVerification('email', caseData.contactInfo.email)}
+                                  onClick={() => handleVerification('email', caseData.contactInfo?.email)}
                                   disabled={verificationStatus.email.verifying}
                                   startIcon={verificationStatus.email.verifying ? <CircularProgress size={16} /> : <VerifiedIcon />}
                                 >
-                                  {verificationStatus.email.verifying ? 'Verifying...' : 'Verify'}
+                                  {verificationStatus.email?.verifying ? 'Verifying...' : 'Verify'}
                                 </Button>
                               )}
                             </Box>
@@ -4950,7 +4994,7 @@ const CaseDetails = () => {
                           <Divider sx={{ mb: 3 }} />
                           
                           <Grid container spacing={3}>
-                            {caseData.policyMembers.map((member, index) => (
+                            {(caseData.policyMembers || []).map((member, index) => (
                               <Grid item xs={12} md={6} lg={4} key={member.id}>
                                 <Zoom in={loaded} timeout={600 + (index * 100)}>
                                   <Card 
@@ -6856,7 +6900,7 @@ const CaseDetails = () => {
                           }}
                         >
                           <Stack spacing={2}>
-                            {caseData.outstandingAmounts?.map((outstandingAmount, index) => {
+                            {(caseData.outstandingAmounts || []).map((outstandingAmount, index) => {
                             const daysOverdue = Math.floor((new Date() - new Date(outstandingAmount.dueDate)) / (1000 * 60 * 60 * 24));
                             const isOverdue = daysOverdue > 0;
                             
@@ -7059,7 +7103,7 @@ const CaseDetails = () => {
                         </Box>
                         <Divider sx={{ mb: 3 }} />
                         <Stepper 
-                          activeStep={caseData.flowSteps.indexOf(caseData.status)} 
+                          activeStep={getActiveStep()} 
                           alternativeLabel 
                           sx={{
                             '.MuiStepLabel-label': {
@@ -7068,7 +7112,7 @@ const CaseDetails = () => {
                             }
                           }}
                         >
-                          {caseData.flowSteps.map((label) => (
+                          {(caseData.flowSteps || []).map((label) => (
                             <Step key={label}>
                               <StepLabel>{label}</StepLabel>
                             </Step>
@@ -7122,7 +7166,7 @@ const CaseDetails = () => {
                           }}
                         >
                           <List>
-                            {caseData.history.map((item, index) => (
+                            {(caseData.history || []).map((item, index) => (
                               <ListItem key={index} sx={{ px: 0 }}>
                                 <ListItemText
                                   primary={item.action}
@@ -7220,8 +7264,8 @@ const CaseDetails = () => {
                             Journey Progress
                           </Typography>
                           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                            {caseData.flowSteps.map((step, index) => {
-                              const isCompleted = caseData.flowSteps.indexOf(caseData.status) >= index;
+                            {(caseData.flowSteps || []).map((step, index) => {
+                              const isCompleted = getActiveStep() >= index;
                               return (
                                 <Box 
                                   key={step} 
@@ -7448,7 +7492,7 @@ const CaseDetails = () => {
                   <TextField
                     fullWidth
                     label="Recipient"
-                    value={selectedChannel === 'email' ? caseData.contactInfo.email : caseData.contactInfo.phone}
+                    value={selectedChannel === 'email' ? (caseData.contactInfo?.email || '') : (caseData.contactInfo?.phone || '')}
                     disabled
                     InputProps={{
                       startAdornment: selectedChannel === 'email' ? <EmailIcon /> : <PhoneIcon />

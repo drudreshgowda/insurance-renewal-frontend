@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Box, Typography, Paper, TextField, InputAdornment, 
   Table, TableBody, TableCell, TableContainer, TableHead, 
@@ -22,7 +22,6 @@ import {
   PriorityHigh as PriorityHighIcon,
   Refresh as RefreshIcon,
   AssignmentInd as AssignmentIndIcon,
-  ManageAccounts as ManageAccountsIcon,
   Message as MessageIcon,
   Phone as PhoneIcon,
   WhatsApp as WhatsAppIcon,
@@ -39,6 +38,7 @@ import {
   Warning as WarningIcon
 } from '@mui/icons-material';
 import { bulkUpdateCaseStatus, bulkAssignCases, checkDNCStatus, requestDNCOverride } from '../services/api';
+import { channelAPI } from '../api/CaseTracking';
 import { useNavigate } from 'react-router-dom';
 import { useSettings } from '../context/SettingsContext';
 import { useAuth } from '../context/AuthContext';
@@ -57,595 +57,144 @@ const CaseTracking = () => {
     navigate(`/policy-timeline?customerName=${encodeURIComponent(customerName)}&customerId=${encodeURIComponent(customerId || 'CUST-' + Math.floor(Math.random() * 10000))}`);
   };
   
-  const mockCases = useMemo(() => [
-    {
-      id: 'CASE-001',
-      customerName: 'Arjun Sharma',
-      policyNumber: 'POL-12345',
-      status: 'Assigned',
-      subStatus: 'Document Pending',
-      policyStatus: 'Pre Due Stage',
-      agent: 'Priya Patel',
-      uploadDate: '2025-04-08',
-      isPriority: false,
-      batchId: 'BATCH-2025-04-08-A',
-      nextFollowUpDate: '2025-04-12',
-      nextActionPlan: 'Contact customer for missing documents',
-      currentWorkStep: 'Document Collection',
-      // New fields
-      customerProfile: 'Normal',
-      customerMobile: '9876543210',
-      preferredLanguage: 'Hindi',
-      assignedAgent: 'Priya Patel',
-      productName: 'Vehicle Insurance',
-      productCategory: 'Motor',
-      channel: 'Online',
-      subChannel: 'Website',
-      lastActionDate: '2025-04-08',
-      totalCalls: 3,
+  // Function to transform API response to expected format
+  const transformApiDataToCaseFormat = (apiData) => {
+    return apiData.map(item => {
+      const caseId = item.case_number || item.id || `CASE-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      return {
+      id: caseId,
+      customerName: item.customer_name,
+      policyNumber: item.policy_number,
+      status: item.status === 'completed' ? 'Renewed' : 
+              item.status === 'not_required' ? 'In Progress' : 
+              item.status === 'pending' ? 'Assigned' : 'Uploaded',
+      subStatus: item.status === 'completed' ? 'Ready for Renewal' :
+                 item.status === 'not_required' ? 'Document Pending' :
+                 item.status === 'pending' ? 'Customer Contact Required' : 'Under Review',
+      policyStatus: item.policy_status === 'active' ? 'Policy Due' : 'Pre Due Stage',
+      agent: item.agent_name || 'Unassigned',
+      uploadDate: item.upload_date,
+      isPriority: item.priority === 'high',
+      batchId: item.batch_id,
+      nextFollowUpDate: item.last_contact_date ? new Date(item.last_contact_date).toISOString().split('T')[0] : null,
+      nextActionPlan: item.notes || 'Contact customer for renewal',
+      currentWorkStep: item.communication_attempts > 0 ? 'Document Collection' : 'Initial Contact',
+      customerProfile: item.customer_profile,
+      customerMobile: item.customer_mobile,
+      preferredLanguage: item.customer_language,
+      assignedAgent: item.agent_name || 'Unassigned',
+      productName: item.product_name,
+      productCategory: item.policy_category,
+      channel: item.channel_name?.split(' - ')[0] || 'Online',
+      subChannel: item.channel_name?.split(' - ')[1] || 'Website',
+      lastActionDate: item.last_action,
+      totalCalls: item.communication_attempts || 0,
       comments: [
         {
-          id: 'comment-1',
-          text: 'Customer contacted, waiting for documents',
-          user: 'Priya Patel',
-          timestamp: '2025-04-08T10:30:00Z',
-          status: 'Assigned',
-          subStatus: 'Document Pending'
+          id: `comment-${item.id}`,
+          text: item.notes || 'No comments available',
+          user: item.agent_name || 'System',
+          timestamp: item.updated_at,
+          status: item.status === 'completed' ? 'Renewed' : 
+                  item.status === 'not_required' ? 'In Progress' : 
+                  item.status === 'pending' ? 'Assigned' : 'Uploaded',
+          subStatus: item.status === 'completed' ? 'Ready for Renewal' :
+                     item.status === 'not_required' ? 'Document Pending' :
+                     item.status === 'pending' ? 'Customer Contact Required' : 'Under Review'
         }
       ],
       contactInfo: {
-        email: 'arjun.sharma@gmail.com',
-        phone: '9876543210'
+        email: item.customer?.email || item.customer_email || '',
+        phone: item.customer_mobile || item.customer?.phone || ''
       },
       policyDetails: {
-        type: 'Vehicle',
-        expiryDate: '2025-05-15',
-        premium: 1250.00,
-        renewalDate: '2025-05-15'
+        type: item.product_name,
+        expiryDate: item.policy?.end_date,
+        premium: parseFloat(item.policy?.premium_amount || 0),
+        renewalDate: item.renewal_date,
+        sumAssured: parseFloat(item.policy?.sum_assured || 0),
+        renewalAmount: parseFloat(item.renewal_amount || 0)
       },
-      flowSteps: ['Uploaded', 'Validated', 'Assigned', 'In Progress']
-    },
-    {
-      id: 'CASE-002',
-      customerName: 'Meera Kapoor',
-      policyNumber: 'POL-23456',
-      status: 'Renewed',
-      subStatus: 'Ready for Renewal',
-      policyStatus: 'Policy Due',
-      agent: 'Rajesh Kumar',
-      uploadDate: '2025-04-07',
-      isPriority: true,
-      batchId: 'BATCH-2025-04-07-B',
-      nextFollowUpDate: '2025-05-07',
-      nextActionPlan: 'Send renewal confirmation',
-      currentWorkStep: 'Final Review',
-      // New fields
-      customerProfile: 'HNI',
-      customerMobile: '9876543211',
-      preferredLanguage: 'English',
-      assignedAgent: 'Rajesh Kumar',
-      productName: 'Home Insurance Premium',
-      productCategory: 'Property',
-      channel: 'Branch',
-      subChannel: 'Relationship Manager',
-      lastActionDate: '2025-04-07',
-      totalCalls: 5,
-      comments: [
-        {
-          id: 'comment-2',
-          text: 'Policy successfully renewed',
-          user: 'Rajesh Kumar',
-          timestamp: '2025-04-07T14:20:00Z',
-          status: 'Renewed',
-          subStatus: 'Ready for Renewal'
+      flowSteps: ['Uploaded', 'Validated', 'Assigned', 'In Progress'],
+      // Additional API fields
+      caseNumber: item.case_number,
+      batchCode: item.batch_code,
+      priority: item.priority,
+      renewalAmount: parseFloat(item.renewal_amount || 0),
+      communicationAttempts: item.communication_attempts || 0,
+      lastContactDate: item.last_contact_date,
+      notes: item.notes,
+      assignedTo: item.assigned_to,
+      channelId: item.channel_id,
+      customer: item.customer,
+      policy: item.policy,
+      customerPayment: item.customer_payment,
+      created_at: item.created_at,
+      updated_at: item.updated_at
+      };
+    });
+  };
+  
+  // State for API data
+  const [apiData, setApiData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [apiError, setApiError] = useState(null);
+
+  // Fetch data from API
+  const fetchCasesData = async () => {
+    try {
+      setLoading(true);
+      setApiError(null);
+      const response = await channelAPI.CaseTrackingList();
+      
+      if (response.success && response.data) {
+        const rawData = response.data.results || response.data;
+        
+        if (Array.isArray(rawData) && rawData.length > 0) {
+          const transformedData = transformApiDataToCaseFormat(rawData);
+          setApiData(transformedData);
+          setCases(transformedData);
+        } else {
+          setApiData([]);
+          setCases([]);
         }
-      ],
-      contactInfo: {
-        email: 'meera.kapoor@gmail.com',
-        phone: '9876543211'
-      },
-      policyDetails: {
-        type: 'Home',
-        expiryDate: '2025-05-10',
-        premium: 950.00,
-        renewalDate: '2025-05-10'
-      },
-      flowSteps: ['Uploaded', 'Validated', 'Assigned', 'In Progress', 'Payment Processed', 'Renewed']
-    },
-    {
-      id: 'CASE-003',
-      customerName: 'Vikram Singh',
-      policyNumber: 'POL-34567',
-      status: 'Failed',
-      subStatus: 'Customer Contact Required',
-      policyStatus: 'Reinstatement',
-      agent: 'Ananya Reddy',
-      uploadDate: '2025-04-06',
-      isPriority: false,
-      batchId: 'BATCH-2025-04-06-A',
-      nextFollowUpDate: '2025-04-10',
-      nextActionPlan: 'Attempt reinstatement process',
-      currentWorkStep: 'Initial Contact',
-      // New fields
-      customerProfile: 'Normal',
-      customerMobile: '9876543212',
-      preferredLanguage: 'Punjabi',
-      assignedAgent: 'Ananya Reddy',
-      productName: 'Term Life Insurance',
-      productCategory: 'Life',
-      channel: 'Telecalling',
-      subChannel: 'Outbound',
-      lastActionDate: '2025-04-06',
-      totalCalls: 8,
-      comments: [
-        {
-          id: 'comment-3',
-          text: 'Customer unreachable, need to try alternative contact',
-          user: 'Ananya Reddy',
-          timestamp: '2025-04-06T16:45:00Z',
-          status: 'Failed',
-          subStatus: 'Customer Contact Required'
-        }
-      ],
-      contactInfo: {
-        email: 'vikram.singh@gmail.com',
-        phone: '9876543212'
-      },
-      policyDetails: {
-        type: 'Life',
-        expiryDate: '2025-05-05',
-        premium: 2100.00,
-        renewalDate: '2025-05-05'
-      },
-      flowSteps: ['Uploaded', 'Validated', 'Assigned', 'In Progress', 'Failed']
-    },
-    {
-      id: 'CASE-004',
-      customerName: 'Priyanka Gupta',
-      policyNumber: 'POL-45678',
-      status: 'In Progress',
-      subStatus: 'Payment Processing',
-      policyStatus: 'Policy Due',
-      agent: 'Amit Shah',
-      uploadDate: '2025-04-05',
-      isPriority: false,
-      batchId: 'BATCH-2025-04-05-C',
-      nextFollowUpDate: '2025-04-09',
-      nextActionPlan: 'Verify payment status and proceed',
-      currentWorkStep: 'Payment Processing',
-      // New fields
-      customerProfile: 'HNI',
-      customerMobile: '9876543213',
-      preferredLanguage: 'English',
-      assignedAgent: 'Amit Shah',
-      productName: 'Comprehensive Auto Insurance',
-      productCategory: 'Motor',
-      channel: 'Online',
-      subChannel: 'Mobile App',
-      lastActionDate: '2025-04-05',
-      totalCalls: 2,
-      comments: [
-        {
-          id: 'comment-4',
-          text: 'Payment initiated by customer, waiting for confirmation',
-          user: 'Amit Shah',
-          timestamp: '2025-04-05T11:15:00Z',
-          status: 'In Progress',
-          subStatus: 'Payment Processing'
-        }
-      ],
-      contactInfo: {
-        email: 'priyanka.gupta@gmail.com',
-        phone: '9876543213'
-      },
-      policyDetails: {
-        type: 'Auto',
-        expiryDate: '2025-05-20',
-        premium: 1450.00,
-        renewalDate: '2025-05-20'
-      },
-      flowSteps: ['Uploaded', 'Validated', 'Assigned', 'In Progress']
-    },
-    {
-      id: 'CASE-005',
-      customerName: 'Rahul Verma',
-      policyNumber: 'POL-56789',
-      status: 'Uploaded',
-      subStatus: 'Under Review',
-      policyStatus: 'Pre Due Stage',
-      agent: 'Unassigned',
-      uploadDate: '2025-04-10',
-      isPriority: false,
-      batchId: 'BATCH-2025-04-10-A',
-      nextFollowUpDate: '2025-04-11',
-      nextActionPlan: 'Assign to agent and begin processing',
-      currentWorkStep: 'Initial Contact',
-      // New fields
-      customerProfile: 'Normal',
-      customerMobile: '9876543214',
-      preferredLanguage: 'Hindi',
-      assignedAgent: 'Unassigned',
-      productName: 'Home Shield Insurance',
-      productCategory: 'Property',
-      channel: 'Partner',
-      subChannel: 'Bank Channel',
-      lastActionDate: '2025-04-10',
-      totalCalls: 0,
-      comments: [],
-      contactInfo: {
-        email: 'rahul.verma@gmail.com',
-        phone: '9876543214'
-      },
-      policyDetails: {
-        type: 'Home',
-        expiryDate: '2025-06-01',
-        premium: 1050.00,
-        renewalDate: '2025-06-01'
-      },
-      flowSteps: ['Uploaded']
-    },
-    {
-      id: 'CASE-006',
-      customerName: 'Sanjay Gupta',
-      policyNumber: 'POL-67890',
-      status: 'In Progress',
-      subStatus: 'Payment Processing',
-      policyStatus: 'Policy Due',
-      agent: 'Ananya Reddy',
-      uploadDate: '2025-04-09',
-      isPriority: true,
-      batchId: 'BATCH-2025-04-09-C',
-      nextFollowUpDate: '2025-04-13',
-      nextActionPlan: 'Confirm payment and process renewal',
-      currentWorkStep: 'Payment Processing',
-      customerProfile: 'Normal',
-      customerMobile: '9876543215',
-      preferredLanguage: 'English',
-      assignedAgent: 'Ananya Reddy',
-      productName: 'Life Insurance Plus',
-      productCategory: 'Life',
-      channel: 'Call Center',
-      subChannel: 'Inbound',
-      lastActionDate: '2025-04-09',
-      totalCalls: 2,
-      comments: [
-        {
-          id: 'comment-6',
-          text: 'Customer confirmed payment details, processing renewal',
-          user: 'Ananya Reddy',
-          timestamp: '2025-04-09T11:15:00Z',
-          status: 'In Progress',
-          subStatus: 'Payment Processing'
-        }
-      ],
-      contactInfo: {
-        email: 'sanjay.gupta@yahoo.com',
-        phone: '9876543215'
-      },
-      policyDetails: {
-        type: 'Life',
-        expiryDate: '2025-05-20',
-        premium: 2500.00,
-        renewalDate: '2025-05-20'
-      },
-      flowSteps: ['Uploaded', 'Validated', 'Assigned', 'In Progress']
-    },
-    {
-      id: 'CASE-007',
-      customerName: 'Kavitha Nair',
-      policyNumber: 'POL-78901',
-      status: 'Pending',
-      subStatus: 'Customer Contact Required',
-      policyStatus: 'Pre Due Stage',
-      agent: 'Amit Shah',
-      uploadDate: '2025-04-11',
-      isPriority: false,
-      batchId: 'BATCH-2025-04-11-A',
-      nextFollowUpDate: '2025-04-14',
-      nextActionPlan: 'Attempt customer contact via phone and email',
-      currentWorkStep: 'Initial Contact',
-      customerProfile: 'HNI',
-      customerMobile: '9876543216',
-      preferredLanguage: 'Malayalam',
-      assignedAgent: 'Amit Shah',
-      productName: 'Health Insurance Family',
-      productCategory: 'Health',
-      channel: 'Online',
-      subChannel: 'Mobile App',
-      lastActionDate: '2025-04-11',
-      totalCalls: 1,
-      comments: [
-        {
-          id: 'comment-7',
-          text: 'Unable to reach customer, will try again tomorrow',
-          user: 'Amit Shah',
-          timestamp: '2025-04-11T16:45:00Z',
-          status: 'Pending',
-          subStatus: 'Customer Contact Required'
-        }
-      ],
-      contactInfo: {
-        email: 'kavitha.nair@gmail.com',
-        phone: '9876543216'
-      },
-      policyDetails: {
-        type: 'Health',
-        expiryDate: '2025-06-15',
-        premium: 1800.00,
-        renewalDate: '2025-06-15'
-      },
-      flowSteps: ['Uploaded', 'Validated', 'Assigned']
-    },
-    {
-      id: 'CASE-008',
-      customerName: 'Vikram Singh',
-      policyNumber: 'POL-89012',
-      status: 'Failed',
-      subStatus: 'Verification in Progress',
-      policyStatus: 'Reinstatement',
-      agent: 'Sarah Johnson',
-      uploadDate: '2025-04-06',
-      isPriority: true,
-      batchId: 'BATCH-2025-04-06-B',
-      nextFollowUpDate: '2025-04-15',
-      nextActionPlan: 'Review failed verification and contact customer',
-      currentWorkStep: 'Verification',
-      customerProfile: 'Normal',
-      customerMobile: '9876543217',
-      preferredLanguage: 'Punjabi',
-      assignedAgent: 'Sarah Johnson',
-      productName: 'Travel Insurance Pro',
-      productCategory: 'Travel',
-      channel: 'Partner',
-      subChannel: 'Travel Agent',
-      lastActionDate: '2025-04-06',
-      totalCalls: 4,
-      comments: [
-        {
-          id: 'comment-8',
-          text: 'Document verification failed, need additional documents',
-          user: 'Sarah Johnson',
-          timestamp: '2025-04-06T13:30:00Z',
-          status: 'Failed',
-          subStatus: 'Verification in Progress'
-        }
-      ],
-      contactInfo: {
-        email: 'vikram.singh@outlook.com',
-        phone: '9876543217'
-      },
-      policyDetails: {
-        type: 'Travel',
-        expiryDate: '2025-04-30',
-        premium: 750.00,
-        renewalDate: '2025-04-30'
-      },
-      flowSteps: ['Uploaded', 'Validated', 'Assigned', 'Failed']
-    },
-    {
-      id: 'CASE-009',
-      customerName: 'Deepika Reddy',
-      policyNumber: 'POL-90123',
-      status: 'Assigned',
-      subStatus: 'Follow-up Required',
-      policyStatus: 'Policy Due',
-      agent: 'Mike Chen',
-      uploadDate: '2025-04-12',
-      isPriority: false,
-      batchId: 'BATCH-2025-04-12-A',
-      nextFollowUpDate: '2025-04-16',
-      nextActionPlan: 'Follow up on premium payment status',
-      currentWorkStep: 'Premium Calculation',
-      customerProfile: 'Normal',
-      customerMobile: '9876543218',
-      preferredLanguage: 'Telugu',
-      assignedAgent: 'Mike Chen',
-      productName: 'Motor Insurance Comprehensive',
-      productCategory: 'Motor',
-      channel: 'Branch',
-      subChannel: 'Walk-in',
-      lastActionDate: '2025-04-12',
-      totalCalls: 1,
-      comments: [
-        {
-          id: 'comment-9',
-          text: 'Customer inquired about premium calculation',
-          user: 'Mike Chen',
-          timestamp: '2025-04-12T09:20:00Z',
-          status: 'Assigned',
-          subStatus: 'Follow-up Required'
-        }
-      ],
-      contactInfo: {
-        email: 'deepika.reddy@gmail.com',
-        phone: '9876543218'
-      },
-      policyDetails: {
-        type: 'Motor',
-        expiryDate: '2025-05-25',
-        premium: 1650.00,
-        renewalDate: '2025-05-25'
-      },
-      flowSteps: ['Uploaded', 'Validated', 'Assigned']
-    },
-    {
-      id: 'CASE-010',
-      customerName: 'Ravi Krishnan',
-      policyNumber: 'POL-01234',
-      status: 'Uploaded',
-      subStatus: 'Under Review',
-      policyStatus: 'Pre Due Stage',
-      agent: 'Emma Davis',
-      uploadDate: '2025-04-13',
-      isPriority: false,
-      batchId: 'BATCH-2025-04-13-B',
-      nextFollowUpDate: '2025-04-17',
-      nextActionPlan: 'Complete initial review and assign agent',
-      currentWorkStep: 'Initial Contact',
-      customerProfile: 'HNI',
-      customerMobile: '9876543219',
-      preferredLanguage: 'Tamil',
-      assignedAgent: 'Emma Davis',
-      productName: 'Property Insurance Elite',
-      productCategory: 'Property',
-      channel: 'Online',
-      subChannel: 'Website',
-      lastActionDate: '2025-04-13',
-      totalCalls: 0,
-      comments: [],
-      contactInfo: {
-        email: 'ravi.krishnan@hotmail.com',
-        phone: '9876543219'
-      },
-      policyDetails: {
-        type: 'Property',
-        expiryDate: '2025-07-10',
-        premium: 3200.00,
-        renewalDate: '2025-07-10'
-      },
-      flowSteps: ['Uploaded']
-    },
-    {
-      id: 'CASE-011',
-      customerName: 'Pooja Sharma',
-      policyNumber: 'POL-11223',
-      status: 'In Progress',
-      subStatus: 'Approval Required',
-      policyStatus: 'Policy Due',
-      agent: 'Alex Rodriguez',
-      uploadDate: '2025-04-05',
-      isPriority: true,
-      batchId: 'BATCH-2025-04-05-C',
-      nextFollowUpDate: '2025-04-18',
-      nextActionPlan: 'Get management approval for special terms',
-      currentWorkStep: 'Final Review',
-      customerProfile: 'HNI',
-      customerMobile: '9876543220',
-      preferredLanguage: 'Hindi',
-      assignedAgent: 'Alex Rodriguez',
-      productName: 'Business Insurance Premium',
-      productCategory: 'Commercial',
-      channel: 'Partner',
-      subChannel: 'Corporate Broker',
-      lastActionDate: '2025-04-05',
-      totalCalls: 6,
-      comments: [
-        {
-          id: 'comment-11',
-          text: 'Special terms negotiated, awaiting management approval',
-          user: 'Alex Rodriguez',
-          timestamp: '2025-04-05T15:10:00Z',
-          status: 'In Progress',
-          subStatus: 'Approval Required'
-        }
-      ],
-      contactInfo: {
-        email: 'pooja.sharma@businessmail.com',
-        phone: '9876543220'
-      },
-      policyDetails: {
-        type: 'Commercial',
-        expiryDate: '2025-05-05',
-        premium: 5500.00,
-        renewalDate: '2025-05-05'
-      },
-      flowSteps: ['Uploaded', 'Validated', 'Assigned', 'In Progress']
-    },
-  ], []);
+      } else {
+        setApiError(response.message || 'Failed to fetch cases data');
+      }
+    } catch (error) {
+      console.error('Error fetching cases data:', error);
+      setApiError('Failed to fetch cases data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const [cases, setCases] = useState([]);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterAnchorEl, setFilterAnchorEl] = useState(null);
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [dateFilter, setDateFilter] = useState('all');
-  const [agentFilter, setAgentFilter] = useState('all');
-  const [policyStatusFilter, setPolicyStatusFilter] = useState('all');
-  const [successMessage, setSuccessMessage] = useState('');
-  const [error, setError] = useState(null);
-  const [exportAnchorEl, setExportAnchorEl] = useState(null);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [currentCase, setCurrentCase] = useState(null);
-  const [commentDialogOpen, setCommentDialogOpen] = useState(false);
-  const [commentText, setCommentText] = useState('');
-  const [commentFormData, setCommentFormData] = useState({
-    status: '',
-    subStatus: '',
-    nextFollowUpDate: '',
-    updateStatus: false,
-    updateFollowUp: false
-  });
-  const [quickEditDialogOpen, setQuickEditDialogOpen] = useState(false);
-  const [quickEditData, setQuickEditData] = useState({
-    status: '',
-    subStatus: '',
-    nextFollowUpDate: '',
-    nextActionPlan: '',
-    currentWorkStep: '',
-    commentText: ''
-  });
-  const [quickMessageDialog, setQuickMessageDialog] = useState(false);
-  const [selectedCase, setSelectedCase] = useState(null);
-  const [messageType, setMessageType] = useState('whatsapp');
-  const [quickMessage, setQuickMessage] = useState('');
-  
-  // DNC states
-  const [dncOverrideDialog, setDNCOverrideDialog] = useState(false);
-  const [dncCheckResult, setDNCCheckResult] = useState(null);
-  const [overrideReason, setOverrideReason] = useState('');
-  
-  // Bulk operations states
   const [selectedCases, setSelectedCases] = useState([]);
-  const [bulkActionsVisible, setBulkActionsVisible] = useState(false);
-  const [bulkStatusDialog, setBulkStatusDialog] = useState(false);
-  const [bulkAssignDialog, setBulkAssignDialog] = useState(false);
-  const [bulkPolicyStatusDialog, setBulkPolicyStatusDialog] = useState(false);
-  const [bulkStatus, setBulkStatus] = useState('');
-  const [bulkAgent, setBulkAgent] = useState('');
-  const [bulkPolicyStatus, setBulkPolicyStatus] = useState('');
 
-  // Available agents for assignment
-  const availableAgents = [
-    'Priya Patel',
-    'Rajesh Kumar', 
-    'Ananya Reddy',
-    'Amit Shah',
-    'Sarah Johnson',
-    'Mike Chen',
-    'Emma Davis',
-    'Alex Rodriguez',
-    'Lisa Wang'
-  ];
+  // Fetch data on component mount
+  useEffect(() => {
+    fetchCasesData();
+  }, []);
 
-  // Available statuses for bulk change
-  const availableStatuses = [
-    'Uploaded',
-    'Assigned', 
-    'In Progress',
-    'Pending',
-    'Failed',
-    'Renewed'
-  ];
+  // Refresh data when component becomes visible (e.g., after navigation from upload)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchCasesData();
+      }
+    };
 
-  // Available policy statuses
-  const availablePolicyStatuses = [
-    'Pre Due Stage',
-    'Policy Due',
-    'Reinstatement'
-  ];
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
-  // Available sub-statuses
-  const availableSubStatuses = [
-    'Document Pending',
-    'Customer Contact Required',
-    'Payment Processing',
-    'Verification in Progress',
-    'Approval Required',
-    'Ready for Renewal',
-    'Follow-up Required',
-    'Under Review'
-  ];
+  // Refresh data function
+  const handleRefresh = () => {
+    fetchCasesData();
+  };
 
   // Available work steps
   const availableWorkSteps = [
@@ -659,12 +208,11 @@ const CaseTracking = () => {
     'Delivery'
   ];
 
-  // Mock data for demonstration
+  // Initialize cases with API data
   useEffect(() => {
-    // Initialize cases with all non-renewed cases
-    const initialCases = mockCases.filter(caseItem => caseItem.status !== 'Renewed');
-    setCases(initialCases);
-  }, [mockCases]);
+    // Cases are already set in fetchCasesData function
+    // No need for additional initialization
+  }, []);
 
   // Add loaded state for animations similar to Settings page
   useEffect(() => {
@@ -733,14 +281,14 @@ const CaseTracking = () => {
       'Policy Status': caseItem.policyStatus,
       'Assigned Agent': caseItem.assignedAgent,
       'Priority': caseItem.isPriority ? 'Priority' : 'Normal',
-      'Last Action Date': new Date(caseItem.lastActionDate).toLocaleDateString(),
+      'Last Action Date': caseItem.lastActionDate ? new Date(caseItem.lastActionDate).toLocaleDateString() : 'N/A',
       'Total Calls': caseItem.totalCalls,
       'Current Work Step': caseItem.currentWorkStep,
-      'Renewal Date': new Date(caseItem.policyDetails.renewalDate).toLocaleDateString(),
-      'Next Follow-up Date': new Date(caseItem.nextFollowUpDate).toLocaleDateString(),
+      'Renewal Date': caseItem.policyDetails?.renewalDate ? new Date(caseItem.policyDetails.renewalDate).toLocaleDateString() : 'N/A',
+      'Next Follow-up Date': caseItem.nextFollowUpDate ? new Date(caseItem.nextFollowUpDate).toLocaleDateString() : 'N/A',
       'Next Action Plan': caseItem.nextActionPlan,
       'Comments Count': caseItem.comments?.length || 0,
-      'Upload Date': new Date(caseItem.uploadDate).toLocaleDateString()
+      'Upload Date': caseItem.uploadDate ? new Date(caseItem.uploadDate).toLocaleDateString() : 'N/A'
     }));
 
     let content = '';
@@ -813,8 +361,8 @@ const CaseTracking = () => {
       .map(term => term.trim().toLowerCase())
       .filter(term => term !== '');
     
-    // Filter cases based on all criteria
-    const filteredCases = mockCases.filter(caseItem => {
+    // Filter cases based on all criteria (use apiData to avoid cumulative filtering)
+    const filteredCases = apiData.filter(caseItem => {
       // Filter by search terms
       const matchesSearch = searchTerms.length === 0 || searchTerms.some(term => 
         caseItem.id.toLowerCase().includes(term) ||
@@ -867,6 +415,16 @@ const CaseTracking = () => {
 
 
 
+  const handleEditDialogOpen = (caseData) => {
+    setCurrentCase(caseData);
+    setCommentFormData({
+      status: caseData.status,
+      subStatus: caseData.subStatus,
+      agent: caseData.agent
+    });
+    setEditDialogOpen(true);
+  };
+
   const handleEditDialogClose = () => {
     setEditDialogOpen(false);
   };
@@ -880,7 +438,7 @@ const CaseTracking = () => {
       setCases(cases.map(c => c.id === currentCase.id ? currentCase : c));
       setEditDialogOpen(false);
     } catch (error) {
-              setError("Failed to update case. Please try again.");
+              setApiError("Failed to update case. Please try again.");
     }
   };
 
@@ -1050,6 +608,92 @@ const CaseTracking = () => {
 
   const [moreActionsMenu, setMoreActionsMenu] = useState({});
 
+  // Additional state variables for dialogs and forms
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [currentCase, setCurrentCase] = useState(null);
+  const [commentText, setCommentText] = useState('');
+  const [commentFormData, setCommentFormData] = useState({
+    status: '',
+    subStatus: '',
+    notes: ''
+  });
+  const [quickEditDialogOpen, setQuickEditDialogOpen] = useState(false);
+  const [quickEditData, setQuickEditData] = useState({
+    status: '',
+    subStatus: '',
+    agent: '',
+    nextFollowUpDate: '',
+    nextActionPlan: ''
+  });
+  const [quickMessageDialog, setQuickMessageDialog] = useState(false);
+  const [selectedCase, setSelectedCase] = useState(null);
+  const [messageType, setMessageType] = useState('email');
+  const [quickMessage, setQuickMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [bulkStatusDialog, setBulkStatusDialog] = useState(false);
+  const [bulkStatus, setBulkStatus] = useState('');
+  const [bulkAssignDialog, setBulkAssignDialog] = useState(false);
+  const [bulkAgent, setBulkAgent] = useState('');
+  const [bulkPolicyStatusDialog, setBulkPolicyStatusDialog] = useState(false);
+  const [bulkPolicyStatus, setBulkPolicyStatus] = useState('');
+  const [dncOverrideDialog, setDNCOverrideDialog] = useState(false);
+  const [dncCheckResult, setDncCheckResult] = useState(null);
+  const [overrideReason, setOverrideReason] = useState('');
+
+  // Additional missing state variables
+  const [bulkActionsVisible, setBulkActionsVisible] = useState(false);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [dateFilter, setDateFilter] = useState('');
+  const [agentFilter, setAgentFilter] = useState('');
+  const [policyStatusFilter, setPolicyStatusFilter] = useState('');
+  const [filterAnchorEl, setFilterAnchorEl] = useState(null);
+  const [exportAnchorEl, setExportAnchorEl] = useState(null);
+  const [commentDialogOpen, setCommentDialogOpen] = useState(false);
+  // Using setApiError for error handling
+
+  // Available options arrays
+  const availableStatuses = [
+    'Uploaded',
+    'Assigned', 
+    'In Progress',
+    'Payment Processed',
+    'Renewed',
+    'Failed'
+  ];
+
+  const availableSubStatuses = [
+    'Under Review',
+    'Customer Contact Required',
+    'Document Pending',
+    'Approval Required',
+    'Payment Pending',
+    'Ready for Renewal',
+    'Completed',
+    'Failed'
+  ];
+
+  const availablePolicyStatuses = [
+    'Policy Due',
+    'Pre Due Stage',
+    'Overdue',
+    'Renewed',
+    'Cancelled'
+  ];
+
+  const availableAgents = [
+    'John Smith',
+    'Sarah Johnson', 
+    'Mike Wilson',
+    'Emma Davis',
+    'Alex Rodriguez',
+    'Lisa Chen',
+    'David Brown',
+    'Maria Garcia'
+  ];
+
   // More actions menu handlers
   const handleMoreActionsClick = (event, caseItem) => {
     event.stopPropagation();
@@ -1089,14 +733,14 @@ const CaseTracking = () => {
       );
       
       if (dncStatus.isBlocked && !dncStatus.overrideAllowed) {
-        setError(`Message blocked: ${dncStatus.reason} (${dncStatus.source})`);
-        setTimeout(() => setError(''), 5000);
+        setApiError(`Message blocked: ${dncStatus.reason} (${dncStatus.source})`);
+        setTimeout(() => setApiError(''), 5000);
         return;
       }
       
       if (dncStatus.isBlocked && dncStatus.overrideAllowed) {
         // Show override dialog
-        setDNCCheckResult(dncStatus);
+        setDncCheckResult(dncStatus);
         setDNCOverrideDialog(true);
         return;
       }
@@ -1105,8 +749,8 @@ const CaseTracking = () => {
       await sendMessageAfterDNCCheck();
       
     } catch (error) {
-      setError('Failed to send message. Please try again.');
-      setTimeout(() => setError(''), 3000);
+      setApiError('Failed to send message. Please try again.');
+      setTimeout(() => setApiError(''), 3000);
     }
   };
   
@@ -1125,8 +769,8 @@ const CaseTracking = () => {
   
   const handleDNCOverride = async () => {
     if (!overrideReason.trim()) {
-      setError('Please provide a reason for the override');
-      setTimeout(() => setError(''), 3000);
+      setApiError('Please provide a reason for the override');
+      setTimeout(() => setApiError(''), 3000);
       return;
     }
     
@@ -1142,11 +786,11 @@ const CaseTracking = () => {
         await sendMessageAfterDNCCheck();
         setDNCOverrideDialog(false);
         setOverrideReason('');
-        setDNCCheckResult(null);
+        setDncCheckResult(null);
       }
     } catch (error) {
-      setError('Failed to request override. Please try again.');
-      setTimeout(() => setError(''), 3000);
+      setApiError('Failed to request override. Please try again.');
+      setTimeout(() => setApiError(''), 3000);
     }
   };
 
@@ -1218,8 +862,8 @@ const CaseTracking = () => {
         setTimeout(() => setSuccessMessage(''), 3000);
       }
     } catch (error) {
-      setError(error.message || 'Failed to update case statuses. Please try again.');
-      setTimeout(() => setError(null), 3000);
+      setApiError(error.message || 'Failed to update case statuses. Please try again.');
+      setTimeout(() => setApiError(null), 3000);
     }
   };
 
@@ -1253,8 +897,8 @@ const CaseTracking = () => {
         setTimeout(() => setSuccessMessage(''), 4000);
       }
     } catch (error) {
-      setError(error.message || 'Failed to assign cases to agent. Please try again.');
-      setTimeout(() => setError(null), 3000);
+      setApiError(error.message || 'Failed to assign cases to agent. Please try again.');
+      setTimeout(() => setApiError(null), 3000);
     }
   };
 
@@ -1277,8 +921,8 @@ const CaseTracking = () => {
       
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
-      setError(error.message || 'Failed to update policy statuses. Please try again.');
-      setTimeout(() => setError(null), 3000);
+      setApiError(error.message || 'Failed to update policy statuses. Please try again.');
+      setTimeout(() => setApiError(null), 3000);
     }
   };
 
@@ -1323,6 +967,28 @@ const CaseTracking = () => {
               </Button>
             </Zoom>
 
+            <Zoom in={loaded} style={{ transitionDelay: '200ms' }}>
+              <Button
+                variant="outlined"
+                startIcon={<RefreshIcon />}
+                onClick={handleRefresh}
+                disabled={loading}
+                sx={{
+                  borderRadius: 2,
+                  py: 1.2,
+                  px: 3,
+                  fontWeight: 600,
+                  mr: 2,
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 6px 20px rgba(0,0,0,0.1)',
+                  }
+                }}
+              >
+                {loading ? 'Refreshing...' : 'Refresh'}
+              </Button>
+            </Zoom>
             <Zoom in={loaded} style={{ transitionDelay: '300ms' }}>
               <Button
                 variant="outlined"
@@ -1361,8 +1027,8 @@ const CaseTracking = () => {
           </Grow>
         )}
         
-        {error && (
-          <Grow in={!!error}>
+        {apiError && (
+          <Grow in={!!apiError}>
             <Alert 
               severity="error" 
               sx={{ 
@@ -1371,7 +1037,7 @@ const CaseTracking = () => {
                 boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
               }}
             >
-              {error}
+              {apiError}
             </Alert>
           </Grow>
         )}
@@ -1617,11 +1283,33 @@ const CaseTracking = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {cases.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((caseItem, index) => (
+                  {cases.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={20} sx={{ textAlign: 'center', py: 4 }}>
+                        <Typography variant="body1" color="text.secondary">
+                          {loading ? 'Loading cases...' : 'No cases found. Please upload a CSV file or check if the API is returning data.'}
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    cases.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((caseItem, index) => (
                     <TableRow 
                       key={caseItem.id}
                       hover
-                      onClick={() => navigate(`/cases/${caseItem.id}`)}
+                      onClick={() => {
+                        try {
+                          if (caseItem.id) {
+                            navigate(`/cases/${caseItem.id}`);
+                          } else {
+                            setApiError('Case ID is missing. Cannot view details.');
+                            setTimeout(() => setApiError(null), 3000);
+                          }
+                        } catch (error) {
+                          console.error('Error navigating to case details:', error);
+                          setApiError('Failed to navigate to case details.');
+                          setTimeout(() => setApiError(null), 3000);
+                        }
+                      }}
                       sx={{ 
                         cursor: 'pointer',
                         transition: 'background-color 0.2s, transform 0.1s',
@@ -1664,7 +1352,18 @@ const CaseTracking = () => {
                               size="small"
                               onClick={(e) => {
                                 e.stopPropagation();
+                                try {
+                                  if (caseItem.id) {
                                 navigate(`/cases/${caseItem.id}`);
+                                  } else {
+                                    setApiError('Case ID is missing. Cannot view details.');
+                                    setTimeout(() => setApiError(null), 3000);
+                                  }
+                                } catch (error) {
+                                  console.error('Error navigating to case details:', error);
+                                  setApiError('Failed to navigate to case details.');
+                                  setTimeout(() => setApiError(null), 3000);
+                                }
                               }}
                               sx={{ 
                                 color: 'primary.main',
@@ -1864,10 +1563,10 @@ const CaseTracking = () => {
                                 setSuccessMessage('');
                               }, 3000);
                             } catch (err) {
-                              setError('Failed to update priority status');
+                              setApiError('Failed to update priority status');
                               // Auto-dismiss error message after 3 seconds
                               setTimeout(() => {
-                                setError(null);
+                                setApiError(null);
                               }, 3000);
                             }
                           }}
@@ -1895,7 +1594,7 @@ const CaseTracking = () => {
                       </TableCell>
                       <TableCell sx={{ width: 150 }}>
                         <Typography variant="body2" fontWeight="500">
-                          {new Date(caseItem.lastActionDate).toLocaleDateString()}
+                          {caseItem.lastActionDate ? new Date(caseItem.lastActionDate).toLocaleDateString() : 'N/A'}
                         </Typography>
                       </TableCell>
                       <TableCell sx={{ width: 120, textAlign: 'center' }}>
@@ -1929,20 +1628,21 @@ const CaseTracking = () => {
                             })()
                           }}
                         >
-                          {new Date(caseItem.policyDetails.renewalDate).toLocaleDateString('en-GB', {
+                          {caseItem.policyDetails?.renewalDate ? new Date(caseItem.policyDetails.renewalDate).toLocaleDateString('en-GB', {
                             day: '2-digit',
                             month: '2-digit',
                             year: 'numeric'
-                          })}
+                          }) : 'N/A'}
                         </Typography>
                       </TableCell>
                       <TableCell sx={{ width: 140 }}>
                         <Typography variant="body2" fontWeight="500">
-                          {new Date(caseItem.uploadDate).toLocaleDateString()}
+                          {caseItem.uploadDate ? new Date(caseItem.uploadDate).toLocaleDateString() : 'N/A'}
                         </Typography>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ))
+                  )}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -2464,7 +2164,7 @@ const CaseTracking = () => {
                     <Box>
                       <Typography variant="caption" color="text.secondary">Next Follow-up</Typography>
                       <Typography variant="body2" fontWeight="500">
-                        {new Date(currentCase.nextFollowUpDate).toLocaleDateString()}
+                        {currentCase.nextFollowUpDate ? new Date(currentCase.nextFollowUpDate).toLocaleDateString() : 'N/A'}
                       </Typography>
                     </Box>
                   </Box>
@@ -2615,7 +2315,7 @@ const CaseTracking = () => {
                     )}
                     {commentFormData.updateFollowUp && (
                       <Typography variant="body2" color="text.secondary">
-                        • Follow-up Date: {new Date(currentCase.nextFollowUpDate).toLocaleDateString()} → {new Date(commentFormData.nextFollowUpDate).toLocaleDateString()}
+                        • Follow-up Date: {currentCase.nextFollowUpDate ? new Date(currentCase.nextFollowUpDate).toLocaleDateString() : 'N/A'} → {commentFormData.nextFollowUpDate ? new Date(commentFormData.nextFollowUpDate).toLocaleDateString() : 'N/A'}
                       </Typography>
                     )}
                   </Box>
@@ -2822,7 +2522,7 @@ const CaseTracking = () => {
                       Work Step: {currentCase.currentWorkStep} → {quickEditData.currentWorkStep}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Follow-up: {new Date(quickEditData.nextFollowUpDate).toLocaleDateString()}
+                      Follow-up: {quickEditData.nextFollowUpDate ? new Date(quickEditData.nextFollowUpDate).toLocaleDateString() : 'N/A'}
                     </Typography>
                   </Box>
                 </Box>
@@ -2950,7 +2650,7 @@ const CaseTracking = () => {
                   <Typography variant="body2" color="text.secondary">
                     Policy: {selectedCase.policyNumber} | Type: {selectedCase.policyDetails.type} | 
                     Premium: ${selectedCase.policyDetails.premium} | 
-                    Expiry: {new Date(selectedCase.policyDetails.expiryDate).toLocaleDateString()}
+                    Expiry: {selectedCase.policyDetails?.expiryDate ? new Date(selectedCase.policyDetails.expiryDate).toLocaleDateString() : 'N/A'}
                   </Typography>
                 </Box>
               </Box>

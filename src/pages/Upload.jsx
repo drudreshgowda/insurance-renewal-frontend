@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { useProviders } from '../context/ProvidersContext';
 import { 
   Box, Typography, Paper, Button, Grid, 
@@ -13,7 +13,7 @@ import {
   AccordionSummary, AccordionDetails, FormGroup, Checkbox
 } from '@mui/material';
 import { 
-  CloudUpload as UploadIcon, 
+  CloudUpload as UploadIcon,  
   Download as DownloadIcon,
   CheckCircleOutline as CheckIcon,
   ErrorOutline as ErrorIcon,
@@ -33,9 +33,16 @@ import {
   ExpandMore as ExpandMoreIcon,
   Notifications as NotificationsIcon,
   Timeline as TimelineIcon,
-  Close as CloseIcon
+  Close as CloseIcon,
+  Refresh as RefreshIcon
 } from '@mui/icons-material';
 import { deduplicateContacts } from '../services/api';
+import { UploadApI } from '../api/Upload';
+import { Snackbar } from '@mui/material';
+import { getDate } from 'date-fns';
+import { id } from 'date-fns/locale';
+
+//import Alert from '@mui/material/Alert';
 
 const Upload = () => {
   const theme = useTheme();
@@ -44,7 +51,70 @@ const Upload = () => {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState(null);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success"
+  });
+
+  //live api
+  useEffect(() => {
+    fetchUploads();
+    fetchTemplates();
+    fetchActiveCampaigns();
+  }, []);
+  const fetchUploads = async () => {
+    const result = await UploadApI.GetFileUploads();
+    if (result.success) {
+      setUploadHistory(result.data.results);
+    } else {
+      console.error("Failed to fetch uploads:", result.message);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!file) return;
   
+    setUploading(true);
+    setUploadProgress(0);
+    setUploadStatus(null);
+  
+    try {
+      const result = await UploadApI.SelectFile(file);
+  
+      if (result.success) {
+        setSnackbar({
+          open: true,
+          message: "File uploaded successfully!",
+          severity: "success",
+        });
+        await fetchUploads();
+
+      } else {
+        const isTokenExpired = result.message && result.message.toLowerCase().includes("token expired");
+        setSnackbar({
+          open: true,
+          message: isTokenExpired ? "Session expired, please login again." : result.message || "File upload failed!",
+          severity: isTokenExpired ? "error" : "error",
+        });
+  
+        if (isTokenExpired) {
+          localStorage.removeItem("authToken");
+        }
+      }
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: error.message || "An unexpected error occurred!",
+        severity: "error",
+      });
+    } finally {
+      setUploading(false);
+      setUploadProgress(100);
+    }
+  };
+
+
   // Campaign state
   const [campaignDialog, setCampaignDialog] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
@@ -64,279 +134,189 @@ const Upload = () => {
     }
   });
   
-  // Predefined templates
-  const [templates] = useState({
-    email: [
-      { id: 'email-1', name: 'Renewal Reminder - 30 Days', subject: 'Your Policy Renewal is Due Soon', content: 'Dear {name}, your policy expires in 30 days...' },
-      { id: 'email-2', name: 'Renewal Reminder - 7 Days', subject: 'Urgent: Policy Renewal Required', content: 'Dear {name}, your policy expires in 7 days...' },
-      { id: 'email-3', name: 'Welcome New Customer', subject: 'Welcome to Our Insurance Family', content: 'Dear {name}, thank you for choosing us...' }
-    ],
-    whatsapp: [
-      { id: 'wa-1', name: 'Quick Renewal Reminder', content: 'Hi {name}! Your policy {policy_number} expires on {expiry_date}. Renew now: {renewal_link}' },
-      { id: 'wa-2', name: 'Payment Confirmation', content: 'Thank you {name}! Your payment of ₹{amount} has been received. Policy renewed successfully.' }
-    ],
-    sms: [
-      { id: 'sms-1', name: 'Renewal Alert', content: 'Dear {name}, your policy expires on {expiry_date}. Renew at {link} or call {phone}' },
-      { id: 'sms-2', name: 'Payment Due', content: 'Payment of ₹{amount} due for policy {policy_number}. Pay now: {payment_link}' }
-    ],
-    call: [
-      { id: 'call-1', name: 'Renewal Follow-up Call', script: 'Hello {name}, this is regarding your policy {policy_number} renewal. We wanted to discuss your renewal options...' },
-      { id: 'call-2', name: 'Payment Reminder Call', script: 'Hi {name}, we wanted to remind you about your pending payment of ₹{amount} for policy {policy_number}...' }
-    ]
-  });
-  
-  // Active campaigns
-  const [activeCampaigns, setActiveCampaigns] = useState([
-    {
-      id: 'camp-1',
-      name: 'May Renewals Email Campaign',
-      type: 'email',
-      status: 'active',
-      uploadId: 'upload-128',
-      uploadFilename: 'may_renewals_batch1.xlsx',
-      targetCount: 238,
-      sent: 156,
-      opened: 89,
-      clicked: 34,
-      converted: 12,
-      createdAt: '2025-05-15T11:00:00',
-      scheduledAt: '2025-05-15T14:00:00'
-    },
-    {
-      id: 'camp-2',
-      name: 'April Follow-up WhatsApp',
-      type: 'whatsapp',
-      status: 'paused',
-      uploadId: 'upload-127',
-      uploadFilename: 'april_end_policies.xlsx',
-      targetCount: 175,
-      sent: 98,
-      delivered: 94,
-      read: 67,
-      replied: 23,
-      createdAt: '2025-04-30T16:30:00',
-      scheduledAt: '2025-05-01T09:00:00'
-    }
-  ]);
+  // Dynamic templates from API
+  const [dynamicTemplates, setDynamicTemplates] = useState([]);
+  const [templatesLoading, setTemplatesLoading] = useState(false);
+  const [templatesError, setTemplatesError] = useState(null);
 
-  const [uploadHistory, setUploadHistory] = useState([
-    {
-      id: 'upload-128',
-      filename: 'may_renewals_batch1.xlsx',
-      timestamp: '2025-05-15T10:45:00',
-      status: 'Completed',
-      records: 245,
-      successful: 238,
-      failed: 7,
-      fileSize: '2.4 MB',
-      downloadUrl: '/api/downloads/may_renewals_batch1.xlsx'
-    },
-    {
-      id: 'upload-127',
-      filename: 'april_end_policies.xlsx',
-      timestamp: '2025-04-30T16:20:00',
-      status: 'Completed',
-      records: 189,
-      successful: 175,
-      failed: 14,
-      fileSize: '1.8 MB',
-      downloadUrl: '/api/downloads/april_end_policies.xlsx'
-    },
-    {
-      id: 'upload-126',
-      filename: 'quarterly_review_q1.csv',
-      timestamp: '2025-04-28T11:30:00',
-      status: 'Processing',
-      records: 312,
-      successful: '...',
-      failed: '...',
-      fileSize: '3.1 MB',
-      downloadUrl: '/api/downloads/quarterly_review_q1.csv'
-    },
-    {
-      id: 'upload-125',
-      filename: 'branch_mumbai_renewals.xlsx',
-      timestamp: '2025-04-25T14:15:00',
-      status: 'Completed',
-      records: 167,
-      successful: 159,
-      failed: 8,
-      fileSize: '1.5 MB',
-      downloadUrl: '/api/downloads/branch_mumbai_renewals.xlsx'
-    },
-    {
-      id: 'upload-124',
-      filename: 'corporate_policies_april.xlsx',
-      timestamp: '2025-04-22T09:45:00',
-      status: 'Failed',
-      records: 95,
-      successful: 0,
-      failed: 95,
-      fileSize: '890 KB',
-      downloadUrl: '/api/downloads/corporate_policies_april.xlsx'
-    },
-    {
-      id: 'upload-123',
-      filename: 'april_renewals.xlsx',
-      timestamp: '2025-04-10T09:30:00',
-      status: 'Completed',
-      records: 156,
-      successful: 142,
-      failed: 14,
-      fileSize: '1.2 MB',
-      downloadUrl: '/api/downloads/april_renewals.xlsx'
-    },
-    {
-      id: 'upload-122',
-      filename: 'march_end_batch.xlsx',
-      timestamp: '2025-03-28T14:15:00',
-      status: 'Completed',
-      records: 203,
-      successful: 189,
-      failed: 14,
-      fileSize: '1.9 MB',
-      downloadUrl: '/api/downloads/march_end_batch.xlsx'
-    },
-    {
-      id: 'upload-121',
-      filename: 'regional_data_south.csv',
-      timestamp: '2025-03-25T13:20:00',
-      status: 'Completed',
-      records: 278,
-      successful: 265,
-      failed: 13,
-      fileSize: '2.7 MB',
-      downloadUrl: '/api/downloads/regional_data_south.csv'
-    },
-    {
-      id: 'upload-120',
-      filename: 'bulk_import_march.xlsx',
-      timestamp: '2025-03-20T10:10:00',
-      status: 'Completed',
-      records: 445,
-      successful: 421,
-      failed: 24,
-      fileSize: '4.2 MB',
-      downloadUrl: '/api/downloads/bulk_import_march.xlsx'
-    },
-    {
-      id: 'upload-119',
-      filename: 'agent_submissions_week12.csv',
-      timestamp: '2025-03-18T15:30:00',
-      status: 'Completed',
-      records: 134,
-      successful: 128,
-      failed: 6,
-      fileSize: '1.1 MB',
-      downloadUrl: '/api/downloads/agent_submissions_week12.csv'
-    }
-  ]);
-
-  const handleFileChange = (event) => {
-    const selectedFile = event.target.files[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      setUploadStatus(null);
-    }
-  };
-
-  const handleUpload = async () => {
-    if (!file) return;
-    
-    setUploading(true);
-    setUploadProgress(0);
-    setUploadStatus(null);
-    
-    // Simulate progress
-    const progressInterval = setInterval(() => {
-      setUploadProgress((prevProgress) => {
-        const newProgress = prevProgress + 10;
-        if (newProgress >= 100) {
-          clearInterval(progressInterval);
-          return 100;
-        }
-        return newProgress;
-      });
-    }, 500);
+  const fetchTemplates = async () => {
+    setTemplatesLoading(true);
+    setTemplatesError(null);
     
     try {
-      // In a real app, this would call your API
-      // const result = await uploadPolicyData(file);
+      console.log("Starting template fetch...");
+      const result = await UploadApI.GetTemplates();
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 5000));
-      
-      clearInterval(progressInterval);
-      setUploadProgress(100);
-      
-      // Mock successful upload
-      const newUpload = {
-        id: `upload-${Date.now()}`,
-        filename: file.name,
-        timestamp: new Date().toISOString(),
-        status: 'Processing',
-        records: 178,
-        successful: '...',
-        failed: '...',
-        fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
-        downloadUrl: '/api/downloads/' + file.name
-      };
-      
-      setUploadHistory([newUpload, ...uploadHistory]);
-      
-      setUploadStatus({
-        type: 'success',
-        message: 'File uploaded successfully. Processing has begun.'
-      });
-      
-      // Simulate status change after processing
-      setTimeout(() => {
-        setUploadHistory(prev => {
-          const updated = [...prev];
-          updated[0] = {
-            ...updated[0],
-            status: 'Completed',
-            successful: 165,
-            failed: 13
-          };
-          return updated;
-        });
-      }, 8000);
-      
+      if (result.success) {
+        console.log("Templates API response:", result.data);
+        
+        // Handle different response formats
+        let templates = [];
+        if (Array.isArray(result.data)) {
+          templates = result.data;
+        } else if (result.data && typeof result.data === 'object') {
+          // Try different possible keys
+          templates = result.data.templates || 
+                     result.data.results || 
+                     result.data.data || 
+                     result.data.items ||
+                     Object.values(result.data).find(Array.isArray) || 
+                     [];
+        }
+        
+        console.log("Extracted templates:", templates);
+        console.log("Number of templates found:", templates.length);
+        
+        if (templates.length > 0) {
+          setDynamicTemplates(templates);
+          setTemplatesError(null);
+          console.log(`Successfully loaded ${templates.length} templates from API`);
+          
+          // Log first few templates to see their structure
+          console.log('Sample templates:', templates.slice(0, 3).map(t => ({
+            id: t.id,
+            idType: typeof t.id,
+            name: t.template_name || t.name,
+            type: t.template_type || t.type || t.channel,
+            subject: t.subject,
+            content: t.template_content || t.content
+          })));
+        } else {
+          console.warn("No templates found in API response");
+          setTemplatesError("No templates found in API response");
+          setDynamicTemplates([]);
+        }
+      } else {
+        console.error("Failed to fetch templates:", result.message);
+        setTemplatesError(result.message || "Failed to fetch templates");
+        setDynamicTemplates([]);
+      }
     } catch (error) {
-      clearInterval(progressInterval);
-      setUploadStatus({
-        type: 'error',
-        message: error.message || 'Failed to upload file. Please try again.'
-      });
+      console.error("Error fetching templates:", error);
+      setTemplatesError(error.message || "Network error while fetching templates");
+      setDynamicTemplates([]);
     } finally {
-      setUploading(false);
+      setTemplatesLoading(false);
     }
   };
 
-  const handleDownloadTemplate = () => {
-    // In a real app, this would download a template file
-    alert('Template download would start here');
+  const fetchActiveCampaigns = async () => {
+    try {
+      const result = await UploadApI.GetActiveCampaigns();
+      
+      if (result.success) {
+        // Handle different response formats from campaigns API
+        let campaigns = [];
+        if (Array.isArray(result.data)) {
+          campaigns = result.data;
+        } else if (result.data && typeof result.data === 'object') {
+          // Try different possible keys for campaigns data
+          campaigns = result.data.campaigns || 
+                     result.data.results || 
+                     result.data.data || 
+                     result.data.items ||
+                     Object.values(result.data).find(Array.isArray) || 
+                     [];
+        }
+        
+        if (campaigns.length > 0) {
+          // Transform the campaigns API response to match the expected format
+          const transformedCampaigns = campaigns.map(campaign => ({
+            id: campaign.id,
+            name: campaign.campaign_name || campaign.name,
+            type: campaign.campaign_type || campaign.type || campaign.channel,
+            status: campaign.status || (campaign.is_active ? 'active' : 'paused'),
+            uploadId: campaign.file_upload_id || `upload-${campaign.id}`,
+            uploadFilename: campaign.upload_filename || `${(campaign.campaign_name || campaign.name).replace(/\s+/g, '_').toLowerCase()}.xlsx`,
+            targetCount: campaign.target_count || campaign.targetCount || 0,
+            sent: campaign.sent_count || campaign.sent || 0,
+            opened: campaign.opened_count || campaign.opened || 0,
+            clicked: campaign.clicked_count || campaign.clicked || 0,
+            converted: campaign.converted_count || campaign.converted || 0,
+            delivered: campaign.delivered_count || campaign.delivered || 0,
+            read: campaign.read_count || campaign.read || 0,
+            replied: campaign.replied_count || campaign.replied || 0,
+            createdAt: campaign.created_at || campaign.createdAt,
+            scheduledAt: campaign.scheduled_at || campaign.scheduledAt || campaign.updated_at,
+            subject: campaign.subject,
+            content: campaign.content,
+            variables: campaign.variables
+          }));
+          
+          setActiveCampaigns(transformedCampaigns);
+        } else {
+          setActiveCampaigns([]);
+        }
+      } else {
+        console.error("Failed to fetch active campaigns:", result.message);
+        setActiveCampaigns([]);
+      }
+    } catch (error) {
+      console.error("Error fetching active campaigns:", error);
+      setActiveCampaigns([]);
+    }
   };
 
+  // Force template refresh when component mounts
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (dynamicTemplates.length === 0 && !templatesLoading) {
+        console.log("No templates loaded, retrying...");
+        fetchTemplates();
+      }
+    }, 2000); // Retry after 2 seconds if no templates loaded
+
+    return () => clearTimeout(timer);
+  }, [dynamicTemplates.length, templatesLoading]);
+  
+  // Fallback templates (in case API fails) - removed mock data
+  const [templates] = useState({
+    email: [],
+    whatsapp: [],
+    sms: [],
+    call: []
+  });
+  
+  // Active campaigns - now fetched dynamically from API
+  const [activeCampaigns, setActiveCampaigns] = useState([]);
+
+  const [uploadHistory, setUploadHistory] = useState([]);
+
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      console.log("Selected file:", selectedFile);
+      setFile(selectedFile);
+    }
+  };
+  
+  
+  
+  
+  
+
+  const handleDownloadTemplate = () => {
+    const link = document.createElement("a");
+    link.href = process.env.PUBLIC_URL + "/PolicyDataFormat.csv"; 
+    link.download = "PolicyDataFormat.csv"; 
+    link.click();
+  };
+  
   const handleDownloadFile = (upload) => {
-    // In a real app, this would trigger the actual file download
     const link = document.createElement('a');
     link.href = upload.downloadUrl;
-    link.download = upload.filename;
+    link.download = upload.original_filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
-    // Show success message
-    // console.log(`Downloading ${upload.filename}...`);
+
   };
 
   // Campaign handlers
   const handleCreateCampaign = (upload) => {
     setSelectedUpload(upload);
     setCampaignData({
-      name: `${upload.filename.split('.')[0]} Campaign`,
+      name: `${upload.original_filename.split('.')[0]} Campaign`,
       type: ['email'], // Initialize as array
       template: {}, // Initialize as empty object
       providers: {}, // Initialize as empty object
@@ -355,107 +335,222 @@ const Upload = () => {
 
   const handleCampaignSubmit = async () => {
     try {
-      // Mock contacts from selected upload
-      const mockContacts = [
-        { phone: '9876543210', email: 'arjun.sharma@gmail.com', name: 'Arjun Sharma' },
-        { phone: '9876543211', email: 'meera.kapoor@gmail.com', name: 'Meera Kapoor' },
-        { phone: '9876543212', email: 'vikram.singh@gmail.com', name: 'Vikram Singh' },
-        { phone: '9876543213', email: 'priyanka.gupta@gmail.com', name: 'Priyanka Gupta' }
-      ];
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        setSnackbar({
+          open: true,
+          message: "Please login first.",
+          severity: "error"
+        });
+        return;
+      }
+  
+      // Get the primary channel (first selected)
+      const primaryChannel = campaignData.type[0];
+      const selectedTemplateId = campaignData.template[primaryChannel];
       
-      // Perform deduplication and DNC filtering
-      const filteredData = await deduplicateContacts(mockContacts, 'CLIENT-001');
+      console.log('Campaign data:', campaignData);
+      console.log('Primary channel:', primaryChannel);
+      console.log('Selected template ID:', selectedTemplateId);
+      console.log('Selected template ID type:', typeof selectedTemplateId);
+      console.log('Template object:', campaignData.template);
+      console.log('Available templates for channel:', getTemplatesForChannel(primaryChannel));
       
-      // Create separate campaigns for each selected type
-      const newCampaigns = campaignData.type.map((type, index) => {
-        const selectedProvider = getProviders(type).find(p => p.id === campaignData.providers[type]) || getActiveProvider(type);
+      // Log each template's ID and type
+      const channelTemplates = getTemplatesForChannel(primaryChannel);
+      channelTemplates.forEach(template => {
+        console.log(`Template: ${template.template_name || template.name}, ID: ${template.id}, ID Type: ${typeof template.id}`);
+      });
+      
+      if (!selectedTemplateId) {
+        setSnackbar({
+          open: true,
+          message: `Please select a template for ${primaryChannel} campaign.`,
+          severity: "error"
+        });
+        return;
+      }
+      
+      // Handle different template ID formats
+      let templateId;
+      const isUsingFallbackTemplates = channelTemplates.some(t => typeof t.id === 'string' && t.id.includes('-'));
+      
+      console.log('Using fallback templates:', isUsingFallbackTemplates);
+      
+      if (isUsingFallbackTemplates) {
+        // For fallback templates with string IDs, we need to map them to numeric IDs
+        const fallbackTemplateMap = {
+          'email-1': 1,
+          'email-2': 2, 
+          'email-3': 3,
+          'wa-1': 4,
+          'wa-2': 5,
+          'sms-1': 6,
+          'sms-2': 7,
+          'call-1': 8,
+          'call-2': 9
+        };
         
-        return {
-        id: `camp-${Date.now()}-${index}`,
-        name: campaignData.type.length > 1 
-          ? `${campaignData.name} (${type.charAt(0).toUpperCase() + type.slice(1)})`
-          : campaignData.name,
-        type: type,
-          provider: selectedProvider ? {
-            id: selectedProvider.id,
-            name: selectedProvider.name,
-            type: selectedProvider.type
-          } : null,
-        status: campaignData.scheduleType === 'immediate' ? 'active' : 'scheduled',
-        uploadId: selectedUpload.id,
-        uploadFilename: selectedUpload.filename,
-        targetCount: filteredData.allowed.length,
-        originalCount: mockContacts.length,
-        dncBlocked: filteredData.dncBlocked,
-        duplicatesRemoved: filteredData.duplicatesRemoved,
-        sent: 0,
-        opened: 0,
-        clicked: 0,
-        converted: 0,
-        createdAt: new Date().toISOString(),
-        scheduledAt: campaignData.scheduleType === 'scheduled' 
-          ? `${campaignData.scheduleDate}T${campaignData.scheduleTime}:00`
-            : new Date().toISOString(),
-          advancedScheduling: campaignData.advancedScheduling.enabled ? {
-            enabled: true,
-            intervals: campaignData.advancedScheduling.intervals.filter(interval => interval.enabled)
-          } : {
+        templateId = fallbackTemplateMap[selectedTemplateId];
+        console.log('Mapped fallback template ID:', selectedTemplateId, '->', templateId);
+      } else {
+        // For dynamic templates from API
+        if (typeof selectedTemplateId === 'number') {
+          templateId = selectedTemplateId;
+        } else if (typeof selectedTemplateId === 'string') {
+          templateId = parseInt(selectedTemplateId, 10);
+          if (isNaN(templateId)) {
+            // If parsing fails, try to find the template by ID and use its numeric ID
+            const selectedTemplate = channelTemplates.find(t => t.id.toString() === selectedTemplateId);
+            if (selectedTemplate) {
+              templateId = parseInt(selectedTemplate.id, 10);
+            }
+          }
+        } else {
+          templateId = parseInt(selectedTemplateId, 10);
+        }
+      }
+      
+      console.log('Final template ID:', templateId, 'Type:', typeof templateId);
+      
+      if (isNaN(templateId) || templateId <= 0) {
+        console.error('Template ID validation failed:', {
+          selectedTemplateId,
+          templateId,
+          isUsingFallbackTemplates,
+          channelTemplates: channelTemplates.map(t => ({ id: t.id, name: t.template_name || t.name }))
+        });
+        
+        setSnackbar({
+          open: true,
+          message: `Invalid template ID (${selectedTemplateId}). Please select a different template or refresh the templates.`,
+          severity: "error"
+        });
+        return;
+      }
+
+      // Map target audience to ID (adjust based on your backend)
+      const targetAudienceMap = {
+        'all': 1,
+        'pending': 2,
+        'expired': 3
+      };
+
+      // Map campaign type to ID (adjust based on your backend)
+      const campaignTypeMap = {
+        'email': 1,
+        'whatsapp': 2,
+        'sms': 3,
+        'call': 4
+      };
+
+      // Handle scheduled_at with proper timezone offset
+      let scheduledAt = null;
+      if (campaignData.scheduleType === 'scheduled') {
+        if (campaignData.scheduleDate && campaignData.scheduleTime) {
+          const date = new Date(`${campaignData.scheduleDate}T${campaignData.scheduleTime}`);
+          scheduledAt = date.toISOString().replace('Z', '+00:00');
+        } else {
+          // Default: schedule for 1 hour from now
+          const now = new Date();
+          now.setHours(now.getHours() + 1);
+          scheduledAt = now.toISOString().replace('Z', '+00:00');
+        }
+      }
+
+      // Map trigger conditions from UI to backend format
+      const mapTriggerConditions = (conditions) => {
+        const conditionMap = [];
+        if (conditions.sendIfNoResponse) conditionMap.push("no_response");
+        if (conditions.sendIfNoAction) conditionMap.push("no_action");
+        if (conditions.sendIfNoEngagement) conditionMap.push("no_engagement");
+        return conditionMap;
+      };
+
+      const campaignPayload = {
+        file_upload_id: selectedUpload.id,
+        campaign_name: campaignData.name,
+        campaign_type_id: campaignTypeMap[primaryChannel] || 1,
+        template_id: templateId,  
+        target_audience_id: targetAudienceMap[campaignData.targetAudience] || 1,
+        communication_provider_id: parseInt(campaignData.providers[primaryChannel]) || 1,
+        schedule_type: campaignData.scheduleType,
+        scheduled_at: scheduledAt,
+        enable_advanced_scheduling: campaignData.advancedScheduling.enabled,
+        schedule_intervals: campaignData.advancedScheduling.enabled
+          ? campaignData.advancedScheduling.intervals
+              .filter(i => i.enabled)
+              .map(interval => ({
+                channel: interval.channel,
+                delay_value: interval.delay,
+                delay_unit: interval.delayUnit,
+                trigger_conditions: mapTriggerConditions(interval.conditions),
+                is_active: interval.enabled,
+                template_id: parseInt(interval.template),
+                communication_provider_id: parseInt(campaignData.providers[interval.channel]) || 1
+              }))
+          : []
+      };
+  
+      console.log('Final Payload:', campaignPayload);
+  
+      const result = await UploadApI.Createcampaigns(campaignPayload);
+  
+      if (result.success) {
+        setSnackbar({
+          open: true,
+          message: result.data.message || "Campaign created successfully!",
+          severity: "success"
+        });
+        
+        // Close dialog first
+        setCampaignDialog(false);
+        
+        // Add a small delay to allow backend processing, then refresh campaigns
+        setTimeout(async () => {
+          await fetchActiveCampaigns();
+        }, 1000);
+        
+        // Reset form state
+        setCampaignData({
+          name: '',
+          type: [],
+          targetAudience: 'all',
+          providers: {},
+          template: {},
+          scheduleType: 'immediate',
+          scheduleDate: '',
+          scheduleTime: '',
+          advancedScheduling: {
             enabled: false,
             intervals: []
           }
-        };
-      });
-      
-      setActiveCampaigns([...newCampaigns, ...activeCampaigns]);
-      setCampaignDialog(false);
-      
-      // Show success message with filtering details
-      const campaignCount = newCampaigns.length;
-      const campaignText = campaignCount > 1 ? `${campaignCount} campaigns` : 'campaign';
-      const scheduleText = campaignData.advancedScheduling.enabled 
-        ? ` with ${campaignData.advancedScheduling.intervals.filter(i => i.enabled).length} scheduled intervals`
-        : '';
-      
-      let filteringSummary = '';
-      if (filteredData.dncBlocked > 0 || filteredData.duplicatesRemoved > 0) {
-        const filterDetails = [];
-        if (filteredData.duplicatesRemoved > 0) {
-          filterDetails.push(`${filteredData.duplicatesRemoved} duplicates removed`);
-        }
-        if (filteredData.dncBlocked > 0) {
-          filterDetails.push(`${filteredData.dncBlocked} blocked by DNC`);
-        }
-        filteringSummary = ` (${filterDetails.join(', ')})`;
+        });
+        setActiveStep(0);
+      } else {
+        console.error("Campaign creation failed:", result);
+        setSnackbar({
+          open: true,
+          message: result.message || "Failed to create campaign.",
+          severity: "error"
+        });
       }
-      
-      setUploadStatus({
-        type: 'success',
-        message: `${campaignText} created successfully! (${campaignData.type.join(', ').toUpperCase()})${scheduleText}${filteringSummary}`
-      });
-      
-      // Clear the success message after 5 seconds
-      setTimeout(() => {
-        setUploadStatus(null);
-      }, 5000);
     } catch (error) {
-      setUploadStatus({
-        type: 'error',
-        message: 'Failed to create campaign. Please try again.'
+      console.error("Campaign submit error:", error);
+      setSnackbar({
+        open: true,
+        message: error.message || "An unexpected error occurred!",
+        severity: "error"
       });
-      setTimeout(() => {
-        setUploadStatus(null);
-      }, 5000);
     }
   };
+  
+  
 
-  const handleCampaignAction = (campaignId, action) => {
-    setActiveCampaigns(prev => 
-      prev.map(campaign => 
-        campaign.id === campaignId 
-          ? { ...campaign, status: action === 'pause' ? 'paused' : 'active' }
-          : campaign
-      )
-    );
+  const handleCampaignAction = async (campaignId, action) => {
+    // For now, just refresh the campaigns list from API
+    // In a real implementation, you would call an API to update the campaign status
+    await fetchActiveCampaigns();
   };
 
   const getCampaignIcon = (type) => {
@@ -478,20 +573,49 @@ const Upload = () => {
     }
   };
 
+  // Helper function to get templates for a specific channel
+  const getTemplatesForChannel = (channel) => {
+    if (dynamicTemplates && dynamicTemplates.length > 0) {
+      // Filter templates by channel type and log the IDs
+      const channelTemplates = dynamicTemplates.filter(template => {
+        const templateChannel = template.template_type?.toLowerCase() || 
+                               template.channel?.toLowerCase() || 
+                               template.type?.toLowerCase();
+        return templateChannel === channel.toLowerCase();
+      });
+      
+      console.log(`Templates for ${channel}:`, channelTemplates.map(t => ({ 
+        id: t.id, 
+        name: t.template_name || t.name,
+        subject: t.subject,
+        content: t.template_content || t.content
+      })));
+      
+      // Return dynamic templates if found
+      if (channelTemplates.length > 0) {
+        return channelTemplates;
+      }
+    }
+    
+    // Fallback to static templates if no dynamic templates found
+    console.log(`Using fallback templates for ${channel}`);
+    return templates[channel] || [];
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Completed': return 'success';
-      case 'Processing': return 'warning';
-      case 'Failed': return 'error';
+      case 'completed': return 'success';
+      case 'processing': return 'warning';
+      case 'fsailed': return 'error';
       default: return 'default';
     }
   };
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'Completed': return <CheckIcon color="success" />;
-      case 'Processing': return <PendingIcon color="warning" />;
-      case 'Failed': return <ErrorIcon color="error" />;
+      case 'completed': return <CheckIcon color="success" />;
+      case 'processing': return <PendingIcon color="warning" />;
+      case 'failed': return <ErrorIcon color="error" />;
       default: return null;
     }
   };
@@ -740,10 +864,10 @@ const Upload = () => {
                                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                                     <Box sx={{ flex: 1, mr: 2 }}>
                                       <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
-                                        {upload.filename}
+                                        {upload.original_filename}
                                       </Typography>
                                       <Typography variant="caption" color="text.secondary">
-                                        {upload.fileSize}
+                                        {upload.file_size_formatted}
                                       </Typography>
                                     </Box>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -751,7 +875,7 @@ const Upload = () => {
                                         <IconButton
                                           size="small"
                                           onClick={() => handleCreateCampaign(upload)}
-                                          disabled={upload.status !== 'Completed'}
+                                          disabled={upload.upload_status !== 'completed'}
                                           sx={{
                                             color: theme.palette.success.main,
                                             '&:hover': {
@@ -782,10 +906,10 @@ const Upload = () => {
                                         </IconButton>
                                       </Tooltip>
                                       <Chip 
-                                        label={upload.status} 
-                                        color={getStatusColor(upload.status)}
+                                        label={upload.upload_status} 
+                                        color={getStatusColor(upload.upload_status)}
                                         size="small"
-                                        icon={getStatusIcon(upload.status)}
+                                        icon={getStatusIcon(upload.upload_status)}
                                         sx={{ 
                                           fontWeight: 500,
                                           '& .MuiChip-icon': { fontSize: '0.8rem' }
@@ -797,7 +921,7 @@ const Upload = () => {
                                 secondary={
                                   <>
                                     <Typography component="span" variant="body2" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                                      {new Date(upload.timestamp).toLocaleString()}
+                                      {new Date(upload.created_at).toLocaleString()}
                                     </Typography>
                                     <Box sx={{ 
                                       mt: 1, 
@@ -812,7 +936,7 @@ const Upload = () => {
                                             Total Records
                                           </Typography>
                                           <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                            {upload.records}
+                                            {upload.total_records}
                                           </Typography>
                                         </Grid>
                                         <Grid item xs={4}>
@@ -820,7 +944,7 @@ const Upload = () => {
                                             Successful
                                           </Typography>
                                           <Typography variant="h6" sx={{ fontWeight: 600, color: 'success.main' }}>
-                                            {upload.successful}
+                                            {upload.successful_records}
                                           </Typography>
                                         </Grid>
                                         <Grid item xs={4}>
@@ -828,7 +952,7 @@ const Upload = () => {
                                             Failed
                                           </Typography>
                                           <Typography variant="h6" sx={{ fontWeight: 600, color: 'error.main' }}>
-                                            {upload.failed}
+                                            {upload.failed_records}
                                           </Typography>
                                         </Grid>
                                       </Grid>
@@ -846,6 +970,7 @@ const Upload = () => {
               </Card>
             </Grow>
           </Grid>
+
           
           <Grid item xs={12}>
             <Grow in={true} timeout={1200}>
@@ -857,9 +982,9 @@ const Upload = () => {
                 }}
               >
                 <CardContent sx={{ p: 3, height: '600px', display: 'flex', flexDirection: 'column' }}>
-                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
-                    Active Campaigns ({activeCampaigns.length})
-                  </Typography>
+                   <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
+                     Active Campaigns ({activeCampaigns.length})
+                   </Typography>
                   
                   <Box sx={{ 
                     flex: 1, 
@@ -1000,26 +1125,22 @@ const Upload = () => {
                                               {campaign.sent}
                                             </Typography>
                                           </Grid>
-                                          {campaign.type === 'email' && (
-                                            <>
-                                              <Grid item xs={6}>
-                                                <Typography variant="body2" color="success.main">
-                                                  Opened
-                                                </Typography>
-                                                <Typography variant="h6" sx={{ fontWeight: 600, color: 'success.main' }}>
-                                                  {campaign.opened}
-                                                </Typography>
-                                              </Grid>
-                                              <Grid item xs={6}>
-                                                <Typography variant="body2" color="warning.main">
-                                                  Clicked
-                                                </Typography>
-                                                <Typography variant="h6" sx={{ fontWeight: 600, color: 'warning.main' }}>
-                                                  {campaign.clicked}
-                                                </Typography>
-                                              </Grid>
-                                            </>
-                                          )}
+                                          <Grid item xs={6}>
+                                            <Typography variant="body2" color="success.main">
+                                              Opened
+                                            </Typography>
+                                            <Typography variant="h6" sx={{ fontWeight: 600, color: 'success.main' }}>
+                                              {campaign.opened}
+                                            </Typography>
+                                          </Grid>
+                                          <Grid item xs={6}>
+                                            <Typography variant="body2" color="warning.main">
+                                              Clicked
+                                            </Typography>
+                                            <Typography variant="h6" sx={{ fontWeight: 600, color: 'warning.main' }}>
+                                              {campaign.clicked}
+                                            </Typography>
+                                          </Grid>
                                           {campaign.type === 'whatsapp' && (
                                             <>
                                               <Grid item xs={6}>
@@ -1058,10 +1179,29 @@ const Upload = () => {
           </Grid>
         </Grid>
 
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={4000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        >
+          <Alert
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
+            severity={snackbar.severity}
+            sx={{ width: "100%" }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+
         {/* Campaign Creation Dialog */}
         <Dialog
           open={campaignDialog}
-          onClose={() => setCampaignDialog(false)}
+          onClose={() => {
+            setCampaignDialog(false);
+            // Refresh campaigns when dialog closes
+            setTimeout(() => fetchActiveCampaigns(), 500);
+          }}
           maxWidth="md"
           fullWidth
           PaperProps={{ sx: { borderRadius: 3 } }}
@@ -1225,7 +1365,7 @@ const Upload = () => {
                                           <Chip label="Default" size="small" sx={{ ml: 1 }} />
                                         )}
                                       </Box>
-                                    </MenuItem>
+                                    </MenuItem> 
                                   ))}
                                   {availableProviders.length === 0 && (
                                     <MenuItem disabled>
@@ -1263,12 +1403,43 @@ const Upload = () => {
               <Step>
                 <StepLabel>Template Selection</StepLabel>
                 <StepContent>
-                                     <Typography variant="body2" color="text.secondary" gutterBottom>
-                     {campaignData.type.length > 1 
-                       ? 'Choose templates for each selected campaign type'
-                       : 'Choose from predefined templates or create a custom one'
-                     }
-                   </Typography>
+                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                     <Box>
+                       <Typography variant="body2" color="text.secondary">
+                         {campaignData.type.length > 1 
+                           ? 'Choose templates for each selected campaign type'
+                           : 'Choose from predefined templates or create a custom one'
+                         }
+                       </Typography>
+
+                       {dynamicTemplates.length === 0 && !templatesLoading && !templatesError && (
+                         <Typography variant="caption" color="warning.main" sx={{ display: 'block', mt: 0.5 }}>
+                           Using fallback templates (API not available)
+                         </Typography>
+                       )}
+                     </Box>
+                     <Box sx={{ display: 'flex', gap: 1 }}>
+
+
+
+                     </Box>
+                   </Box>
+                   
+                   {templatesError && (
+                     <Alert severity="warning" sx={{ mb: 2 }}>
+                       <Typography variant="body2">
+                         {templatesError}. Using fallback templates.
+                       </Typography>
+                     </Alert>
+                   )}
+                   
+                   {!templatesError && dynamicTemplates.length === 0 && !templatesLoading && (
+                     <Alert severity="info" sx={{ mb: 2 }}>
+                       <Typography variant="body2">
+                         No templates loaded from API. Using fallback templates. Click "Refresh" to try loading from API again.
+                       </Typography>
+                     </Alert>
+                   )}
                    
                    {campaignData.type.map((type) => (
                      <Box key={type} sx={{ mt: 3 }}>
@@ -1278,6 +1449,7 @@ const Upload = () => {
                          {type === 'sms' && <SmsIcon fontSize="small" />}
                          {type === 'call' && <PhoneIcon fontSize="small" />}
                          {type.charAt(0).toUpperCase() + type.slice(1)} Template
+
                        </Typography>
                        
                        <FormControl fullWidth>
@@ -1285,52 +1457,64 @@ const Upload = () => {
                          <Select
                            value={campaignData.template[type] || ''}
                            label={`Select ${type.charAt(0).toUpperCase() + type.slice(1)} Template`}
-                           onChange={(e) => setCampaignData(prev => ({ 
-                             ...prev, 
-                             template: { ...prev.template, [type]: e.target.value }
-                           }))}
+                           onChange={(e) => {
+                             console.log(`Template selected for ${type}:`, e.target.value, 'Type:', typeof e.target.value);
+                             setCampaignData(prev => ({ 
+                               ...prev, 
+                               template: { ...prev.template, [type]: e.target.value }
+                             }));
+                           }}
+                           disabled={templatesLoading}
                          >
-                           {templates[type]?.map((template) => (
+                           {getTemplatesForChannel(type)?.map((template) => (
                              <MenuItem key={template.id} value={template.id}>
-                               <Box>
-                                 <Typography variant="body1">{template.name}</Typography>
-                                 <Typography variant="caption" color="text.secondary">
-                                   {template.subject || template.script || template.content.substring(0, 50) + '...'}
+                               <Box sx={{ width: '100%' }}>
+                                 <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                   {template.template_name || template.name}
                                  </Typography>
+                                 <Typography variant="caption" color="text.secondary" sx={{ 
+                                   display: 'block',
+                                   overflow: 'hidden',
+                                   textOverflow: 'ellipsis',
+                                   whiteSpace: 'nowrap',
+                                   maxWidth: '300px'
+                                 }}>
+                                   {template.subject || template.script || template.template_content || 'Template content...'}
+                                 </Typography>
+                                 {template.template_type && (
+                                   <Chip 
+                                     label={template.template_type} 
+                                     size="small" 
+                                     sx={{ mt: 0.5, fontSize: '0.7rem', height: '20px' }}
+                                   />
+                                 )}
                                </Box>
                              </MenuItem>
                            ))}
+                           {templatesLoading && (
+                             <MenuItem disabled>
+                               <Typography variant="body2" color="text.secondary">
+                                 Loading templates...
+                               </Typography>
+                             </MenuItem>
+                           )}
+                               {!templatesLoading && getTemplatesForChannel(type)?.length === 0 && (
+                             <MenuItem disabled>
+                               <Typography variant="body2" color="text.secondary">
+                                 No templates available for {type}
+                               </Typography>
+                             </MenuItem>
+                           )}
+                           {!templatesLoading && getTemplatesForChannel(type)?.length > 0 && !campaignData.template[type] && (
+                             <MenuItem disabled>
+                               <Typography variant="body2" color="warning.main">
+                                 Please select a template to continue
+                               </Typography>
+                             </MenuItem>
+                           )}
                          </Select>
                        </FormControl>
                        
-                       {campaignData.template[type] && (
-                         <Box sx={{ 
-                           mt: 2, 
-                           p: 2, 
-                           borderRadius: 2, 
-                           backgroundColor: theme.palette.mode === 'dark' ? alpha(theme.palette.background.paper, 0.4) : alpha(theme.palette.background.default, 0.8),
-                           border: `1px solid ${theme.palette.divider}`
-                         }}>
-                           <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
-                             Template Preview:
-                           </Typography>
-                           {(() => {
-                             const template = templates[type]?.find(t => t.id === campaignData.template[type]);
-                             return (
-                               <Box>
-                                 {template?.subject && (
-                                   <Typography variant="body2" sx={{ fontWeight: 500, mb: 1 }}>
-                                     Subject: {template.subject}
-                                   </Typography>
-                                 )}
-                                 <Typography variant="body2" color="text.secondary">
-                                   {template?.content}
-                                 </Typography>
-                               </Box>
-                             );
-                           })()}
-                         </Box>
-                       )}
                      </Box>
                    ))}
                   
@@ -1446,7 +1630,10 @@ const Upload = () => {
                     <Button
                       variant="contained"
                       onClick={handleCampaignSubmit}
-                      disabled={campaignData.scheduleType === 'scheduled' && (!campaignData.scheduleDate || !campaignData.scheduleTime)}
+                      disabled={
+                        (campaignData.scheduleType === 'scheduled' && (!campaignData.scheduleDate || !campaignData.scheduleTime)) ||
+                        !campaignData.type.every(type => campaignData.template[type])
+                      }
                     >
                       Create Campaign
                     </Button>
@@ -1530,7 +1717,7 @@ const Upload = () => {
                                     After {interval.delay} {interval.delayUnit}
                                   </Typography>
                                   <Typography variant="caption" color="text.secondary">
-                                    {interval.template ? templates[interval.channel]?.find(t => t.id === interval.template)?.name : 'No template selected'}
+                                    {interval.template ? getTemplatesForChannel(interval.channel)?.find(t => t.id === interval.template)?.template_name || getTemplatesForChannel(interval.channel)?.find(t => t.id === interval.template)?.name : 'No template selected'}
                                   </Typography>
                                 </Box>
                                 <FormControlLabel
@@ -1671,11 +1858,33 @@ const Upload = () => {
                                         }));
                                       }}
                                     >
-                                      {templates[interval.channel]?.map((template) => (
+                                      {getTemplatesForChannel(interval.channel)?.map((template) => (
                                         <MenuItem key={template.id} value={template.id}>
-                                          {template.name}
+                                          <Box sx={{ width: '100%' }}>
+                                            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                              {template.template_name || template.name}
+                                            </Typography>
+                                            {template.subject && (
+                                              <Typography variant="caption" color="text.secondary" sx={{ 
+                                                display: 'block',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                whiteSpace: 'nowrap',
+                                                maxWidth: '200px'
+                                              }}>
+                                                {template.subject}
+                                              </Typography>
+                                            )}
+                                          </Box>
                                         </MenuItem>
                                       ))}
+                                      {getTemplatesForChannel(interval.channel)?.length === 0 && (
+                                        <MenuItem disabled>
+                                          <Typography variant="body2" color="text.secondary">
+                                            No templates available for {interval.channel}
+                                          </Typography>
+                                        </MenuItem>
+                                      )}
                                     </Select>
                                   </FormControl>
                                 </Grid>
@@ -1782,4 +1991,4 @@ const Upload = () => {
   );
 };
 
-export default Upload;
+export default Upload; 
