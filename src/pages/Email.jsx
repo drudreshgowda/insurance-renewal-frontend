@@ -92,6 +92,7 @@ import {
   Save as SaveIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { templateAPI } from '../api/EmailTemplate';
 
 const EmailInbox = () => {
   const theme = useTheme();
@@ -683,6 +684,8 @@ const EmailInbox = () => {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [templateForEmail, setTemplateForEmail] = useState(null); // Track which email to apply template to
   const [templateStep, setTemplateStep] = useState(0);
+  const [templateLoading, setTemplateLoading] = useState(false);
+  const [templatesLoading, setTemplatesLoading] = useState(false);
   const [newTemplate, setNewTemplate] = useState({
     name: '',
     type: 'email',
@@ -693,56 +696,44 @@ const EmailInbox = () => {
     tags: [],
     status: 'draft'
   });
-  const [templates, setTemplates] = useState([
-    {
-      id: 'acknowledgment',
-      name: 'Acknowledgment',
-      category: 'general',
-      subject: 'Re: {{subject}}',
-      content: `Dear {{customerName}},
-
-Thank you for contacting us. We have received your email regarding {{subject}} and want to assure you that we are reviewing your request.
-
-Our team will respond to your inquiry within 24 hours during business hours. If this is an urgent matter, please call our customer service line at (555) 123-4567.
-
-We appreciate your patience and look forward to assisting you.
-
-Best regards,
-Customer Support Team
-Intelipro Insurance`,
-      variables: ['customerName', 'subject'],
-      tags: ['general', 'acknowledgment'],
-      status: 'active',
-      usage: 45
-    },
-    {
-      id: 'complaint_response',
-      name: 'Complaint Response',
-      category: 'complaint',
-      subject: 'Re: {{subject}} - We\'re Here to Help',
-      content: `Dear {{customerName}},
-
-Thank you for bringing this matter to our attention. We sincerely apologize for any inconvenience you have experienced.
-
-Your concern is important to us, and we are committed to resolving this issue promptly. A senior customer service representative will review your case and contact you within 4 hours.
-
-In the meantime, if you have any additional information that might help us resolve this matter, please don't hesitate to share it with us.
-
-We value your business and appreciate your patience as we work to make this right.
-
-Sincerely,
-Customer Care Team
-Intelipro Insurance`,
-      variables: ['customerName', 'subject'],
-      tags: ['complaint', 'response'],
-      status: 'active',
-      usage: 32
-    }
-  ]);
+  const [templates, setTemplates] = useState([]);
 
   // Template management functions
-  const handleOpenTemplateManagement = () => {
+  const fetchTemplates = async () => {
+    setTemplatesLoading(true);
+    try {
+      const response = await templateAPI.GetTemplates();
+      if (response.success) {
+        // Handle different possible API response structures
+        let templatesData = [];
+        if (Array.isArray(response.data)) {
+          templatesData = response.data;
+        } else if (response.data && Array.isArray(response.data.results)) {
+          templatesData = response.data.results;
+        } else if (response.data && Array.isArray(response.data.templates)) {
+          templatesData = response.data.templates;
+        } else if (response.data && response.data.data && Array.isArray(response.data.data)) {
+          templatesData = response.data.data;
+        }
+        
+        console.log('Fetched templates:', templatesData); // Debug log
+        setTemplates(templatesData);
+      } else {
+        showNotification(response.message || 'Failed to fetch templates', 'error');
+        setTemplates([]); // Ensure templates is always an array
+      }
+    } catch (error) {
+      console.error('Error fetching templates:', error);
+      showNotification('An error occurred while fetching templates', 'error');
+      setTemplates([]); // Ensure templates is always an array
+    } finally {
+      setTemplatesLoading(false);
+    }
+  };
+
+  const handleOpenTemplateManagement = async () => {
     setTemplateManagementDialog(true);
+    await fetchTemplates();
   };
 
   const handleCreateTemplate = () => {
@@ -772,26 +763,124 @@ Intelipro Insurance`,
     return variables;
   };
 
-  const handleSaveTemplate = () => {
-    const variables = extractVariables(newTemplate.content);
-    const template = {
-      ...newTemplate,
-      variables,
-      id: selectedTemplate ? selectedTemplate.id : `template_${Date.now()}`,
-      usage: selectedTemplate ? selectedTemplate.usage : 0,
-      createdBy: 'Current User',
-      lastModified: new Date().toISOString().split('T')[0]
-    };
+  const handleSaveTemplate = async () => {
+    console.log('handleSaveTemplate called');
+    console.log('Current newTemplate state:', newTemplate);
+    setTemplateLoading(true);
+    
+    try {
+      console.log('Extracting variables from content:', newTemplate.content);
+      const variables = extractVariables(newTemplate.content);
+      console.log('Extracted variables:', variables);
+      
+      // Prepare template data with proper field names and validation
+      const templateData = {
+        name: newTemplate.name?.trim() || '',
+        template_type: newTemplate.type || 'email',
+        channel: 'email', // Set default channel to email
+        category: newTemplate.category || 'general',
+        subject: newTemplate.subject?.trim() || '',
+        content: newTemplate.content?.trim() || '',
+        variables: variables || [],
+        tags: newTemplate.tags || [],
+        status: newTemplate.status || 'draft',
+        createdBy: 'Current User',
+        lastModified: new Date().toISOString().split('T')[0]
+      };
 
-    if (selectedTemplate) {
-      setTemplates(prev => prev.map(t => t.id === selectedTemplate.id ? template : t));
-    } else {
-      setTemplates(prev => [...prev, template]);
+      // Validate required fields
+      if (!templateData.name) {
+        showNotification('Template name is required', 'error');
+        setTemplateLoading(false);
+        return;
+      }
+      
+      if (!templateData.content) {
+        showNotification('Template content is required', 'error');
+        setTemplateLoading(false);
+        return;
+      }
+
+      console.log('Prepared template data:', templateData);
+      
+      // Additional validation
+      if (typeof templateData !== 'object' || templateData === null) {
+        throw new Error('Invalid template data format');
+      }
+      
+      console.log('About to call API...');
+      let response;
+      try {
+        if (selectedTemplate) {
+          // Edit existing template
+          console.log('Editing template with ID:', selectedTemplate.id);
+          response = await templateAPI.EditTemplate(selectedTemplate.id, templateData);
+        } else {
+          // Create new template
+          console.log('Creating new template');
+          response = await templateAPI.CreateTemplate(templateData);
+        }
+        console.log('API response received:', response);
+      } catch (apiError) {
+        console.error('API call failed:', apiError);
+        throw new Error(`API call failed: ${apiError.message || apiError.name || 'Unknown API error'}`);
+      }
+      
+      if (response.success) {
+        console.log('Template operation successful, closing dialog...');
+        setCreateTemplateDialog(false);
+        setSelectedTemplate(null);
+        showNotification(selectedTemplate ? 'Template updated successfully' : 'Template created successfully', 'success');
+        
+        // Refresh templates list
+        console.log('Refreshing templates list...');
+        try {
+          await fetchTemplates();
+          console.log('Templates list refreshed successfully');
+        } catch (refreshError) {
+          console.error('Error refreshing templates:', refreshError);
+          // Don't throw here, just log the error since template was created successfully
+        }
+      } else {
+        console.log('Template creation failed:', response.message);
+        showNotification(response.message || 'Failed to save template', 'error');
+      }
+    } catch (error) {
+      console.error('Error saving template:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+        cause: error.cause
+      });
+      
+      let errorMessage = 'An error occurred while saving the template';
+      
+      // More specific error handling
+      if (error.message && error.message !== '') {
+        errorMessage = error.message;
+      } else if (error.name === 'TypeError') {
+        errorMessage = 'Network error: Unable to connect to server';
+      } else if (error.name === 'SyntaxError') {
+        errorMessage = 'Invalid response from server';
+      } else if (error.name === 'ReferenceError') {
+        errorMessage = 'Application error: Missing reference';
+      } else if (error.name) {
+        errorMessage = `${error.name}: Application error occurred`;
+      }
+      
+      console.log('Final error message:', errorMessage);
+      
+      try {
+        showNotification(errorMessage, 'error');
+      } catch (notificationError) {
+        console.error('Error showing notification:', notificationError);
+        // Fallback: show alert if notification fails
+        alert(`Error: ${errorMessage}`);
+      }
+    } finally {
+      setTemplateLoading(false);
     }
-
-    setCreateTemplateDialog(false);
-    setSelectedTemplate(null);
-    showNotification('Template saved successfully', 'success');
   };
 
   const handleEditTemplate = (template) => {
@@ -801,9 +890,36 @@ Intelipro Insurance`,
     setCreateTemplateDialog(true);
   };
 
-  const handleDeleteTemplate = (templateId) => {
-    setTemplates(prev => prev.filter(t => t.id !== templateId));
-    showNotification('Template deleted successfully', 'success');
+  const handleDeleteTemplate = async (templateId) => {
+    // Find the template to get its name for confirmation
+    const template = templates.find(t => t.id === templateId);
+    const templateName = template ? template.name || template.template_name : 'this template';
+    
+    // Show confirmation dialog
+    const confirmed = window.confirm(`Are you sure you want to delete "${templateName}"? This action cannot be undone.`);
+    
+    if (!confirmed) {
+      return; // User cancelled the deletion
+    }
+    
+    try {
+      console.log('Deleting template with ID:', templateId);
+      
+      const response = await templateAPI.DeleteTemplate(templateId);
+      
+      if (response.success) {
+        // Remove template from local state
+        setTemplates(prev => prev.filter(t => t.id !== templateId));
+        showNotification(response.message || 'Template deleted successfully', 'success');
+        console.log('Template deleted successfully');
+      } else {
+        showNotification(response.message || 'Failed to delete template', 'error');
+        console.error('Failed to delete template:', response.message);
+      }
+    } catch (error) {
+      console.error('Error deleting template:', error);
+      showNotification('An error occurred while deleting the template', 'error');
+    }
   };
 
   const handleUseTemplate = (template, emailId) => {
@@ -2030,113 +2146,140 @@ Intelipro Insurance`,
             </Box>
           </DialogTitle>
           <DialogContent dividers sx={{ minHeight: '400px' }}>
-            <Grid container spacing={2}>
-              {templates.map((template) => (
-                <Grid item xs={12} md={6} key={template.id}>
-                  <Card sx={{ 
-                    borderRadius: 2,
-                    transition: 'transform 0.2s, box-shadow 0.2s',
-                    '&:hover': {
-                      transform: 'translateY(-2px)',
-                      boxShadow: 4
-                    }
-                  }}>
-                    <CardContent>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                        <Box>
-                          <Typography variant="h6" fontWeight="600" gutterBottom>
-                            {template.name}
-                          </Typography>
-                          <Chip 
-                            label={template.category} 
-                            size="small" 
-                            color="primary" 
-                            variant="outlined"
-                            sx={{ mb: 1 }}
-                          />
+            {templatesLoading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+                <CircularProgress />
+                <Typography variant="body2" sx={{ ml: 2 }}>
+                  Loading templates...
+                </Typography>
+              </Box>
+            ) : (
+              Array.isArray(templates) && templates.length > 0 ? (
+                <Grid container spacing={2}>
+                  {templates.map((template) => (
+                  <Grid item xs={12} md={6} key={template.id}>
+                    <Card sx={{ 
+                      borderRadius: 2,
+                      transition: 'transform 0.2s, box-shadow 0.2s',
+                      '&:hover': {
+                        transform: 'translateY(-2px)',
+                        boxShadow: 4
+                      }
+                    }}>
+                      <CardContent>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                          <Box>
+                            <Typography variant="h6" fontWeight="600" gutterBottom>
+                              {template.name || 'Unnamed Template'}
+                            </Typography>
+                            <Chip 
+                              label={template.category || 'general'} 
+                              size="small" 
+                              color="primary" 
+                              variant="outlined"
+                              sx={{ mb: 1 }}
+                            />
+                          </Box>
+                                                   <Box sx={{ display: 'flex', gap: 0.5 }}>
+                             <Tooltip title="Use Template">
+                               <IconButton 
+                                 size="small"
+                                 color="primary"
+                                 onClick={() => {
+                                   if (templateForEmail) {
+                                     handleUseTemplate(template, templateForEmail.id);
+                                     setTemplateManagementDialog(false);
+                                     setTemplateForEmail(null);
+                                   } else {
+                                     showNotification(`Template "${template.name}" ready to use - select an email from the action menu first`, 'info');
+                                   }
+                                 }}
+                               >
+                                 <CheckCircleIcon fontSize="small" />
+                               </IconButton>
+                             </Tooltip>
+                             <Tooltip title="Edit Template">
+                               <IconButton 
+                                 size="small"
+                                 onClick={() => handleEditTemplate(template)}
+                               >
+                                 <EditIcon fontSize="small" />
+                               </IconButton>
+                             </Tooltip>
+                             <Tooltip title="Delete Template">
+                               <IconButton 
+                                 size="small"
+                                 color="error"
+                                 onClick={() => handleDeleteTemplate(template.id)}
+                               >
+                                 <DeleteIcon fontSize="small" />
+                               </IconButton>
+                             </Tooltip>
+                           </Box>
                         </Box>
-                                                 <Box sx={{ display: 'flex', gap: 0.5 }}>
-                           <Tooltip title="Use Template">
-                             <IconButton 
-                               size="small"
-                               color="primary"
-                               onClick={() => {
-                                 if (templateForEmail) {
-                                   handleUseTemplate(template, templateForEmail.id);
-                                   setTemplateManagementDialog(false);
-                                   setTemplateForEmail(null);
-                                 } else {
-                                   showNotification(`Template "${template.name}" ready to use - select an email from the action menu first`, 'info');
-                                 }
-                               }}
-                             >
-                               <CheckCircleIcon fontSize="small" />
-                             </IconButton>
-                           </Tooltip>
-                           <Tooltip title="Edit Template">
-                             <IconButton 
-                               size="small"
-                               onClick={() => handleEditTemplate(template)}
-                             >
-                               <EditIcon fontSize="small" />
-                             </IconButton>
-                           </Tooltip>
-                           <Tooltip title="Delete Template">
-                             <IconButton 
-                               size="small"
-                               color="error"
-                               onClick={() => handleDeleteTemplate(template.id)}
-                             >
-                               <DeleteIcon fontSize="small" />
-                             </IconButton>
-                           </Tooltip>
-                         </Box>
-                      </Box>
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
-                        <strong>Subject:</strong> {template.subject}
-                      </Typography>
-                      <Typography 
-                        variant="body2" 
-                        color="text.secondary"
-                        sx={{ 
-                          display: '-webkit-box',
-                          WebkitLineClamp: 3,
-                          WebkitBoxOrient: 'vertical',
-                          overflow: 'hidden',
-                          mb: 2
-                        }}
-                      >
-                        {template.content}
-                      </Typography>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Typography variant="caption" color="text.secondary">
-                          Used {template.usage} times
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                          <strong>Subject:</strong> {template.subject || 'No subject'}
                         </Typography>
-                        <Box sx={{ display: 'flex', gap: 1 }}>
-                          {template.variables.slice(0, 3).map((variable, index) => (
-                            <Chip 
-                              key={index}
-                              label={variable}
-                              size="small"
-                              variant="outlined"
-                              sx={{ fontSize: '0.7rem' }}
-                            />
-                          ))}
-                          {template.variables.length > 3 && (
-                            <Chip 
-                              label={`+${template.variables.length - 3}`}
-                              size="small"
-                              variant="outlined"
-                              sx={{ fontSize: '0.7rem' }}
-                            />
-                          )}
+                        <Typography 
+                          variant="body2" 
+                          color="text.secondary"
+                          sx={{ 
+                            display: '-webkit-box',
+                            WebkitLineClamp: 3,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                            mb: 2
+                          }}
+                        >
+                          {template.content || 'No content'}
+                        </Typography>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Typography variant="caption" color="text.secondary">
+                            Used {template.usage || 0} times
+                          </Typography>
+                          <Box sx={{ display: 'flex', gap: 1 }}>
+                            {(template.variables || []).slice(0, 3).map((variable, index) => (
+                              <Chip 
+                                key={index}
+                                label={variable}
+                                size="small"
+                                variant="outlined"
+                                sx={{ fontSize: '0.7rem' }}
+                              />
+                            ))}
+                            {(template.variables || []).length > 3 && (
+                              <Chip 
+                                label={`+${(template.variables || []).length - 3}`}
+                                size="small"
+                                variant="outlined"
+                                sx={{ fontSize: '0.7rem' }}
+                              />
+                            )}
+                          </Box>
                         </Box>
-                      </Box>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
                 </Grid>
-              ))}
-            </Grid>
+              ) : (
+                <Box sx={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  minHeight: '200px',
+                  textAlign: 'center'
+                }}>
+                  <Typography variant="h6" color="text.secondary" gutterBottom>
+                    No templates found
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Create your first template to get started
+                  </Typography>
+                </Box>
+              )
+            )}
           </DialogContent>
         </Dialog>
 
@@ -2244,10 +2387,10 @@ Intelipro Insurance`,
             <Button
               variant="contained"
               onClick={handleSaveTemplate}
-              disabled={!newTemplate.name || !newTemplate.content}
-              startIcon={<SaveIcon />}
+              disabled={!newTemplate.name || !newTemplate.content || templateLoading}
+              startIcon={templateLoading ? <CircularProgress size={16} /> : <SaveIcon />}
             >
-              Save Template
+              {templateLoading ? (selectedTemplate ? 'Updating...' : 'Saving...') : (selectedTemplate ? 'Update Template' : 'Save Template')}
             </Button>
           </DialogActions>
         </Dialog>

@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { emailProviderAPI } from '../api/Settings_Emailprovider';
 
 // Create the Providers context
 const ProvidersContext = createContext();
@@ -352,21 +353,125 @@ export const ProvidersProvider = ({ children }) => {
   }, [providers]);
 
   // Add new provider
-  const addProvider = (channel, providerData) => {
-    const newProvider = {
-      id: `${channel}-${Date.now()}`,
-      ...providerData,
-      createdAt: new Date().toISOString(),
-      lastUsed: null,
-      status: 'disconnected'
-    };
+  const addProvider = async (channel, providerData) => {
+    try {
+      // For email providers, make API call
+      if (channel === 'email') {
+        // Map provider type to backend format
+        const providerTypeMapping = {
+          'sendgrid': 'sendgrid',
+          'aws-ses': 'aws_ses',
+          'aws_ses': 'aws_ses',
+          'mailgun': 'mailgun',
+          'smtp': 'smtp'
+        };
 
-    setProviders(prev => ({
-      ...prev,
-      [channel]: [...prev[channel], newProvider]
-    }));
+        // Transform the provider data to match API format
+        const apiPayload = {
+          name: providerData.name,
+          provider_type: providerTypeMapping[providerData.type] || providerData.type,
+          from_email: providerData.config.fromEmail || providerData.config.from_email || '',
+          from_name: providerData.config.fromName || providerData.config.from_name || '',
+          reply_to: providerData.config.replyTo || providerData.config.reply_to || '',
+          daily_limit: providerData.limits.dailyLimit,
+          monthly_limit: providerData.limits.monthlyLimit,
+          rate_limit_per_minute: providerData.limits.rateLimit,
+          priority: 1,
+          is_default: providerData.isDefault,
+          is_active: providerData.isActive,
+          // Include API keys and credentials at top level based on provider type
+          ...(providerData.type === 'sendgrid' && {
+            api_key: providerData.config.apiKey || providerData.config.api_key || ''
+          }),
+          ...((providerData.type === 'aws-ses' || providerData.type === 'aws_ses') && {
+            access_key_id: providerData.config.accessKeyId || '',
+            secret_access_key: providerData.config.secretAccessKey || '',
+            region: providerData.config.region || ''
+          }),
+          ...(providerData.type === 'mailgun' && {
+            api_key: providerData.config.apiKey || '',
+            domain: providerData.config.domain || ''
+          }),
+          ...(providerData.type === 'smtp' && {
+            host: providerData.config.host || '',
+            port: providerData.config.port || '',
+            username: providerData.config.username || '',
+            password: providerData.config.password || ''
+          })
+        };
 
-    return newProvider.id;
+        console.log('Provider data received:', JSON.stringify(providerData, null, 2));
+        console.log('Config object:', JSON.stringify(providerData.config, null, 2));
+        console.log('API Key from config (apiKey):', providerData.config.apiKey);
+        console.log('API Key from config (api_key):', providerData.config.api_key);
+        console.log('All config keys:', Object.keys(providerData.config || {}));
+        console.log('Sending API payload:', JSON.stringify(apiPayload, null, 2));
+        
+        try {
+          const result = await emailProviderAPI.CreateProvider(apiPayload);
+          console.log('API Response:', JSON.stringify(result, null, 2));
+          
+          if (result.success) {
+            // Add the provider to local state with the API response data
+            const newProvider = {
+              id: result.data.id || `${channel}-${Date.now()}`,
+              ...providerData, // Keep the original form data including config
+              ...result.data, // Override with API response data
+              createdAt: new Date().toISOString(),
+              lastUsed: null,
+              status: 'connected'
+            };
+
+            setProviders(prev => ({
+              ...prev,
+              [channel]: [...prev[channel], newProvider]
+            }));
+
+            return { success: true, providerId: newProvider.id };
+          } else {
+            console.error('API call failed:', result.message);
+            return { success: false, message: result.message || 'API call failed' };
+          }
+        } catch (apiError) {
+          console.error('API call error:', apiError);
+          // Fallback to local storage if API fails
+          console.log('API failed, falling back to local storage');
+          const newProvider = {
+            id: `${channel}-${Date.now()}`,
+            ...providerData,
+            createdAt: new Date().toISOString(),
+            lastUsed: null,
+            status: 'disconnected'
+          };
+
+          setProviders(prev => ({
+            ...prev,
+            [channel]: [...prev[channel], newProvider]
+          }));
+
+          return { success: true, providerId: newProvider.id, message: 'Provider added locally (API unavailable)' };
+        }
+      } else {
+        // For other channels, use local storage (existing behavior)
+        const newProvider = {
+          id: `${channel}-${Date.now()}`,
+          ...providerData,
+          createdAt: new Date().toISOString(),
+          lastUsed: null,
+          status: 'disconnected'
+        };
+
+        setProviders(prev => ({
+          ...prev,
+          [channel]: [...prev[channel], newProvider]
+        }));
+
+        return { success: true, providerId: newProvider.id };
+      }
+    } catch (error) {
+      console.error('Error adding provider:', error);
+      return { success: false, message: error.message || 'Failed to add provider' };
+    }
   };
 
   // Update existing provider

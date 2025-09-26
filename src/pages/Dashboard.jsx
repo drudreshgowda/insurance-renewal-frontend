@@ -204,6 +204,10 @@ const handleChannelSave = async () => {
     paymentCollected: 0,
     paymentPending: 0
   });
+
+  // Debug log to see current stats
+  // eslint-disable-next-line no-console
+  console.log('📊 Current stats state:', stats);
   
   const [trendData, setTrendData] = useState([]);
   const [batchData, setBatchData] = useState([]);
@@ -304,11 +308,18 @@ const handleChannelSave = async () => {
   const loadDashboardData = useCallback(async () => {
     try {
       const statsData = await fetchDashboardStats(dateRange, policyType, caseStatus, startDate, endDate, selectedTeam, selectedTeamMember);
+      // eslint-disable-next-line no-console
+      console.log('📈 Dashboard received stats data:', statsData);
       if (statsData) {
-        setStats(prev => ({
-          ...prev,
-          ...statsData
-        }));
+        setStats(prev => {
+          const newStats = {
+            ...prev,
+            ...statsData
+          };
+          // eslint-disable-next-line no-console
+          console.log('🔄 Setting new stats:', newStats);
+          return newStats;
+        });
       }
       
       const trends = await fetchTrendData(dateRange, policyType, caseStatus, startDate, endDate, selectedTeam, selectedTeamMember);
@@ -438,18 +449,7 @@ const handleChannelSave = async () => {
     // Load dashboard data
     loadDashboardData();
     
-    // For demo purposes, let's set some mock data with a slight delay to simulate API fetch
-    const mockTimer = setTimeout(() => {
-      setStats({
-        totalCases: 1250,
-        inProgress: 320,
-        renewed: 780,
-        pendingAction: 95,
-        errors: 55,
-        paymentCollected: 13850000,
-        paymentPending: 3250000
-      });
-    }, 300);
+    // Mock data removed - now using live API via fetchDashboardStats
     
     const mockTrendData = [
       { name: 'Mon', newCases: 65, renewals: 42, successRate: 0.85 },
@@ -924,7 +924,6 @@ const handleChannelSave = async () => {
 
     // Cleanup timers
     return () => {
-      clearTimeout(mockTimer);
       clearTimeout(loadedTimer);
     };
   }, [loadDashboardData]); // Include the memoized function in dependencies

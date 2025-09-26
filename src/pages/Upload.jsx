@@ -10,7 +10,8 @@ import {
   TextField, FormControl, InputLabel, Select, MenuItem,
   Switch, FormControlLabel, Avatar,
   Stepper, Step, StepLabel, StepContent, Accordion,
-  AccordionSummary, AccordionDetails, FormGroup, Checkbox
+  AccordionSummary, AccordionDetails, FormGroup, Checkbox,
+  CircularProgress
 } from '@mui/material';
 import { 
   CloudUpload as UploadIcon,  
@@ -33,7 +34,7 @@ import {
   ExpandMore as ExpandMoreIcon,
   Notifications as NotificationsIcon,
   Timeline as TimelineIcon,
-  Close as CloseIcon
+  Close as CloseIcon,
 } from '@mui/icons-material';
 import { UploadApI } from '../api/Upload';
 import { Snackbar } from '@mui/material';
@@ -130,133 +131,231 @@ const Upload = () => {
     }
   });
   
-  // Dynamic templates from API
-  const [dynamicTemplates, setDynamicTemplates] = useState([]);
-  const [templatesLoading, setTemplatesLoading] = useState(false);
-  const [templatesError, setTemplatesError] = useState(null);
 
   const fetchTemplates = async () => {
-    setTemplatesLoading(true);
-    setTemplatesError(null);
-    
     try {
       const result = await UploadApI.GetTemplates();
-      
-      if (result.success) {
+      if (result.success && result.data) {
+        // Handle different response structures
+        let templatesData = result.data;
         
-        // Handle different response formats
-        let templates = [];
-        if (Array.isArray(result.data)) {
-          templates = result.data;
-        } else if (result.data && typeof result.data === 'object') {
-          // Try different possible keys
-          templates = result.data.templates || 
-                     result.data.results || 
-                     result.data.data || 
-                     result.data.items ||
-                     Object.values(result.data).find(Array.isArray) || 
-                     [];
+        // If data is nested in results or data property
+        if (result.data.results && Array.isArray(result.data.results)) {
+          templatesData = result.data.results;
+        } else if (result.data.data && Array.isArray(result.data.data)) {
+          templatesData = result.data.data;
+        } else if (!Array.isArray(result.data)) {
+          // If data is not an array, keep fallback templates
+          return;
         }
         
-        if (templates.length > 0) {
-          setDynamicTemplates(templates);
-          setTemplatesError(null);
-        } else {
-          setTemplatesError("No templates found in API response");
-          setDynamicTemplates([]);
+        // Ensure we have an array to work with
+        if (Array.isArray(templatesData)) {
+          // Transform API data to match UI expectations
+          const transformedTemplates = {
+            email: templatesData.filter(t => {
+              const type = t.template_type || t.type || t.channel;
+              return type === 'email' || type === 1 || type === 'Email';
+            }).map(t => ({
+              id: t.id,
+              template_name: t.template_name || t.name || t.title,
+              name: t.template_name || t.name || t.title,
+              subject: t.subject || t.email_subject,
+              template_content: t.template_content || t.content || t.body,
+              content: t.template_content || t.content || t.body,
+              template_type: t.template_type || t.type || t.channel
+            })),
+            whatsapp: templatesData.filter(t => {
+              const type = t.template_type || t.type || t.channel;
+              return type === 'whatsapp' || type === 2 || type === 'WhatsApp';
+            }).map(t => ({
+              id: t.id,
+              template_name: t.template_name || t.name || t.title,
+              name: t.template_name || t.name || t.title,
+              content: t.template_content || t.content || t.body,
+              template_type: t.template_type || t.type || t.channel
+            })),
+            sms: templatesData.filter(t => {
+              const type = t.template_type || t.type || t.channel;
+              return type === 'sms' || type === 3 || type === 'SMS';
+            }).map(t => ({
+              id: t.id,
+              template_name: t.template_name || t.name || t.title,
+              name: t.template_name || t.name || t.title,
+              content: t.template_content || t.content || t.body,
+              template_type: t.template_type || t.type || t.channel
+            })),
+            call: templatesData.filter(t => {
+              const type = t.template_type || t.type || t.channel;
+              return type === 'call' || type === 4 || type === 'Call';
+            }).map(t => ({
+              id: t.id,
+              template_name: t.template_name || t.name || t.title,
+              name: t.template_name || t.name || t.title,
+              content: t.template_content || t.content || t.body,
+              script: t.template_content || t.content || t.body,
+              template_type: t.template_type || t.type || t.channel
+            }))
+          };
+          
+          // Check if any templates were found
+          const totalTemplates = Object.values(transformedTemplates).reduce((sum, arr) => sum + arr.length, 0);
+          if (totalTemplates > 0) {
+            setTemplates(transformedTemplates);
+          }
         }
-      } else {
-        setTemplatesError(result.message || "Failed to fetch templates");
-        setDynamicTemplates([]);
       }
     } catch (error) {
-      setTemplatesError(error.message || "Network error while fetching templates");
-      setDynamicTemplates([]);
-    } finally {
-      setTemplatesLoading(false);
+      // Keep fallback data if API fails
     }
   };
 
   const fetchActiveCampaigns = async () => {
+    setCampaignsLoading(true);
     try {
-      const result = await UploadApI.GetActiveCampaigns();
+      console.log('Fetching active campaigns...');
+      const result = await UploadApI.ActiveCampaigns();
+      console.log('ActiveCampaigns API result:', result);
       
-      if (result.success) {
-        // Handle different response formats from campaigns API
-        let campaigns = [];
-        if (Array.isArray(result.data)) {
-          campaigns = result.data;
-        } else if (result.data && typeof result.data === 'object') {
-          // Try different possible keys for campaigns data
-          campaigns = result.data.campaigns || 
-                     result.data.results || 
-                     result.data.data || 
-                     result.data.items ||
-                     Object.values(result.data).find(Array.isArray) || 
-                     [];
+      if (result.success && result.data) {
+        console.log('API call successful, processing data:', result.data);
+        
+        // Handle different response structures
+        let campaignsData = result.data;
+        
+        // If data is nested in results or data property
+        if (result.data.results && Array.isArray(result.data.results)) {
+          campaignsData = result.data.results;
+          console.log('Using nested results data:', campaignsData);
+        } else if (result.data.data && Array.isArray(result.data.data)) {
+          campaignsData = result.data.data;
+          console.log('Using nested data.data:', campaignsData);
+        } else if (Array.isArray(result.data)) {
+          campaignsData = result.data;
+          console.log('Using direct array data:', campaignsData);
+        } else {
+          console.log('Data is not an array, structure:', typeof result.data, result.data);
+          // Try to extract campaigns from the response object
+          if (result.data.campaigns && Array.isArray(result.data.campaigns)) {
+            campaignsData = result.data.campaigns;
+            console.log('Using campaigns property:', campaignsData);
+          } else if (result.data.list && Array.isArray(result.data.list)) {
+            campaignsData = result.data.list;
+            console.log('Using list property:', campaignsData);
+          } else {
+            console.log('No valid campaign data found in response');
+            setActiveCampaigns([]);
+            return;
+          }
         }
         
-        if (campaigns.length > 0) {
-          // Transform the campaigns API response to match the expected format
-          const transformedCampaigns = campaigns.map(campaign => ({
-            id: campaign.id,
-            name: campaign.campaign_name || campaign.name,
-            type: campaign.campaign_type || campaign.type || campaign.channel,
-            status: campaign.status || (campaign.is_active ? 'active' : 'paused'),
-            uploadId: campaign.file_upload_id || `upload-${campaign.id}`,
-            uploadFilename: campaign.upload_filename || `${(campaign.campaign_name || campaign.name).replace(/\s+/g, '_').toLowerCase()}.xlsx`,
-            targetCount: campaign.target_count || campaign.targetCount || 0,
-            sent: campaign.sent_count || campaign.sent || 0,
-            opened: campaign.opened_count || campaign.opened || 0,
-            clicked: campaign.clicked_count || campaign.clicked || 0,
-            converted: campaign.converted_count || campaign.converted || 0,
-            delivered: campaign.delivered_count || campaign.delivered || 0,
-            read: campaign.read_count || campaign.read || 0,
-            replied: campaign.replied_count || campaign.replied || 0,
-            createdAt: campaign.created_at || campaign.createdAt,
-            scheduledAt: campaign.scheduled_at || campaign.scheduledAt || campaign.updated_at,
-            subject: campaign.subject,
-            content: campaign.content,
-            variables: campaign.variables
-          }));
+        // Ensure we have an array to work with
+        if (Array.isArray(campaignsData)) {
+          console.log('Processing campaigns array with', campaignsData.length, 'items');
           
+          // Transform API data to match UI expectations
+          const transformedCampaigns = campaignsData.map(campaign => {
+            console.log('Transforming campaign:', campaign);
+            console.log('Campaign date fields:', {
+              created_at: campaign.created_at,
+              createdAt: campaign.createdAt,
+              date_created: campaign.date_created,
+              created_date: campaign.created_date
+            });
+            return {
+              id: campaign.id || campaign.campaign_id || campaign.pk,
+              name: campaign.campaign_name || campaign.name || campaign.title,
+              type: campaign.campaign_type || campaign.type || campaign.channel || 'email',
+              status: campaign.status || campaign.state || 'active',
+              uploadId: campaign.file_upload_id || campaign.upload_id || campaign.file_id,
+              uploadFilename: campaign.upload_filename || campaign.filename || campaign.file_name,
+              targetCount: campaign.target_count || campaign.targetCount || campaign.total_records || 0,
+              sent: campaign.sent_count || campaign.sent || campaign.sent_messages || 0,
+              opened: campaign.opened_count || campaign.opened || campaign.opened_messages || 0,
+              clicked: campaign.clicked_count || campaign.clicked || campaign.clicked_messages || 0,
+              converted: campaign.converted_count || campaign.converted || campaign.conversions || 0,
+              delivered: campaign.delivered_count || campaign.delivered || campaign.delivered_messages || 0,
+              read: campaign.read_count || campaign.read || campaign.read_messages || 0,
+              replied: campaign.replied_count || campaign.replied || campaign.replies || 0,
+              createdAt: campaign.created_at || campaign.createdAt || campaign.date_created || campaign.created_date,
+              scheduledAt: campaign.scheduled_at || campaign.scheduledAt || campaign.date_scheduled || campaign.scheduled_date
+            };
+          });
+          
+          console.log('Transformed campaigns:', transformedCampaigns);
           setActiveCampaigns(transformedCampaigns);
         } else {
+          console.log('Campaigns data is not an array:', typeof campaignsData, campaignsData);
           setActiveCampaigns([]);
         }
       } else {
-        console.error("Failed to fetch active campaigns:", result.message);
+        console.error('Failed to fetch active campaigns:', result.message || 'Unknown error');
         setActiveCampaigns([]);
       }
     } catch (error) {
-      console.error("Error fetching active campaigns:", error);
+      console.error('Error fetching active campaigns:', error);
       setActiveCampaigns([]);
+    } finally {
+      setCampaignsLoading(false);
     }
   };
-
-  // Force template refresh when component mounts
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (dynamicTemplates.length === 0 && !templatesLoading) {
-        fetchTemplates();
-      }
-    }, 2000); // Retry after 2 seconds if no templates loaded
-
-    return () => clearTimeout(timer);
-  }, [dynamicTemplates.length, templatesLoading]);
   
-  // Fallback templates (in case API fails) - removed mock data
-  const [templates] = useState({
-    email: [],
-    whatsapp: [],
-    sms: [],
-    call: []
+  
+  
+  
+  
+
+
+  
+  // Dynamic templates with fallback
+  const [templates, setTemplates] = useState({
+    email: [
+      { id: 'email-1', name: 'Renewal Reminder', subject: 'Policy Renewal Due', content: 'Your policy is due for renewal...' },
+      { id: 'email-2', name: 'Payment Link', subject: 'Secure Payment Link', content: 'Click here to make payment...' }
+    ],
+    whatsapp: [
+      { id: 'whatsapp-1', name: 'Renewal Notice', content: '🔔 Your policy renewal is due...' },
+      { id: 'whatsapp-2', name: 'Payment Reminder', content: '💳 Payment link for your policy...' }
+    ],
+    sms: [
+      { id: 'sms-1', name: 'Renewal Alert', content: 'RENEWAL: Your policy expires soon...' },
+      { id: 'sms-2', name: 'Payment Link', content: 'PAYMENT: Secure link for renewal...' }
+    ],
+    call: [
+      { id: 'call-1', name: 'Renewal Call Script', content: 'Hello, this is regarding your policy renewal...' }
+    ]
   });
   
-  // Active campaigns - now fetched dynamically from API
+  // Active campaigns - dynamic data from API
   const [activeCampaigns, setActiveCampaigns] = useState([]);
+  const [campaignsLoading, setCampaignsLoading] = useState(false);
 
-  const [uploadHistory, setUploadHistory] = useState([]);
+  const [uploadHistory, setUploadHistory] = useState([
+    {
+      id: 'upload-001',
+      filename: 'health_renewal_q1.xlsx',
+      uploadDate: '2024-01-15T10:30:00Z',
+      recordCount: 1250,
+      status: 'completed',
+      campaigns: ['CAMP-001']
+    },
+    {
+      id: 'upload-002',
+      filename: 'life_insurance_leads.xlsx',
+      uploadDate: '2024-01-14T14:20:00Z',
+      recordCount: 850,
+      status: 'completed',
+      campaigns: ['CAMP-002']
+    },
+    {
+      id: 'upload-003',
+      filename: 'motor_insurance_data.xlsx',
+      uploadDate: '2024-01-13T09:15:00Z',
+      recordCount: 2100,
+      status: 'completed',
+      campaigns: ['CAMP-003']
+    }
+  ]);
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -458,10 +557,8 @@ const Upload = () => {
         // Close dialog first
         setCampaignDialog(false);
         
-        // Add a small delay to allow backend processing, then refresh campaigns
-        setTimeout(async () => {
-          await fetchActiveCampaigns();
-        }, 1000);
+        // Refresh active campaigns list
+        await fetchActiveCampaigns();
         
         // Reset form state
         setCampaignData({
@@ -498,9 +595,7 @@ const Upload = () => {
   
 
   const handleCampaignAction = async (_campaignId, _action) => {
-    // For now, just refresh the campaigns list from API
-    // In a real implementation, you would call an API to update the campaign status
-    await fetchActiveCampaigns();
+    // Mock action - in a real implementation, you would call an API to update the campaign status
   };
 
   const getCampaignIcon = (type) => {
@@ -525,23 +620,6 @@ const Upload = () => {
 
   // Helper function to get templates for a specific channel
   const getTemplatesForChannel = (channel) => {
-    if (dynamicTemplates && dynamicTemplates.length > 0) {
-      // Filter templates by channel type and log the IDs
-      const channelTemplates = dynamicTemplates.filter(template => {
-        const templateChannel = template.template_type?.toLowerCase() || 
-                               template.channel?.toLowerCase() || 
-                               template.type?.toLowerCase();
-        return templateChannel === channel.toLowerCase();
-      });
-      
-      
-      // Return dynamic templates if found
-      if (channelTemplates.length > 0) {
-        return channelTemplates;
-      }
-    }
-    
-    // Fallback to static templates if no dynamic templates found
     return templates[channel] || [];
   };
 
@@ -864,7 +942,7 @@ const Upload = () => {
                                 secondary={
                                   <>
                                     <Typography component="span" variant="body2" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                                      {new Date(upload.created_at).toLocaleString()}
+                                      {new Date(upload.created_at).toLocaleDateString()}
                                     </Typography>
                                     <Box sx={{ 
                                       mt: 1, 
@@ -948,7 +1026,21 @@ const Upload = () => {
                       }
                     }
                   }}>
-                    {activeCampaigns.length === 0 ? (
+                    {campaignsLoading ? (
+                      <Box sx={{ 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        height: '100%',
+                        textAlign: 'center'
+                      }}>
+                        <LinearProgress sx={{ width: '100%', mb: 2 }} />
+                        <Typography variant="body2" color="text.secondary">
+                          Loading active campaigns...
+                        </Typography>
+                      </Box>
+                    ) : activeCampaigns.length === 0 ? (
                       <Box sx={{ 
                         display: 'flex', 
                         flexDirection: 'column', 
@@ -1042,7 +1134,64 @@ const Upload = () => {
                                   secondary={
                                     <>
                                       <Typography component="span" variant="body2" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                                        Created: {new Date(campaign.createdAt).toLocaleDateString()}
+                                        Created: {(() => {
+                                          try {
+                                            console.log('Displaying date for campaign:', campaign.id, 'createdAt value:', campaign.createdAt);
+                                            if (!campaign.createdAt) return 'N/A';
+                                            
+                                            // Try different date parsing approaches
+                                            let date;
+                                            if (typeof campaign.createdAt === 'string') {
+                                              // Handle different date string formats
+                                              if (campaign.createdAt.includes('T')) {
+                                                // ISO format
+                                                date = new Date(campaign.createdAt);
+                                              } else if (campaign.createdAt.includes('-')) {
+                                                // Date format YYYY-MM-DD
+                                                date = new Date(campaign.createdAt + 'T00:00:00');
+                                              } else if (campaign.createdAt.includes('/')) {
+                                                // Handle DD/MM/YYYY HH:MM:SS format
+                                                const datePart = campaign.createdAt.split(' ')[0]; // Get just the date part
+                                                const [day, month, year] = datePart.split('/');
+                                                date = new Date(year, month - 1, day); // month is 0-indexed
+                                              } else {
+                                                // Try direct parsing
+                                                date = new Date(campaign.createdAt);
+                                              }
+                                            } else {
+                                              date = new Date(campaign.createdAt);
+                                            }
+                                            
+                                            if (isNaN(date.getTime())) {
+                                              console.log('Invalid date parsed:', campaign.createdAt);
+                                              // Try to extract just the date part if it's in DD/MM/YYYY HH:MM:SS format
+                                              if (typeof campaign.createdAt === 'string' && campaign.createdAt.includes('/') && campaign.createdAt.includes(' ')) {
+                                                const datePart = campaign.createdAt.split(' ')[0];
+                                                const [day, month, year] = datePart.split('/');
+                                                const fallbackDate = new Date(year, month - 1, day);
+                                                if (!isNaN(fallbackDate.getTime())) {
+                                                  return fallbackDate.toLocaleDateString();
+                                                }
+                                              }
+                                              return 'Invalid Date';
+                                            }
+                                            
+                                            console.log('Successfully parsed date:', date.toLocaleDateString());
+                                            return date.toLocaleDateString();
+                                          } catch (error) {
+                                            console.log('Date parsing error:', error, 'for value:', campaign.createdAt);
+                                            // Try to extract just the date part if it's in DD/MM/YYYY HH:MM:SS format
+                                            if (typeof campaign.createdAt === 'string' && campaign.createdAt.includes('/') && campaign.createdAt.includes(' ')) {
+                                              const datePart = campaign.createdAt.split(' ')[0];
+                                              const [day, month, year] = datePart.split('/');
+                                              const fallbackDate = new Date(year, month - 1, day);
+                                              if (!isNaN(fallbackDate.getTime())) {
+                                                return fallbackDate.toLocaleDateString();
+                                              }
+                                            }
+                                            return 'Invalid Date';
+                                          }
+                                        })()}
                                       </Typography>
                                       <Box sx={{ 
                                         mt: 1, 
@@ -1142,8 +1291,6 @@ const Upload = () => {
           open={campaignDialog}
           onClose={() => {
             setCampaignDialog(false);
-            // Refresh campaigns when dialog closes
-            setTimeout(() => fetchActiveCampaigns(), 500);
           }}
           maxWidth="md"
           fullWidth
@@ -1355,11 +1502,6 @@ const Upload = () => {
                          }
                        </Typography>
 
-                       {dynamicTemplates.length === 0 && !templatesLoading && !templatesError && (
-                         <Typography variant="caption" color="warning.main" sx={{ display: 'block', mt: 0.5 }}>
-                           Using fallback templates (API not available)
-                         </Typography>
-                       )}
                      </Box>
                      <Box sx={{ display: 'flex', gap: 1 }}>
 
@@ -1368,21 +1510,6 @@ const Upload = () => {
                      </Box>
                    </Box>
                    
-                   {templatesError && (
-                     <Alert severity="warning" sx={{ mb: 2 }}>
-                       <Typography variant="body2">
-                         {templatesError}. Using fallback templates.
-                       </Typography>
-                     </Alert>
-                   )}
-                   
-                   {!templatesError && dynamicTemplates.length === 0 && !templatesLoading && (
-                     <Alert severity="info" sx={{ mb: 2 }}>
-                       <Typography variant="body2">
-                         No templates loaded from API. Using fallback templates. Click "Refresh" to try loading from API again.
-                       </Typography>
-                     </Alert>
-                   )}
                    
                    {campaignData.type.map((type) => (
                      <Box key={type} sx={{ mt: 3 }}>
@@ -1406,7 +1533,6 @@ const Upload = () => {
                                template: { ...prev.template, [type]: e.target.value }
                              }));
                            }}
-                           disabled={templatesLoading}
                          >
                            {getTemplatesForChannel(type)?.map((template) => (
                              <MenuItem key={template.id} value={template.id}>
@@ -1433,21 +1559,14 @@ const Upload = () => {
                                </Box>
                              </MenuItem>
                            ))}
-                           {templatesLoading && (
-                             <MenuItem disabled>
-                               <Typography variant="body2" color="text.secondary">
-                                 Loading templates...
-                               </Typography>
-                             </MenuItem>
-                           )}
-                               {!templatesLoading && getTemplatesForChannel(type)?.length === 0 && (
+                           {getTemplatesForChannel(type)?.length === 0 && (
                              <MenuItem disabled>
                                <Typography variant="body2" color="text.secondary">
                                  No templates available for {type}
                                </Typography>
                              </MenuItem>
                            )}
-                           {!templatesLoading && getTemplatesForChannel(type)?.length > 0 && !campaignData.template[type] && (
+                           {getTemplatesForChannel(type)?.length > 0 && !campaignData.template[type] && (
                              <MenuItem disabled>
                                <Typography variant="body2" color="warning.main">
                                  Please select a template to continue

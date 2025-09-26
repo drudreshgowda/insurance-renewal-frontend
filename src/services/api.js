@@ -55,17 +55,62 @@
 
 // Dashboard API calls
 export const fetchDashboardStats = async (_dateRange, _policyType, _caseStatus) => {
-  // In a real app, this would call the API
-  // return apiRequest(`/dashboard/stats?dateRange=${dateRange}&policyType=${policyType}&caseStatus=${caseStatus}`);
-  
-  // Mock implementation
-  return {
-    totalCases: 1250,
-    inProgress: 320,
-    renewed: 780,
-    pendingAction: 95,
-    errors: 55
-  };
+  try {
+    // Import the GetCountsCases API from Renewal.js
+    const { channelAPI } = await import('../api/Renewal.js');
+    
+    const result = await channelAPI.GetCountsCases();
+    
+    // eslint-disable-next-line no-console
+    console.log('🔍 API Response:', result);
+    
+    // Check if result has success and data properties
+    if (result && result.success && result.data) {
+      // eslint-disable-next-line no-console
+      console.log('📊 API Data:', result.data);
+      
+      // Map the API response to the expected format
+      const mappedData = {
+        totalCases: result.data.total_cases || 0,
+        inProgress: result.data.in_progress || 0,
+        renewed: result.data.renewed || 0,
+        pendingAction: result.data.pending_action || 0,
+        errors: result.data.failed || 0,
+        paymentCollected: parseFloat(result.data.payment_collected) || 0,
+        paymentPending: parseFloat(result.data.payment_pending) || 0
+      };
+      
+      // eslint-disable-next-line no-console
+      console.log('✅ Mapped Data:', mappedData);
+      return mappedData;
+    } else {
+      // eslint-disable-next-line no-console
+      console.error('❌ API call failed or no data:', result);
+      // Return default values if API fails
+      return {
+        totalCases: 0,
+        inProgress: 0,
+        renewed: 0,
+        pendingAction: 0,
+        errors: 0,
+        paymentCollected: 0,
+        paymentPending: 0
+      };
+    }
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('💥 Error fetching dashboard stats:', error);
+    // Return default values if API fails
+    return {
+      totalCases: 0,
+      inProgress: 0,
+      renewed: 0,
+      pendingAction: 0,
+      errors: 0,
+      paymentCollected: 0,
+      paymentPending: 0
+    };
+  }
 };
 
 export const fetchTrendData = async (_dateRange, _policyType, _caseStatus) => {

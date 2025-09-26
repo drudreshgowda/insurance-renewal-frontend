@@ -95,6 +95,7 @@ import {
 import { useSettings } from '../context/SettingsContext';
 import { useTheme } from '@mui/material/styles';
 import ChannelDetails from '../components/common/ChannelDetails';
+import { caseDetailsAPI, GetPreferences, GetOffers, GetCaseHistoryAndPreferences, AddComment, GetOutstandingSummary } from '../api/CaseDetails';
 
 // Custom TabPanel component
 function TabPanel(props) {
@@ -141,6 +142,33 @@ const CaseDetails = () => {
   const [sendingNotice, setSendingNotice] = useState(false);
   const [messageType, setMessageType] = useState('renewal_notice');
   
+  // Preferences state
+  const [preferencesData, setPreferencesData] = useState(null);
+  const [preferencesLoading, setPreferencesLoading] = useState(false);
+  const [preferencesError, setPreferencesError] = useState(null);
+  
+  // Offers state
+  const [offersData, setOffersData] = useState(null);
+  const [offersLoading, setOffersLoading] = useState(false);
+  const [offersError, setOffersError] = useState(null);
+  
+  // History & Timeline state
+  const [historyData, setHistoryData] = useState(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState(null);
+  
+  // Outstanding Summary state
+  const [outstandingData, setOutstandingData] = useState(null);
+  const [outstandingLoading, setOutstandingLoading] = useState(false);
+  const [outstandingError, setOutstandingError] = useState(null);
+
+  // Debug useEffect to watch outstanding data changes
+  useEffect(() => {
+    console.log('Outstanding data changed:', outstandingData);
+    console.log('Outstanding loading:', outstandingLoading);
+    console.log('Outstanding error:', outstandingError);
+  }, [outstandingData, outstandingLoading, outstandingError]);
+  
   // New state for tab management
   const [currentTab, setCurrentTab] = useState(0);
   const [isConsolidatedView, setIsConsolidatedView] = useState(false);
@@ -169,38 +197,387 @@ const CaseDetails = () => {
       try {
         console.log('Fetching case details for ID:', caseId);
         
-        // Import the API function to get case by ID
-        const { getCaseById } = await import('../services/api');
+        // Try multiple API endpoints to get comprehensive data
+        let result = await caseDetailsAPI.getCaseOverview(caseId);
         
-        // Fetch case data using the caseId from URL parameters
-        const caseData = await getCaseById(caseId);
+        // If the main API doesn't provide enough data, try the regular case details API
+        if (result.success && (!result.data.customerName || result.data.customerName === 'Unknown Customer')) {
+          console.log('Main API data insufficient, trying fallback API...');
+          const fallbackResult = await caseDetailsAPI.getCaseDetails(caseId);
+          if (fallbackResult.success) {
+            // Merge the data from both APIs
+            result.data = { ...result.data, ...fallbackResult.data };
+            console.log('Merged data from both APIs:', result.data);
+          }
+        }
+        
+        if (!result.success) {
+          throw new Error(result.message || 'Failed to fetch case details');
+        }
+        
+        const caseData = result.data;
         console.log('Received case data:', caseData);
+        console.log('Case data structure:', JSON.stringify(caseData, null, 2));
         
-        // Ensure contactInfo exists with default values
+        // Debug specific fields for Policy Information
+        console.log('Annual Income fields:', {
+          annualIncome: caseData.annualIncome,
+          annual_income: caseData.annual_income,
+          income: caseData.income,
+          annual_income_amount: caseData.annual_income_amount
+        });
+        console.log('Policy Proposer fields:', {
+          policyProposer: caseData.policyProposer,
+          policy_proposer: caseData.policy_proposer,
+          proposer: caseData.proposer,
+          proposer_name: caseData.proposer_name
+        });
+        console.log('Life Assured fields:', {
+          lifeAssured: caseData.lifeAssured,
+          life_assured: caseData.life_assured,
+          assured: caseData.assured,
+          life_assured_name: caseData.life_assured_name
+        });
+        console.log('Channel Partner fields:', {
+          businessChannel: caseData.channelDetails?.businessChannel,
+          business_channel: caseData.business_channel,
+          channel: caseData.channel
+        });
+        
+        // Validate and ensure caseData is not null/undefined
+        if (!caseData) {
+          throw new Error('No data received from API');
+        }
+        
+        // Extract data from the actual API structure with better error handling
+        const policy = (caseData.policies && Array.isArray(caseData.policies) && caseData.policies[0]) ? caseData.policies[0] : {};
+        const policyType = policy.policy_type || {};
+        const policyFeatures = Array.isArray(policyType.policy_features) ? policyType.policy_features : [];
+        const policyCoverages = Array.isArray(policyType.policy_coverages) ? policyType.policy_coverages : [];
+
+        // Comprehensive data extraction with multiple fallback sources
+        const extractField = (sources, defaultValue = 'N/A') => {
+          for (const source of sources) {
+            if (source && source !== '' && source !== null && source !== undefined) {
+              return source;
+            }
+          }
+          return defaultValue;
+        };
+
+        // Ensure contactInfo exists with default values and add comprehensive fallbacks
         const safeCaseData = {
           ...caseData,
-          contactInfo: {
-            email: caseData.contactInfo?.email || caseData.customer?.email || '',
-            phone: caseData.contactInfo?.phone || caseData.customer_mobile || caseData.customer?.phone || ''
-          },
-          policyDetails: {
-            type: caseData.policyDetails?.type || caseData.product_name || '',
-            expiryDate: caseData.policyDetails?.expiryDate || caseData.policy?.end_date || '',
-            premium: caseData.policyDetails?.premium || parseFloat(caseData.policy?.premium_amount || 0),
-            renewalDate: caseData.policyDetails?.renewalDate || caseData.renewal_date || '',
-            sumAssured: caseData.policyDetails?.sumAssured || parseFloat(caseData.policy?.sum_assured || 0),
-            renewalAmount: caseData.policyDetails?.renewalAmount || parseFloat(caseData.renewal_amount || 0)
-          },
-          flowSteps: caseData.flowSteps || ['Uploaded', 'Validated', 'Assigned', 'In Progress'],
-          status: caseData.status || 'Uploaded',
-          comments: caseData.comments || [],
+          // Ensure all required fields have fallback values
           customerName: caseData.customerName || caseData.customer_name || 'Unknown Customer',
           policyNumber: caseData.policyNumber || caseData.policy_number || 'N/A',
-          agent: caseData.agent || caseData.agent_name || 'Unassigned',
-          policyMembers: caseData.policyMembers || [],
-          history: caseData.history || [],
-          outstandingAmounts: caseData.outstandingAmounts || []
+          sumAssured: caseData.sumAssured || caseData.sum_assured || 0,
+          status: caseData.status || 'Unknown',
+          contactInfo: {
+            email: caseData.contactInfo?.email || caseData.email || 'N/A',
+            phone: caseData.contactInfo?.phone || caseData.phone || 'N/A',
+            ...caseData.contactInfo
+          },
+          policyDetails: {
+            type: caseData.policyDetails?.type || caseData.policy_type || 'N/A',
+            premium: caseData.policyDetails?.premium || caseData.premium || 0,
+            startDate: caseData.policyDetails?.startDate || caseData.start_date || null,
+            expiryDate: caseData.policyDetails?.expiryDate || caseData.expiry_date || null,
+            policyTerm: caseData.policyDetails?.policyTerm || caseData.policy_term || 'N/A',
+            paymentMode: caseData.policyDetails?.paymentMode || caseData.payment_mode || 'N/A',
+            ...caseData.policyDetails
+          },
+          channelDetails: {
+            businessChannel: caseData.channelDetails?.businessChannel || caseData.business_channel || 'N/A',
+            salesManager: caseData.channelDetails?.salesManager || caseData.sales_manager || 'N/A',
+            region: caseData.channelDetails?.region || caseData.region || 'N/A',
+            agentName: caseData.channelDetails?.agentName || caseData.agent_name || 'N/A',
+            ...caseData.channelDetails
+          },
+          // Add new fields for Policy Information with comprehensive fallbacks
+          annualIncome: caseData.annualIncome || caseData.annual_income || caseData.income || caseData.annual_income_amount || caseData.customer_income || 500000,
+          policyProposer: caseData.policyProposer || caseData.policy_proposer || caseData.proposer || caseData.proposer_name || caseData.customerName || 'Policy Holder',
+          lifeAssured: caseData.lifeAssured || caseData.life_assured || caseData.assured || caseData.life_assured_name || caseData.customerName || 'Life Assured',
+          // Add policy features and coverages with fallbacks
+          policyFeatures: policyFeatures.length > 0 ? policyFeatures : [
+            { name: 'Comprehensive Coverage', description: 'Own damage + third-party liability' },
+            { name: 'Zero Depreciation', description: 'Full claim without depreciation deduction' },
+            { name: 'Roadside Assistance', description: '24x7 emergency support' },
+            { name: 'NCB Protection', description: 'No claims bonus safeguard' }
+          ],
+          policyCoverages: policyCoverages.length > 0 ? policyCoverages : [
+            { type: 'Vehicle Protection', coverage: '₹25,000', details: 'Comprehensive Coverage' },
+            { type: 'Liability Coverage', coverage: '₹7,50,000', details: 'Third Party Liability' }
+          ],
+          // Additional fallback data for UI
+          additionalBenefits: [
+            { name: 'Key Replacement', description: 'Coverage for lost or damaged keys' },
+            { name: 'Return to Invoice', description: 'Full invoice value in case of total loss' },
+            { name: 'Personal Accident Cover', description: '₹15 lakh for owner-driver' },
+            { name: 'Passenger Cover', description: '₹1 lakh per passenger' }
+          ],
+          coverageDetails: {
+            sumInsured: caseData.sumAssured || caseData.sum_assured || 25000,
+            deductible: caseData.deductible || 63,
+            coverageRatio: caseData.coverage_ratio || '100%',
+            supportCoverage: caseData.support_coverage || '24/7'
+          },
+          policyDetails: {
+            type: extractField([
+              policyType.name,
+              policyType.category,
+              caseData.policyDetails?.type
+            ], ''),
+            expiryDate: extractField([
+              policy.end_date,
+              caseData.policyDetails?.expiryDate
+            ], ''),
+            premium: parseFloat(extractField([
+              policy.premium_amount,
+              caseData.policyDetails?.premium
+            ], 0)),
+            renewalDate: extractField([
+              policy.renewal_date,
+              caseData.policyDetails?.renewalDate
+            ], ''),
+            sumAssured: parseFloat(extractField([
+              policy.sum_assured,
+              caseData.policyDetails?.sumAssured
+            ], 0)),
+            renewalAmount: parseFloat(extractField([
+              policy.premium_amount,
+              caseData.policyDetails?.renewalAmount
+            ], 0)),
+            startDate: extractField([
+              policy.start_date,
+              caseData.policyDetails?.startDate
+            ], ''),
+            policyTerm: extractField([
+              policyType.description,
+              caseData.policyDetails?.policyTerm
+            ], ''),
+            paymentMode: extractField([
+              policy.payment_frequency,
+              caseData.policyDetails?.paymentMode
+            ], ''),
+            status: extractField([
+              policy.status,
+              caseData.policyDetails?.status
+            ], '')
+          },
+          flowSteps: caseData.flowSteps || caseData.flow_steps || ['Uploaded', 'Validated', 'Assigned', 'In Progress'],
+          status: extractField([
+            caseData.status,
+            caseData.case_status,
+            caseData.current_status
+          ], 'Uploaded'),
+          comments: caseData.comments || caseData.case_comments || [],
+          customerName: extractField([
+            `${caseData.first_name || ''} ${caseData.last_name || ''}`.trim(),
+            caseData.customerName,
+            caseData.customer_name
+          ], 'Unknown Customer'),
+          policyNumber: extractField([
+            policy.policy_number,
+            caseData.policyNumber,
+            caseData.policy_number
+          ], 'N/A'),
+          agent: extractField([
+            policy.agent_name,
+            caseData.agent,
+            caseData.agent_name
+          ], 'Unassigned'),
+          policyMembers: caseData.policyMembers || caseData.policy_members || caseData.members || [],
+          history: [], // History now comes from live API via historyData
+          outstandingAmounts: caseData.outstandingAmounts || caseData.outstanding_amounts || [],
+          // Channel Details
+          channelDetails: {
+            businessChannel: extractField([
+              caseData.channels && caseData.channels[0] ? caseData.channels[0].name : null,
+              caseData.channelDetails?.businessChannel,
+              caseData.business_channel
+            ], 'N/A'),
+            region: extractField([
+              caseData.state,
+              caseData.channelDetails?.region,
+              caseData.region
+            ], 'N/A'),
+            salesManager: extractField([
+              caseData.channelDetails?.salesManager,
+              caseData.sales_manager
+            ], 'N/A'),
+            agentName: extractField([
+              policy.agent_name,
+              caseData.channelDetails?.agentName,
+              caseData.agent_name
+            ], 'N/A'),
+            agentStatus: extractField([
+              caseData.channelDetails?.agentStatus,
+              caseData.agent_status
+            ], 'Active')
+          },
+          // Policy Features - Extract from actual API structure
+          policyFeatures: policyFeatures.reduce((acc, feature) => {
+            const category = feature.feature_type || 'general';
+            if (!acc[category]) {
+              acc[category] = [];
+            }
+            acc[category].push({
+              name: feature.feature_name,
+              description: feature.feature_description,
+              value: feature.feature_value,
+              mandatory: feature.is_mandatory
+            });
+            return acc;
+          }, {}),
+          // Coverage Details - Extract from actual API structure
+          coverageDetails: policyCoverages.reduce((acc, coverage) => {
+            const category = coverage.coverage_type || 'general';
+            if (!acc[category]) {
+              acc[category] = [];
+            }
+            acc[category].push({
+              name: coverage.coverage_name,
+              description: coverage.coverage_description,
+              amount: coverage.coverage_amount,
+              deductible: coverage.deductible_amount,
+              percentage: coverage.coverage_percentage,
+              included: coverage.is_included
+            });
+            return acc;
+          }, {}),
+          // Additional Policy Information
+          policyProposer: caseData.policyProposer || caseData.policy_proposer || caseData.proposer || null,
+          lifeAssured: caseData.lifeAssured || caseData.life_assured || caseData.assured || null,
+          // Sum Assured and other financial details
+          sumAssured: parseFloat(extractField([
+            policy.sum_assured,
+            caseData.sumAssured,
+            caseData.sum_assured
+          ], 0)),
+          renewalAmount: parseFloat(extractField([
+            policy.premium_amount,
+            caseData.renewalAmount,
+            caseData.renewal_amount
+          ], 0))
         };
+        
+        console.log('=== CASE DATA MAPPING DEBUG ===');
+        console.log('Raw API data:', caseData);
+        console.log('Policy data:', policy);
+        console.log('Policy type data:', policyType);
+        console.log('Policy features:', policyFeatures);
+        console.log('Policy coverages:', policyCoverages);
+        console.log('Mapped case data:', safeCaseData);
+
+        // Always try to fetch policy members data for all cases
+        // The API will return appropriate data or empty array
+        console.log('Fetching policy members for case:', caseId);
+        try {
+          const policyMembersResult = await caseDetailsAPI.getPolicyMembers(caseId);
+          if (policyMembersResult.success) {
+            console.log('Policy members data:', policyMembersResult.data);
+            safeCaseData.policyMembers = policyMembersResult.data;
+          } else {
+            console.warn('Failed to fetch policy members:', policyMembersResult.message);
+            safeCaseData.policyMembers = [];
+          }
+        } catch (error) {
+          console.error('Error fetching policy members:', error);
+          safeCaseData.policyMembers = [];
+        }
+
+        // Fetch offers data
+        console.log('Fetching offers...');
+        try {
+          const offersResult = await GetOffers();
+          if (offersResult.success) {
+            console.log('Offers data:', offersResult.data);
+            setOffersData(offersResult.data);
+          } else {
+            console.warn('Failed to fetch offers:', offersResult.message);
+            setOffersError(offersResult.message);
+          }
+        } catch (error) {
+          console.error('Error fetching offers:', error);
+          setOffersError(error.message);
+        }
+
+        // Fetch history & timeline data
+        console.log('Fetching history & timeline for case:', caseId);
+        try {
+          const historyResult = await GetCaseHistoryAndPreferences(caseId);
+          if (historyResult.success) {
+            console.log('History data:', historyResult);
+            console.log('History array:', historyResult.history);
+            console.log('Comments array:', historyResult.comments);
+            console.log('Case logs array:', historyResult.case_logs);
+            console.log('Case object:', historyResult.case);
+            
+            // Force clear any old data and ensure we only use live API data
+            const cleanHistoryData = {
+              ...historyResult,
+              history: historyResult.history || [],
+              comments: historyResult.comments || [],
+              case_logs: historyResult.case_logs || []
+            };
+            
+            console.log('Clean history data:', cleanHistoryData);
+            setHistoryData(cleanHistoryData);
+          } else {
+            console.warn('Failed to fetch history:', historyResult.message);
+            setHistoryError(historyResult.message);
+          }
+        } catch (error) {
+          console.error('Error fetching history:', error);
+          setHistoryError(error.message);
+        }
+
+        // Fetch outstanding summary data
+        console.log('Fetching outstanding summary for case:', caseId);
+        if (!caseId) {
+          console.warn('No caseId available for outstanding summary');
+          return;
+        }
+        try {
+          setOutstandingLoading(true);
+          const outstandingResult = await GetOutstandingSummary(caseId);
+          console.log('Raw outstanding result:', outstandingResult);
+          
+          if (outstandingResult.success) {
+            console.log('Outstanding summary data:', outstandingResult.data);
+            console.log('Total outstanding:', outstandingResult.data?.total_outstanding);
+            console.log('Pending count:', outstandingResult.data?.pending_count);
+            console.log('Installments:', outstandingResult.data?.installments);
+            
+            // The API returns { success: true, data: { ... } }
+            // We need to extract the actual data object
+            const actualData = outstandingResult.data;
+            console.log('Setting outstanding data to:', actualData);
+            setOutstandingData(actualData);
+          } else {
+            console.warn('Failed to fetch outstanding summary:', outstandingResult.message);
+            setOutstandingError(outstandingResult.message);
+          }
+        } catch (error) {
+          console.error('Error fetching outstanding summary:', error);
+          setOutstandingError(error.message);
+        } finally {
+          setOutstandingLoading(false);
+        }
+        
+        // Show which fields were successfully extracted
+        console.log('=== EXTRACTION RESULTS ===');
+        console.log('Customer Name:', safeCaseData.customerName);
+        console.log('Email:', safeCaseData.contactInfo.email);
+        console.log('Phone:', safeCaseData.contactInfo.phone);
+        console.log('Policy Type:', safeCaseData.policyDetails.type);
+        console.log('Premium:', safeCaseData.policyDetails.premium);
+        console.log('Sum Assured:', safeCaseData.sumAssured);
+        console.log('Agent:', safeCaseData.agent);
+        console.log('Channel:', safeCaseData.channelDetails.businessChannel);
+        console.log('Policy Features Count:', Object.keys(safeCaseData.policyFeatures).length);
+        console.log('Coverage Details Count:', Object.keys(safeCaseData.coverageDetails).length);
         
         setCaseData(safeCaseData);
       } catch (err) {
@@ -227,6 +604,179 @@ const CaseDetails = () => {
       }, 100);
     }
   }, [loading, caseData]);
+
+  // Helper function to safely extract preferences data
+  const getPreferencesData = (data) => {
+    if (!data) return null;
+    
+    // Handle different API response structures
+    if (data.data) {
+      return data.data;
+    }
+    return data;
+  };
+
+  // Helper function to get communication preferences
+  const getCommunicationPreferences = (data) => {
+    const prefs = getPreferencesData(data);
+    console.log('Getting communication preferences from:', prefs);
+    
+    // Try multiple possible locations for communication preferences
+    const commPrefs = prefs?.communication_preferences || 
+                     prefs?.data?.communication_preferences || 
+                     prefs?.communication || 
+                     prefs?.preferences ||
+                     prefs;
+    
+    console.log('Extracted communication preferences:', commPrefs);
+    return commPrefs;
+  };
+
+  // Helper function to get renewal timeline
+  const getRenewalTimeline = (data) => {
+    const prefs = getPreferencesData(data);
+    return prefs?.renewal_timeline || prefs?.data?.renewal_timeline || null;
+  };
+
+  // Helper function to get customer data
+  const getCustomerData = (data) => {
+    const prefs = getPreferencesData(data);
+    return prefs?.customer || prefs?.data?.customer || null;
+  };
+
+  // Helper function to get communication channel value
+  const getChannelValue = (commPrefs, channelName) => {
+    if (!commPrefs) return null;
+    
+    // Try multiple possible field names for each channel
+    const possibleFields = {
+      email: ['email', 'email_status', 'email_enabled', 'email_preference'],
+      sms: ['sms', 'sms_status', 'sms_enabled', 'sms_preference'],
+      phone: ['phone_call', 'phone', 'phone_status', 'phone_enabled', 'phone_preference'],
+      whatsapp: ['whatsapp', 'whatsapp_status', 'whatsapp_enabled', 'whatsapp_preference'],
+      ai_call: ['ai_call', 'ai_call_status', 'ai_call_enabled', 'ai_call_preference'],
+      postal: ['postal_mail', 'postal', 'postal_status', 'postal_mail_enabled', 'postal_preference']
+    };
+    
+    const fields = possibleFields[channelName] || [channelName];
+    
+    for (const field of fields) {
+      if (commPrefs[field] !== undefined && commPrefs[field] !== null) {
+        console.log(`Found ${channelName} value:`, commPrefs[field], 'in field:', field);
+        return commPrefs[field];
+      }
+    }
+    
+    console.log(`No value found for ${channelName}`);
+    return null;
+  };
+
+  // Helper function to get status color based on preference value or case status
+  const getStatusColor = (status) => {
+    if (!status) return 'default';
+    
+    // Handle boolean values
+    if (status === true || status === 'true') return 'success';
+    if (status === false || status === 'false') return 'error';
+    
+    const statusLower = status.toLowerCase();
+    switch (statusLower) {
+      // Communication preference statuses
+      case 'preferred':
+        return 'primary';
+      case 'accepted':
+        return 'success';
+      case 'backup':
+        return 'info';
+      case 'opt-out':
+      case 'opted-out':
+        return 'error';
+      case 'disabled':
+        return 'error';
+      case 'enabled':
+        return 'success';
+      // Case status values
+      case 'renewed':
+        return 'success';
+      case 'in progress':
+        return 'info';
+      case 'failed':
+        return 'error';
+      case 'pending':
+        return 'warning';
+      default:
+        return 'default';
+    }
+  };
+
+  // Helper function to get status variant based on preference value
+  const getStatusVariant = (status) => {
+    if (!status) return 'outlined';
+    
+    // Handle boolean values
+    if (status === true || status === 'true') return 'filled';
+    if (status === false || status === 'false') return 'outlined';
+    
+    const statusLower = status.toLowerCase();
+    switch (statusLower) {
+      case 'preferred':
+        return 'filled';
+      case 'accepted':
+        return 'filled';
+      case 'backup':
+        return 'outlined';
+      case 'opt-out':
+      case 'opted-out':
+        return 'outlined';
+      case 'disabled':
+        return 'outlined';
+      case 'enabled':
+        return 'filled';
+      default:
+        return 'outlined';
+    }
+  };
+
+  // Fetch preferences data
+  useEffect(() => {
+    const fetchPreferences = async () => {
+      if (!caseId) return;
+      
+      setPreferencesLoading(true);
+      setPreferencesError(null);
+      
+      try {
+        console.log('Fetching preferences for case:', caseId);
+        const result = await GetPreferences(caseId);
+        
+        if (result.success) {
+          console.log('=== FULL API RESPONSE ===');
+          console.log('Complete API response:', result);
+          console.log('Data structure:', result.data);
+          console.log('Data keys:', result.data ? Object.keys(result.data) : 'No data');
+          
+          // Check for nested data structure
+          if (result.data && result.data.data) {
+            console.log('Using nested data structure');
+            setPreferencesData(result.data.data);
+          } else {
+            console.log('Using direct data structure');
+            setPreferencesData(result.data);
+          }
+        } else {
+          console.warn('Failed to fetch preferences:', result.message);
+          setPreferencesError(result.message);
+        }
+      } catch (error) {
+        console.error('Error fetching preferences:', error);
+        setPreferencesError(error.message);
+      } finally {
+        setPreferencesLoading(false);
+      }
+    };
+
+    fetchPreferences();
+  }, [caseId]);
 
   // Verification API functions (configurable endpoints)
   const verificationConfig = {
@@ -358,15 +908,6 @@ const CaseDetails = () => {
     );
   }
 
-  const getStatusColor = (status) => {
-    switch (status.toLowerCase()) {
-      case 'renewed': return 'success';
-      case 'in progress': return 'info';
-      case 'failed': return 'error';
-      case 'pending': return 'warning';
-      default: return 'default';
-    }
-  };
 
   const getDefaultMessage = (channel, type) => {
     const customerName = caseData?.customerName || 'Customer';
@@ -703,7 +1244,7 @@ const CaseDetails = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
                         <PhoneIcon color="primary" />
-                        <Typography>{caseData.contactInfo.phone}</Typography>
+                        <Typography>{caseData.contactInfo?.phone || 'No phone available'}</Typography>
                       </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         {verificationStatus.phone.verified ? (
@@ -722,7 +1263,7 @@ const CaseDetails = () => {
                           <Button
                             size="small"
                             variant="outlined"
-                            onClick={() => handleVerification('phone', caseData.contactInfo.phone)}
+                            onClick={() => handleVerification('phone', caseData.contactInfo?.phone)}
                             disabled={verificationStatus.phone.verifying}
                             startIcon={verificationStatus.phone.verifying ? <CircularProgress size={16} /> : <VerifiedIcon />}
                           >
@@ -736,7 +1277,7 @@ const CaseDetails = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
                         <CreditCardIcon color="primary" />
-                        <Typography>{caseData.contactInfo.pan}</Typography>
+                        <Typography>{caseData.contactInfo?.pan || 'N/A'}</Typography>
                       </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         {verificationStatus.pan.verified ? (
@@ -755,7 +1296,7 @@ const CaseDetails = () => {
                           <Button
                             size="small"
                             variant="outlined"
-                            onClick={() => handleVerification('pan', caseData.contactInfo.pan)}
+                            onClick={() => handleVerification('pan', caseData.contactInfo?.pan)}
                             disabled={verificationStatus.pan.verifying}
                             startIcon={verificationStatus.pan.verifying ? <CircularProgress size={16} /> : <VerifiedIcon />}
                           >
@@ -806,7 +1347,7 @@ const CaseDetails = () => {
                           <Typography variant="subtitle2" color="text.secondary" gutterBottom sx={{ mb: 0.5 }}>
                             Policy Type
                           </Typography>
-                          <Typography variant="body1" fontWeight="500">{caseData.policyDetails.type}</Typography>
+                          <Typography variant="body1" fontWeight="500">{caseData.policyDetails?.type || 'N/A'}</Typography>
                         </Box>
                       </Stack>
                     </Grid>
@@ -817,7 +1358,7 @@ const CaseDetails = () => {
                             Premium
                           </Typography>
                           <Typography variant="body1" fontWeight="500">
-                            ₹{caseData.policyDetails.premium.toLocaleString()}
+                            ₹{(caseData.policyDetails?.premium || 0).toLocaleString()}
                           </Typography>
                         </Box>
                         <Box>
@@ -825,7 +1366,7 @@ const CaseDetails = () => {
                             Expiry Date
                           </Typography>
                           <Typography variant="body1" fontWeight="500">
-                            {new Date(caseData.policyDetails.expiryDate).toLocaleDateString()}
+                            {caseData.policyDetails?.expiryDate ? new Date(caseData.policyDetails.expiryDate).toLocaleDateString() : 'N/A'}
                           </Typography>
                         </Box>
                       </Stack>
@@ -909,7 +1450,7 @@ const CaseDetails = () => {
                   </Box>
                   <Divider sx={{ mb: 3 }} />
                   <Grid container spacing={3}>
-                    {caseData.policyDetails.type === 'Health' && (
+                    {caseData.policyDetails?.type === 'Health' && (
                       <>
                         {/* Health Insurance Section */}
                         <Grid item xs={12} md={6}>
@@ -983,7 +1524,7 @@ const CaseDetails = () => {
                       </>
                     )}
                     
-                    {caseData.policyDetails.type === 'Auto' && (
+                    {caseData.policyDetails?.type === 'Auto' && (
                       <>
                         {/* Auto Insurance Section */}
                         <Grid item xs={12} md={6}>
@@ -1014,7 +1555,7 @@ const CaseDetails = () => {
                       </>
                     )}
                     
-                    {caseData.policyDetails.type === 'Life' && (
+                    {caseData.policyDetails?.type === 'Life' && (
                       <>
                         {/* Life Insurance Section */}
                         <Grid item xs={12} md={6}>
@@ -1045,7 +1586,7 @@ const CaseDetails = () => {
                       </>
                     )}
                     
-                    {caseData.policyDetails.type === 'Home' && (
+                    {caseData.policyDetails?.type === 'Home' && (
                       <>
                         {/* Home Insurance Section */}
                         <Grid item xs={12} md={6}>
@@ -1081,8 +1622,8 @@ const CaseDetails = () => {
             </Grow>
           </Grid>
 
-          {/* Policy Members Details - Only for Health Insurance */}
-          {caseData.policyDetails.type === 'Health' && caseData.policyMembers && (
+          {/* Policy Members Details */}
+          {caseData.policyMembers && caseData.policyMembers.length > 0 && (
             <Grid item xs={12}>
               <Grow in={loaded} timeout={575}>
                 <Card 
@@ -1112,172 +1653,149 @@ const CaseDetails = () => {
                     <Divider sx={{ mb: 3 }} />
                     
                     <Grid container spacing={3}>
-                      {(caseData.policyMembers || []).map((member, index) => (
-                        <Grid item xs={12} md={6} lg={4} key={member.id}>
-                          <Zoom in={loaded} timeout={600 + (index * 100)}>
-                            <Card 
-                              variant="outlined" 
-                              sx={{ 
-                                height: '100%',
-                                borderRadius: 2,
-                                border: '2px solid',
-                                borderColor: member.relationship === 'Self' ? 'primary.main' : 'divider',
-                                transition: 'all 0.3s ease',
-                                '&:hover': {
-                                  borderColor: 'primary.main',
-                                  transform: 'translateY(-2px)',
-                                  boxShadow: '0 8px 24px rgba(0,0,0,0.1)'
-                                }
-                              }}
-                            >
-                              <CardContent sx={{ p: 2.5 }}>
-                                {/* Member Header */}
-                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                  <Avatar 
-                                    sx={{ 
-                                      bgcolor: member.relationship === 'Self' ? 'primary.main' : 'secondary.main',
-                                      width: 48,
-                                      height: 48,
-                                      mr: 2,
-                                      fontSize: '1.2rem',
-                                      fontWeight: 'bold'
-                                    }}
-                                  >
-                                    {member.name.split(' ').map(n => n[0]).join('')}
-                                  </Avatar>
-                                  <Box sx={{ flex: 1 }}>
-                                    <Typography variant="h6" fontWeight="600" sx={{ fontSize: '1.1rem' }}>
-                                      {member.name}
-                                    </Typography>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                      <Chip 
-                                        label={member.relationship} 
-                                        size="small" 
-                                        color={member.relationship === 'Self' ? 'primary' : 'default'}
-                                        sx={{ fontSize: '0.75rem' }}
-                                      />
-                                      <Typography variant="caption" color="text.secondary">
-                                        {member.age} years
+                      {(caseData.policyMembers || []).map((member, index) => {
+                        // Dynamic field extraction with fallbacks - Updated for actual API response
+                        const memberName = member.name || 'Unknown Member';
+                        const memberRelationship = member.relation || member.relation_display || 'Member';
+                        const memberAge = member.age || 'N/A';
+                        const memberGender = member.gender || member.gender_display || 'N/A';
+                        const memberDOB = member.dob || 'N/A';
+                        const memberSumInsured = member.sum_insured || 'N/A';
+                        const memberPremium = member.premium_share || 'N/A';
+                        const memberInitials = member.initials || memberName.split(' ').map(n => n[0]).join('').substring(0, 2);
+                        const memberPolicyNumber = member.policy_number || 'N/A';
+                        const memberCustomerName = member.customer_name || 'N/A';
+                        
+                        return (
+                          <Grid item xs={12} md={6} lg={4} key={member.id || member.member_id || index}>
+                            <Zoom in={loaded} timeout={600 + (index * 100)}>
+                              <Card 
+                                variant="outlined" 
+                                sx={{ 
+                                  height: '100%',
+                                  borderRadius: 2,
+                                  border: '2px solid',
+                                  borderColor: memberRelationship === 'Self' || memberRelationship === 'Proposer' ? 'primary.main' : 'divider',
+                                  transition: 'all 0.3s ease',
+                                  '&:hover': {
+                                    borderColor: 'primary.main',
+                                    transform: 'translateY(-2px)',
+                                    boxShadow: '0 8px 24px rgba(0,0,0,0.1)'
+                                  }
+                                }}
+                              >
+                                <CardContent sx={{ p: 2.5 }}>
+                                  {/* Member Header */}
+                                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                    <Avatar 
+                                      sx={{ 
+                                        bgcolor: memberRelationship === 'Self' || memberRelationship === 'Proposer' ? 'primary.main' : 'secondary.main',
+                                        width: 48,
+                                        height: 48,
+                                        mr: 2,
+                                        fontSize: '1.2rem',
+                                        fontWeight: 'bold'
+                                      }}
+                                    >
+                                      {memberInitials}
+                                    </Avatar>
+                                    <Box sx={{ flex: 1 }}>
+                                      <Typography variant="h6" fontWeight="600" sx={{ fontSize: '1.1rem' }}>
+                                        {memberName}
                                       </Typography>
+                                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <Chip 
+                                          label={memberRelationship} 
+                                          size="small" 
+                                          color={memberRelationship === 'Self' || memberRelationship === 'Proposer' ? 'primary' : 'default'}
+                                          sx={{ fontSize: '0.75rem' }}
+                                        />
+                                        {memberAge !== 'N/A' && (
+                                          <Typography variant="caption" color="text.secondary">
+                                            {memberAge} years
+                                          </Typography>
+                                        )}
+                                      </Box>
                                     </Box>
                                   </Box>
-                                </Box>
 
-                                {/* Member Details */}
-                                <Stack spacing={1.5}>
-                                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <Typography variant="body2" color="text.secondary">
-                                      Date of Birth:
-                                    </Typography>
-                                    <Typography variant="body2" fontWeight="500">
-                                      {new Date(member.dateOfBirth).toLocaleDateString('en-IN')}
-                                    </Typography>
-                                  </Box>
-                                  
-                                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <Typography variant="body2" color="text.secondary">
-                                      Gender:
-                                    </Typography>
-                                    <Typography variant="body2" fontWeight="500">
-                                      {member.gender}
-                                    </Typography>
-                                  </Box>
-                                  
-                                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <Typography variant="body2" color="text.secondary">
-                                      Sum Insured:
-                                    </Typography>
-                                    <Typography variant="body2" fontWeight="600" color="primary.main">
-                                      {member.sumInsured}
-                                    </Typography>
-                                  </Box>
-                                  
-                                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <Typography variant="body2" color="text.secondary">
-                                      Premium Share:
-                                    </Typography>
-                                    <Typography variant="body2" fontWeight="500" color="success.main">
-                                      {member.premiumContribution}
-                                    </Typography>
-                                  </Box>
-                                  
-                                  <Divider sx={{ my: 1 }} />
-                                  
-                                  {/* Medical History */}
-                                  <Box>
-                                    <Typography variant="subtitle2" fontWeight="600" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
-                                      <HealthAndSafetyIcon fontSize="small" sx={{ mr: 0.5 }} />
-                                      Medical History
-                                    </Typography>
-                                    {member.medicalHistory && member.medicalHistory.length > 0 ? (
-                                      <Stack spacing={0.5}>
-                                        {member.medicalHistory.map((condition, idx) => (
-                                          <Typography key={idx} variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                                            • {condition}
-                                          </Typography>
-                                        ))}
-                                      </Stack>
-                                    ) : (
-                                      <Typography variant="caption" color="text.secondary">
-                                        No medical history recorded
-                                      </Typography>
+                                  {/* Member Details */}
+                                  <Stack spacing={1.5}>
+                                    {memberDOB && (
+                                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <Typography variant="body2" color="text.secondary">
+                                          Date of Birth:
+                                        </Typography>
+                                        <Typography variant="body2" fontWeight="500">
+                                          {new Date(memberDOB).toLocaleDateString('en-IN')}
+                                        </Typography>
+                                      </Box>
                                     )}
-                                  </Box>
-                                  
-                                  <Divider sx={{ my: 1 }} />
-                                  
-                                  {/* Last Claim Info */}
-                                  <Box>
-                                    <Typography variant="subtitle2" fontWeight="600" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
-                                      <PaymentsIcon fontSize="small" sx={{ mr: 0.5 }} />
-                                      Recent Claim
-                                    </Typography>
-                                    {member.lastClaimDate ? (
-                                      <Stack spacing={0.5}>
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                          <Typography variant="caption" color="text.secondary">
-                                            Date:
-                                          </Typography>
-                                          <Typography variant="caption" fontWeight="500">
-                                            {new Date(member.lastClaimDate).toLocaleDateString('en-IN')}
-                                          </Typography>
-                                        </Box>
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                          <Typography variant="caption" color="text.secondary">
-                                            Amount:
-                                          </Typography>
-                                          <Typography variant="caption" fontWeight="600" color="error.main">
-                                            {member.lastClaimAmount}
-                                          </Typography>
-                                        </Box>
-                                      </Stack>
-                                    ) : (
-                                      <Typography variant="caption" color="text.secondary">
-                                        No claims made
-                                      </Typography>
+                                    
+                                    {memberGender !== 'N/A' && (
+                                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <Typography variant="body2" color="text.secondary">
+                                          Gender:
+                                        </Typography>
+                                        <Typography variant="body2" fontWeight="500">
+                                          {memberGender}
+                                        </Typography>
+                                      </Box>
                                     )}
-                                  </Box>
-                                  
-                                  {/* Claim History Count */}
-                                  {member.claimHistory && member.claimHistory.length > 0 && (
-                                    <Box sx={{ 
-                                      mt: 1, 
-                                      p: 1, 
-                                      bgcolor: alpha(theme.palette.info.main, 0.1),
-                                      borderRadius: 1,
-                                      textAlign: 'center'
-                                    }}>
-                                      <Typography variant="caption" color="info.main" fontWeight="500">
-                                        Total Claims: {member.claimHistory.length}
-                                      </Typography>
-                                    </Box>
-                                  )}
-                                </Stack>
-                              </CardContent>
-                            </Card>
-                          </Zoom>
-                        </Grid>
-                      ))}
+                                    
+                                    {memberSumInsured !== 'N/A' && (
+                                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <Typography variant="body2" color="text.secondary">
+                                          Sum Insured:
+                                        </Typography>
+                                        <Typography variant="body2" fontWeight="600" color="primary.main">
+                                          {typeof memberSumInsured === 'number' ? `₹${memberSumInsured.toLocaleString()}` : memberSumInsured}
+                                        </Typography>
+                                      </Box>
+                                    )}
+                                    
+                                    {memberPremium !== 'N/A' && (
+                                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <Typography variant="body2" color="text.secondary">
+                                          Premium Share:
+                                        </Typography>
+                                        <Typography variant="body2" fontWeight="500" color="success.main">
+                                          {typeof memberPremium === 'number' ? `₹${memberPremium.toLocaleString()}` : memberPremium}
+                                        </Typography>
+                                      </Box>
+                                    )}
+                                    
+                                    <Divider sx={{ my: 1 }} />
+                                    
+                                    {/* Additional Member Info */}
+                                    {memberPolicyNumber !== 'N/A' && (
+                                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <Typography variant="body2" color="text.secondary">
+                                          Policy Number:
+                                        </Typography>
+                                        <Typography variant="body2" fontWeight="500">
+                                          {memberPolicyNumber}
+                                        </Typography>
+                                      </Box>
+                                    )}
+                                    
+                                    {memberCustomerName !== 'N/A' && (
+                                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <Typography variant="body2" color="text.secondary">
+                                          Customer:
+                                        </Typography>
+                                        <Typography variant="body2" fontWeight="500">
+                                          {memberCustomerName}
+                                        </Typography>
+                                      </Box>
+                                    )}
+                                  </Stack>
+                                </CardContent>
+                              </Card>
+                            </Zoom>
+                          </Grid>
+                        );
+                      })}
                     </Grid>
                     
                     {/* Family Summary */}
@@ -1299,7 +1817,7 @@ const CaseDetails = () => {
                         <Grid item xs={12} md={3}>
                           <Box sx={{ textAlign: 'center' }}>
                             <Typography variant="h5" fontWeight="bold" color="success.main">
-                              ₹{caseData.policyDetails.premium.toLocaleString()}
+                              ₹{(caseData.policyDetails?.premium || 0).toLocaleString()}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
                               Annual Premium
@@ -1424,7 +1942,7 @@ const CaseDetails = () => {
                     </Typography>
                     <Grid container spacing={2}>
                       {/* Auto/Vehicle Insurance Coverage */}
-                      {caseData.policyDetails.type === 'Auto' && (
+                      {caseData.policyDetails?.type === 'Auto' && (
                         <>
                           <Grid item xs={12} md={6}>
                             <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
@@ -1477,7 +1995,7 @@ const CaseDetails = () => {
                       )}
 
                       {/* Health Insurance Coverage */}
-                      {caseData.policyDetails.type === 'Health' && (
+                      {caseData.policyDetails?.type === 'Health' && (
                         <>
                           <Grid item xs={12} md={6}>
                             <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
@@ -1530,7 +2048,7 @@ const CaseDetails = () => {
                       )}
 
                       {/* Life Insurance Coverage */}
-                      {caseData.policyDetails.type === 'Life' && (
+                      {caseData.policyDetails?.type === 'Life' && (
                         <>
                           <Grid item xs={12} md={6}>
                             <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
@@ -1583,7 +2101,7 @@ const CaseDetails = () => {
                       )}
 
                       {/* Home Insurance Coverage */}
-                      {caseData.policyDetails.type === 'Home' && (
+                      {caseData.policyDetails?.type === 'Home' && (
                         <>
                           <Grid item xs={12} md={6}>
                             <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
@@ -1644,7 +2162,7 @@ const CaseDetails = () => {
                     </Typography>
                     <Grid container spacing={2}>
                       {/* Auto Insurance Benefits */}
-                      {caseData.policyDetails.type === 'Auto' && (
+                      {caseData.policyDetails?.type === 'Auto' && (
                         <>
                           <Grid item xs={12} md={4}>
                             <Card variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: 'success.light', color: 'success.contrastText' }}>
@@ -1691,7 +2209,7 @@ const CaseDetails = () => {
                       )}
 
                       {/* Health Insurance Benefits */}
-                      {caseData.policyDetails.type === 'Health' && (
+                      {caseData.policyDetails?.type === 'Health' && (
                         <>
                           <Grid item xs={12} md={4}>
                             <Card variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: 'success.light', color: 'success.contrastText' }}>
@@ -1738,7 +2256,7 @@ const CaseDetails = () => {
                       )}
 
                       {/* Life Insurance Benefits */}
-                      {caseData.policyDetails.type === 'Life' && (
+                      {caseData.policyDetails?.type === 'Life' && (
                         <>
                           <Grid item xs={12} md={4}>
                             <Card variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: 'success.light', color: 'success.contrastText' }}>
@@ -1785,7 +2303,7 @@ const CaseDetails = () => {
                       )}
 
                       {/* Home Insurance Benefits */}
-                      {caseData.policyDetails.type === 'Home' && (
+                      {caseData.policyDetails?.type === 'Home' && (
                         <>
                           <Grid item xs={12} md={4}>
                             <Card variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: 'success.light', color: 'success.contrastText' }}>
@@ -1841,7 +2359,7 @@ const CaseDetails = () => {
                     <Card variant="outlined" sx={{ p: 2, bgcolor: alpha(theme.palette.error.main, 0.05), border: '1px solid', borderColor: 'error.light' }}>
                       <Grid container spacing={2}>
                         {/* Auto Insurance Exclusions */}
-                        {caseData.policyDetails.type === 'Auto' && (
+                        {caseData.policyDetails?.type === 'Auto' && (
                           <>
                             <Grid item xs={12} md={6}>
                               <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: 'error.main' }}>
@@ -1869,7 +2387,7 @@ const CaseDetails = () => {
                         )}
 
                         {/* Health Insurance Exclusions */}
-                        {caseData.policyDetails.type === 'Health' && (
+                        {caseData.policyDetails?.type === 'Health' && (
                           <>
                             <Grid item xs={12} md={6}>
                               <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: 'error.main' }}>
@@ -1897,7 +2415,7 @@ const CaseDetails = () => {
                         )}
 
                         {/* Life Insurance Exclusions */}
-                        {caseData.policyDetails.type === 'Life' && (
+                        {caseData.policyDetails?.type === 'Life' && (
                           <>
                             <Grid item xs={12} md={6}>
                               <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: 'error.main' }}>
@@ -1925,7 +2443,7 @@ const CaseDetails = () => {
                         )}
 
                         {/* Home Insurance Exclusions */}
-                        {caseData.policyDetails.type === 'Home' && (
+                        {caseData.policyDetails?.type === 'Home' && (
                           <>
                             <Grid item xs={12} md={6}>
                               <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: 'error.main' }}>
@@ -2049,23 +2567,37 @@ const CaseDetails = () => {
                       disabled={!comment.trim()}
                       onClick={async () => {
                         try {
-                          const { updateCase } = await import('../services/api');
-                          const newHistory = [
-                            {
-                              date: new Date().toISOString(),
-                              action: 'Comment Added',
-                              details: comment,
-                              user: 'Current User', // In a real app, this would come from auth context
-                              level: 'info'
-                            },
-                            ...caseData.history
-                          ];
-                          await updateCase(caseId, { history: newHistory });
-                          setCaseData({ ...caseData, history: newHistory });
-                          setComment('');
-                          setSuccessMessage('Comment added successfully');
+                          setLoading(true);
+                          const commentPayload = {
+                            comment: comment.trim(),
+                            user: 'Current User', // In a real app, this would come from auth context
+                            timestamp: new Date().toISOString(),
+                            type: 'comment'
+                          };
+                          
+                          const result = await AddComment(caseId, commentPayload);
+                          
+                          if (result.success) {
+                            setComment('');
+                            setSuccessMessage('Comment added successfully');
+                            
+                            // Refresh history data to show the new comment
+                            try {
+                              const historyResult = await GetCaseHistoryAndPreferences(caseId);
+                              if (historyResult.success) {
+                                setHistoryData(historyResult);
+                              }
+                            } catch (historyError) {
+                              console.warn('Failed to refresh history after adding comment:', historyError);
+                            }
+                          } else {
+                            setError(result.message || 'Failed to add comment');
+                          }
                         } catch (err) {
+                          console.error('Add comment error:', err);
                           setError('Failed to add comment');
+                        } finally {
+                          setLoading(false);
                         }
                       }}
                       sx={{
@@ -2088,304 +2620,6 @@ const CaseDetails = () => {
             </Grow>
           </Grid>
 
-          {/* Customer Preferences */}
-          <Grid item xs={12}>
-            <Grow in={loaded} timeout={800}>
-              <Card 
-                elevation={0}
-                sx={{ 
-                  borderRadius: 3,
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
-                  overflow: 'visible',
-                  transition: 'transform 0.2s, box-shadow 0.2s',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: '0 12px 32px rgba(0,0,0,0.1)'
-                  }
-                }}
-              >
-                <CardContent sx={{ p: 3 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                    <SettingsIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
-                    <Typography variant="h6" fontWeight="600">Customer Preferences</Typography>
-                  </Box>
-                  <Divider sx={{ mb: 3 }} />
-                  
-                  <Grid container spacing={3}>
-                    {/* Communication Preferences */}
-                    <Grid item xs={12} md={3}>
-                      <Box sx={{ p: 3, bgcolor: alpha(theme.palette.primary.main, 0.04), borderRadius: 2, height: '100%' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                          <ChatIcon color="primary" sx={{ mr: 1 }} />
-                          <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
-                            Communication Preferences
-                          </Typography>
-                        </Box>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                              <EmailIcon color="action" sx={{ mr: 1, fontSize: 20 }} />
-                              <Typography variant="body2">Email</Typography>
-                            </Box>
-                            <Chip 
-                              label="Preferred" 
-                              size="small" 
-                              color="primary" 
-                              sx={{ fontWeight: 'medium', borderRadius: 5 }} 
-                            />
-                          </Box>
-                          
-                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                              <PhoneIcon color="action" sx={{ mr: 1, fontSize: 20 }} />
-                              <Typography variant="body2">Phone Call</Typography>
-                            </Box>
-                            <Chip 
-                              label="Backup" 
-                              size="small" 
-                              variant="outlined" 
-                              sx={{ fontWeight: 'medium', borderRadius: 5 }} 
-                            />
-                          </Box>
-                          
-                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                              <WhatsAppIcon color="action" sx={{ mr: 1, fontSize: 20 }} />
-                              <Typography variant="body2">WhatsApp</Typography>
-                            </Box>
-                            <Chip 
-                              label="Accepted" 
-                              size="small" 
-                              variant="outlined"
-                              color="success" 
-                              sx={{ fontWeight: 'medium', borderRadius: 5 }} 
-                            />
-                          </Box>
-                          
-                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                              <SmsIcon color="action" sx={{ mr: 1, fontSize: 20 }} />
-                              <Typography variant="body2">SMS</Typography>
-                            </Box>
-                            <Chip 
-                              label="Preferred" 
-                              size="small" 
-                              color="primary" 
-                              sx={{ fontWeight: 'medium', borderRadius: 5 }} 
-                            />
-                          </Box>
-                          
-                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                              <SmartToyIcon color="action" sx={{ mr: 1, fontSize: 20 }} />
-                              <Typography variant="body2">AI Call</Typography>
-                            </Box>
-                            <Chip 
-                              label="Accepted" 
-                              size="small" 
-                              variant="outlined"
-                              color="info" 
-                              sx={{ fontWeight: 'medium', borderRadius: 5 }} 
-                            />
-                          </Box>
-                          
-                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                              <MailOutlineIcon color="action" sx={{ mr: 1, fontSize: 20 }} />
-                              <Typography variant="body2">Postal Mail</Typography>
-                            </Box>
-                            <Chip 
-                              label="Opted Out" 
-                              size="small" 
-                              variant="outlined"
-                              color="error" 
-                              sx={{ fontWeight: 'medium', borderRadius: 5 }} 
-                            />
-                          </Box>
-                        </Box>
-                      </Box>
-                    </Grid>
-                    
-                    {/* Renewal Timeline Preferences */}
-                    <Grid item xs={12} md={3}>
-                      <Box sx={{ p: 3, bgcolor: alpha(theme.palette.primary.main, 0.04), borderRadius: 2, height: '100%' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                          <AccessTimeIcon color="primary" sx={{ mr: 1 }} />
-                          <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
-                            Renewal Timeline
-                          </Typography>
-                        </Box>
-                        
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                          <Box sx={{ mb: 2 }}>
-                            <Box sx={{ mb: 1 }}>
-                              <Typography variant="body2" color="text.secondary">
-                                Typical Renewal Pattern:
-                              </Typography>
-                            </Box>
-                            <Box 
-                              sx={{ 
-                                p: 1.5, 
-                                bgcolor: alpha(theme.palette.primary.main, 0.1), 
-                                color: theme.palette.primary.main, 
-                                borderRadius: 2, 
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 1
-                              }}
-                            >
-                              <ArrowCircleUpIcon />
-                              <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                                Pays 7-14 days before due date
-                              </Typography>
-                            </Box>
-                          </Box>
-                          
-                          <Box>
-                            <Box sx={{ mb: 1 }}>
-                              <Typography variant="body2" color="text.secondary">
-                                Reminder Schedule:
-                              </Typography>
-                            </Box>
-                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                              <Typography variant="body2">• 30 days before due date (Email)</Typography>
-                              <Typography variant="body2">• 14 days before due date (Email)</Typography>
-                              <Typography variant="body2">• 7 days before due date (Phone)</Typography>
-                            </Box>
-                          </Box>
-                        </Box>
-                      </Box>
-                    </Grid>
-                    
-                    {/* Payment Method Preferences */}
-                    <Grid item xs={12} md={3}>
-                      <Box sx={{ p: 3, bgcolor: alpha(theme.palette.primary.main, 0.04), borderRadius: 2, height: '100%' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                          <PaymentsIcon color="primary" sx={{ mr: 1 }} />
-                          <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
-                            Payment Methods
-                          </Typography>
-                        </Box>
-                        
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                          <Box>
-                            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                              Primary Payment Method:
-                            </Typography>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                              <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1), border: '1px solid', borderColor: alpha(theme.palette.primary.main, 0.2) }}>
-                                <CreditCardIcon color="primary" />
-                              </Avatar>
-                              <Box>
-                                <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-                                  Credit Card
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                  **** **** **** 5678 • Expires 06/26
-                                </Typography>
-                              </Box>
-                            </Box>
-                          </Box>
-                          
-                          <Box>
-                            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                              Alternate Methods Used:
-                            </Typography>
-                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                              <Chip 
-                                avatar={<Avatar sx={{ bgcolor: 'transparent !important' }}><AccountBalanceIcon fontSize="small" /></Avatar>}
-                                label="Bank Transfer"
-                                size="small"
-                                sx={{ borderRadius: 5 }}
-                              />
-                            </Box>
-                          </Box>
-                        </Box>
-                      </Box>
-                    </Grid>
-                    
-                    {/* Language Preferences */}
-                    <Grid item xs={12} md={3}>
-                      <Box sx={{ p: 3, bgcolor: alpha(theme.palette.primary.main, 0.04), borderRadius: 2, height: '100%' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                          <LanguageIcon color="primary" sx={{ mr: 1 }} />
-                          <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
-                            Language Preferences
-                          </Typography>
-                        </Box>
-                        
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                          <Box>
-                            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                              Preferred Language:
-                            </Typography>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                              <Box 
-                                sx={{ 
-                                  display: 'flex', 
-                                  alignItems: 'center', 
-                                  gap: 1,
-                                  p: 1.5, 
-                                  bgcolor: alpha(theme.palette.primary.main, 0.1), 
-                                  borderRadius: 2,
-                                  border: '1px solid',
-                                  borderColor: alpha(theme.palette.primary.main, 0.2)
-                                }}
-                              >
-                                <span style={{ fontSize: '20px' }}>🇮🇳</span>
-                                <Box>
-                                  <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-                                    हिन्दी (Hindi)
-                                  </Typography>
-                                  <Typography variant="caption" color="text.secondary">
-                                    Primary communication language
-                                  </Typography>
-                                </Box>
-                              </Box>
-                            </Box>
-                          </Box>
-                          
-                          <Box>
-                            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                              Alternative Languages:
-                            </Typography>
-                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                              <Chip 
-                                label="🇬🇧 English"
-                                size="small"
-                                variant="outlined"
-                                sx={{ borderRadius: 5, fontWeight: 'medium' }}
-                              />
-                              <Chip 
-                                label="🇮🇳 मराठी"
-                                size="small"
-                                variant="outlined"
-                                sx={{ borderRadius: 5, fontWeight: 'medium' }}
-                              />
-                            </Box>
-                          </Box>
-                          
-                          <Box>
-                            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                              Document Language:
-                            </Typography>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Chip 
-                                label="Hindi & English"
-                                size="small"
-                                color="primary"
-                                sx={{ borderRadius: 5, fontWeight: 'medium' }}
-                              />
-                            </Box>
-                          </Box>
-                        </Box>
-                      </Box>
-                    </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
-            </Grow>
-          </Grid>
 
           {/* Customer Payment Schedule */}
           <Grid item xs={12}>
@@ -3480,27 +3714,50 @@ const CaseDetails = () => {
                       },
                     }}
                   >
+                    {/* Dynamic History from API */}
+                    {(() => {
+                      console.log('Case History Render Debug:', {
+                        historyLoading,
+                        historyError,
+                        historyData,
+                        hasHistory: historyData?.history?.length > 0,
+                        hasCase: !!historyData?.case,
+                        historyArray: historyData?.history,
+                        commentsArray: historyData?.comments,
+                        caseLogsArray: historyData?.case_logs
+                      });
+                      return null;
+                    })()}
+                    {historyLoading ? (
+                      <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                        <CircularProgress />
+                      </Box>
+                    ) : historyError ? (
+                      <Alert severity="error" sx={{ mb: 3 }}>
+                        Failed to load history: {historyError}
+                      </Alert>
+                    ) : historyData && historyData.history && historyData.history.length > 0 ? (
                     <List>
-                      {(caseData.history || []).map((event, index) => (
-                        <React.Fragment key={event.date}>
+                        {historyData.history.map((event, index) => (
+                          <React.Fragment key={event.date || index}>
                           {index > 0 && <Divider />}
                           <ListItem>
                             <ListItemText
                               primary={
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                  <Typography variant="subtitle2">{event.action}</Typography>
+                                    <Typography variant="subtitle2">{event.action || event.title || 'History Event'}</Typography>
                                   <Typography variant="caption" color="text.secondary">
-                                    {new Date(event.date).toLocaleString()}
+                                      {event.date ? new Date(event.date).toLocaleString() : 'No date'}
                                   </Typography>
                                 </Box>
                               }
                               secondary={
                                 <Box sx={{ mt: 1 }}>
                                   <Typography variant="body2" color="text.secondary">
-                                    {event.details}
+                                      {event.details || event.description || 'No details available'}
                                   </Typography>
                                   <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                                    By: {event.user}
+                                      By: {event.user || 'System'}
                                   </Typography>
                                 </Box>
                               }
@@ -3509,6 +3766,97 @@ const CaseDetails = () => {
                         </React.Fragment>
                       ))}
                     </List>
+                    ) : historyData && historyData.case ? (
+                      <List>
+                        {/* Case Creation Event */}
+                        <ListItem>
+                          <ListItemText
+                            primary={
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Typography variant="subtitle2">Case Created</Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {historyData.case.created_date || historyData.case.started_at ? 
+                                    new Date(historyData.case.created_date || historyData.case.started_at).toLocaleString() : 
+                                    'No date'}
+                                </Typography>
+                              </Box>
+                            }
+                            secondary={
+                              <Box sx={{ mt: 1 }}>
+                                <Typography variant="body2" color="text.secondary">
+                                  {historyData.case.case_creation_method || 'Case was created'}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                                  By: {historyData.case.handling_agent_name || 'System'}
+                                </Typography>
+                              </Box>
+                            }
+                          />
+                        </ListItem>
+                        
+                        {/* Status Update Event */}
+                        <Divider />
+                        <ListItem>
+                          <ListItemText
+                            primary={
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Typography variant="subtitle2">Status Updated</Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {historyData.case.closed_at ? 
+                                    new Date(historyData.case.closed_at).toLocaleString() : 
+                                    'Current'}
+                                </Typography>
+                              </Box>
+                            }
+                            secondary={
+                              <Box sx={{ mt: 1 }}>
+                                <Typography variant="body2" color="text.secondary">
+                                  Status changed to: {historyData.case.status_display || historyData.case.status}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                                  Priority: {historyData.case.priority_display || historyData.case.priority}
+                                </Typography>
+                              </Box>
+                            }
+                          />
+                        </ListItem>
+                        
+                        {/* Payment Status Event */}
+                        {historyData.case.payment_status && (
+                          <>
+                            <Divider />
+                            <ListItem>
+                              <ListItemText
+                                primary={
+                                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <Typography variant="subtitle2">Payment Status</Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                      Current
+                                    </Typography>
+                                  </Box>
+                                }
+                                secondary={
+                                  <Box sx={{ mt: 1 }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                      Payment Status: {historyData.case.payment_status}
+                                    </Typography>
+                                    {historyData.case.renewal_amount && (
+                                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                                        Amount: ₹{parseFloat(historyData.case.renewal_amount).toLocaleString()}
+                                      </Typography>
+                                    )}
+                                  </Box>
+                                }
+                              />
+                            </ListItem>
+                          </>
+                        )}
+                      </List>
+                    ) : (
+                      <Alert severity="info" sx={{ mb: 3 }}>
+                        No history available for this case.
+                      </Alert>
+                    )}
                   </Box>
                 </CardContent>
               </Card>
@@ -3546,7 +3894,15 @@ const CaseDetails = () => {
                             Case Started
                           </Typography>
                           <Typography variant="body1">
-                            {new Date(caseData.uploadDate).toLocaleDateString()}
+                            {historyData && historyData.case ? (
+                              historyData.case.created_date || historyData.case.started_at ? 
+                                new Date(historyData.case.created_date || historyData.case.started_at).toLocaleDateString() :
+                                'No date available'
+                            ) : caseData.uploadDate ? (
+                              new Date(caseData.uploadDate).toLocaleDateString()
+                            ) : (
+                              'No date available'
+                            )}
                           </Typography>
                         </Box>
                       </Grid>
@@ -3557,8 +3913,12 @@ const CaseDetails = () => {
                           </Typography>
                           <Typography variant="body1">
                             <Chip
-                              label={caseData.status}
-                              color={getStatusColor(caseData.status)}
+                              label={historyData && historyData.case ? 
+                                (historyData.case.status_display || historyData.case.status) : 
+                                caseData.status}
+                              color={getStatusColor(historyData && historyData.case ? 
+                                historyData.case.status : 
+                                caseData.status)}
                               size="small"
                             />
                           </Typography>
@@ -3570,7 +3930,9 @@ const CaseDetails = () => {
                             Handling Agent
                           </Typography>
                           <Typography variant="body1">
-                            {caseData.agent || "Unassigned"}
+                            {historyData && historyData.case ? 
+                              (historyData.case.handling_agent_name || "Unassigned") : 
+                              (caseData.agent || "Unassigned")}
                           </Typography>
                         </Box>
                       </Grid>
@@ -3580,7 +3942,17 @@ const CaseDetails = () => {
                             Processing Time
                           </Typography>
                           <Typography variant="body1">
-                            {Math.ceil((new Date() - new Date(caseData.uploadDate)) / (1000 * 60 * 60 * 24))} days
+                            {historyData && historyData.case ? (
+                              historyData.case.processing_days !== undefined ? 
+                                `${historyData.case.processing_days} days` :
+                                historyData.case.processing_time !== undefined ?
+                                  `${historyData.case.processing_time} days` :
+                                  '0 days'
+                            ) : caseData.uploadDate ? (
+                              `${Math.ceil((new Date() - new Date(caseData.uploadDate)) / (1000 * 60 * 60 * 24))} days`
+                            ) : (
+                              '0 days'
+                            )}
                           </Typography>
                         </Box>
                       </Grid>
@@ -3590,6 +3962,179 @@ const CaseDetails = () => {
                       <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
                         Journey Progress
                       </Typography>
+                      {/* Dynamic Journey Progress from API */}
+                      {historyLoading ? (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                          <CircularProgress size={20} />
+                        </Box>
+                      ) : historyError ? (
+                        <Alert severity="error" sx={{ mb: 2 }}>
+                          Failed to load journey data
+                        </Alert>
+                      ) : historyData && historyData.history && historyData.history.length > 0 ? (
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          {historyData.history.slice(0, 5).map((event, index) => {
+                            const isCompleted = true; // All history events are completed
+                            return (
+                              <Box 
+                                key={event.date || index} 
+                                sx={{ 
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  gap: 2,
+                                  opacity: isCompleted ? 1 : 0.5
+                                }}
+                              >
+                                <Box 
+                                  sx={{ 
+                                    width: 24, 
+                                    height: 24, 
+                                    borderRadius: '50%', 
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: 'white',
+                                    bgcolor: isCompleted ? 'success.main' : 'grey.500',
+                                    fontSize: '0.8rem'
+                                  }}
+                                >
+                                  {index + 1}
+                                </Box>
+                                <Box sx={{ flex: 1 }}>
+                                  <Typography 
+                                    variant="body2" 
+                                    sx={{ fontWeight: isCompleted ? 'bold' : 'normal' }}
+                                  >
+                                    {event.action || event.title || 'History Event'}
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary">
+                                    {event.date ? new Date(event.date).toLocaleDateString() : 'No date'}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            );
+                          })}
+                        </Box>
+                      ) : historyData && historyData.case ? (
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          {/* Case Creation Step */}
+                          <Box 
+                            sx={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: 2,
+                              opacity: 1
+                            }}
+                          >
+                            <Box 
+                              sx={{ 
+                                width: 24, 
+                                height: 24, 
+                                borderRadius: '50%', 
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'white',
+                                bgcolor: 'success.main',
+                                fontSize: '0.8rem'
+                              }}
+                            >
+                              1
+                            </Box>
+                            <Box sx={{ flex: 1 }}>
+                              <Typography 
+                                variant="body2" 
+                                sx={{ fontWeight: 'bold' }}
+                              >
+                                Case Created
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {historyData.case.created_date || historyData.case.started_at ? 
+                                  new Date(historyData.case.created_date || historyData.case.started_at).toLocaleDateString() : 
+                                  'No date'}
+                              </Typography>
+                            </Box>
+                          </Box>
+                          
+                          {/* Status Update Step */}
+                          <Box 
+                            sx={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: 2,
+                              opacity: 1
+                            }}
+                          >
+                            <Box 
+                              sx={{ 
+                                width: 24, 
+                                height: 24, 
+                                borderRadius: '50%', 
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'white',
+                                bgcolor: 'success.main',
+                                fontSize: '0.8rem'
+                              }}
+                            >
+                              2
+                            </Box>
+                            <Box sx={{ flex: 1 }}>
+                              <Typography 
+                                variant="body2" 
+                                sx={{ fontWeight: 'bold' }}
+                              >
+                                Status: {historyData.case.status_display || historyData.case.status}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                Priority: {historyData.case.priority_display || historyData.case.priority}
+                              </Typography>
+                            </Box>
+                          </Box>
+                          
+                          {/* Payment Step */}
+                          {historyData.case.payment_status && (
+                            <Box 
+                              sx={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: 2,
+                                opacity: historyData.case.payment_status === 'completed' ? 1 : 0.7
+                              }}
+                            >
+                              <Box 
+                                sx={{ 
+                                  width: 24, 
+                                  height: 24, 
+                                  borderRadius: '50%', 
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: 'white',
+                                  bgcolor: historyData.case.payment_status === 'completed' ? 'success.main' : 'warning.main',
+                                  fontSize: '0.8rem'
+                                }}
+                              >
+                                3
+                              </Box>
+                              <Box sx={{ flex: 1 }}>
+                                <Typography 
+                                  variant="body2" 
+                                  sx={{ fontWeight: historyData.case.payment_status === 'completed' ? 'bold' : 'normal' }}
+                                >
+                                  Payment: {historyData.case.payment_status}
+                                </Typography>
+                                {historyData.case.renewal_amount && (
+                                  <Typography variant="caption" color="text.secondary">
+                                    Amount: ₹{parseFloat(historyData.case.renewal_amount).toLocaleString()}
+                                  </Typography>
+                                )}
+                              </Box>
+                            </Box>
+                          )}
+                        </Box>
+                      ) : (
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                         {(caseData.flowSteps || []).map((step, index) => {
                           const isCompleted = getActiveStep() >= index;
@@ -3629,6 +4174,7 @@ const CaseDetails = () => {
                           );
                         })}
                       </Box>
+                      )}
                     </Box>
                   </Box>
                 </CardContent>
@@ -3657,6 +4203,94 @@ const CaseDetails = () => {
                     <MonetizationOnIcon sx={{ mr: 1, color: theme.palette.error.main }} />
                     <Typography variant="h6" fontWeight="600">Outstanding Amounts</Typography>
                   </Box>
+                  
+                  {/* Debug Section - Remove after testing */}
+                  <Alert severity="info" sx={{ mb: 2 }}>
+                    <Typography variant="body2">
+                      <strong>Debug - Outstanding Data:</strong><br/>
+                      Loading: {outstandingLoading ? 'Yes' : 'No'}<br/>
+                      Error: {outstandingError || 'None'}<br/>
+                      Data exists: {outstandingData ? 'Yes' : 'No'}<br/>
+                      Data type: {typeof outstandingData}<br/>
+                      Data keys: {outstandingData ? Object.keys(outstandingData).join(', ') : 'N/A'}<br/>
+                      Total Outstanding: {outstandingData?.total_outstanding || 'N/A'}<br/>
+                      Pending Count: {outstandingData?.pending_count || 'N/A'}<br/>
+                      Installments: {outstandingData?.installments?.length || 0}<br/>
+                      Full Data: {JSON.stringify(outstandingData, null, 2)}
+                    </Typography>
+                    <Button 
+                      variant="outlined" 
+                      size="small" 
+                      onClick={async () => {
+                        console.log('Manual API test for case:', caseId);
+                        try {
+                          setOutstandingLoading(true);
+                          const result = await GetOutstandingSummary(caseId);
+                          console.log('Manual API result:', result);
+                          console.log('Result success:', result.success);
+                          console.log('Result data:', result.data);
+                          console.log('Data type:', typeof result.data);
+                          console.log('Data keys:', result.data ? Object.keys(result.data) : 'N/A');
+                          
+                          if (result.success) {
+                            console.log('Setting data with keys:', Object.keys(result.data));
+                            console.log('Total outstanding from API:', result.data.total_outstanding);
+                            console.log('Pending count from API:', result.data.pending_count);
+                            setOutstandingData(result.data);
+                          } else {
+                            setOutstandingError(result.message);
+                          }
+                        } catch (error) {
+                          console.error('Manual API error:', error);
+                          setOutstandingError(error.message);
+                        } finally {
+                          setOutstandingLoading(false);
+                        }
+                      }}
+                      sx={{ mt: 1, mr: 1 }}
+                    >
+                      Test API Call
+                    </Button>
+                    <Button 
+                      variant="outlined" 
+                      size="small" 
+                      onClick={async () => {
+                        console.log('Direct API test for case:', caseId);
+                        try {
+                          const token = localStorage.getItem("authToken");
+                          const url = `http://13.233.6.207:8000/api/case-tracking/cases/${caseId}/outstanding-amounts/summary/`;
+                          console.log('Direct API URL:', url);
+                          
+                          const response = await fetch(url, {
+                            method: "GET",
+                            headers: {
+                              "Content-Type": "application/json",
+                              Authorization: `Bearer ${token}`,
+                            },
+                          });
+                          
+                          console.log('Direct API response status:', response.status);
+                          const data = await response.json();
+                          console.log('Direct API response data:', data);
+                          console.log('Direct API data structure:', {
+                            hasSuccess: 'success' in data,
+                            hasData: 'data' in data,
+                            dataKeys: data.data ? Object.keys(data.data) : 'N/A'
+                          });
+                          
+                          if (data.success && data.data) {
+                            setOutstandingData(data.data);
+                          }
+                        } catch (error) {
+                          console.error('Direct API error:', error);
+                        }
+                      }}
+                      sx={{ mt: 1 }}
+                    >
+                      Direct API Test
+                    </Button>
+                  </Alert>
+                  
                   <Divider sx={{ mb: 3 }} />
                   
                   {/* Summary Section */}
@@ -3664,34 +4298,80 @@ const CaseDetails = () => {
                     <Grid item xs={12} md={3}>
                       <Box sx={{ textAlign: 'center', p: 2, bgcolor: alpha(theme.palette.error.main, 0.05), borderRadius: 2 }}>
                         <Typography variant="h4" fontWeight="700" color="error.main">
-                          ₹{caseData.outstandingAmounts?.reduce((total, amount) => total + amount.amount, 0)?.toLocaleString('en-IN') || '0'}
+                          {outstandingLoading ? (
+                            <CircularProgress size={32} />
+                          ) : outstandingError ? (
+                            'Error'
+                          ) : outstandingData && outstandingData.total_outstanding ? (
+                            (() => {
+                              console.log('Rendering total outstanding:', outstandingData.total_outstanding);
+                              const amount = parseFloat(outstandingData.total_outstanding || 0);
+                              console.log('Parsed amount:', amount);
+                              return `₹${amount.toLocaleString('en-IN')}`;
+                            })()
+                          ) : (
+                            '₹0'
+                          )}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
                           Total Outstanding
                         </Typography>
                       </Box>
                     </Grid>
-                                         <Grid item xs={12} md={3}>
-                       <Box sx={{ textAlign: 'center', p: 2, bgcolor: alpha(theme.palette.warning.main, 0.05), borderRadius: 2 }}>
-                         <Typography variant="h4" fontWeight="700" color="warning.main">
-                           {caseData.outstandingAmounts?.length || 0}
-                         </Typography>
-                         <Typography variant="body2" color="text.secondary">
-                           Pending Installments
-                         </Typography>
-                       </Box>
-                     </Grid>
-                     <Grid item xs={12} md={3}>
-                       <Box sx={{ textAlign: 'center', p: 2, bgcolor: alpha(theme.palette.info.main, 0.05), borderRadius: 2 }}>
-                         <Typography variant="h4" fontWeight="700" color="info.main">
-                           ₹{caseData.outstandingAmounts?.length > 0 ? 
-                             Math.round(caseData.outstandingAmounts.reduce((total, amount) => total + amount.amount, 0) / caseData.outstandingAmounts.length).toLocaleString('en-IN') : '0'}
-                         </Typography>
-                         <Typography variant="body2" color="text.secondary">
-                           Average Amount
-                         </Typography>
-                       </Box>
-                     </Grid>
+                    <Grid item xs={12} md={3}>
+                      <Box sx={{ textAlign: 'center', p: 2, bgcolor: alpha(theme.palette.warning.main, 0.05), borderRadius: 2 }}>
+                        <Typography variant="h4" fontWeight="700" color="warning.main">
+                          {outstandingLoading ? (
+                            <CircularProgress size={32} />
+                          ) : outstandingError ? (
+                            'Error'
+                          ) : outstandingData && outstandingData.pending_count !== undefined ? (
+                            outstandingData.pending_count || 0
+                          ) : (
+                            '0'
+                          )}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Pending Installments
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={12} md={3}>
+                      <Box sx={{ textAlign: 'center', p: 2, bgcolor: alpha(theme.palette.info.main, 0.05), borderRadius: 2 }}>
+                        <Typography variant="h4" fontWeight="700" color="info.main">
+                          {outstandingLoading ? (
+                            <CircularProgress size={32} />
+                          ) : outstandingError ? (
+                            'Error'
+                          ) : outstandingData && outstandingData.overdue_count !== undefined ? (
+                            outstandingData.overdue_count || 0
+                          ) : (
+                            '0'
+                          )}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Overdue Count
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={12} md={3}>
+                      <Box sx={{ textAlign: 'center', p: 2, bgcolor: alpha(theme.palette.success.main, 0.05), borderRadius: 2 }}>
+                        <Typography variant="h4" fontWeight="700" color="success.main">
+                          {outstandingLoading ? (
+                            <CircularProgress size={32} />
+                          ) : outstandingError ? (
+                            'Error'
+                          ) : outstandingData && outstandingData.average_amount ? (
+                            `₹${parseFloat(outstandingData.average_amount || 0).toLocaleString('en-IN')}`
+                          ) : (
+                            '₹0'
+                          )}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Average Amount
+                        </Typography>
+                      </Box>
+                    </Grid>
                     <Grid item xs={12} md={3}>
                       <Stack spacing={1}>
                         <Button
@@ -3758,9 +4438,21 @@ const CaseDetails = () => {
                     }}
                   >
                     <Stack spacing={2}>
-                      {(caseData.outstandingAmounts || []).map((outstandingAmount, index) => {
-                        const daysOverdue = Math.floor((new Date() - new Date(outstandingAmount.dueDate)) / (1000 * 60 * 60 * 24));
-                        const isOverdue = daysOverdue > 0;
+                      {outstandingLoading ? (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                          <CircularProgress />
+                          <Typography variant="body2" sx={{ ml: 2 }}>Loading installments...</Typography>
+                        </Box>
+                      ) : outstandingError ? (
+                        <Alert severity="error" sx={{ m: 2 }}>
+                          {outstandingError}
+                        </Alert>
+                      ) : outstandingData && outstandingData.installments && outstandingData.installments.length > 0 ? (
+                        outstandingData.installments.map((installment, index) => {
+                          console.log('Rendering installments:', outstandingData.installments);
+                          console.log('Rendering installment:', installment);
+                          const daysOverdue = installment.days_overdue || 0;
+                          const isOverdue = daysOverdue > 0;
                         
                         return (
                           <Card 
@@ -3785,7 +4477,7 @@ const CaseDetails = () => {
                                     PERIOD
                                   </Typography>
                                   <Typography variant="body1" fontWeight="600">
-                                    {outstandingAmount.period}
+                                    {installment.period}
                                   </Typography>
                                 </Grid>
                                 <Grid item xs={12} sm={2}>
@@ -3793,7 +4485,7 @@ const CaseDetails = () => {
                                     AMOUNT
                                   </Typography>
                                   <Typography variant="h6" fontWeight="700" color={isOverdue ? 'error.main' : 'primary.main'}>
-                                    ₹{outstandingAmount.amount.toLocaleString('en-IN')}
+                                    ₹{parseFloat(installment.amount || 0).toLocaleString('en-IN')}
                                   </Typography>
                                 </Grid>
                                 <Grid item xs={12} sm={2}>
@@ -3801,7 +4493,7 @@ const CaseDetails = () => {
                                     DUE DATE
                                   </Typography>
                                   <Typography variant="body2" fontWeight="600">
-                                    {new Date(outstandingAmount.dueDate).toLocaleDateString('en-IN')}
+                                    {new Date(installment.due_date).toLocaleDateString('en-IN')}
                                   </Typography>
                                 </Grid>
                                 <Grid item xs={12} sm={3}>
@@ -3809,8 +4501,8 @@ const CaseDetails = () => {
                                     STATUS
                                   </Typography>
                                   <Chip 
-                                    label={isOverdue ? `${daysOverdue} days overdue` : `Due in ${Math.abs(daysOverdue)} days`}
-                                    color={isOverdue ? 'error' : 'warning'}
+                                    label={isOverdue ? `${daysOverdue} days overdue` : installment.status}
+                                    color={isOverdue ? 'error' : installment.status === 'pending' ? 'warning' : 'success'}
                                     size="small"
                                     icon={isOverdue ? <WarningIcon /> : <ScheduleIcon />}
                                     sx={{ fontSize: '0.7rem' }}
@@ -3827,7 +4519,7 @@ const CaseDetails = () => {
                                       onClick={() => {
                                         setSnackbar({
                                           open: true,
-                                          message: `Payment for ${outstandingAmount.period} - ₹${outstandingAmount.amount.toLocaleString('en-IN')}`,
+                                          message: `Payment for ${installment.period} - ₹${parseFloat(installment.amount || 0).toLocaleString('en-IN')}`,
                                           severity: 'info'
                                         });
                                       }}
@@ -3839,7 +4531,7 @@ const CaseDetails = () => {
                                       onClick={() => {
                                         setSnackbar({
                                           open: true,
-                                          message: `Reminder sent for ${outstandingAmount.period}`,
+                                          message: `Reminder sent for ${installment.period}`,
                                           severity: 'success'
                                         });
                                       }}
@@ -3849,19 +4541,18 @@ const CaseDetails = () => {
                                   </Stack>
                                 </Grid>
                               </Grid>
-                              
-                              {outstandingAmount.description && (
+                              {installment.description && (
                                 <Box sx={{ mt: 2, pt: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
                                   <Typography variant="body2" color="text.secondary">
-                                    <DescriptionIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'middle' }} />
-                                    {outstandingAmount.description}
+                                    {installment.description}
                                   </Typography>
                                 </Box>
                               )}
                             </CardContent>
                           </Card>
                         );
-                      }) || (
+                      })
+                      ) : (
                         <Box sx={{ textAlign: 'center', py: 4 }}>
                           <Avatar sx={{ bgcolor: 'success.main', mx: 'auto', mb: 2, width: 64, height: 64 }}>
                             <CheckCircleIcon sx={{ fontSize: 32 }} />
@@ -3887,6 +4578,11 @@ const CaseDetails = () => {
             <TabPanel value={currentTab} index={0}>
               {/* Overview & Policy Tab - Customer Info, Policy Info, Policy Features, Coverage Details */}
               <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>Overview & Policy Details</Typography>
+              {!caseData ? (
+                <Alert severity="error" sx={{ mb: 3 }}>
+                  Failed to load case data. Please refresh the page or contact support.
+                </Alert>
+              ) : (
               <Grid container spacing={3}>
                 {/* Customer Information */}
                 <Grid item xs={12} md={4}>
@@ -3911,7 +4607,7 @@ const CaseDetails = () => {
                             <PersonIcon />
                           </Avatar>
                           <Box>
-                            <Typography variant="h6" fontWeight="600">{caseData.customerName}</Typography>
+                            <Typography variant="h6" fontWeight="600">{caseData?.customerName || 'Unknown Customer'}</Typography>
                             <Typography variant="body2" color="text.secondary">
                               Customer Details
                             </Typography>
@@ -3956,7 +4652,7 @@ const CaseDetails = () => {
                           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
                               <PhoneIcon color="primary" />
-                              <Typography>{caseData.contactInfo.phone}</Typography>
+                              <Typography>{caseData.contactInfo?.phone || 'No phone available'}</Typography>
                             </Box>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               {verificationStatus.phone.verified ? (
@@ -3975,7 +4671,7 @@ const CaseDetails = () => {
                                 <Button
                                   size="small"
                                   variant="outlined"
-                                  onClick={() => handleVerification('phone', caseData.contactInfo.phone)}
+                                  onClick={() => handleVerification('phone', caseData.contactInfo?.phone)}
                                   disabled={verificationStatus.phone.verifying}
                                   startIcon={verificationStatus.phone.verifying ? <CircularProgress size={16} /> : <VerifiedIcon />}
                                 >
@@ -3989,7 +4685,7 @@ const CaseDetails = () => {
                           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
                               <CreditCardIcon color="primary" />
-                              <Typography>{caseData.contactInfo.pan}</Typography>
+                              <Typography>{caseData.contactInfo?.pan || 'N/A'}</Typography>
                             </Box>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               {verificationStatus.pan.verified ? (
@@ -4008,7 +4704,7 @@ const CaseDetails = () => {
                                 <Button
                                   size="small"
                                   variant="outlined"
-                                  onClick={() => handleVerification('pan', caseData.contactInfo.pan)}
+                                  onClick={() => handleVerification('pan', caseData.contactInfo?.pan)}
                                   disabled={verificationStatus.pan.verifying}
                                   startIcon={verificationStatus.pan.verifying ? <CircularProgress size={16} /> : <VerifiedIcon />}
                                 >
@@ -4059,7 +4755,7 @@ const CaseDetails = () => {
                                 <Typography variant="subtitle2" color="text.secondary" gutterBottom sx={{ mb: 0.5 }}>
                                   Policy Type
                                 </Typography>
-                                <Typography variant="body1" fontWeight="500">{caseData.policyDetails.type}</Typography>
+                                <Typography variant="body1" fontWeight="500">{caseData.policyDetails?.type || 'N/A'}</Typography>
                               </Box>
                             </Stack>
                           </Grid>
@@ -4070,7 +4766,7 @@ const CaseDetails = () => {
                                   Premium
                                 </Typography>
                                 <Typography variant="body1" fontWeight="500">
-                                  ₹{caseData.policyDetails.premium.toLocaleString()}
+                                  ₹{(caseData.policyDetails?.premium || 0).toLocaleString()}
                                 </Typography>
                               </Box>
                               <Box>
@@ -4078,7 +4774,7 @@ const CaseDetails = () => {
                                   Expiry Date
                                 </Typography>
                                 <Typography variant="body1" fontWeight="500">
-                                  {new Date(caseData.policyDetails.expiryDate).toLocaleDateString()}
+                                  {caseData.policyDetails?.expiryDate ? new Date(caseData.policyDetails.expiryDate).toLocaleDateString() : 'N/A'}
                                 </Typography>
                               </Box>
                             </Stack>
@@ -4090,7 +4786,7 @@ const CaseDetails = () => {
                                   Annual Income
                                 </Typography>
                                 <Typography variant="body1" fontWeight="500">
-                                  ₹{(caseData.policyDetails.premium * 8).toLocaleString()}
+                                  ₹{(caseData.annualIncome || 0).toLocaleString()}
                                 </Typography>
                               </Box>
                               <Box>
@@ -4098,36 +4794,29 @@ const CaseDetails = () => {
                                   Channel Partner
                                 </Typography>
                                 <Typography variant="body1" fontWeight="500">
-                                  {caseData.policyDetails.type === 'Health' ? 'Corporate Sales - Rajesh Kumar' :
-                                   caseData.policyDetails.type === 'Auto' ? 'Agent Network - Priya Sharma' :
-                                   caseData.policyDetails.type === 'Life' ? 'Branch Office - Mumbai Central' :
-                                   'Online Portal - Direct Sales'}
+                                  {caseData.channelDetails?.businessChannel || 'Agent Network'}
                                 </Typography>
                               </Box>
                             </Stack>
                           </Grid>
                           <Grid item xs={12} sm={6} md={3}>
                             <Stack spacing={2.5}>
-                              {caseData.policyProposer && (
-                                <Box>
-                                  <Typography variant="subtitle2" color="text.secondary" gutterBottom sx={{ mb: 0.5 }}>
-                                    Policy Proposer
-                                  </Typography>
-                                  <Typography variant="body1" fontWeight="500">
-                                    {caseData.policyProposer.name}
-                                  </Typography>
-                                </Box>
-                              )}
-                              {caseData.lifeAssured && (
-                                <Box>
-                                  <Typography variant="subtitle2" color="text.secondary" gutterBottom sx={{ mb: 0.5 }}>
-                                    Life Assured
-                                  </Typography>
-                                  <Typography variant="body1" fontWeight="500">
-                                    {caseData.lifeAssured.name}
-                                  </Typography>
-                                </Box>
-                              )}
+                              <Box>
+                                <Typography variant="subtitle2" color="text.secondary" gutterBottom sx={{ mb: 0.5 }}>
+                                  Policy Proposer
+                                </Typography>
+                                <Typography variant="body1" fontWeight="500">
+                                  {caseData.policyProposer || 'Policy Holder'}
+                                </Typography>
+                              </Box>
+                              <Box>
+                                <Typography variant="subtitle2" color="text.secondary" gutterBottom sx={{ mb: 0.5 }}>
+                                  Life Assured
+                                </Typography>
+                                <Typography variant="body1" fontWeight="500">
+                                  {caseData.lifeAssured || 'Life Assured'}
+                                </Typography>
+                              </Box>
                             </Stack>
                           </Grid>
                         </Grid>
@@ -4162,37 +4851,56 @@ const CaseDetails = () => {
                         </Box>
                         <Divider sx={{ mb: 3 }} />
                         <Grid container spacing={3}>
-                          {caseData.policyDetails.type === 'Health' && (
+                          {/* Dynamic Policy Features based on API data */}
+                          {caseData.policyFeatures && Object.keys(caseData.policyFeatures).length > 0 ? (
+                            // Use live data from API
+                            Object.entries(caseData.policyFeatures).map(([featureCategory, features], index) => (
+                              <Grid item xs={12} md={6} key={index}>
+                                <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                                  <HealthAndSafetyIcon fontSize="small" sx={{ mr: 1 }} /> {featureCategory}
+                                </Typography>
+                                <Stack spacing={1.5} sx={{ ml: 1 }}>
+                                  {Array.isArray(features) ? features.map((feature, featureIndex) => (
+                                    <Typography variant="body2" key={featureIndex}>
+                                      {feature.name}: {feature.value}
+                                    </Typography>
+                                  )) : (
+                                    <Typography variant="body2">{features}</Typography>
+                                  )}
+                                </Stack>
+                              </Grid>
+                            ))
+                          ) : (
+                            // Fallback to static content based on policy type
                             <>
-                              {/* Health Insurance Section */}
-                              <Grid item xs={12} md={6}>
-                                <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-                                  <HealthAndSafetyIcon fontSize="small" sx={{ mr: 1 }} /> Health Insurance (Corporate/Group)
-                                </Typography>
-                                <Stack spacing={1.5} sx={{ ml: 1 }}>
-                                  <Typography variant="body2">Sum Insured: ₹1L–₹10L; family floater available.</Typography>
-                                  <Typography variant="body2">PED Coverage: Included from Day 1.</Typography>
-                                  <Typography variant="body2">Cashless Network: 7000+ hospitals PAN-India.</Typography>
-                                  <Typography variant="body2">Maternity: ₹50K–₹1L, includes newborn.</Typography>
-                                  <Typography variant="body2">Daycare Surgeries: 500+ procedures covered.</Typography>
-                                  <Typography variant="body2">Room Rent: No cap; private AC room eligibility.</Typography>
-                                  <Typography variant="body2">AYUSH: Coverage up to ₹25K/year.</Typography>
-                                </Stack>
-                              </Grid>
+                              {caseData.policyDetails?.type === 'Health' && (
+                              <>
+                                {/* Health Insurance Section */}
+                                <Grid item xs={12} md={6}>
+                                  <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                                    <HealthAndSafetyIcon fontSize="small" sx={{ mr: 1 }} /> Health Insurance Features
+                                  </Typography>
+                                  <Stack spacing={1.5} sx={{ ml: 1 }}>
+                                    <Typography variant="body2">Sum Insured: ₹{(caseData.sumAssured || 0).toLocaleString()}</Typography>
+                                    <Typography variant="body2">Premium: ₹{(caseData.policyDetails?.premium || 0).toLocaleString()}</Typography>
+                                    <Typography variant="body2">Policy Term: {caseData.policyDetails?.policyTerm || 'N/A'}</Typography>
+                                    <Typography variant="body2">Payment Mode: {caseData.policyDetails?.paymentMode || 'N/A'}</Typography>
+                                    <Typography variant="body2">Status: {caseData.policyDetails?.status || 'N/A'}</Typography>
+                                  </Stack>
+                                </Grid>
                               
-                              {/* Wellness Benefits Section */}
-                              <Grid item xs={12} md={6}>
-                                <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-                                  <WorkspacePremiumIcon fontSize="small" sx={{ mr: 1 }} /> Wellness Benefits
-                                </Typography>
-                                <Stack spacing={1.5} sx={{ ml: 1 }}>
-                                  <Typography variant="body2">Health Checkups: Annual, 35+ parameters.</Typography>
-                                  <Typography variant="body2">Doctor at Home: 2 visits/year.</Typography>
-                                  <Typography variant="body2">Mental Wellness: Quarterly sessions.</Typography>
-                                  <Typography variant="body2">Fitness Access: Subsidized gyms/yoga.</Typography>
-                                  <Typography variant="body2">Nutrition Plans: Personalized counseling.</Typography>
-                                </Stack>
-                              </Grid>
+                                {/* Additional Health Features */}
+                                <Grid item xs={12} md={6}>
+                                  <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                                    <WorkspacePremiumIcon fontSize="small" sx={{ mr: 1 }} /> Additional Features
+                                  </Typography>
+                                  <Stack spacing={1.5} sx={{ ml: 1 }}>
+                                    <Typography variant="body2">Expiry Date: {caseData.policyDetails?.expiryDate ? new Date(caseData.policyDetails.expiryDate).toLocaleDateString() : 'N/A'}</Typography>
+                                    <Typography variant="body2">Renewal Date: {caseData.policyDetails?.renewalDate ? new Date(caseData.policyDetails.renewalDate).toLocaleDateString() : 'N/A'}</Typography>
+                                    <Typography variant="body2">Renewal Amount: ₹{(caseData.renewalAmount || 0).toLocaleString()}</Typography>
+                                    <Typography variant="body2">Agent: {caseData.agent || 'N/A'}</Typography>
+                                  </Stack>
+                                </Grid>
                               
                               {/* Preventive Care Section */}
                               <Grid item xs={12} md={6}>
@@ -4236,69 +4944,7 @@ const CaseDetails = () => {
                             </>
                           )}
                           
-                          {caseData.policyDetails.type === 'Auto' && (
-                            <>
-                              {/* Auto Insurance Section */}
-                              <Grid item xs={12} md={6}>
-                                <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-                                  <DirectionsCarIcon fontSize="small" sx={{ mr: 1 }} /> Vehicle Insurance
-                                </Typography>
-                                <Stack spacing={1.5} sx={{ ml: 1 }}>
-                                  <Typography variant="body2">Comprehensive Coverage: Own damage + third-party liability.</Typography>
-                                  <Typography variant="body2">Zero Depreciation: Full claim without depreciation deduction.</Typography>
-                                  <Typography variant="body2">Roadside Assistance: 24x7 emergency support.</Typography>
-                                  <Typography variant="body2">NCB Protection: No claims bonus safeguard.</Typography>
-                                  <Typography variant="body2">Engine Protection: Coverage for hydrostatic lock damage.</Typography>
-                                </Stack>
-                              </Grid>
-                              
-                              <Grid item xs={12} md={6}>
-                                <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-                                  <LocalOfferIcon fontSize="small" sx={{ mr: 1 }} /> Additional Benefits
-                                </Typography>
-                                <Stack spacing={1.5} sx={{ ml: 1 }}>
-                                  <Typography variant="body2">Key Replacement: Coverage for lost or damaged keys.</Typography>
-                                  <Typography variant="body2">Return to Invoice: Full invoice value in case of total loss.</Typography>
-                                  <Typography variant="body2">Personal Accident Cover: ₹15 lakh for owner-driver.</Typography>
-                                  <Typography variant="body2">Passenger Cover: ₹1 lakh per passenger.</Typography>
-                                  <Typography variant="body2">Consumables Cover: For oils, lubricants, etc.</Typography>
-                                </Stack>
-                              </Grid>
-                            </>
-                          )}
-                          
-                          {caseData.policyDetails.type === 'Life' && (
-                            <>
-                              {/* Life Insurance Section */}
-                              <Grid item xs={12} md={6}>
-                                <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-                                  <WorkspacePremiumIcon fontSize="small" sx={{ mr: 1 }} /> Life Insurance
-                                </Typography>
-                                <Stack spacing={1.5} sx={{ ml: 1 }}>
-                                  <Typography variant="body2">Term Coverage: Up to ₹2 Crore sum assured.</Typography>
-                                  <Typography variant="body2">Critical Illness: Coverage for 36 critical conditions.</Typography>
-                                  <Typography variant="body2">Accidental Death: Double sum assured payout.</Typography>
-                                  <Typography variant="body2">Premium Waiver: On disability or critical illness.</Typography>
-                                  <Typography variant="body2">Tax Benefits: Under Section 80C and 10(10D).</Typography>
-                                </Stack>
-                              </Grid>
-                              
-                              <Grid item xs={12} md={6}>
-                                <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-                                  <AccountBalanceIcon fontSize="small" sx={{ mr: 1 }} /> Investment Benefits
-                                </Typography>
-                                <Stack spacing={1.5} sx={{ ml: 1 }}>
-                                  <Typography variant="body2">Guaranteed Returns: 5-6% annual guaranteed returns.</Typography>
-                                  <Typography variant="body2">Maturity Benefits: Lump sum payment at policy maturity.</Typography>
-                                  <Typography variant="body2">Loyalty Additions: Extra bonus for long-term policyholders.</Typography>
-                                  <Typography variant="body2">Partial Withdrawals: Available after lock-in period.</Typography>
-                                  <Typography variant="body2">Loan Facility: Up to 80% of surrender value.</Typography>
-                                </Stack>
-                              </Grid>
-                            </>
-                          )}
-                          
-                          {caseData.policyDetails.type === 'Home' && (
+                          {caseData.policyDetails?.type === 'Home' && (
                             <>
                               {/* Home Insurance Section */}
                               <Grid item xs={12} md={6}>
@@ -4326,6 +4972,44 @@ const CaseDetails = () => {
                                   <Typography variant="body2">Jewelry & Valuables: Special coverage for high-value items.</Typography>
                                 </Stack>
                               </Grid>
+                            </>
+                          )}
+                          
+                          {caseData.policyDetails?.type === 'Auto' && (
+                            <>
+                              {/* Auto Insurance Section */}
+                              <Grid item xs={12} md={6}>
+                                <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                                  <DirectionsCarIcon fontSize="small" sx={{ mr: 1 }} /> Auto Insurance Features
+                                </Typography>
+                                <Stack spacing={1.5} sx={{ ml: 1 }}>
+                                  <Typography variant="body2">Sum Assured: ₹{(caseData.sumAssured || 0).toLocaleString()}</Typography>
+                                  <Typography variant="body2">Premium: ₹{(caseData.policyDetails?.premium || 0).toLocaleString()}</Typography>
+                                  <Typography variant="body2">Policy Term: {caseData.policyDetails?.policyTerm || 'N/A'}</Typography>
+                                  <Typography variant="body2">Payment Mode: {caseData.policyDetails?.paymentMode || 'N/A'}</Typography>
+                                  <Typography variant="body2">Status: {caseData.policyDetails?.status || 'N/A'}</Typography>
+                                </Stack>
+                              </Grid>
+                            </>
+                          )}
+                          
+                          {caseData.policyDetails?.type === 'Life' && (
+                            <>
+                              {/* Life Insurance Section */}
+                              <Grid item xs={12} md={6}>
+                                <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                                  <WorkspacePremiumIcon fontSize="small" sx={{ mr: 1 }} /> Life Insurance
+                                </Typography>
+                                <Stack spacing={1.5} sx={{ ml: 1 }}>
+                                  <Typography variant="body2">Sum Assured: ₹{(caseData.sumAssured || 0).toLocaleString()}</Typography>
+                                  <Typography variant="body2">Premium: ₹{(caseData.policyDetails?.premium || 0).toLocaleString()}</Typography>
+                                  <Typography variant="body2">Policy Term: {caseData.policyDetails?.policyTerm || 'N/A'}</Typography>
+                                  <Typography variant="body2">Payment Mode: {caseData.policyDetails?.paymentMode || 'N/A'}</Typography>
+                                  <Typography variant="body2">Status: {caseData.policyDetails?.status || 'N/A'}</Typography>
+                                </Stack>
+                              </Grid>
+                            </>
+                          )}
                             </>
                           )}
                         </Grid>
@@ -4367,7 +5051,7 @@ const CaseDetails = () => {
                               <Card variant="outlined" sx={{ p: 2, height: '100%', bgcolor: 'primary.light', color: 'primary.contrastText' }}>
                                 <Box sx={{ textAlign: 'center' }}>
                                   <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 1 }}>
-                                    ₹{(caseData.policyDetails.premium * 20).toLocaleString()}
+                                    ₹{(caseData.sumAssured || 0).toLocaleString()}
                                   </Typography>
                                   <Typography variant="subtitle2">
                                     Sum Insured
@@ -4379,10 +5063,10 @@ const CaseDetails = () => {
                               <Card variant="outlined" sx={{ p: 2, height: '100%' }}>
                                 <Box sx={{ textAlign: 'center' }}>
                                   <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 1, color: 'success.main' }}>
-                                    ₹{Math.round(caseData.policyDetails.premium * 0.05).toLocaleString()}
+                                    ₹{(caseData.policyDetails?.premium || 0).toLocaleString()}
                                   </Typography>
                                   <Typography variant="subtitle2" color="text.secondary">
-                                    Deductible
+                                    Premium Amount
                                   </Typography>
                                 </Box>
                               </Card>
@@ -4391,10 +5075,10 @@ const CaseDetails = () => {
                               <Card variant="outlined" sx={{ p: 2, height: '100%' }}>
                                 <Box sx={{ textAlign: 'center' }}>
                                   <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 1, color: 'info.main' }}>
-                                    100%
+                                    {caseData.policyDetails?.policyTerm || 'N/A'}
                                   </Typography>
                                   <Typography variant="subtitle2" color="text.secondary">
-                                    Coverage Ratio
+                                    Policy Term
                                   </Typography>
                                 </Box>
                               </Card>
@@ -4403,10 +5087,10 @@ const CaseDetails = () => {
                               <Card variant="outlined" sx={{ p: 2, height: '100%' }}>
                                 <Box sx={{ textAlign: 'center' }}>
                                   <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 1, color: 'warning.main' }}>
-                                    24/7
+                                    {caseData.policyDetails?.status || 'N/A'}
                                   </Typography>
                                   <Typography variant="subtitle2" color="text.secondary">
-                                    Support Coverage
+                                    Policy Status
                                   </Typography>
                                 </Box>
                               </Card>
@@ -4414,14 +5098,21 @@ const CaseDetails = () => {
                           </Grid>
                         </Box>
 
+
                         {/* Coverage Types - Dynamic based on Policy Type */}
                         <Box sx={{ mb: 4 }}>
                           <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'medium', color: 'primary.main' }}>
                             Coverage Types & Limits
                           </Typography>
                           <Grid container spacing={2}>
-                            {/* Auto/Vehicle Insurance Coverage */}
-                            {caseData.policyDetails.type === 'Auto' && (
+                            {/* Dynamic Coverage based on API data */}
+                            {(() => {
+                              console.log('Policy type from API:', caseData.policyDetails?.type);
+                              console.log('Case data structure:', caseData);
+                              console.log('Additional Benefits:', caseData.additionalBenefits);
+                              console.log('Policy Features:', caseData.policyFeatures);
+                              return true; // Always show for now to debug
+                            })() && (
                               <>
                                 <Grid item xs={12} md={6}>
                                   <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
@@ -4429,16 +5120,16 @@ const CaseDetails = () => {
                                       🚗 Vehicle Protection
                                     </Typography>
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                      <Typography variant="body2" color="text.secondary">Comprehensive Coverage:</Typography>
-                                      <Typography variant="body2" sx={{ fontWeight: 'medium' }}>₹{(caseData.policyDetails.premium * 20).toLocaleString()}</Typography>
+                                      <Typography variant="body2" color="text.secondary">Sum Assured:</Typography>
+                                      <Typography variant="body2" sx={{ fontWeight: 'medium' }}>₹{(caseData.sumAssured || caseData.coverageDetails?.sumInsured || 0).toLocaleString()}</Typography>
                                     </Box>
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                      <Typography variant="body2" color="text.secondary">Own Damage:</Typography>
-                                      <Typography variant="body2" sx={{ fontWeight: 'medium' }}>₹{(caseData.policyDetails.premium * 15).toLocaleString()}</Typography>
+                                      <Typography variant="body2" color="text.secondary">Premium Amount:</Typography>
+                                      <Typography variant="body2" sx={{ fontWeight: 'medium' }}>₹{(caseData.policyDetails?.premium || 0).toLocaleString()}</Typography>
                                     </Box>
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                      <Typography variant="body2" color="text.secondary">Engine Protection:</Typography>
-                                      <Typography variant="body2" sx={{ fontWeight: 'medium' }}>₹{(caseData.policyDetails.premium * 8).toLocaleString()}</Typography>
+                                      <Typography variant="body2" color="text.secondary">Policy Term:</Typography>
+                                      <Typography variant="body2" sx={{ fontWeight: 'medium' }}>{caseData.policyDetails?.policyTerm || 'N/A'}</Typography>
                                     </Box>
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                                       <Typography variant="body2" color="text.secondary">Zero Depreciation:</Typography>
@@ -4474,7 +5165,7 @@ const CaseDetails = () => {
                             )}
 
                             {/* Health Insurance Coverage */}
-                            {caseData.policyDetails.type === 'Health' && (
+                            {caseData.policyDetails?.type === 'Health' && (
                               <>
                                 <Grid item xs={12} md={6}>
                                   <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
@@ -4527,7 +5218,7 @@ const CaseDetails = () => {
                             )}
 
                             {/* Life Insurance Coverage */}
-                            {caseData.policyDetails.type === 'Life' && (
+                            {caseData.policyDetails?.type === 'Life' && (
                               <>
                                 <Grid item xs={12} md={6}>
                                   <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
@@ -4580,7 +5271,7 @@ const CaseDetails = () => {
                             )}
 
                             {/* Home Insurance Coverage */}
-                            {caseData.policyDetails.type === 'Home' && (
+                            {caseData.policyDetails?.type === 'Home' && (
                               <>
                                 <Grid item xs={12} md={6}>
                                   <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
@@ -4640,8 +5331,11 @@ const CaseDetails = () => {
                             Additional Benefits & Riders
                           </Typography>
                           <Grid container spacing={2}>
-                            {/* Auto Insurance Benefits */}
-                            {caseData.policyDetails.type === 'Auto' && (
+                            {/* Dynamic Benefits based on API data */}
+                            {(() => {
+                              console.log('Additional Benefits - Policy type:', caseData.policyDetails?.type);
+                              return true; // Always show for now to debug
+                            })() && (
                               <>
                                 <Grid item xs={12} md={4}>
                                   <Card variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: 'success.light', color: 'success.contrastText' }}>
@@ -4649,10 +5343,18 @@ const CaseDetails = () => {
                                       🛡️ Enhanced Protection
                                     </Typography>
                                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                      {caseData.additionalBenefits && caseData.additionalBenefits.length > 0 ? (
+                                        caseData.additionalBenefits.slice(0, 4).map((benefit, index) => (
+                                          <Chip key={index} label={benefit.name || benefit} size="small" />
+                                        ))
+                                      ) : (
+                                        <>
                                       <Chip label="No Claim Bonus: 50%" size="small" />
                                       <Chip label="Roadside Assistance" size="small" />
                                       <Chip label="Key Replacement" size="small" />
                                       <Chip label="Emergency Towing" size="small" />
+                                        </>
+                                      )}
                                     </Box>
                                   </Card>
                                 </Grid>
@@ -4663,10 +5365,18 @@ const CaseDetails = () => {
                                       🔧 Add-on Covers
                                     </Typography>
                                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                      {caseData.policyFeatures && caseData.policyFeatures.length > 0 ? (
+                                        caseData.policyFeatures.slice(0, 4).map((feature, index) => (
+                                          <Chip key={index} label={feature.name || feature} size="small" />
+                                        ))
+                                      ) : (
+                                        <>
                                       <Chip label="Engine Protection" size="small" />
                                       <Chip label="Return to Invoice" size="small" />
                                       <Chip label="Consumable Cover" size="small" />
                                       <Chip label="Depreciation Cover" size="small" />
+                                        </>
+                                      )}
                                     </Box>
                                   </Card>
                                 </Grid>
@@ -4688,7 +5398,7 @@ const CaseDetails = () => {
                             )}
 
                             {/* Health Insurance Benefits */}
-                            {caseData.policyDetails.type === 'Health' && (
+                            {caseData.policyDetails?.type === 'Health' && (
                               <>
                                 <Grid item xs={12} md={4}>
                                   <Card variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: 'success.light', color: 'success.contrastText' }}>
@@ -4735,7 +5445,7 @@ const CaseDetails = () => {
                             )}
 
                             {/* Life Insurance Benefits */}
-                            {caseData.policyDetails.type === 'Life' && (
+                            {caseData.policyDetails?.type === 'Life' && (
                               <>
                                 <Grid item xs={12} md={4}>
                                   <Card variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: 'success.light', color: 'success.contrastText' }}>
@@ -4782,7 +5492,7 @@ const CaseDetails = () => {
                             )}
 
                             {/* Home Insurance Benefits */}
-                            {caseData.policyDetails.type === 'Home' && (
+                            {caseData.policyDetails?.type === 'Home' && (
                               <>
                                 <Grid item xs={12} md={4}>
                                   <Card variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: 'success.light', color: 'success.contrastText' }}>
@@ -4837,8 +5547,11 @@ const CaseDetails = () => {
                           </Typography>
                           <Card variant="outlined" sx={{ p: 2, bgcolor: alpha(theme.palette.error.main, 0.05), border: '1px solid', borderColor: 'error.light' }}>
                             <Grid container spacing={2}>
-                              {/* Auto Insurance Exclusions */}
-                              {caseData.policyDetails.type === 'Auto' && (
+                              {/* Dynamic Exclusions based on API data */}
+                              {(() => {
+                                console.log('Important Exclusions - Policy type:', caseData.policyDetails?.type);
+                                return true; // Always show for now to debug
+                              })() && (
                                 <>
                                   <Grid item xs={12} md={6}>
                                     <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: 'error.main' }}>
@@ -4866,7 +5579,7 @@ const CaseDetails = () => {
                               )}
 
                               {/* Health Insurance Exclusions */}
-                              {caseData.policyDetails.type === 'Health' && (
+                              {caseData.policyDetails?.type === 'Health' && (
                                 <>
                                   <Grid item xs={12} md={6}>
                                     <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: 'error.main' }}>
@@ -4894,7 +5607,7 @@ const CaseDetails = () => {
                               )}
 
                               {/* Life Insurance Exclusions */}
-                              {caseData.policyDetails.type === 'Life' && (
+                              {caseData.policyDetails?.type === 'Life' && (
                                 <>
                                   <Grid item xs={12} md={6}>
                                     <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: 'error.main' }}>
@@ -4922,7 +5635,7 @@ const CaseDetails = () => {
                               )}
 
                               {/* Home Insurance Exclusions */}
-                              {caseData.policyDetails.type === 'Home' && (
+                              {caseData.policyDetails?.type === 'Home' && (
                                 <>
                                   <Grid item xs={12} md={6}>
                                     <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: 'error.main' }}>
@@ -4956,6 +5669,7 @@ const CaseDetails = () => {
                   </Grow>
                 </Grid>
               </Grid>
+              )}
             </TabPanel>
 
 
@@ -4963,7 +5677,11 @@ const CaseDetails = () => {
             {/* Tab 2: Policy Members */}
             <TabPanel value={currentTab} index={1}>
               <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>Policy Members</Typography>
-              {caseData.policyDetails.type === 'Health' && caseData.policyMembers ? (
+              {!caseData ? (
+                <Alert severity="error" sx={{ mb: 3 }}>
+                  Failed to load case data. Please refresh the page or contact support.
+                </Alert>
+              ) : caseData.policyMembers && caseData.policyMembers.length > 0 ? (
                 <Grid container spacing={3}>
                   <Grid item xs={12}>
                     <Grow in={loaded} timeout={575}>
@@ -4994,100 +5712,149 @@ const CaseDetails = () => {
                           <Divider sx={{ mb: 3 }} />
                           
                           <Grid container spacing={3}>
-                            {(caseData.policyMembers || []).map((member, index) => (
-                              <Grid item xs={12} md={6} lg={4} key={member.id}>
-                                <Zoom in={loaded} timeout={600 + (index * 100)}>
-                                  <Card 
-                                    variant="outlined" 
-                                    sx={{ 
-                                      height: '100%',
-                                      borderRadius: 2,
-                                      border: '2px solid',
-                                      borderColor: member.relationship === 'Self' ? 'primary.main' : 'divider',
-                                      transition: 'all 0.3s ease',
-                                      '&:hover': {
-                                        borderColor: 'primary.main',
-                                        transform: 'translateY(-2px)',
-                                        boxShadow: '0 8px 24px rgba(0,0,0,0.1)'
-                                      }
-                                    }}
-                                  >
-                                    <CardContent sx={{ p: 2.5 }}>
-                                      {/* Member Header */}
-                                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                        <Avatar 
-                                          sx={{ 
-                                            bgcolor: member.relationship === 'Self' ? 'primary.main' : 'secondary.main',
-                                            width: 48,
-                                            height: 48,
-                                            mr: 2,
-                                            fontSize: '1.2rem',
-                                            fontWeight: 'bold'
-                                          }}
-                                        >
-                                          {member.name.split(' ').map(n => n[0]).join('')}
-                                        </Avatar>
-                                        <Box sx={{ flex: 1 }}>
-                                          <Typography variant="h6" fontWeight="600" sx={{ fontSize: '1.1rem' }}>
-                                            {member.name}
-                                          </Typography>
-                                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                            <Chip 
-                                              label={member.relationship} 
-                                              size="small" 
-                                              color={member.relationship === 'Self' ? 'primary' : 'default'}
-                                              sx={{ fontSize: '0.75rem' }}
-                                            />
-                                            <Typography variant="caption" color="text.secondary">
-                                              {member.age} years
+                            {(caseData.policyMembers || []).map((member, index) => {
+                              // Dynamic field extraction with fallbacks - Updated for actual API response
+                              const memberName = member.name || 'Unknown Member';
+                              const memberRelationship = member.relation || member.relation_display || 'Member';
+                              const memberAge = member.age || 'N/A';
+                              const memberGender = member.gender || member.gender_display || 'N/A';
+                              const memberDOB = member.dob || 'N/A';
+                              const memberSumInsured = member.sum_insured || 'N/A';
+                              const memberPremium = member.premium_share || 'N/A';
+                              const memberInitials = member.initials || memberName.split(' ').map(n => n[0]).join('').substring(0, 2);
+                              const memberPolicyNumber = member.policy_number || 'N/A';
+                              const memberCustomerName = member.customer_name || 'N/A';
+                              
+                              return (
+                                <Grid item xs={12} md={6} lg={4} key={member.id || member.member_id || index}>
+                                  <Zoom in={loaded} timeout={600 + (index * 100)}>
+                                    <Card 
+                                      variant="outlined" 
+                                      sx={{ 
+                                        height: '100%',
+                                        borderRadius: 2,
+                                        border: '2px solid',
+                                        borderColor: memberRelationship === 'Self' || memberRelationship === 'Proposer' ? 'primary.main' : 'divider',
+                                        transition: 'all 0.3s ease',
+                                        '&:hover': {
+                                          borderColor: 'primary.main',
+                                          transform: 'translateY(-2px)',
+                                          boxShadow: '0 8px 24px rgba(0,0,0,0.1)'
+                                        }
+                                      }}
+                                    >
+                                      <CardContent sx={{ p: 2.5 }}>
+                                        {/* Member Header */}
+                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                          <Avatar 
+                                            sx={{ 
+                                              bgcolor: memberRelationship === 'Self' || memberRelationship === 'Proposer' ? 'primary.main' : 'secondary.main',
+                                              width: 48,
+                                              height: 48,
+                                              mr: 2,
+                                              fontSize: '1.2rem',
+                                              fontWeight: 'bold'
+                                            }}
+                                          >
+                                            {memberInitials}
+                                          </Avatar>
+                                          <Box sx={{ flex: 1 }}>
+                                            <Typography variant="h6" fontWeight="600" sx={{ fontSize: '1.1rem' }}>
+                                              {memberName}
                                             </Typography>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                              <Chip 
+                                                label={memberRelationship} 
+                                                size="small" 
+                                                color={memberRelationship === 'Self' || memberRelationship === 'Proposer' ? 'primary' : 'default'}
+                                                sx={{ fontSize: '0.75rem' }}
+                                              />
+                                              {memberAge !== 'N/A' && (
+                                                <Typography variant="caption" color="text.secondary">
+                                                  {memberAge} years
+                                                </Typography>
+                                              )}
+                                            </Box>
                                           </Box>
                                         </Box>
-                                      </Box>
 
-                                      {/* Member Details */}
-                                      <Stack spacing={1.5}>
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                          <Typography variant="body2" color="text.secondary">
-                                            Date of Birth:
-                                          </Typography>
-                                          <Typography variant="body2" fontWeight="500">
-                                            {new Date(member.dateOfBirth).toLocaleDateString('en-IN')}
-                                          </Typography>
-                                        </Box>
-                                        
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                          <Typography variant="body2" color="text.secondary">
-                                            Gender:
-                                          </Typography>
-                                          <Typography variant="body2" fontWeight="500">
-                                            {member.gender}
-                                          </Typography>
-                                        </Box>
-                                        
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                          <Typography variant="body2" color="text.secondary">
-                                            Sum Insured:
-                                          </Typography>
-                                          <Typography variant="body2" fontWeight="600" color="primary.main">
-                                            {member.sumInsured}
-                                          </Typography>
-                                        </Box>
-                                        
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                          <Typography variant="body2" color="text.secondary">
-                                            Premium Share:
-                                          </Typography>
-                                          <Typography variant="body2" fontWeight="500" color="success.main">
-                                            {member.premiumContribution}
-                                          </Typography>
-                                        </Box>
-                                      </Stack>
-                                    </CardContent>
-                                  </Card>
-                                </Zoom>
-                              </Grid>
-                            ))}
+                                        {/* Member Details */}
+                                        <Stack spacing={1.5}>
+                                          {memberDOB && (
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                              <Typography variant="body2" color="text.secondary">
+                                                Date of Birth:
+                                              </Typography>
+                                              <Typography variant="body2" fontWeight="500">
+                                                {new Date(memberDOB).toLocaleDateString('en-IN')}
+                                              </Typography>
+                                            </Box>
+                                          )}
+                                          
+                                          {memberGender !== 'N/A' && (
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                              <Typography variant="body2" color="text.secondary">
+                                                Gender:
+                                              </Typography>
+                                              <Typography variant="body2" fontWeight="500">
+                                                {memberGender}
+                                              </Typography>
+                                            </Box>
+                                          )}
+                                          
+                                          {memberSumInsured !== 'N/A' && (
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                              <Typography variant="body2" color="text.secondary">
+                                                Sum Insured:
+                                              </Typography>
+                                              <Typography variant="body2" fontWeight="600" color="primary.main">
+                                                {typeof memberSumInsured === 'number' ? `₹${memberSumInsured.toLocaleString()}` : memberSumInsured}
+                                              </Typography>
+                                            </Box>
+                                          )}
+                                          
+                                          {memberPremium !== 'N/A' && (
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                              <Typography variant="body2" color="text.secondary">
+                                                Premium Share:
+                                              </Typography>
+                                              <Typography variant="body2" fontWeight="500" color="success.main">
+                                                {typeof memberPremium === 'number' ? `₹${memberPremium.toLocaleString()}` : memberPremium}
+                                              </Typography>
+                                            </Box>
+                                          )}
+                                          
+                                          <Divider sx={{ my: 1 }} />
+                                          
+                                          {/* Additional Member Info */}
+                                          {memberPolicyNumber !== 'N/A' && (
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                              <Typography variant="body2" color="text.secondary">
+                                                Policy Number:
+                                              </Typography>
+                                              <Typography variant="body2" fontWeight="500">
+                                                {memberPolicyNumber}
+                                              </Typography>
+                                            </Box>
+                                          )}
+                                          
+                                          {memberCustomerName !== 'N/A' && (
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                              <Typography variant="body2" color="text.secondary">
+                                                Customer:
+                                              </Typography>
+                                              <Typography variant="body2" fontWeight="500">
+                                                {memberCustomerName}
+                                              </Typography>
+                                            </Box>
+                                          )}
+                                        </Stack>
+                                      </CardContent>
+                                    </Card>
+                                  </Zoom>
+                                </Grid>
+                              );
+                            })}
                           </Grid>
                         </CardContent>
                       </Card>
@@ -5096,14 +5863,19 @@ const CaseDetails = () => {
                 </Grid>
               ) : (
                 <Alert severity="info">
-                  Policy member details are only available for Health Insurance policies.
+                  No policy members found for this case.
                 </Alert>
               )}
-            </TabPanel>
+            </TabPanel> 
 
             {/* Tab 3: Preferences */}
             <TabPanel value={currentTab} index={2}>
               <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>Customer Preferences</Typography>
+              {!caseData ? (
+                <Alert severity="error" sx={{ mb: 3 }}>
+                  Failed to load case data. Please refresh the page or contact support.
+                </Alert>
+              ) : (
               <Grid container spacing={3}>
                 <Grid item xs={12}>
                   <Grow in={loaded} timeout={800}>
@@ -5127,6 +5899,17 @@ const CaseDetails = () => {
                         </Box>
                         <Divider sx={{ mb: 3 }} />
                         
+                        
+                        {preferencesLoading ? (
+                          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
+                            <CircularProgress />
+                            <Typography variant="body2" sx={{ ml: 2 }}>Loading preferences...</Typography>
+                          </Box>
+                        ) : preferencesError ? (
+                          <Alert severity="error" sx={{ mb: 3 }}>
+                            Failed to load preferences: {preferencesError}
+                          </Alert>
+                        ) : preferencesData ? (
                         <Grid container spacing={3}>
                           {/* Communication Preferences */}
                           <Grid item xs={12} md={3}>
@@ -5138,86 +5921,190 @@ const CaseDetails = () => {
                                 </Typography>
                               </Box>
                               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                  {(() => {
+                                    const commPrefs = getCommunicationPreferences(preferencesData);
+                                    console.log('=== COMMUNICATION PREFERENCES DEBUG ===');
+                                    console.log('Full preferencesData:', preferencesData);
+                                    console.log('Communication preferences structure:', commPrefs);
+                                    console.log('Available keys:', commPrefs ? Object.keys(commPrefs) : 'No data');
+                                    console.log('Email value:', commPrefs?.email);
+                                    console.log('SMS value:', commPrefs?.sms);
+                                    console.log('Phone value:', commPrefs?.phone_call);
+                                    console.log('WhatsApp value:', commPrefs?.whatsapp);
+                                    console.log('AI Call value:', commPrefs?.ai_call);
+                                    console.log('Postal Mail value:', commPrefs?.postal_mail);
+                                    console.log('=== END DEBUG ===');
+                                    return commPrefs ? (
+                                      <>
+                                        {/* Email */}
                                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                     <EmailIcon color="action" sx={{ mr: 1, fontSize: 20 }} />
                                     <Typography variant="body2">Email</Typography>
                                   </Box>
+                                          {(() => {
+                                            const emailValue = getChannelValue(commPrefs, 'email');
+                                            const isActive = emailValue === "preferred" || emailValue === "accepted" || emailValue === true;
+                                            const displayValue = emailValue || "preferred";
+                                            return (
                                   <Chip 
-                                    label="Preferred" 
+                                                label={displayValue} 
                                     size="small" 
-                                    color="primary" 
-                                    sx={{ fontWeight: 'medium', borderRadius: 5 }} 
-                                  />
+                                                color={isActive ? "primary" : "default"}
+                                                variant={isActive ? "filled" : "outlined"}
+                                                sx={{ 
+                                                  fontWeight: 'medium', 
+                                                  borderRadius: 5,
+                                                  backgroundColor: isActive ? theme.palette.primary.main : 'transparent',
+                                                  color: isActive ? 'white' : theme.palette.text.secondary,
+                                                  borderColor: isActive ? theme.palette.primary.main : theme.palette.divider
+                                                }} 
+                                              />
+                                            );
+                                          })()}
                                 </Box>
                                 
+                                        {/* SMS */}
                                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                    <PhoneIcon color="action" sx={{ mr: 1, fontSize: 20 }} />
-                                    <Typography variant="body2">Phone Call</Typography>
+                                            <SmsIcon color="action" sx={{ mr: 1, fontSize: 20 }} />
+                                            <Typography variant="body2">SMS</Typography>
                                   </Box>
                                   <Chip 
-                                    label="Backup" 
+                                            label="preferred" 
                                     size="small" 
-                                    variant="outlined" 
-                                    sx={{ fontWeight: 'medium', borderRadius: 5 }} 
+                                            color="primary"
+                                            variant="filled"
+                                            sx={{ 
+                                              fontWeight: 'medium', 
+                                              borderRadius: 5,
+                                              backgroundColor: theme.palette.primary.main,
+                                              color: 'white',
+                                              borderColor: theme.palette.primary.main
+                                            }} 
                                   />
                                 </Box>
                                 
+                                        {/* Phone */}
                                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                    <WhatsAppIcon color="action" sx={{ mr: 1, fontSize: 20 }} />
-                                    <Typography variant="body2">WhatsApp</Typography>
+                                            <PhoneIcon color="action" sx={{ mr: 1, fontSize: 20 }} />
+                                            <Typography variant="body2">Phone Call</Typography>
                                   </Box>
+                                          {(() => {
+                                            const phoneValue = getChannelValue(commPrefs, 'phone');
+                                            const isActive = phoneValue === "preferred" || phoneValue === "accepted" || phoneValue === true;
+                                            const displayValue = phoneValue || "backup";
+                                            return (
                                   <Chip 
-                                    label="Accepted" 
+                                                label={displayValue} 
                                     size="small" 
-                                    variant="outlined"
-                                    color="success" 
-                                    sx={{ fontWeight: 'medium', borderRadius: 5 }} 
-                                  />
+                                                color={isActive ? "primary" : "default"}
+                                                variant={isActive ? "filled" : "outlined"}
+                                                sx={{ 
+                                                  fontWeight: 'medium', 
+                                                  borderRadius: 5,
+                                                  backgroundColor: isActive ? theme.palette.primary.main : 'transparent',
+                                                  color: isActive ? 'white' : theme.palette.text.secondary,
+                                                  borderColor: isActive ? theme.palette.primary.main : theme.palette.divider
+                                                }} 
+                                              />
+                                            );
+                                          })()}
                                 </Box>
                                 
+                                        {/* WhatsApp */}
                                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                    <SmsIcon color="action" sx={{ mr: 1, fontSize: 20 }} />
-                                    <Typography variant="body2">SMS</Typography>
+                                            <WhatsAppIcon color="action" sx={{ mr: 1, fontSize: 20 }} />
+                                            <Typography variant="body2">WhatsApp</Typography>
                                   </Box>
+                                          {(() => {
+                                            const whatsappValue = getChannelValue(commPrefs, 'whatsapp');
+                                            const isActive = whatsappValue === "preferred" || whatsappValue === "accepted" || whatsappValue === true;
+                                            const displayValue = whatsappValue || "accepted";
+                                            return (
                                   <Chip 
-                                    label="Preferred" 
+                                                label={displayValue} 
                                     size="small" 
-                                    color="primary" 
-                                    sx={{ fontWeight: 'medium', borderRadius: 5 }} 
-                                  />
+                                                color={isActive ? "primary" : "default"}
+                                                variant={isActive ? "filled" : "outlined"}
+                                                sx={{ 
+                                                  fontWeight: 'medium', 
+                                                  borderRadius: 5,
+                                                  backgroundColor: isActive ? theme.palette.primary.main : 'transparent',
+                                                  color: isActive ? 'white' : theme.palette.text.secondary,
+                                                  borderColor: isActive ? theme.palette.primary.main : theme.palette.divider
+                                                }} 
+                                              />
+                                            );
+                                          })()}
                                 </Box>
                                 
+                                        {/* AI Call */}
                                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                     <SmartToyIcon color="action" sx={{ mr: 1, fontSize: 20 }} />
                                     <Typography variant="body2">AI Call</Typography>
                                   </Box>
+                                          {(() => {
+                                            const aiCallValue = getChannelValue(commPrefs, 'ai_call');
+                                            const isActive = aiCallValue === "preferred" || aiCallValue === "accepted" || aiCallValue === true;
+                                            const displayValue = aiCallValue || "accepted";
+                                            return (
                                   <Chip 
-                                    label="Accepted" 
+                                                label={displayValue} 
                                     size="small" 
-                                    variant="outlined"
-                                    color="info" 
-                                    sx={{ fontWeight: 'medium', borderRadius: 5 }} 
-                                  />
+                                                color={isActive ? "primary" : "default"}
+                                                variant={isActive ? "filled" : "outlined"}
+                                                sx={{ 
+                                                  fontWeight: 'medium', 
+                                                  borderRadius: 5,
+                                                  backgroundColor: isActive ? theme.palette.primary.main : 'transparent',
+                                                  color: isActive ? 'white' : theme.palette.text.secondary,
+                                                  borderColor: isActive ? theme.palette.primary.main : theme.palette.divider
+                                                }} 
+                                              />
+                                            );
+                                          })()}
                                 </Box>
                                 
+                                        {/* Postal Mail */}
                                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                     <MailOutlineIcon color="action" sx={{ mr: 1, fontSize: 20 }} />
                                     <Typography variant="body2">Postal Mail</Typography>
                                   </Box>
+                                          {(() => {
+                                            const postalValue = getChannelValue(commPrefs, 'postal');
+                                            const isActive = postalValue === "preferred" || postalValue === "accepted" || postalValue === true;
+                                            const displayValue = postalValue || "opt-out";
+                                            return (
                                   <Chip 
-                                    label="Opted Out" 
+                                                label={displayValue} 
                                     size="small" 
-                                    variant="outlined"
-                                    color="error" 
-                                    sx={{ fontWeight: 'medium', borderRadius: 5 }} 
-                                  />
+                                                color={isActive ? "primary" : "default"}
+                                                variant={isActive ? "filled" : "outlined"}
+                                                sx={{ 
+                                                  fontWeight: 'medium', 
+                                                  borderRadius: 5,
+                                                  backgroundColor: isActive ? theme.palette.primary.main : 'transparent',
+                                                  color: isActive ? 'white' : theme.palette.text.secondary,
+                                                  borderColor: isActive ? theme.palette.primary.main : theme.palette.divider
+                                                }} 
+                                              />
+                                            );
+                                          })()}
                                 </Box>
+                                        
+                                        
+                                      </>
+                                    ) : (
+                                      <Typography variant="body2" color="text.secondary">
+                                        No communication preferences available
+                                      </Typography>
+                                    );
+                                  })()}
                               </Box>
                             </Box>
                           </Grid>
@@ -5233,6 +6120,11 @@ const CaseDetails = () => {
                               </Box>
                               
                               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                  {(() => {
+                                    const renewalTimeline = getRenewalTimeline(preferencesData);
+                                    return renewalTimeline ? (
+                                      <>
+                                        {renewalTimeline.renewal_pattern && (
                                 <Box sx={{ mb: 2 }}>
                                   <Box sx={{ mb: 1 }}>
                                     <Typography variant="body2" color="text.secondary">
@@ -5252,11 +6144,13 @@ const CaseDetails = () => {
                                   >
                                     <ArrowCircleUpIcon />
                                     <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                                      Pays 7-14 days before due date
+                                                {renewalTimeline.renewal_pattern}
                                     </Typography>
                                   </Box>
                                 </Box>
+                                        )}
                                 
+                                        {renewalTimeline.reminder_schedule && renewalTimeline.reminder_schedule.length > 0 && (
                                 <Box>
                                   <Box sx={{ mb: 1 }}>
                                     <Typography variant="body2" color="text.secondary">
@@ -5264,11 +6158,22 @@ const CaseDetails = () => {
                                     </Typography>
                                   </Box>
                                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                    <Typography variant="body2">• 30 days before due date (Email)</Typography>
-                                    <Typography variant="body2">• 14 days before due date (Email)</Typography>
-                                    <Typography variant="body2">• 7 days before due date (Phone)</Typography>
+                                              {renewalTimeline.reminder_schedule.map((reminder, index) => (
+                                                <Typography key={index} variant="body2">
+                                                  • {reminder}
+                                                </Typography>
+                                              ))}
                                   </Box>
                                 </Box>
+                                        )}
+                                        
+                                      </>
+                                    ) : (
+                                      <Typography variant="body2" color="text.secondary">
+                                        No renewal timeline preferences available
+                                      </Typography>
+                                    );
+                                  })()}
                               </Box>
                             </Box>
                           </Grid>
@@ -5284,9 +6189,10 @@ const CaseDetails = () => {
                               </Box>
                               
                               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                                  {preferencesData.latest_payment ? (
                                 <Box>
                                   <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                    Primary Payment Method:
+                                        Latest Payment Method:
                                   </Typography>
                                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                     <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1), border: '1px solid', borderColor: alpha(theme.palette.primary.main, 0.2) }}>
@@ -5294,28 +6200,37 @@ const CaseDetails = () => {
                                     </Avatar>
                                     <Box>
                                       <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-                                        Credit Card
+                                            {preferencesData.latest_payment.method || 'Payment Method'}
                                       </Typography>
+                                          {preferencesData.latest_payment.details && (
                                       <Typography variant="caption" color="text.secondary">
-                                        **** **** **** 5678 • Expires 06/26
+                                              {preferencesData.latest_payment.details}
                                       </Typography>
+                                          )}
                                     </Box>
                                   </Box>
                                 </Box>
-                                
+                                  ) : (
                                 <Box>
                                   <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                    Alternate Methods Used:
+                                        Payment Information:
                                   </Typography>
-                                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                                    <Chip 
-                                      avatar={<Avatar sx={{ bgcolor: 'transparent !important' }}><AccountBalanceIcon fontSize="small" /></Avatar>}
-                                      label="Bank Transfer"
-                                      size="small"
-                                      sx={{ borderRadius: 5 }}
-                                    />
+                                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                        <Avatar sx={{ bgcolor: alpha(theme.palette.grey[300], 0.1), border: '1px solid', borderColor: alpha(theme.palette.grey[300], 0.2) }}>
+                                          <CreditCardIcon color="disabled" />
+                                        </Avatar>
+                                        <Box>
+                                          <Typography variant="body2" sx={{ fontWeight: 'medium', color: 'text.secondary' }}>
+                                            No payment information available
+                                          </Typography>
+                                          <Typography variant="caption" color="text.secondary">
+                                            Payment details will appear here when available
+                                          </Typography>
                                   </Box>
                                 </Box>
+                                    </Box>
+                                  )}
+                                  
                               </Box>
                             </Box>
                           </Grid>
@@ -5331,6 +6246,12 @@ const CaseDetails = () => {
                               </Box>
                               
                               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                                  {(() => {
+                                    const customerData = getCustomerData(preferencesData);
+                                    const commPrefs = getCommunicationPreferences(preferencesData);
+                                    
+                                    if (customerData?.preferred_language || commPrefs?.preferred_language) {
+                                      return (
                                 <Box>
                                   <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                                     Preferred Language:
@@ -5348,10 +6269,10 @@ const CaseDetails = () => {
                                         borderColor: alpha(theme.palette.primary.main, 0.2)
                                       }}
                                     >
-                                      <span style={{ fontSize: '20px' }}>🇮🇳</span>
+                                              <span style={{ fontSize: '20px' }}>🌐</span>
                                       <Box>
                                         <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-                                          हिन्दी (Hindi)
+                                                  {(customerData?.preferred_language || commPrefs?.preferred_language || 'en').toUpperCase()}
                                         </Typography>
                                         <Typography variant="caption" color="text.secondary">
                                           Primary communication language
@@ -5360,54 +6281,71 @@ const CaseDetails = () => {
                                     </Box>
                                   </Box>
                                 </Box>
-                                
+                                      );
+                                    }
+                                    return null;
+                                  })()}
+                                  
+                                  {/* Alternative Languages */}
+                                  {(() => {
+                                    const customerData = getCustomerData(preferencesData);
+                                    const commPrefs = getCommunicationPreferences(preferencesData);
+                                    const alternativeLanguages = customerData?.alternative_languages || commPrefs?.alternative_languages || ['English', 'Hindi'];
+                                    
+                                    return (
                                 <Box>
                                   <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                                     Alternative Languages:
                                   </Typography>
                                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                          {alternativeLanguages.map((language, index) => (
                                     <Chip 
-                                      label="🇬🇧 English"
+                                              key={index}
+                                              label={language}
                                       size="small"
                                       variant="outlined"
                                       sx={{ borderRadius: 5, fontWeight: 'medium' }}
                                     />
-                                    <Chip 
-                                      label="🇮🇳 मराठी"
-                                      size="small"
-                                      variant="outlined"
-                                      sx={{ borderRadius: 5, fontWeight: 'medium' }}
-                                    />
+                                          ))}
                                   </Box>
                                 </Box>
-                                
-                                <Box>
-                                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                    Document Language:
+                                    );
+                                  })()}
+                                  
+                                  {(() => {
+                                    const customerData = getCustomerData(preferencesData);
+                                    const commPrefs = getCommunicationPreferences(preferencesData);
+                                    return !customerData?.preferred_language && !commPrefs?.preferred_language && (
+                                      <Typography variant="body2" color="text.secondary">
+                                        No language preferences available
                                   </Typography>
-                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                    <Chip 
-                                      label="Hindi & English"
-                                      size="small"
-                                      color="primary"
-                                      sx={{ borderRadius: 5, fontWeight: 'medium' }}
-                                    />
-                                  </Box>
-                                </Box>
+                                    );
+                                  })()}
                               </Box>
                             </Box>
                           </Grid>
                         </Grid>
+                        ) : (
+                          <Alert severity="info">
+                            No preferences data available for this case.
+                          </Alert>
+                        )}
                       </CardContent>
                     </Card>
                   </Grow>
                 </Grid>
               </Grid>
+              )}
             </TabPanel>
 
             {/* Tab 3: Insights */}
             <TabPanel value={currentTab} index={3}>
               <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>Customer Insights</Typography>
+              {!caseData ? (
+                <Alert severity="error" sx={{ mb: 3 }}>
+                  Failed to load case data. Please refresh the page or contact support.
+                </Alert>
+              ) : (
               <Grid container spacing={3}>
                 {/* Customer Payment Schedule */}
                 <Grid item xs={12}>
@@ -6192,11 +7130,17 @@ const CaseDetails = () => {
                   </Grow>
                 </Grid>
               </Grid>
+              )}
             </TabPanel>
 
             {/* Tab 4: Analytics */}
             <TabPanel value={currentTab} index={4}>
               <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>Analytics</Typography>
+              {!caseData ? (
+                <Alert severity="error" sx={{ mb: 3 }}>
+                  Failed to load case data. Please refresh the page or contact support.
+                </Alert>
+              ) : (
               <Grid container spacing={3}>
                 <Grid item xs={12}>
                   <Grow in={loaded} timeout={900}>
@@ -6478,6 +7422,7 @@ const CaseDetails = () => {
                   </Grow>
                 </Grid>
               </Grid>
+              )}
             </TabPanel>
 
             {/* Tab 5: Offers */}
@@ -6506,243 +7451,124 @@ const CaseDetails = () => {
                         </Box>
                         <Divider sx={{ mb: 3 }} />
                         
-                        {/* Payment Options */}
+                        {/* Dynamic Offers from API */}
+                        {offersLoading ? (
+                          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                            <CircularProgress />
+                          </Box>
+                        ) : offersError ? (
+                          <Alert severity="error" sx={{ mb: 3 }}>
+                            Failed to load offers: {offersError}
+                          </Alert>
+                        ) : offersData && offersData.results && offersData.results.length > 0 ? (
                         <Box sx={{ mb: 4 }}>
                           <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'medium' }}>
-                            Flexible Payment Options
+                              Available Offers ({offersData.count})
                           </Typography>
                           <Grid container spacing={3}>
-                            <Grid item xs={12} md={3}>
-                              <Card variant="outlined" sx={{ height: '100%', boxShadow: 'none', border: '1px solid', borderColor: 'primary.light' }}>
-                                <CardContent>
+                              {offersData.results.map((offer, index) => (
+                                <Grid item xs={12} md={4} key={offer.id}>
+                                  <Card 
+                                    variant="outlined" 
+                                    sx={{ 
+                                      height: '100%', 
+                                      minHeight: '300px',
+                                      boxShadow: 'none',
+                                      border: '1px solid',
+                                      borderColor: offer.color_scheme === 'blue' ? 'primary.light' : 
+                                                   offer.color_scheme === 'green' ? 'success.light' :
+                                                   offer.color_scheme === 'orange' ? 'warning.light' :
+                                                   offer.color_scheme === 'pink' ? 'secondary.light' : 'divider',
+                                      transition: 'transform 0.2s, box-shadow 0.2s',
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      '&:hover': {
+                                        transform: 'translateY(-2px)',
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                                      }
+                                    }}
+                                  >
+                                <CardContent sx={{ 
+                                  display: 'flex', 
+                                  flexDirection: 'column', 
+                                  height: '100%',
+                                  p: 2
+                                }}>
                                   <Box sx={{ textAlign: 'center', mb: 2 }}>
-                                    <Typography variant="h6" color="primary.main" gutterBottom>
-                                      EMI Payment Plan
+                                        <Typography 
+                                          variant="h6" 
+                                          sx={{ 
+                                            color: offer.color_scheme === 'blue' ? 'primary.main' :
+                                                   offer.color_scheme === 'green' ? 'success.main' :
+                                                   offer.color_scheme === 'orange' ? 'warning.main' :
+                                                   offer.color_scheme === 'pink' ? 'secondary.main' : 'text.primary',
+                                            fontWeight: 'bold'
+                                          }}
+                                          gutterBottom
+                                        >
+                                          {offer.title}
                                     </Typography>
                                     <Typography variant="subtitle2" color="text.secondary">
-                                      Split your premium into easy monthly payments
+                                          {offer.description}
                                     </Typography>
                                   </Box>
-                                  <Box sx={{ p: 1, mb: 2 }}>
-                                    <Typography variant="body2" sx={{ mb: 1 }}>
-                                      • No additional charges
+                                      
+                                  {/* Features */}
+                                  <Box sx={{ p: 1, mb: 2, flexGrow: 1 }}>
+                                    {offer.features && offer.features.map((feature, featureIndex) => (
+                                      <Typography key={featureIndex} variant="body2" sx={{ mb: 1 }}>
+                                        • {feature}
                                     </Typography>
-                                    <Typography variant="body2" sx={{ mb: 1 }}>
-                                      • Flexible payment schedule
-                                    </Typography>
-                                    <Typography variant="body2">
-                                      • Easy auto-debit option
-                                    </Typography>
+                                    ))}
                                   </Box>
-                                  <Box sx={{ textAlign: 'center', p: 1, bgcolor: 'background.default', borderRadius: 1 }}>
+                                      
+                                      {/* Amount/Interest Display */}
+                                      <Box sx={{ 
+                                        textAlign: 'center', 
+                                        p: 1, 
+                                        bgcolor: offer.color_scheme === 'blue' ? 'primary.light' :
+                                                offer.color_scheme === 'green' ? 'success.light' :
+                                                offer.color_scheme === 'orange' ? 'warning.light' :
+                                                offer.color_scheme === 'pink' ? 'secondary.light' : 'background.default',
+                                        borderRadius: 1,
+                                        color: offer.color_scheme === 'blue' ? 'primary.contrastText' :
+                                               offer.color_scheme === 'green' ? 'success.contrastText' :
+                                               offer.color_scheme === 'orange' ? 'warning.contrastText' :
+                                               offer.color_scheme === 'pink' ? 'secondary.contrastText' : 'text.primary'
+                                      }}>
+                                        {offer.formatted_amount && (
                                     <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                                      ₹{Math.round(caseData.policyDetails.premium / 12)}
+                                            {offer.formatted_amount}
                                     </Typography>
-                                  </Box>
-                                </CardContent>
-                              </Card>
-                            </Grid>
-                            
-                            <Grid item xs={12} md={3}>
-                              <Card variant="outlined" sx={{ height: '100%', boxShadow: 'none' }}>
-                                <CardContent>
-                                  <Box sx={{ textAlign: 'center', mb: 2 }}>
-                                    <Typography variant="h6" gutterBottom>
-                                      Quarterly Payment
+                                        )}
+                                        {offer.formatted_interest_rate && (
+                                          <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                                            {offer.formatted_interest_rate}
                                     </Typography>
-                                    <Typography variant="subtitle2" color="text.secondary">
-                                      Pay every three months
-                                    </Typography>
-                                  </Box>
-                                  <Box sx={{ p: 1, mb: 2 }}>
-                                    <Typography variant="body2" sx={{ mb: 1 }}>
-                                      • 2% discount on total premium
-                                    </Typography>
-                                    <Typography variant="body2" sx={{ mb: 1 }}>
-                                      • Reduced payment frequency
-                                    </Typography>
-                                    <Typography variant="body2">
-                                      • Scheduled reminders
-                                    </Typography>
-                                  </Box>
-                                  <Box sx={{ textAlign: 'center', p: 1, bgcolor: 'background.default', borderRadius: 1 }}>
-                                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                                      ₹{Math.round((caseData.policyDetails.premium * 0.98) / 4)}
-                                    </Typography>
-                                  </Box>
-                                </CardContent>
-                              </Card>
-                            </Grid>
-                            
-                            <Grid item xs={12} md={3}>
-                              <Card variant="outlined" sx={{ height: '100%', boxShadow: 'none' }}>
-                                <CardContent>
-                                  <Box sx={{ textAlign: 'center', mb: 2 }}>
-                                    <Typography variant="h6" gutterBottom>
-                                      Annual Payment
-                                    </Typography>
-                                    <Typography variant="subtitle2" color="text.secondary">
-                                      Pay once and save
-                                    </Typography>
-                                  </Box>
-                                  <Box sx={{ p: 1, mb: 2 }}>
-                                    <Typography variant="body2" sx={{ mb: 1 }}>
-                                      • 5% discount on total premium
-                                    </Typography>
-                                    <Typography variant="body2" sx={{ mb: 1 }}>
-                                      • No hassle of multiple payments
-                                    </Typography>
-                                    <Typography variant="body2">
-                                      • Get it done in one go
-                                    </Typography>
-                                  </Box>
-                                  <Box sx={{ textAlign: 'center', p: 1, bgcolor: 'background.default', borderRadius: 1 }}>
-                                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                                      ₹{Math.round(caseData.policyDetails.premium * 0.95)}
-                                    </Typography>
-                                  </Box>
-                                </CardContent>
-                              </Card>
-                            </Grid>
-                            
-                            <Grid item xs={12} md={3}>
-                              <Card variant="outlined" sx={{ height: '100%', boxShadow: 'none', border: '1px solid', borderColor: 'warning.light' }}>
-                                <CardContent>
-                                  <Box sx={{ textAlign: 'center', mb: 2 }}>
-                                    <Typography variant="h6" color="warning.main" gutterBottom>
-                                      Premium Funding
-                                    </Typography>
-                                    <Typography variant="subtitle2" color="text.secondary">
-                                      Finance your premium with third-party funding
-                                    </Typography>
-                                  </Box>
-                                  <Box sx={{ p: 1, mb: 2 }}>
-                                    <Typography variant="body2" sx={{ mb: 1 }}>
-                                      • Preserve cash flow & liquidity
-                                    </Typography>
-                                    <Typography variant="body2" sx={{ mb: 1 }}>
-                                      • Flexible repayment terms
-                                    </Typography>
-                                    <Typography variant="body2">
-                                      • Tax benefits available*
-                                    </Typography>
-                                  </Box>
-                                  <Box sx={{ textAlign: 'center', p: 1, bgcolor: 'warning.light', borderRadius: 1, color: 'warning.contrastText' }}>
+                                        )}
+                                        {offer.discount && (
                                     <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                                      Interest from 3.5% p.a.
+                                            {offer.discount} Discount
                                     </Typography>
-                                    <Typography variant="caption">
-                                      *Terms & conditions apply
+                                        )}
+                                        {offer.terms_and_conditions && (
+                                          <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+                                            {offer.terms_and_conditions}
                                     </Typography>
+                                        )}
                                   </Box>
                                 </CardContent>
                               </Card>
                             </Grid>
+                              ))}
                           </Grid>
                         </Box>
+                        ) : (
+                          <Alert severity="info" sx={{ mb: 3 }}>
+                            No offers available at the moment.
+                          </Alert>
+                        )}
                         
-                        {/* Product Recommendations */}
-                        <Box>
-                          <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'medium' }}>
-                            Recommended Insurance Products
-                          </Typography>
-                          <Grid container spacing={3}>
-                            <Grid item xs={12} md={6}>
-                              <Card variant="outlined" sx={{ 
-                                p: 2, 
-                                display: 'flex', 
-                                flexDirection: { xs: 'column', sm: 'row' },
-                                alignItems: { sm: 'center' },
-                                gap: 2,
-                                boxShadow: 'none',
-                                border: '1px solid',
-                                borderColor: 'secondary.light'
-                              }}>
-                                <Avatar sx={{ bgcolor: 'secondary.light', width: 60, height: 60, alignSelf: { xs: 'center', sm: 'flex-start' } }}>
-                                  <DirectionsCarIcon sx={{ fontSize: 30 }} />
-                                </Avatar>
-                                <Box>
-                                  <Typography variant="h6" gutterBottom>
-                                    Enhanced Vehicle Protection
-                                  </Typography>
-                                  <Typography variant="body2" sx={{ mb: 1 }}>
-                                    Based on your existing Vehicle policy and claims history, we recommend upgrading to our Enhanced Vehicle Protection plan.
-                                  </Typography>
-                                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                                    <Chip label="Roadside Assistance" size="small" />
-                                    <Chip label="Rental Coverage" size="small" />
-                                    <Chip label="Gap Insurance" size="small" />
-                                  </Box>
-                                  <Typography variant="body2" color="secondary" sx={{ fontWeight: 'bold' }}>
-                                    Special offer: 15% discount for multi-policy holders
-                                  </Typography>
-                                </Box>
-                              </Card>
-                            </Grid>
-                            
-                            <Grid item xs={12} md={6}>
-                              <Card variant="outlined" sx={{ 
-                                p: 2, 
-                                display: 'flex', 
-                                flexDirection: { xs: 'column', sm: 'row' },
-                                alignItems: { sm: 'center' },
-                                gap: 2,
-                                boxShadow: 'none'
-                              }}>
-                                <Avatar sx={{ bgcolor: 'info.light', width: 60, height: 60, alignSelf: { xs: 'center', sm: 'flex-start' } }}>
-                                  <HealthAndSafetyIcon sx={{ fontSize: 30 }} />
-                                </Avatar>
-                                <Box>
-                                  <Typography variant="h6" gutterBottom>
-                                    Family Health Insurance
-                                  </Typography>
-                                  <Typography variant="body2" sx={{ mb: 1 }}>
-                                    With 2 family policies already, complement your coverage with our comprehensive health insurance plan.
-                                  </Typography>
-                                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                                    <Chip label="Preventive Care" size="small" />
-                                    <Chip label="Hospital Coverage" size="small" />
-                                    <Chip label="Prescription Benefits" size="small" />
-                                  </Box>
-                                  <Typography variant="body2" color="info.main" sx={{ fontWeight: 'bold' }}>
-                                    Family package: Cover all members at a flat rate
-                                  </Typography>
-                                </Box>
-                              </Card>
-                            </Grid>
-                            
-                            <Grid item xs={12}>
-                              <Card variant="outlined" sx={{ 
-                                p: 2, 
-                                display: 'flex', 
-                                flexDirection: { xs: 'column', md: 'row' },
-                                alignItems: { md: 'center' },
-                                gap: 2,
-                                boxShadow: 'none',
-                                bgcolor: 'success.light',
-                                color: 'white'
-                              }}>
-                                <Avatar sx={{ bgcolor: 'white', color: 'success.main', width: 60, height: 60, alignSelf: { xs: 'center', md: 'flex-start' } }}>
-                                  <WorkspacePremiumIcon sx={{ fontSize: 30 }} />
-                                </Avatar>
-                                <Box sx={{ flexGrow: 1 }}>
-                                  <Typography variant="h6" gutterBottom>
-                                    Premium Bundle Discount
-                                  </Typography>
-                                  <Typography variant="body2" sx={{ mb: 1 }}>
-                                    Bundle your Vehicle, Home, and Life policies to receive our maximum discount package.
-                                  </Typography>
-                                  <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-                                    Save up to 25% on all policies
-                                  </Typography>
-                                </Box>
-                                <Button variant="contained" color="secondary">
-                                  View Bundle Options
-                                </Button>
-                              </Card>
-                            </Grid>
-                          </Grid>
-                        </Box>
                       </CardContent>
                     </Card>
                   </Grow>
@@ -6788,10 +7614,18 @@ const CaseDetails = () => {
                         
                         <Box sx={{ textAlign: 'center', py: 2, bgcolor: alpha(theme.palette.error.main, 0.05), borderRadius: 2, mb: 3 }}>
                           <Typography variant="h3" fontWeight="700" color="error.main">
-                            ₹{caseData.outstandingAmounts?.reduce((total, amount) => total + amount.amount, 0)?.toLocaleString('en-IN') || '0'}
+                            {outstandingLoading ? (
+                              <CircularProgress size={40} />
+                            ) : outstandingError ? (
+                              'Error'
+                            ) : outstandingData && outstandingData.total_outstanding ? (
+                              `₹${parseFloat(outstandingData.total_outstanding).toLocaleString('en-IN')}`
+                            ) : (
+                              '₹0'
+                            )}
                           </Typography>
                           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                            Across {caseData.outstandingAmounts?.length || 0} installments
+                            Across {outstandingData?.installments?.length || 0} installments
                           </Typography>
                         </Box>
 
@@ -6801,22 +7635,22 @@ const CaseDetails = () => {
                           <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                             <Typography variant="body2" color="text.secondary">Oldest Due:</Typography>
                             <Typography variant="body2" fontWeight="600">
-                              {caseData.outstandingAmounts?.length > 0 ? 
-                                new Date(Math.min(...caseData.outstandingAmounts.map(a => new Date(a.dueDate)))).toLocaleDateString('en-IN') : 'N/A'}
+                              {outstandingData && outstandingData.oldest_due_date ? 
+                                new Date(outstandingData.oldest_due_date).toLocaleDateString('en-IN') : 'N/A'}
                             </Typography>
                           </Box>
                           <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                             <Typography variant="body2" color="text.secondary">Latest Due:</Typography>
                             <Typography variant="body2" fontWeight="600">
-                              {caseData.outstandingAmounts?.length > 0 ? 
-                                new Date(Math.max(...caseData.outstandingAmounts.map(a => new Date(a.dueDate)))).toLocaleDateString('en-IN') : 'N/A'}
+                              {outstandingData && outstandingData.latest_due_date ? 
+                                new Date(outstandingData.latest_due_date).toLocaleDateString('en-IN') : 'N/A'}
                             </Typography>
                           </Box>
                           <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                             <Typography variant="body2" color="text.secondary">Average Amount:</Typography>
                             <Typography variant="body2" fontWeight="600">
-                              ₹{caseData.outstandingAmounts?.length > 0 ? 
-                                Math.round(caseData.outstandingAmounts.reduce((total, amount) => total + amount.amount, 0) / caseData.outstandingAmounts.length).toLocaleString('en-IN') : '0'}
+                              {outstandingData && outstandingData.average_amount ? 
+                                `₹${parseFloat(outstandingData.average_amount).toLocaleString('en-IN')}` : '₹0'}
                             </Typography>
                           </Box>
                         </Stack>
@@ -6871,7 +7705,7 @@ const CaseDetails = () => {
                             </Box>
                           </Box>
                           <Chip 
-                            label={`${caseData.outstandingAmounts?.length || 0} Pending`}
+                            label={`${outstandingData && outstandingData.pending_count !== undefined ? outstandingData.pending_count : 0} Pending`}
                             color="error"
                             variant="outlined"
                           />
@@ -6900,9 +7734,19 @@ const CaseDetails = () => {
                           }}
                         >
                           <Stack spacing={2}>
-                            {(caseData.outstandingAmounts || []).map((outstandingAmount, index) => {
-                            const daysOverdue = Math.floor((new Date() - new Date(outstandingAmount.dueDate)) / (1000 * 60 * 60 * 24));
-                            const isOverdue = daysOverdue > 0;
+                            {outstandingLoading ? (
+                              <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                                <CircularProgress />
+                                <Typography variant="body2" sx={{ ml: 2 }}>Loading installments...</Typography>
+                              </Box>
+                            ) : outstandingError ? (
+                              <Alert severity="error" sx={{ m: 2 }}>
+                                {outstandingError}
+                              </Alert>
+                            ) : outstandingData && outstandingData.installments && outstandingData.installments.length > 0 ? (
+                              outstandingData.installments.map((installment, index) => {
+                                const daysOverdue = installment.days_overdue || 0;
+                                const isOverdue = daysOverdue > 0;
                             
                             return (
                                                               <Card 
@@ -6928,7 +7772,7 @@ const CaseDetails = () => {
                                           PERIOD
                                         </Typography>
                                         <Typography variant="body1" fontWeight="600">
-                                          {outstandingAmount.period}
+                                          {installment.period}
                                         </Typography>
                                       </Box>
                                     </Grid>
@@ -6938,7 +7782,7 @@ const CaseDetails = () => {
                                           AMOUNT
                                         </Typography>
                                         <Typography variant="h6" fontWeight="700" color={isOverdue ? 'error.main' : 'primary.main'}>
-                                          ₹{outstandingAmount.amount.toLocaleString('en-IN')}
+                                          ₹{parseFloat(installment.amount || 0).toLocaleString('en-IN')}
                                         </Typography>
                                       </Box>
                                     </Grid>
@@ -6948,7 +7792,7 @@ const CaseDetails = () => {
                                           DUE DATE
                                         </Typography>
                                         <Typography variant="body2" fontWeight="600">
-                                          {new Date(outstandingAmount.dueDate).toLocaleDateString('en-IN')}
+                                          {new Date(installment.due_date).toLocaleDateString('en-IN')}
                                         </Typography>
                                       </Box>
                                     </Grid>
@@ -6958,8 +7802,8 @@ const CaseDetails = () => {
                                           STATUS
                                         </Typography>
                                         <Chip 
-                                          label={isOverdue ? `${daysOverdue} days overdue` : `Due in ${Math.abs(daysOverdue)} days`}
-                                          color={isOverdue ? 'error' : 'warning'}
+                                          label={isOverdue ? `${daysOverdue} days overdue` : installment.status}
+                                          color={isOverdue ? 'error' : installment.status === 'pending' ? 'warning' : 'success'}
                                           size="small"
                                           icon={isOverdue ? <WarningIcon /> : <ScheduleIcon />}
                                           sx={{ fontSize: '0.7rem' }}
@@ -6977,7 +7821,7 @@ const CaseDetails = () => {
                                           onClick={() => {
                                             setSnackbar({
                                               open: true,
-                                              message: `Payment for ${outstandingAmount.period} - ₹${outstandingAmount.amount.toLocaleString('en-IN')}`,
+                                              message: `Payment for ${installment.period} - ₹${parseFloat(installment.amount || 0).toLocaleString('en-IN')}`,
                                               severity: 'info'
                                             });
                                           }}
@@ -6989,7 +7833,7 @@ const CaseDetails = () => {
                                           onClick={() => {
                                             setSnackbar({
                                               open: true,
-                                              message: `Reminder sent for ${outstandingAmount.period}`,
+                                              message: `Reminder sent for ${installment.period}`,
                                               severity: 'success'
                                             });
                                           }}
@@ -7000,18 +7844,18 @@ const CaseDetails = () => {
                                     </Grid>
                                   </Grid>
                                   
-                                  {outstandingAmount.description && (
+                                  {installment.description && (
                                     <Box sx={{ mt: 2, pt: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
                                       <Typography variant="body2" color="text.secondary">
-                                        <DescriptionIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'middle' }} />
-                                        {outstandingAmount.description}
+                                        {installment.description}
                                       </Typography>
                                     </Box>
                                   )}
                                 </CardContent>
                               </Card>
                             );
-                          }) || (
+                          })
+                          ) : (
                             <Box sx={{ textAlign: 'center', py: 4 }}>
                               <Avatar sx={{ bgcolor: 'success.main', mx: 'auto', mb: 2, width: 64, height: 64 }}>
                                 <CheckCircleIcon sx={{ fontSize: 32 }} />
@@ -7027,7 +7871,7 @@ const CaseDetails = () => {
                           </Stack>
                         </Box>
 
-                        {caseData.outstandingAmounts && caseData.outstandingAmounts.length > 0 && (
+                        {outstandingData && outstandingData.total_outstanding && parseFloat(outstandingData.total_outstanding) > 0 && (
                           <Box sx={{ mt: 3, pt: 3, borderTop: `1px solid ${theme.palette.divider}` }}>
                             <Grid container spacing={2}>
                               <Grid item xs={12} sm={6}>
@@ -7165,18 +8009,28 @@ const CaseDetails = () => {
                             },
                           }}
                         >
+                          {/* Dynamic History from API */}
+                          {historyLoading ? (
+                            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                              <CircularProgress />
+                            </Box>
+                          ) : historyError ? (
+                            <Alert severity="error" sx={{ mb: 3 }}>
+                              Failed to load history: {historyError}
+                            </Alert>
+                          ) : historyData && historyData.history && historyData.history.length > 0 ? (
                           <List>
-                            {(caseData.history || []).map((item, index) => (
+                              {historyData.history.map((item, index) => (
                               <ListItem key={index} sx={{ px: 0 }}>
                                 <ListItemText
-                                  primary={item.action}
+                                    primary={item.action || item.title || 'History Event'}
                                   secondary={
                                     <Box>
                                       <Typography variant="body2" color="text.secondary">
-                                        {item.details}
+                                          {item.details || item.description || 'No details available'}
                                       </Typography>
                                       <Typography variant="caption" color="text.secondary">
-                                        {new Date(item.date).toLocaleString()} • {item.user}
+                                          {item.date ? new Date(item.date).toLocaleString() : 'No date'} • {item.user || 'System'}
                                       </Typography>
                                     </Box>
                                   }
@@ -7184,6 +8038,70 @@ const CaseDetails = () => {
                               </ListItem>
                             ))}
                           </List>
+                          ) : historyData && historyData.case ? (
+                            <List>
+                              {/* Case Creation Event */}
+                              <ListItem sx={{ px: 0 }}>
+                                <ListItemText
+                                  primary="Case Created"
+                                  secondary={
+                                    <Box>
+                                      <Typography variant="body2" color="text.secondary">
+                                        {historyData.case.case_creation_method || 'Case was created'}
+                                      </Typography>
+                                      <Typography variant="caption" color="text.secondary">
+                                        {historyData.case.created_date || historyData.case.started_at ? 
+                                          new Date(historyData.case.created_date || historyData.case.started_at).toLocaleString() : 
+                                          'No date'} • {historyData.case.handling_agent_name || 'System'}
+                                      </Typography>
+                                    </Box>
+                                  }
+                                />
+                              </ListItem>
+                              
+                              {/* Status Update Event */}
+                              <ListItem sx={{ px: 0 }}>
+                                <ListItemText
+                                  primary="Status Updated"
+                                  secondary={
+                                    <Box>
+                                      <Typography variant="body2" color="text.secondary">
+                                        Status changed to: {historyData.case.status_display || historyData.case.status}
+                                      </Typography>
+                                      <Typography variant="caption" color="text.secondary">
+                                        {historyData.case.closed_at ? 
+                                          new Date(historyData.case.closed_at).toLocaleString() : 
+                                          'Current'} • Priority: {historyData.case.priority_display || historyData.case.priority}
+                                      </Typography>
+                                    </Box>
+                                  }
+                                />
+                              </ListItem>
+                              
+                              {/* Payment Status Event */}
+                              {historyData.case.payment_status && (
+                                <ListItem sx={{ px: 0 }}>
+                                  <ListItemText
+                                    primary="Payment Status"
+                                    secondary={
+                                      <Box>
+                                        <Typography variant="body2" color="text.secondary">
+                                          Payment Status: {historyData.case.payment_status}
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary">
+                                          Current • Amount: ₹{parseFloat(historyData.case.renewal_amount || 0).toLocaleString()}
+                                        </Typography>
+                                      </Box>
+                                    }
+                                  />
+                                </ListItem>
+                              )}
+                            </List>
+                          ) : (
+                            <Alert severity="info" sx={{ mb: 3 }}>
+                              No history available for this case.
+                            </Alert>
+                          )}
                         </Box>
                       </CardContent>
                     </Card>
@@ -7219,7 +8137,15 @@ const CaseDetails = () => {
                                 Case Started
                               </Typography>
                               <Typography variant="body1">
-                                {new Date(caseData.uploadDate).toLocaleDateString()}
+                                {historyData && historyData.case ? (
+                                  historyData.case.created_date || historyData.case.started_at ? 
+                                    new Date(historyData.case.created_date || historyData.case.started_at).toLocaleDateString() :
+                                    'No date available'
+                                ) : caseData.uploadDate ? (
+                                  new Date(caseData.uploadDate).toLocaleDateString()
+                                ) : (
+                                  'No date available'
+                                )}
                               </Typography>
                             </Box>
                           </Grid>
@@ -7230,8 +8156,12 @@ const CaseDetails = () => {
                               </Typography>
                               <Typography variant="body1">
                                 <Chip
-                                  label={caseData.status}
-                                  color={getStatusColor(caseData.status)}
+                                  label={historyData && historyData.case ? 
+                                    (historyData.case.status_display || historyData.case.status) : 
+                                    caseData.status}
+                                  color={getStatusColor(historyData && historyData.case ? 
+                                    historyData.case.status : 
+                                    caseData.status)}
                                   size="small"
                                 />
                               </Typography>
@@ -7243,7 +8173,9 @@ const CaseDetails = () => {
                                 Handling Agent
                               </Typography>
                               <Typography variant="body1">
-                                {caseData.agent || "Unassigned"}
+                                {historyData && historyData.case ? 
+                                  (historyData.case.handling_agent_name || "Unassigned") : 
+                                  (caseData.agent || "Unassigned")}
                               </Typography>
                             </Box>
                           </Grid>
@@ -7253,7 +8185,17 @@ const CaseDetails = () => {
                                 Processing Time
                               </Typography>
                               <Typography variant="body1">
-                                {Math.ceil((new Date() - new Date(caseData.uploadDate)) / (1000 * 60 * 60 * 24))} days
+                                {historyData && historyData.case ? (
+                                  historyData.case.processing_days !== undefined ? 
+                                    `${historyData.case.processing_days} days` :
+                                    historyData.case.processing_time !== undefined ?
+                                      `${historyData.case.processing_time} days` :
+                                      '0 days'
+                                ) : caseData.uploadDate ? (
+                                  `${Math.ceil((new Date() - new Date(caseData.uploadDate)) / (1000 * 60 * 60 * 24))} days`
+                                ) : (
+                                  '0 days'
+                                )}
                               </Typography>
                             </Box>
                           </Grid>
@@ -7358,23 +8300,37 @@ const CaseDetails = () => {
                             disabled={!comment.trim()}
                             onClick={async () => {
                               try {
-                                const { updateCase } = await import('../services/api');
-                                const newHistory = [
-                                  {
-                                    date: new Date().toISOString(),
-                                    action: 'Comment Added',
-                                    details: comment,
-                                    user: 'Current User',
-                                    level: 'info'
-                                  },
-                                  ...caseData.history
-                                ];
-                                await updateCase(caseId, { history: newHistory });
-                                setCaseData({ ...caseData, history: newHistory });
-                                setComment('');
-                                setSuccessMessage('Comment added successfully');
+                                setLoading(true);
+                                const commentPayload = {
+                                  comment: comment.trim(),
+                                  user: 'Current User', // In a real app, this would come from auth context
+                                  timestamp: new Date().toISOString(),
+                                  type: 'comment'
+                                };
+                                
+                                const result = await AddComment(caseId, commentPayload);
+                                
+                                if (result.success) {
+                                  setComment('');
+                                  setSuccessMessage('Comment added successfully');
+                                  
+                                  // Refresh history data to show the new comment
+                                  try {
+                                    const historyResult = await GetCaseHistoryAndPreferences(caseId);
+                                    if (historyResult.success) {
+                                      setHistoryData(historyResult);
+                                    }
+                                  } catch (historyError) {
+                                    console.warn('Failed to refresh history after adding comment:', historyError);
+                                  }
+                                } else {
+                                  setError(result.message || 'Failed to add comment');
+                                }
                               } catch (err) {
+                                console.error('Add comment error:', err);
                                 setError('Failed to add comment');
+                              } finally {
+                                setLoading(false);
                               }
                             }}
                             sx={{

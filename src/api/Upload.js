@@ -153,13 +153,16 @@ export const UploadApI = {
     }
   },
 
-  GetActiveCampaigns: async () => {
+  ActiveCampaigns: async () => {
     try {
       const token = localStorage.getItem("authToken");
       if (!token) {
+        console.log("No auth token found for ActiveCampaigns API");
         return { success: false, message: "No token found, please login first." };
       }
-  
+
+      console.log("Calling ActiveCampaigns API with token:", token.substring(0, 10) + "...");
+      
       const response = await fetch(
         "http://13.233.6.207:8000/api/campaigns/list/",
         {
@@ -171,25 +174,30 @@ export const UploadApI = {
           },
         }
       );
-  
+
+      console.log("ActiveCampaigns API response status:", response.status);
+
       if (response.status === 401) {
+        console.log("Token expired for ActiveCampaigns API");
         return { success: false, message: "Token expired, please login again." };
       }
-  
+
       if (!response.ok) {
-        const errorData = await response.json();
-        return {
-          success: false,
-          message: errorData.message || `Request failed with status ${response.status}`,
-        };
+        const errorText = await response.text();
+        console.error("ActiveCampaigns API error response:", errorText);
+        throw new Error(`Request failed with status ${response.status}: ${errorText}`);
       }
-  
+
       const data = await response.json();
-      return { success: true, data: data.data || data }; // Return the actual data or fallback to full response
+      console.log("ActiveCampaigns API response data:", data);
+      return { success: true, data };
     } catch (error) {
-      console.error("GetActiveCampaigns API failed:", error);
+      console.error("Active Campaigns API failed:", error);
       return { success: false, message: error.message || "Request failed" };
     }
   }
   
+ 
+  
 };
+

@@ -6481,6 +6481,8 @@ const Settings = () => {
     const [selectedChannel, setSelectedChannel] = useState('email');
     const [providerDialog, setProviderDialog] = useState({ open: false, provider: null, mode: 'add', channel: 'email' });
     const [testingProvider, setTestingProvider] = useState(null);
+    const [savingProvider, setSavingProvider] = useState(false);
+    const [providerError, setProviderError] = useState(null);
     const [newProvider, setNewProvider] = useState({
       name: '',
       type: '',
@@ -6546,13 +6548,49 @@ const Settings = () => {
       deleteProvider(channel, providerId);
     };
 
-    const handleSaveProvider = () => {
-      if (providerDialog.mode === 'add') {
-        addProvider(providerDialog.channel, newProvider);
-      } else {
-        updateProvider(providerDialog.channel, providerDialog.provider.id, newProvider);
+    const handleSaveProvider = async () => {
+      setSavingProvider(true);
+      setProviderError(null);
+      
+      try {
+        if (providerDialog.mode === 'add') {
+          console.log('Adding provider with data:', newProvider);
+          const result = await addProvider(providerDialog.channel, newProvider);
+          console.log('Add provider result:', result);
+          
+          if (result.success) {
+            setProviderDialog({ open: false, provider: null, mode: 'add', channel: 'email' });
+            // Reset form
+            setNewProvider({
+              name: '',
+              type: '',
+              isActive: false,
+              isDefault: false,
+              config: {},
+              limits: {
+                dailyLimit: 1000,
+                monthlyLimit: 10000,
+                rateLimit: 10
+              }
+            });
+            // Show success message if there's a fallback message
+            if (result.message) {
+              console.log('Provider added with message:', result.message);
+            }
+          } else {
+            console.error('Add provider failed:', result.message);
+            setProviderError(result.message || 'Failed to add provider');
+          }
+        } else {
+          updateProvider(providerDialog.channel, providerDialog.provider.id, newProvider);
+          setProviderDialog({ open: false, provider: null, mode: 'add', channel: 'email' });
+        }
+      } catch (error) {
+        console.error('Error saving provider:', error);
+        setProviderError(error.message || 'An unexpected error occurred');
+      } finally {
+        setSavingProvider(false);
       }
-      setProviderDialog({ open: false, provider: null, mode: 'add', channel: 'email' });
     };
 
     const handleTestProvider = async (provider, channel) => {
@@ -6623,7 +6661,7 @@ const Settings = () => {
                 onClick={() => handleTestProvider(provider, channel)}
                 disabled={testingProvider === provider.id}
               >
-                {testingProvider === provider.id ? <SyncIcon /> : <TestIcon />}
+                {testingProvider === provider.id ? <SyncIcon /> : <TestIcon />} 
               </IconButton>
               <IconButton
                 size="small"
@@ -6761,6 +6799,11 @@ const Settings = () => {
             {providerDialog.mode === 'add' ? 'Add' : 'Edit'} {providerDialog.channel.charAt(0).toUpperCase() + providerDialog.channel.slice(1)} Provider
           </DialogTitle>
           <DialogContent dividers>
+            {providerError && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {providerError}
+              </Alert>
+            )}
             <Grid container spacing={2}>
               <Grid item xs={12} md={6}>
                 <TextField
@@ -6872,11 +6915,21 @@ const Settings = () => {
               Cancel
             </Button>
             <Button
+              variant="outlined"
+              onClick={() => {
+                console.log('Current newProvider state:', JSON.stringify(newProvider, null, 2));
+                console.log('Config object:', JSON.stringify(newProvider.config, null, 2));
+              }}
+              sx={{ mr: 1 }}
+            >
+              Debug
+            </Button>
+            <Button
               variant="contained"
               onClick={handleSaveProvider}
-              disabled={!newProvider.name.trim() || !newProvider.type}
+              disabled={!newProvider.name.trim() || !newProvider.type || savingProvider}
             >
-              {providerDialog.mode === 'add' ? 'Add Provider' : 'Save Changes'}
+              {savingProvider ? 'Saving...' : (providerDialog.mode === 'add' ? 'Add Provider' : 'Save Changes')}
             </Button>
           </DialogActions>
         </Dialog>
@@ -7018,4 +7071,4 @@ const Settings = () => {
   );
 };
 
-export default Settings;
+export default Settings;  

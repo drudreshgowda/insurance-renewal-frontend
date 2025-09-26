@@ -66,6 +66,7 @@ import {
   HealthAndSafety as HealthAndSafetyIcon
 } from '@mui/icons-material';
 import { useLocation } from 'react-router-dom';
+import { policyTimelineAPI } from '../api/PolicyTimeline';
 
 const PolicyTimeline = () => {
   const location = useLocation();
