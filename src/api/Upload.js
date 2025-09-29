@@ -195,9 +195,78 @@ export const UploadApI = {
       console.error("Active Campaigns API failed:", error);
       return { success: false, message: error.message || "Request failed" };
     }
-  }
+  },
+
+  GetProviders: async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        return { success: false, message: "No token found, please login first." };
+      }
   
- 
+      const response = await fetch(
+        "http://13.233.6.207:8000/api/communication-provider/providers/",
+        {
+          method: "GET",
+          mode: "cors",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
   
+      if (response.status === 401) {
+        return { success: false, message: "Token expired, please login again." };
+      }
+  
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+      }
+  
+      const data = await response.json();
+      return { success: true, data };
+    } catch (error) {
+      console.error("Providers API failed:", error);
+      return { success: false, message: error.message || "Request failed" };
+    }
+  },
+
+  GetTargetAudienceTypes: async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        return { success: false, message: "No token found, please login first." };
+      }
+  
+      const response = await fetch(
+        "http://13.233.6.207:8000/api/target-audience/audiences/predefined/",
+        {
+          method: "GET",
+          mode: "cors",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      if (response.status === 401) {
+        return { success: false, message: "Token expired, please login again." };
+      }
+  
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+      }
+  
+      const data = await response.json();
+      return { success: true, data };
+    } catch (error) {
+      console.error("Target Audience Types API failed:", error);
+      return { success: false, message: error.message || "Request failed" };
+    }
+  },
+  
+   
 };
 

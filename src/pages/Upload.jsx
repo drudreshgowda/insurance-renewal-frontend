@@ -59,6 +59,8 @@ const Upload = () => {
     fetchUploads();
     fetchTemplates();
     fetchActiveCampaigns();
+    fetchProviders();
+    fetchTargetAudienceTypes();
   }, []);
   const fetchUploads = async () => {
     const result = await UploadApI.GetFileUploads();
@@ -299,6 +301,130 @@ const Upload = () => {
       setCampaignsLoading(false);
     }
   };
+
+  const fetchProviders = async () => {
+    setProvidersLoading(true);
+    try {
+      const result = await UploadApI.GetProviders();
+      
+      if (result.success && result.data) {
+        // Handle different response structures
+        let providersData = result.data;
+        
+        // If data is nested in results property
+        if (result.data.results && Array.isArray(result.data.results)) {
+          providersData = result.data.results;
+        } else if (Array.isArray(result.data)) {
+          providersData = result.data;
+        } else {
+          setProviders([]);
+          return;
+        }
+        
+        // Ensure we have an array to work with
+        if (Array.isArray(providersData)) {
+          // Transform API data to match UI expectations
+          const transformedProviders = providersData.map(provider => ({
+            id: provider.id,
+            name: provider.name,
+            provider_type: provider.provider_type,
+            provider_type_display: provider.provider_type_display,
+            is_active: provider.is_active,
+            is_default: provider.is_default,
+            priority: provider.priority,
+            priority_display: provider.priority_display,
+            health_status: provider.health_status,
+            health_status_display: provider.health_status_display,
+            daily_limit: provider.daily_limit,
+            monthly_limit: provider.monthly_limit,
+            emails_sent_today: provider.emails_sent_today,
+            emails_sent_this_month: provider.emails_sent_this_month,
+            from_email: provider.from_email,
+            from_name: provider.from_name
+          }));
+          
+          setProviders(transformedProviders);
+        } else {
+          setProviders([]);
+        }
+      } else {
+        console.error('Failed to fetch providers:', result.message || 'Unknown error');
+        setProviders([]);
+      }
+    } catch (error) {
+      console.error('Error fetching providers:', error);
+      setProviders([]);
+    } finally {
+      setProvidersLoading(false);
+    }
+  };
+
+  const fetchTargetAudienceTypes = async () => {
+    setTargetAudienceLoading(true);
+    try {
+      const result = await UploadApI.GetTargetAudienceTypes();
+      
+      if (result.success && result.data) {
+        // Handle different response structures
+        let audienceData = result.data;
+        
+        // If data is nested in results property
+        if (result.data.results && Array.isArray(result.data.results)) {
+          audienceData = result.data.results;
+        } else if (Array.isArray(result.data)) {
+          audienceData = result.data;
+        } else {
+          setTargetAudienceTypes([]);
+          return;
+        }
+        
+        // Ensure we have an array to work with
+        if (Array.isArray(audienceData)) {
+          // Transform API data to match UI expectations
+          const transformedAudienceTypes = audienceData.map(audience => {
+            console.log('Raw audience data from API:', audience);
+            const transformed = {
+              id: audience.id,
+              name: audience.name || audience.type_name || audience.display_name,
+              value: audience.value || audience.type_value || audience.code || audience.id,
+              description: audience.description || audience.type_description,
+              is_active: audience.is_active !== false // Default to true if not specified
+            };
+            console.log('Transformed audience data:', transformed);
+            return transformed;
+          });
+          
+          setTargetAudienceTypes(transformedAudienceTypes);
+        } else {
+          // Fallback: use common target audience types if API data is not in expected format
+          console.log('API data not in expected format, using fallback target audience types');
+          setTargetAudienceTypes([
+            { id: 1, name: 'All Customers', value: 'all', description: 'All customers in the database' },
+            { id: 2, name: 'Pending Renewals', value: 'pending', description: 'Customers with pending renewals' },
+            { id: 3, name: 'Expired Policies', value: 'expired', description: 'Customers with expired policies' }
+          ]);
+        }
+      } else {
+        console.error('Failed to fetch target audience types:', result.message || 'Unknown error');
+        // Fallback: use common target audience types if API fails
+        setTargetAudienceTypes([
+          { id: 1, name: 'All Customers', value: 'all', description: 'All customers in the database' },
+          { id: 2, name: 'Pending Renewals', value: 'pending', description: 'Customers with pending renewals' },
+          { id: 3, name: 'Expired Policies', value: 'expired', description: 'Customers with expired policies' }
+        ]);
+      }
+    } catch (error) {
+      console.error('Error fetching target audience types:', error);
+      // Fallback: use common target audience types if API fails
+      setTargetAudienceTypes([
+        { id: 1, name: 'All Customers', value: 'all', description: 'All customers in the database' },
+        { id: 2, name: 'Pending Renewals', value: 'pending', description: 'Customers with pending renewals' },
+        { id: 3, name: 'Expired Policies', value: 'expired', description: 'Customers with expired policies' }
+      ]);
+    } finally {
+      setTargetAudienceLoading(false);
+    }
+  };
   
   
   
@@ -329,6 +455,14 @@ const Upload = () => {
   // Active campaigns - dynamic data from API
   const [activeCampaigns, setActiveCampaigns] = useState([]);
   const [campaignsLoading, setCampaignsLoading] = useState(false);
+
+  // Communication providers - dynamic data from API
+  const [providers, setProviders] = useState([]);
+  const [providersLoading, setProvidersLoading] = useState(false);
+
+  // Target audience types - dynamic data from API
+  const [targetAudienceTypes, setTargetAudienceTypes] = useState([]);
+  const [targetAudienceLoading, setTargetAudienceLoading] = useState(false);
 
   const [uploadHistory, setUploadHistory] = useState([
     {
@@ -481,12 +615,7 @@ const Upload = () => {
         return;
       }
 
-      // Map target audience to ID (adjust based on your backend)
-      const targetAudienceMap = {
-        'all': 1,
-        'pending': 2,
-        'expired': 3
-      };
+      // Target audience is now sent as string directly to match API expectations
 
       // Map campaign type to ID (adjust based on your backend)
       const campaignTypeMap = {
@@ -519,13 +648,28 @@ const Upload = () => {
         return conditionMap;
       };
 
+      console.log('Selected target audience:', campaignData.targetAudience);
+      console.log('Available target audience types:', targetAudienceTypes);
+      
+      // Find the selected audience type to verify we have the correct value
+      const selectedAudience = targetAudienceTypes.find(audience => audience.value === campaignData.targetAudience);
+      console.log('Selected audience object:', selectedAudience);
+      
       const campaignPayload = {
         file_upload_id: selectedUpload.id,
         campaign_name: campaignData.name,
         campaign_type_id: campaignTypeMap[primaryChannel] || 1,
         template_id: templateId,  
-        target_audience_id: targetAudienceMap[campaignData.targetAudience] || 1,
-        communication_provider_id: parseInt(campaignData.providers[primaryChannel]) || 1,
+        target_audience_type: selectedAudience ? selectedAudience.value : campaignData.targetAudience,
+        communication_provider_id: parseInt(campaignData.providers[primaryChannel]) || (() => {
+          // Fallback: get the first available provider for the channel
+          const availableProviders = providers.filter(p => 
+            p.is_active && 
+            (p.provider_type === primaryChannel || 
+             (primaryChannel === 'email' && (p.provider_type === 'sendgrid' || p.provider_type === 'mailgun' || p.provider_type === 'aws_ses')))
+          );
+          return availableProviders.length > 0 ? availableProviders[0].id : 1;
+        })(),
         schedule_type: campaignData.scheduleType,
         scheduled_at: scheduledAt,
         enable_advanced_scheduling: campaignData.advancedScheduling.enabled,
@@ -543,7 +687,50 @@ const Upload = () => {
               }))
           : []
       };
-  
+      
+      console.log('Campaign payload being sent:', campaignPayload);
+
+      
+      // Validate required fields
+      if (!campaignPayload.communication_provider_id || campaignPayload.communication_provider_id <= 0) {
+        setSnackbar({
+          open: true,
+          message: "Please select a communication provider from the dropdown.",
+          severity: "error"
+        });
+        return;
+      }
+      
+      // Validate that the selected provider exists in the API data
+      const validProvider = providers.find(provider => provider.id === campaignPayload.communication_provider_id);
+      if (!validProvider) {
+        setSnackbar({
+          open: true,
+          message: "Selected communication provider is not valid. Please refresh and try again.",
+          severity: "error"
+        });
+        return;
+      }
+      
+      if (!campaignPayload.target_audience_type) {
+        setSnackbar({
+          open: true,
+          message: "Please select a target audience type from the dropdown.",
+          severity: "error"
+        });
+        return;
+      }
+      
+      // Validate that the selected target audience type exists in the API data
+      const validAudienceType = targetAudienceTypes.find(audience => audience.value === campaignPayload.target_audience_type);
+      if (!validAudienceType) {
+        setSnackbar({
+          open: true,
+          message: "Selected target audience type is not valid. Please refresh and try again.",
+          severity: "error"
+        });
+        return;
+      }
   
       const result = await UploadApI.Createcampaigns(campaignPayload);
   
@@ -1402,10 +1589,36 @@ const Upload = () => {
                           value={campaignData.targetAudience}
                           label="Target Audience"
                           onChange={(e) => setCampaignData(prev => ({ ...prev, targetAudience: e.target.value }))}
+                          disabled={targetAudienceLoading}
                         >
-                          <MenuItem value="all">All Customers</MenuItem>
-                          <MenuItem value="pending">Pending Renewals Only</MenuItem>
-                          <MenuItem value="expired">Expired Policies Only</MenuItem>
+                          {targetAudienceLoading ? (
+                            <MenuItem disabled>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <CircularProgress size={16} />
+                                Loading target audience types...
+                              </Box>
+                            </MenuItem>
+                          ) : (
+                            targetAudienceTypes.map((audience) => (
+                              <MenuItem key={audience.id} value={audience.value}>
+                                <Box sx={{ width: '100%' }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                    {audience.name}
+                                  </Typography>
+                                  {audience.description && (
+                                    <Typography variant="caption" color="text.secondary">
+                                      {audience.description}
+                                    </Typography>
+                                  )}
+                                </Box>
+                              </MenuItem>
+                            ))
+                          )}
+                          {!targetAudienceLoading && targetAudienceTypes.length === 0 && (
+                            <MenuItem disabled>
+                              No target audience types available
+                            </MenuItem>
+                          )}
                         </Select>
                       </FormControl>
                     </Grid>
@@ -1421,13 +1634,38 @@ const Upload = () => {
                         Choose specific providers for each communication channel
                       </Typography>
                       
+                      
                       <Grid container spacing={2} sx={{ mt: 1 }}>
                         {campaignData.type.map((channel) => {
-                          const availableProviders = getProviders(channel).filter(p => p.isActive);
-                          const defaultProvider = getActiveProvider(channel);
+                          // Filter providers by channel type and active status
+                          // For email channel, show all email providers (sendgrid, mailgun, aws_ses)
+                          // For other channels, show providers that match the channel type
+                          let availableProviders = providers.filter(p => {
+                            if (!p.is_active) return false;
+                            
+                            // For email channel, show all email providers
+                            if (channel === 'email') {
+                              return p.provider_type === 'sendgrid' || 
+                                     p.provider_type === 'mailgun' || 
+                                     p.provider_type === 'aws_ses' ||
+                                     p.provider_type === 'email';
+                            }
+                            
+                            // For other channels, match the provider type
+                            return p.provider_type === channel;
+                          });
+                          
+                          // If no providers found for the channel, show all active providers as fallback
+                          if (availableProviders.length === 0) {
+                            availableProviders = providers.filter(p => p.is_active);
+                          }
+                          
+                          
+                          const defaultProvider = availableProviders.find(p => p.is_default) || availableProviders[0];
                           
                           return (
                             <Grid item xs={12} md={6} key={channel}>
+                              
                               <FormControl fullWidth>
                                 <InputLabel>
                                   {channel.charAt(0).toUpperCase() + channel.slice(1)} Provider
@@ -1439,32 +1677,60 @@ const Upload = () => {
                                     ...prev,
                                     providers: { ...prev.providers, [channel]: e.target.value }
                                   }))}
-                                  disabled={availableProviders.length === 0}
+                                  disabled={availableProviders.length === 0 || providersLoading}
                                 >
-                                  {availableProviders.map((provider) => (
-                                    <MenuItem key={provider.id} value={provider.id}>
+                                  {providersLoading ? (
+                                    <MenuItem disabled>
                                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <Box sx={{ 
-                                          width: 8, 
-                                          height: 8, 
-                                          borderRadius: '50%', 
-                                          bgcolor: provider.status === 'connected' ? 'success.main' : 'error.main' 
-                                        }} />
-                                        {provider.name}
-                                        {provider.isDefault && (
-                                          <Chip label="Default" size="small" sx={{ ml: 1 }} />
-                                        )}
+                                        <CircularProgress size={16} />
+                                        Loading providers...
                                       </Box>
-                                    </MenuItem> 
-                                  ))}
-                                  {availableProviders.length === 0 && (
+                                    </MenuItem>
+                                  ) : (
+                                    availableProviders.map((provider) => (
+                                      <MenuItem key={provider.id} value={provider.id}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                                          <Box sx={{ 
+                                            width: 8, 
+                                            height: 8, 
+                                            borderRadius: '50%', 
+                                            bgcolor: provider.health_status === 'healthy' ? 'success.main' : 
+                                                     provider.health_status === 'unhealthy' ? 'error.main' : 'warning.main'
+                                          }} />
+                                          <Box sx={{ flex: 1 }}>
+                                            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                              {provider.name}
+                                            </Typography>
+                                            <Typography variant="caption" color="text.secondary">
+                                              {provider.provider_type_display} • {provider.from_email}
+                                            </Typography>
+                                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                                              Daily: {provider.emails_sent_today}/{provider.daily_limit} • Monthly: {provider.emails_sent_this_month}/{provider.monthly_limit}
+                                            </Typography>
+                                          </Box>
+                                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                                            {provider.is_default && (
+                                              <Chip label="Default" size="small" color="primary" />
+                                            )}
+                                            {provider.priority_display && (
+                                              <Chip label={provider.priority_display} size="small" variant="outlined" />
+                                            )}
+                                            {!provider.is_active && (
+                                              <Chip label="Inactive" size="small" color="error" />
+                                            )}
+                                          </Box>
+                                        </Box>
+                                      </MenuItem>
+                                    ))
+                                  )}
+                                  {!providersLoading && availableProviders.length === 0 && (
                                     <MenuItem disabled>
                                       No active {channel} providers configured
                                     </MenuItem>
                                   )}
                                 </Select>
                               </FormControl>
-                              {availableProviders.length === 0 && (
+                              {!providersLoading && availableProviders.length === 0 && (
                                 <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
                                   Configure {channel} providers in Settings → Providers
                                 </Typography>
