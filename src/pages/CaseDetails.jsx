@@ -172,6 +172,58 @@ const CaseDetails = () => {
   // New state for tab management
   const [currentTab, setCurrentTab] = useState(0);
   const [isConsolidatedView, setIsConsolidatedView] = useState(false);
+
+  // Effect to ensure data consistency when switching views
+  useEffect(() => {
+    const refreshData = async () => {
+      if (isConsolidatedView) {
+        try {
+          // Refresh history data
+          const historyResult = await GetCaseHistoryAndPreferences(caseId);
+          if (historyResult.success) {
+            const cleanHistoryData = {
+              ...historyResult,
+              history: (historyResult.history || []).map(event => ({
+                ...event,
+                date: event.date || event.created_at || event.timestamp,
+                action: event.action || event.description || event.type || 'Unknown Event',
+                description: event.description || event.details || event.message || ''
+              })),
+              comments: historyResult.comments || [],
+              case_logs: historyResult.case_logs || [],
+              case: {
+                ...historyResult.case,
+                created_date: historyResult.case?.created_date || historyResult.case?.started_at || caseData?.uploadDate
+              }
+            };
+            setHistoryData(cleanHistoryData);
+          }
+
+          // Refresh preferences data
+          const preferencesResult = await GetPreferences(caseId);
+          if (preferencesResult.success) {
+            setPreferencesData(preferencesResult.data);
+          }
+
+          // Refresh offers data
+          const offersResult = await GetOffers(caseId);
+          if (offersResult.success) {
+            setOffersData(offersResult.data);
+          }
+
+          // Refresh outstanding data
+          const outstandingResult = await GetOutstandingSummary(caseId);
+          if (outstandingResult.success) {
+            setOutstandingData(outstandingResult.data);
+          }
+        } catch (error) {
+          console.error('Error refreshing data:', error);
+        }
+      }
+    };
+
+    refreshData();
+  }, [isConsolidatedView, caseId]);
   
   // Verification states
   const [verificationStatus, setVerificationStatus] = useState({
@@ -517,9 +569,18 @@ const CaseDetails = () => {
             // Force clear any old data and ensure we only use live API data
             const cleanHistoryData = {
               ...historyResult,
-              history: historyResult.history || [],
+              history: (historyResult.history || []).map(event => ({
+                ...event,
+                date: event.date || event.created_at || event.timestamp,
+                action: event.action || event.description || event.type || 'Unknown Event',
+                description: event.description || event.details || event.message || ''
+              })),
               comments: historyResult.comments || [],
-              case_logs: historyResult.case_logs || []
+              case_logs: historyResult.case_logs || [],
+              case: {
+                ...historyResult.case,
+                created_date: historyResult.case?.created_date || historyResult.case?.started_at || caseData?.uploadDate
+              }
             };
             
             console.log('Clean history data:', cleanHistoryData);
@@ -1174,7 +1235,11 @@ const CaseDetails = () => {
 
         {/* Content Area */}
         {isConsolidatedView ? (
-          // Consolidated View - Show all content in original layout
+          // Consolidated View - Show all content with proper section headers
+          <Box>
+            <Box>
+            {/* Section: Overview & Policy Details */}
+            <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>Overview & Policy Details</Typography>
           <Grid container spacing={3}>
             {/* Customer Information */}
           <Grid item xs={12} md={4}>
@@ -1621,7 +1686,11 @@ const CaseDetails = () => {
               </Card>
             </Grow>
           </Grid>
+        </Grid>
 
+        {/* Section: Policy Members */}
+        <Typography variant="h6" sx={{ mb: 3, mt: 4, fontWeight: 600 }}>Policy Members</Typography>
+        <Grid container spacing={3}>
           {/* Policy Members Details */}
           {caseData.policyMembers && caseData.policyMembers.length > 0 && (
             <Grid item xs={12}>
@@ -1888,7 +1957,7 @@ const CaseDetails = () => {
                         <Card variant="outlined" sx={{ p: 2, height: '100%', bgcolor: 'primary.light', color: 'primary.contrastText' }}>
                           <Box sx={{ textAlign: 'center' }}>
                             <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 1 }}>
-                              ₹{(caseData.policyDetails.premium * 20).toLocaleString()}
+                              ₹{(caseData.sumAssured || caseData.coverageDetails?.sumInsured || caseData.policyDetails?.sumAssured || 0).toLocaleString()}
                             </Typography>
                             <Typography variant="subtitle2">
                               Sum Insured
@@ -1900,7 +1969,7 @@ const CaseDetails = () => {
                         <Card variant="outlined" sx={{ p: 2, height: '100%' }}>
                           <Box sx={{ textAlign: 'center' }}>
                             <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 1, color: 'success.main' }}>
-                              ₹{Math.round(caseData.policyDetails.premium * 0.05).toLocaleString()}
+                              ₹{(caseData.coverageDetails?.deductible || caseData.deductible || 0).toLocaleString()}
                             </Typography>
                             <Typography variant="subtitle2" color="text.secondary">
                               Deductible
@@ -1912,7 +1981,7 @@ const CaseDetails = () => {
                         <Card variant="outlined" sx={{ p: 2, height: '100%' }}>
                           <Box sx={{ textAlign: 'center' }}>
                             <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 1, color: 'info.main' }}>
-                              100%
+                              {caseData.coverageDetails?.coverageRatio || caseData.coverage_ratio || '100%'}
                             </Typography>
                             <Typography variant="subtitle2" color="text.secondary">
                               Coverage Ratio
@@ -1924,7 +1993,7 @@ const CaseDetails = () => {
                         <Card variant="outlined" sx={{ p: 2, height: '100%' }}>
                           <Box sx={{ textAlign: 'center' }}>
                             <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 1, color: 'warning.main' }}>
-                              24/7
+                              {caseData.coverageDetails?.supportCoverage || caseData.support_coverage || '24/7'}
                             </Typography>
                             <Typography variant="subtitle2" color="text.secondary">
                               Support Coverage
@@ -1942,7 +2011,7 @@ const CaseDetails = () => {
                     </Typography>
                     <Grid container spacing={2}>
                       {/* Auto/Vehicle Insurance Coverage */}
-                      {caseData.policyDetails?.type === 'Auto' && (
+                      {(caseData.policyDetails?.type || true) && (
                         <>
                           <Grid item xs={12} md={6}>
                             <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
@@ -2162,7 +2231,7 @@ const CaseDetails = () => {
                     </Typography>
                     <Grid container spacing={2}>
                       {/* Auto Insurance Benefits */}
-                      {caseData.policyDetails?.type === 'Auto' && (
+                      {(caseData.policyDetails?.type || true) && (
                         <>
                           <Grid item xs={12} md={4}>
                             <Card variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: 'success.light', color: 'success.contrastText' }}>
@@ -2359,7 +2428,7 @@ const CaseDetails = () => {
                     <Card variant="outlined" sx={{ p: 2, bgcolor: alpha(theme.palette.error.main, 0.05), border: '1px solid', borderColor: 'error.light' }}>
                       <Grid container spacing={2}>
                         {/* Auto Insurance Exclusions */}
-                        {caseData.policyDetails?.type === 'Auto' && (
+                        {(caseData.policyDetails?.type || true) && (
                           <>
                             <Grid item xs={12} md={6}>
                               <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: 'error.main' }}>
@@ -2476,7 +2545,16 @@ const CaseDetails = () => {
               </Card>
             </Grow>
           </Grid>
+        </Grid>
 
+        {/* Section: Customer Insights */}
+        <Typography variant="h6" sx={{ mb: 3, mt: 4, fontWeight: 600 }}>Customer Insights</Typography>
+        <Grid container spacing={3}>
+        </Grid>
+
+        {/* Section: History & Timeline */}
+        <Typography variant="h6" sx={{ mb: 3, mt: 4, fontWeight: 600 }}>History & Timeline</Typography>
+        <Grid container spacing={3}>
           {/* Case Flow */}
           <Grid item xs={12}>
             <Grow in={loaded} timeout={600}>
@@ -2838,6 +2916,11 @@ const CaseDetails = () => {
             </Grow>
           </Grid>
 
+        </Grid>
+
+        {/* Section: Analytics */}
+        <Typography variant="h6" sx={{ mb: 3, mt: 4, fontWeight: 600 }}>Analytics</Typography>
+        <Grid container spacing={3}>
           {/* Last 10 Years Premium Payment History */}
           <Grid item xs={12}>
             <Grow in={loaded} timeout={875}>
@@ -3177,7 +3260,11 @@ const CaseDetails = () => {
               </Card>
             </Grow>
           </Grid>
+        </Grid>
 
+        {/* Section: Customer Preferences */}
+        <Typography variant="h6" sx={{ mb: 3, mt: 4, fontWeight: 600 }}>Customer Preferences</Typography>
+        <Grid container spacing={3}>
           {/* Customer Profiling */}
           <Grid item xs={12}>
             <Grow in={loaded} timeout={900}>
@@ -3403,7 +3490,11 @@ const CaseDetails = () => {
               </Card>
             </Grow>
           </Grid>
+        </Grid>
 
+        {/* Section: Available Offers */}
+        <Typography variant="h6" sx={{ mb: 3, mt: 4, fontWeight: 600 }}>Available Offers</Typography>
+        <Grid container spacing={3}>
           {/* Available Offers */}
           <Grid item xs={12}>
             <Grow in={loaded} timeout={1000}>
@@ -4204,92 +4295,6 @@ const CaseDetails = () => {
                     <Typography variant="h6" fontWeight="600">Outstanding Amounts</Typography>
                   </Box>
                   
-                  {/* Debug Section - Remove after testing */}
-                  <Alert severity="info" sx={{ mb: 2 }}>
-                    <Typography variant="body2">
-                      <strong>Debug - Outstanding Data:</strong><br/>
-                      Loading: {outstandingLoading ? 'Yes' : 'No'}<br/>
-                      Error: {outstandingError || 'None'}<br/>
-                      Data exists: {outstandingData ? 'Yes' : 'No'}<br/>
-                      Data type: {typeof outstandingData}<br/>
-                      Data keys: {outstandingData ? Object.keys(outstandingData).join(', ') : 'N/A'}<br/>
-                      Total Outstanding: {outstandingData?.total_outstanding || 'N/A'}<br/>
-                      Pending Count: {outstandingData?.pending_count || 'N/A'}<br/>
-                      Installments: {outstandingData?.installments?.length || 0}<br/>
-                      Full Data: {JSON.stringify(outstandingData, null, 2)}
-                    </Typography>
-                    <Button 
-                      variant="outlined" 
-                      size="small" 
-                      onClick={async () => {
-                        console.log('Manual API test for case:', caseId);
-                        try {
-                          setOutstandingLoading(true);
-                          const result = await GetOutstandingSummary(caseId);
-                          console.log('Manual API result:', result);
-                          console.log('Result success:', result.success);
-                          console.log('Result data:', result.data);
-                          console.log('Data type:', typeof result.data);
-                          console.log('Data keys:', result.data ? Object.keys(result.data) : 'N/A');
-                          
-                          if (result.success) {
-                            console.log('Setting data with keys:', Object.keys(result.data));
-                            console.log('Total outstanding from API:', result.data.total_outstanding);
-                            console.log('Pending count from API:', result.data.pending_count);
-                            setOutstandingData(result.data);
-                          } else {
-                            setOutstandingError(result.message);
-                          }
-                        } catch (error) {
-                          console.error('Manual API error:', error);
-                          setOutstandingError(error.message);
-                        } finally {
-                          setOutstandingLoading(false);
-                        }
-                      }}
-                      sx={{ mt: 1, mr: 1 }}
-                    >
-                      Test API Call
-                    </Button>
-                    <Button 
-                      variant="outlined" 
-                      size="small" 
-                      onClick={async () => {
-                        console.log('Direct API test for case:', caseId);
-                        try {
-                          const token = localStorage.getItem("authToken");
-                          const url = `http://13.233.6.207:8000/api/case-tracking/cases/${caseId}/outstanding-amounts/summary/`;
-                          console.log('Direct API URL:', url);
-                          
-                          const response = await fetch(url, {
-                            method: "GET",
-                            headers: {
-                              "Content-Type": "application/json",
-                              Authorization: `Bearer ${token}`,
-                            },
-                          });
-                          
-                          console.log('Direct API response status:', response.status);
-                          const data = await response.json();
-                          console.log('Direct API response data:', data);
-                          console.log('Direct API data structure:', {
-                            hasSuccess: 'success' in data,
-                            hasData: 'data' in data,
-                            dataKeys: data.data ? Object.keys(data.data) : 'N/A'
-                          });
-                          
-                          if (data.success && data.data) {
-                            setOutstandingData(data.data);
-                          }
-                        } catch (error) {
-                          console.error('Direct API error:', error);
-                        }
-                      }}
-                      sx={{ mt: 1 }}
-                    >
-                      Direct API Test
-                    </Button>
-                  </Alert>
                   
                   <Divider sx={{ mb: 3 }} />
                   
@@ -4572,6 +4577,8 @@ const CaseDetails = () => {
             </Grow>
           </Grid>
         </Grid>
+            </Box>
+          </Box>
         ) : (
           // Tab-based View
           <Box>
@@ -8206,11 +8213,15 @@ const CaseDetails = () => {
                             Journey Progress
                           </Typography>
                           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                            {(caseData.flowSteps || []).map((step, index) => {
-                              const isCompleted = getActiveStep() >= index;
+                            {historyData?.history?.slice(0, 5).map((event, index) => {
+                              const isCompleted = true;
+                              const eventDate = event.date ? new Date(event.date).toLocaleDateString() : '';
+                              const eventAction = event.action || event.description || event.type || 'Unknown Event';
+                              const isCurrent = event.action === caseData?.status;
+                              
                               return (
                                 <Box 
-                                  key={step} 
+                                  key={`${event.date}-${index}`}
                                   sx={{ 
                                     display: 'flex', 
                                     alignItems: 'center', 
@@ -8222,7 +8233,6 @@ const CaseDetails = () => {
                                     sx={{ 
                                       width: 24, 
                                       height: 24, 
-                                      borderRadius: '50%', 
                                       display: 'flex',
                                       alignItems: 'center',
                                       justifyContent: 'center',
@@ -8237,8 +8247,8 @@ const CaseDetails = () => {
                                     variant="body2" 
                                     sx={{ fontWeight: isCompleted ? 'bold' : 'normal' }}
                                   >
-                                    {step}
-                                    {step === caseData.status && ' (Current)'}
+                                    {eventAction}
+                                    {isCurrent && ' (Current)'}
                                   </Typography>
                                 </Box>
                               );

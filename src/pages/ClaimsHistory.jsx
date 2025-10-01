@@ -601,4 +601,4 @@ const ClaimsHistory = () => {
   );
 };
 
-export default ClaimsHistory; 
+export default ClaimsHistory;
