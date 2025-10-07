@@ -101,7 +101,7 @@ useEffect(() => {
 //       name: channelDialog.channelData.name,
 //       channel_type: channelDialog.channelData.type,
 //       description: channelDialog.channelData.description,
-//       target_audience_name_input: channelDialog.channelData.targetAudience,
+//       target_audience_name_input: channelDialog.channe4lData.targetAudience,
 //       manager_name: channelDialog.channelData.manager,
 //       cost_per_lead: channelDialog.channelData.costPerLead 
 //         ? channelDialog.channelData.costPerLead.toFixed(2) 
@@ -143,23 +143,25 @@ useEffect(() => {
 
 
 const handleChannelSave = async () => {
+  // Log the form data before creating payload
+  console.log("Channel Dialog Data:", channelDialog.channelData);
+
   const payload = {
     name: channelDialog.channelData.name,
-    channel_type: channelDialog.channelData.type,
-    description: channelDialog.channelData.description,
-    target_audience_name_input: channelDialog.channelData.targetAudience,
-    manager_name: channelDialog.channelData.manager,
-    cost_per_lead: channelDialog.channelData.costPerLead 
-      ? channelDialog.channelData.costPerLead.toFixed(2) 
-      : "0.00",
-    budget: channelDialog.channelData.budget 
-      ? channelDialog.channelData.budget.toFixed(2) 
-      : "0.00",
-    status: channelDialog.channelData.status,
-    priority: channelDialog.channelData.settings?.priority,
-    working_hours: channelDialog.channelData.settings?.workingHours,
-    max_capacity: channelDialog.channelData.settings?.maxCapacity,
+    channel_type: channelDialog.channelData.type || 'online',
+    description: channelDialog.channelData.description || '',
+    target_audience_name_input: channelDialog.channelData.targetAudience || '',
+    manager_name: channelDialog.channelData.manager || '',
+    cost_per_lead: parseFloat(channelDialog.channelData.costPerLead || 0).toFixed(2),
+    budget: parseFloat(channelDialog.channelData.budget || 0).toFixed(2),
+    status: channelDialog.channelData.status || 'active',
+    priority: channelDialog.channelData.settings?.priority || 'medium',
+    working_hours: channelDialog.channelData.settings?.workingHours || '9-18',
+    max_capacity: parseInt(channelDialog.channelData.settings?.maxCapacity || 100, 10)
   };
+
+  // Log the final payload
+  console.log("Channel Create Payload:", payload);
 
   let result;
   if (channelDialog.mode === "create") {

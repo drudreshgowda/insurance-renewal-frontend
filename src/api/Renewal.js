@@ -1,4 +1,4 @@
-const API_URL = "http://13.233.6.207:8000/api/channels";
+const API_URL = "http://13.233.6.207:8000/api/channels/channels";
 const DASHBOARD_URL = "http://13.233.6.207:8000/api/dashboard";
 
 export const channelAPI = {
@@ -70,6 +70,20 @@ export const channelAPI = {
         return { success: false, message: "No token found, please login first." };
       }
 
+      // eslint-disable-next-line no-console
+      console.log("API Request:", {
+        url: `${API_URL}/`,
+        method: "POST",
+        payload
+      });
+
+      // Log the full request details
+      console.log("Making API request to:", `${API_URL}/create_channel/`);
+      console.log("Request headers:", {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token.substring(0, 10)}...` // Only log part of the token for security
+      });
+
       const response = await fetch(`${API_URL}/create_channel/`, {
         method: "POST",
         mode: "cors",
@@ -80,16 +94,62 @@ export const channelAPI = {
         body: JSON.stringify(payload),
       });
 
-      const data = await response.json();
+      // Log response details
+      console.log("Response status:", response.status);
+      console.log("Response headers:", Object.fromEntries([...response.headers.entries()]));
 
-      if (!response.ok) {
-        return { success: false, message: data.message || JSON.stringify(data) };
+      let responseData;
+      try {
+        responseData = await response.text();
+        // Try to parse as JSON if possible
+        try {
+          responseData = JSON.parse(responseData);
+        } catch (e) {
+          // Keep as text if not JSON
+        }
+      } catch (e) {
+        responseData = null;
       }
 
-      return { success: true, data };
+      // eslint-disable-next-line no-console
+      console.log("API Response:", {
+        status: response.status,
+        data: responseData
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          return { success: false, message: "Authentication failed. Please login again." };
+        }
+        
+        if (response.status === 404) {
+          return { success: false, message: "API endpoint not found" };
+        }
+
+        if (typeof responseData === 'object' && responseData !== null) {
+          return { 
+            success: false, 
+            message: responseData.message || responseData.detail || "Server error occurred"
+          };
+        }
+
+        return { 
+          success: false, 
+          message: responseData || "Server error occurred"
+        };
+      }
+
+      return { 
+        success: true, 
+        data: typeof responseData === 'object' ? responseData : { message: "Channel created successfully" }
+      };
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("CreateChannel API failed:", error);
-      return { success: false, message: error.message || "Request failed" };
+      return { 
+        success: false, 
+        message: error.message || "Network error occurred" 
+      };
     }
   },
 
